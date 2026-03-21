@@ -47,9 +47,11 @@ python manage.py migrate
 python manage.py test
 ```
 
-### 4) Danach auf Django 5.0/5.1 ziehen (optional)
-- Erst stabil auf 4.2 LTS
-- dann nächste Stufe
+### 4) Django 5 Status
+- Django 5.0.14 wurde in einer separaten Test-venv erfolgreich installiert
+- `python manage.py check` unter Django 5: **ohne Fehler**
+- `./scripts/smoke.sh` unter Django 5: **OK**
+- Requirements wurden auf `Django==5.0.14` angehoben
 
 ## Kandidaten für Cleanup/Entfernung
 
