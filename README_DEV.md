@@ -51,6 +51,14 @@ python manage.py showmigrations slg
 python manage.py runserver 0.0.0.0:8000
 ```
 
+### Schneller Smoke-Test
+
+```bash
+./scripts/smoke.sh
+# optional:
+# VENV_PATH=/home/goffosen/.venvs/eligius_min ./scripts/smoke.sh
+```
+
 ## 5) SQL-Dump reimport (falls nötig)
 
 ```bash

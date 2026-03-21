@@ -154,6 +154,8 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Keep legacy AutoField behavior for old migrations/models (avoids noisy W042 warnings)
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
