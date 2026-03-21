@@ -61,6 +61,17 @@ Hinweis: Das Script stellt auch sicher, dass ein `django_site` mit ID 1 existier
 # VENV_PATH=/home/goffosen/.venvs/eligius_min ./scripts/smoke.sh
 ```
 
+### Route-Sweep (Webseiten-/API-Basischeck)
+
+```bash
+source /home/goffosen/.venvs/eligius_min/bin/activate
+export DJANGO_DB_CNF_PATH='/mnt/e/Eligius/eligius/mysql.cnf'
+export DJANGO_SECRET_KEY='dev'
+export DJANGO_DEBUG='1'
+export DJANGO_ALLOWED_HOSTS='*'
+python scripts/route_sweep.py
+```
+
 ## 5) SQL-Dump reimport (falls nötig)
 
 ```bash
