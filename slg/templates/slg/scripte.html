@@ -228,48 +228,12 @@
 {% elif active_block == 'jsobjektliste' %}
 {% block jsobjektliste %}
 <!-- Grundlegende Bibliotheken -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-{# ADD: Waypoint libraries for infinite scroll #}
-<script src="{% static 'Djangoprojekt/js/jquery.waypoints.min.js' %}"></script>
-<script src="{% static 'Djangoprojekt/js/infinite.min.js' %}"></script>
-{# END ADD #}
+<script defer src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <!-- Eigene JavaScript-Dateien -->
-{# This might contain specific logic, keep it #}
-<script src="{% static 'js/filter-ajax.js' %}"></script>
-{# This might contain the actual infinite scroll setup, or just helpers #}
-<script src="{% static 'js/infinite-scroll.js' %}"></script>
-
-{# ADD: Basic Waypoint Infinite initialization if not already in infinite-scroll.js #}
-<script>
-    $(document).ready(function () {
-        // Ensure this selector matches your container for objects
-        var infinite = new Waypoint.Infinite({
-            element: $('.infinite-container')[0], // Adjust selector if needed
-            // Optional: Specify offset, e.g., 'bottom-in-view' or a pixel value
-            // offset: 'bottom-in-view',
-            onBeforePageLoad: function () {
-                // Show a loading indicator if you have one
-                // Example: $('.loading-indicator').show();
-                console.log('Loading next page...'); // For debugging
-            },
-            onAfterPageLoad: function ($items) {
-                // Hide the loading indicator
-                // Example: $('.loading-indicator').hide();
-                console.log('Page loaded.'); // For debugging
-                // You might need to re-initialize things for the new items here
-                // e.g., lazy loading, lightboxes, etc. if they apply
-            }
-        });
-
-        // If your infinite-scroll.js already initializes Waypoint.Infinite,
-        // you might not need the above block, or you might need to adjust it
-        // based on how infinite-scroll.js is structured.
-    });
-</script>
-{# END ADD #}
+<script defer src="{% static 'js/filter-ajax.js' %}"></script>
+<script defer src="{% static 'js/infinite-scroll.js' %}"></script>
 {% endblock %}
 {% elif active_block == 'jstyp_detail' %}
 {% block jstyp_detail %}
