@@ -2344,6 +2344,10 @@ def cycle_coin(request):
             .only('id', 'Typ')                # schlank
             .order_by('id')
     )
+
+    if not objs:
+        return Response({"detail": "Keine Objekte für den angegebenen type_id gefunden."}, status=404)
+
     ids = [o.id for o in objs]
 
     try:
