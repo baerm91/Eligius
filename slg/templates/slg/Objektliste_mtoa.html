@@ -10,29 +10,7 @@
 <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
 <link rel="dns-prefetch" href="//unpkg.com">
 
-<!-- Critical: Bootstrap Icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-
-<!-- DEFER non-critical CSS using media="print" trick -->
-<link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style"
-  onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@2.4.0/Control.FullScreen.css" as="style"
-  onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" href="https://cdn.jsdelivr.net/npm/nouislider@14.7.0/distribute/nouislider.min.css" as="style"
-  onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" as="style"
-  onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" as="style"
-  onload="this.onload=null;this.rel='stylesheet'">
-
-<!-- Fallback for browsers without preload support -->
-<noscript>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@2.4.0/Control.FullScreen.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@14.7.0/distribute/nouislider.min.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-</noscript>
+{% include 'slg/partials/html/browse_vendor_css.html' %}
 
 <!-- Optimierte Font-Display Einstellungen -->
 <style>
@@ -515,27 +493,7 @@
 
 {% block scripts %}
 {% include 'slg/scripte.html' with active_block='jsobjektliste' %}
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<!-- Leaflet Fullscreen Plugin -->
-<script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@2.4.0/Control.FullScreen.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- noUiSlider JS -->
-<script src="https://cdn.jsdelivr.net/npm/nouislider@14.7.0/distribute/nouislider.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/wnumb@1.2.0/wNumb.min.js"></script>
-
-<!-- Chart.js mit exakter Version -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-<!-- Hammer.js für Touch-Gesten -->
-<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
-
-<!-- Zoom-Plugin mit exakter Version - make sure this loads correctly -->
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-
-<!-- MarkerCluster Plugin -->
-<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+{% include 'slg/partials/html/browse_vendor_js.html' %}
 
 <script>
   // Global plugin registration to ensure it's available
