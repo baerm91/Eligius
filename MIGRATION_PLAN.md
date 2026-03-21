@@ -48,10 +48,10 @@ python manage.py test
 ```
 
 ### 4) Django 5 Status
-- Django 5.0.14 und 5.1.8 wurden in separaten Test-venvs erfolgreich installiert
-- `python manage.py check` unter Django 5.1.8: **ohne Fehler**
-- `./scripts/smoke.sh` unter Django 5.1.8: **OK**
-- Requirements wurden auf `Django==5.1.8` angehoben
+- Django 5.0.14, 5.1.8 und 5.2.2 wurden in separaten Test-venvs erfolgreich installiert
+- `python manage.py check` unter Django 5.2.2: **ohne Fehler**
+- `./scripts/smoke.sh` unter Django 5.2.2: **OK**
+- Requirements wurden auf `Django==5.2.2` angehoben
 
 ## Kandidaten für Cleanup/Entfernung
 
