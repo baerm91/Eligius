@@ -1,0 +1,219 @@
+{% load static %}
+<script defer src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+{% comment %}
+<script src="{% static 'Djangoprojekt/js/bootstrap.min.js'%}"></script> {% endcomment %}
+<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script defer src="{% static 'Djangoprojekt/js/aos.js'%}"></script>
+<script src="{% static 'Djangoprojekt/js/lazysizes.min.js'%}" async></script>
+
+<script>
+    AOS.init({
+        startEvent: 'load',
+    });
+
+    $(document).ready(function () {
+        // Variablen für Touch-Events für die Münzgalerie
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const minSwipeDistance = 50; // Minimale Distanz für einen Swipe
+
+        // Touch-Event-Handler für die Münzgalerie
+        function handleTouchStart(e) {
+            touchStartX = e.touches[0].clientX;
+        }
+
+        function handleTouchMove(e) {
+            // Optional: Verhindern des vertikalen Scrollens während des horizontalen Swipes
+            // e.preventDefault();
+        }
+
+        function handleTouchEnd(e) {
+            touchEndX = e.changedTouches[0].clientX;
+            handleSwipe();
+        }
+
+        function handleSwipe() {
+            const swipeDistance = touchEndX - touchStartX;
+
+            // Wenn die Swipe-Distanz größer als die Mindestdistanz ist
+            if (Math.abs(swipeDistance) > minSwipeDistance) {
+                if (swipeDistance > 0) {
+                    // Swipe nach rechts - scrolle nach links
+                    scrollCoins('left');
+                } else {
+                    // Swipe nach links - scrolle nach rechts
+                    scrollCoins('right');
+                }
+            }
+        }
+
+        // Funktion zum Scrollen der Münzgalerie
+        window.scrollCoins = function (direction) {
+            const container = document.getElementById('coinsContainer');
+            if (!container) return; // Prüfen, ob das Element existiert
+
+            const scrollAmount = 300; // Scroll-Distanz
+
+            if (direction === 'left') {
+                container.scrollLeft -= scrollAmount;
+            } else {
+                container.scrollLeft += scrollAmount;
+            }
+
+            // Update arrow visibility
+            updateArrows();
+        }
+
+        function updateArrows() {
+            const container = document.getElementById('coinsContainer');
+            if (!container) return; // Prüfen, ob das Element existiert
+
+            const prevArrow = document.querySelector('.nav-arrow.prev');
+            const nextArrow = document.querySelector('.nav-arrow.next');
+
+            if (!prevArrow || !nextArrow) return; // Prüfen, ob die Pfeile existieren
+
+            // Show/hide prev arrow
+            if (container.scrollLeft <= 0) {
+                prevArrow.classList.add('hidden');
+            } else {
+                prevArrow.classList.remove('hidden');
+            }
+
+            // Show/hide next arrow
+            if (container.scrollLeft >= (container.scrollWidth - container.clientWidth)) {
+                nextArrow.classList.add('hidden');
+            } else {
+                nextArrow.classList.remove('hidden');
+            }
+        }
+
+        // Event-Listener für die Münzgalerie hinzufügen
+        const coinsContainer = document.getElementById('coinsContainer');
+        if (coinsContainer) {
+            // Touch-Events hinzufügen
+            coinsContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+            coinsContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
+            coinsContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+            // Aktualisierung beim Scrollen
+            coinsContainer.addEventListener('scroll', updateArrows);
+
+            // Initiale Überprüfung der Pfeilsichtbarkeit
+            updateArrows();
+        }
+
+        // Aktualisierung bei Größenänderung
+        window.addEventListener('resize', updateArrows);
+
+        // JavaScript für die Suchfeld-Auswahl
+        const searchFieldTags = document.querySelectorAll('.search-field-tag');
+        const searchInput = document.querySelector('.search-input');
+        const searchForm = document.querySelector('.search-box form');
+
+        if (searchFieldTags.length > 0 && searchInput) {
+            // Event-Listener für Suchfeld-Tags
+            searchFieldTags.forEach(tag => {
+                tag.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    // Aktiven Tag markieren
+                    searchFieldTags.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Suchfeld-Wert setzen
+                    const field = this.dataset.field;
+
+                    // Name des Eingabefelds ändern
+                    searchInput.name = field;
+
+                    // Verstecktes Feld entfernen, falls vorhanden
+                    const hiddenField = document.getElementById('search_field');
+                    if (hiddenField) {
+                        hiddenField.value = field;
+                    }
+
+                    // Platzhaltertext ändern
+                    searchInput.placeholder = 'Suche nach ' + this.textContent;
+
+                    // Fokus auf das Eingabefeld setzen
+                    searchInput.focus();
+                });
+            });
+        }
+
+        // JavaScript für dynamisches Filtern
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const collectionCards = document.querySelectorAll('.collection-card');
+
+        if (filterButtons.length > 0 && collectionCards.length > 0) {
+            // Filter-Funktion
+            function filterCollections(category) {
+                collectionCards.forEach(card => {
+                    if (category === 'all' || card.dataset.category === category) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+
+            // Event-Listener für Filter-Buttons
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    // Aktiven Button markieren
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Sammlungen filtern
+                    filterCollections(this.dataset.category);
+                });
+            });
+        }
+
+        // Original Suchfunktion wiederherstellen
+        $(document).ready(function () {
+            // Rubrikauswahl
+            $('#rubrikSelect').select2({
+                placeholder: "Suchkategorie wählen",
+                allowClear: true
+            });
+
+            // Event-Handler für Rubrikauswahl
+            $('#rubrikSelect').on('change', function () {
+                var selectedType = $(this).val();
+                var searchInput = $('#searchFields input');
+
+                // Name des Eingabefelds an den ausgewählten Typ anpassen
+                searchInput.attr('name', selectedType);
+
+                // Platzhaltertext anpassen
+                var placeholder = 'Suche nach ' + $(this).find('option:selected').text();
+                searchInput.attr('placeholder', placeholder);
+            });
+
+            // Formularvalidierung
+            $('.search-form').on('submit', function (e) {
+                var searchType = $('#rubrikSelect').val();
+                var searchInputObj = $('#searchFields input[type="text"]');
+                var searchTerm = searchInputObj.val();
+
+                // Nur meckern, wenn tatsächlich ein Suchbegriff eingegeben wurde, aber keine Kategorie
+                if (searchTerm && !searchType) {
+                    e.preventDefault();
+                    alert('Bitte wählen Sie eine Suchkategorie aus.');
+                    return false;
+                }
+
+                // Entferne leere Eingabefelder vor dem Submit
+                $(this).find('input[type="text"]').each(function () {
+                    if (!$(this).val()) {
+                        $(this).removeAttr('name');
+                    }
+                });
+                return true;
+            });
+        });
+    });
+
+</script>
