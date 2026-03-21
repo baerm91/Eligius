@@ -51,6 +51,8 @@ python manage.py showmigrations slg
 python manage.py runserver 0.0.0.0:8000
 ```
 
+Hinweis: Das Script stellt auch sicher, dass ein `django_site` mit ID 1 existiert (fix für Admin-Login-500 bei fehlendem Site-Record).
+
 ### Schneller Smoke-Test
 
 ```bash

@@ -21,6 +21,9 @@ export DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS:-*}"
 echo "==> Django check"
 python manage.py check
 
+echo "==> Ensure django.contrib.sites default row"
+python manage.py shell -c "from django.contrib.sites.models import Site; s,_=Site.objects.get_or_create(id=1, defaults={'domain':'localhost','name':'localhost'}); print('site=',s.id,s.domain)"
+
 echo "==> Show latest slg migrations"
 python manage.py showmigrations slg | tail -n 20
 
