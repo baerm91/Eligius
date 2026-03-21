@@ -405,7 +405,7 @@ def NomismaInfo(link):
       return exactmatch, definition
 
 def PersonModalView(request, id):
-   person = Person.objects.get(id=id)
+   person = get_object_or_404(Person, id=id)
    
    if person.WikiDe:
       link = unquote_plus(person.WikiDe)
@@ -508,7 +508,7 @@ def PersonModalView(request, id):
    return render(request, 'slg/modal_person.html', context)
 
 def NominalModalView(request, id):
-   nominal = Nominal.objects.get(id=id)
+   nominal = get_object_or_404(Nominal, id=id)
    # if nominal.WikiDe:
    #    link = unquote_plus(nominal.WikiDe)
       
@@ -612,6 +612,7 @@ def TypView(request, id):
                 "datierung_verbale",
                 "thumbnail_av_url", "thumbnail_rv_url",
             )
+            .order_by("obj_id")
     )
     paginator = Paginator(objekte_qs, 12)
     page = request.GET.get("page", 1)
@@ -637,7 +638,7 @@ def TypView(request, id):
 
 def SammlungView(request, id):
    
-   sammlung = Slg.objects.get(id=id)
+   sammlung = get_object_or_404(Slg, id=id)
    # avbildtypen = AvBildtyp.objects.prefetch_related('avmztypen','avmztypen__objekte','avmztypen__objekte__SlgTeil').filter(schlagworte=id,)
    # typen = Muenztyp.objects.select_related('rv_bildtyp_set',).filter(rv_bildtyp__schlagworte=id,)
    # rvbildtypen = typen.values_list('rv_bildtyp__name', 'rv_bildtyp__id',).exclude(rv_bildtyp__name=None).distinct()
@@ -718,20 +719,15 @@ def RvSchlagwortTimelineView(request, id):
 
 def PraegeherrTimelineView(request, id):
    
-   # obj = Muenztyp.objects.select_related('Muenzstand', 'Herstellung', 'Nominal', 'Mzstaette', 'Metall', 'region', 'av_bildtyp', 'rv_bildtyp', 'av_beizeichen', 'rv_beizeichen', 'Objekttyp',).prefetch_related('obj_set', 'mztyp_person_set', 'typ_ref_set',).get(id=id)
-   # rvbildtypen = RvBildtyp.objects.prefetch_related('muenztyp_set','obj_set').exclude(name__isnull=True).filter(schlagworte=id,)
-   #Typ__mztyp_person__idfk_Person__name', 'Typ__mztyp_person__idfk_PersonFunktion__name
-   rvbildtypen = RvBildtyp.objects.prefetch_related('rvmztypen','rvmztypen__objekte','rvmztypen__objekte__SlgTeil',).filter(rvmztypen__mztyp_person__idfk_Person=id,).distinct()
-   # rvbildtypen = RvBildtyp.objects.prefetch_related('rvmztypen','rvmztypen__objekte','rvmztypen__objekte__SlgTeil').filter(rvmztypen__mztyp_person__idfk_Person__id=id,rvmztypen__mztyp_person__idfk_PersonFunktion__id='1',).distinct()
-   # mztypen = rvbildtypen.rvmztypen.filter(rvmztypen__mztyp_person__idfk_Person=id,)
+   rvbildtypen = RvBildtyp.objects.prefetch_related(
+      'rvmztypen', 'rvmztypen__objekte', 'rvmztypen__objekte__SlgTeil'
+   ).filter(rvmztypen__mztyp_person__idfk_Person=id).distinct()
+
    startandenddate = rvbildtypen.aggregate(start=Min('rvmztypen__dat_von'), end=Max('rvmztypen__dat_bis'))
-   
-   typen = Muenztyp.objects.select_related('rv_bildtyp_set',).filter(mztyp_person__idfk_Person=id,)
-   
-   print(typen)
+
+   typen = Muenztyp.objects.filter(mztyp_person__idfk_Person=id).distinct()
    datierungen = typen.values('dat_von')
-   # rvbildtypen = typen.values_list('rv_bildtyp__name', 'rv_bildtyp__id',).exclude(rv_bildtyp__name=None).distinct()
-   # print(rvbildtypen.muenztyp.all())
+
    context = {
       'rvbildtypen': rvbildtypen,
       'startandenddate': startandenddate,
