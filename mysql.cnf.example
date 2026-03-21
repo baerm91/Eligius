@@ -1,0 +1,7 @@
+[client]
+database = djangoproject
+user = django
+password = django_change_me
+host = 127.0.0.1
+port = 3307
+default-character-set = utf8mb4
