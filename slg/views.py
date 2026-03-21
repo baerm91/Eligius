@@ -1636,15 +1636,14 @@ def area_chart_data(request):
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
-        print(f"ERROR in area_chart_data: {error_details}")
-        
+        logger.error(f"ERROR in area_chart_data: {error_details}")
+
         return JsonResponse({
-            'error': str(e),
-            'details': error_details,
+            'error': 'Ungültige oder inkompatible Filterparameter.',
             'years': [],
             'counts': [],
             'percentages': []
-        })
+        }, status=400)
 
 
 
@@ -2396,10 +2395,14 @@ def cycle_coin(request):
 def ereignisse_api(request):
     """
     REST API-Endpunkt für Ereignisse (slginformation).
-    
+
     Parameter werden über die GET-Parameter übergeben.
     """
-    data = get_timeline_data(request)
+    cache_key = f"timeline_api:{request.get_full_path()}"
+    data = cache.get(cache_key)
+    if data is None:
+        data = get_timeline_data(request)
+        cache.set(cache_key, data, 300)  # 5 Minuten
     return JsonResponse(data)
 
 
