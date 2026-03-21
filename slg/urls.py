@@ -1,4 +1,5 @@
 from django.urls import path, include
+from django.views.decorators.cache import cache_page
 from rest_framework import routers
 from . import views
 from . import api_views
@@ -7,8 +8,8 @@ from . import api_views
 router = routers.DefaultRouter()
 router.register('mints/', views.MzstaettenRView)
 urlpatterns = [
-    path('', views.index, name="index_slg"),
-    path('about/', views.about, name="about"),
+    path('', cache_page(60 * 5)(views.index), name="index_slg"),
+    path('about/', cache_page(60 * 30)(views.about), name="about"),
     #path('', include(router.urls)) 
     #path('<id>/', views.details, name="details_slg")
     path('api-token-auth/', api_views.obtain_auth_token, name='api_token_auth'),
@@ -58,7 +59,7 @@ urlpatterns = [
     # Neue API-Route für die Zeitleiste
     path('api/ereignisse/', views.ereignisse_api, name='ereignisse_api'),
     # Route für die Timeline-Ansicht
-    path('timeline/', views.timeline_view, name='timeline_view'),
+    path('timeline/', cache_page(60 * 5)(views.timeline_view), name='timeline_view'),
     # Katalog-URLs
     path('catalog/sort-titles/', views.catalog_sort_titles, name='catalog_sort_titles'),
     path('catalog/generate/', views.catalog_generate, name='catalog_generate'),

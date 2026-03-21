@@ -21,6 +21,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.decorators.cache import cache_page
 from rest_framework import routers, serializers, viewsets
 
 from slg.api_views import ExportObjLSNO
@@ -49,8 +50,8 @@ urlpatterns = [
     # path('id/<int:id>/update/', MzUpdate.as_view(), name='Objekt'),
     path('id/<int:id>.ttl', rdfliboutput, name='ObjTTl'),
     #path('slg/<int:id>.json', jsonresp, name='Objekt'),
-    path('browse/', objekt_list_view_mtoa, name='Objektliste'),
-    path('browse_legacy/', objekt_list_view, name='Objektliste_legacy'),
+    path('browse/', cache_page(60 * 5)(objekt_list_view_mtoa), name='Objektliste'),
+    path('browse_legacy/', cache_page(60 * 5)(objekt_list_view), name='Objektliste_legacy'),
     # path('slg/objekte/', include('django_select2.urls'), objekt_list_view, name='Objektliste'),
     #path('select2/',include('django_select2.urls')),
     #path('api-auth/', include('rest_framework.urls')),
