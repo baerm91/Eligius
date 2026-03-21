@@ -188,14 +188,22 @@ def export_xlsx(request):
     filters = {key: value for key, value in request.GET.items() if key not in IGNORED_PARAMS}
 
     queryset = Obj.objects.all()
+    invalid_filter_fields = []
     for key, value in filters.items():
         # Split the key to extract the field name and lookup type (if any)
         field_lookup_parts = key.split('__')
         field_name = field_lookup_parts[0]
         lookup_type = field_lookup_parts[1] if len(field_lookup_parts) > 1 else 'exact'
-        
+
+        # Unknown fields should not crash the export endpoint
+        try:
+            model_field = Obj._meta.get_field(field_name)
+        except Exception:
+            invalid_filter_fields.append(field_name)
+            continue
+
         # Handle '__exact' lookup for ForeignKey fields correctly
-        if lookup_type == 'exact' and isinstance(Obj._meta.get_field(field_name), models.ForeignKey):
+        if lookup_type == 'exact' and isinstance(model_field, models.ForeignKey):
             filter_key = f"{field_name}_id"
         else:
             filter_key = key
@@ -203,19 +211,28 @@ def export_xlsx(request):
         # Convert the value if it's a boolean field or if it's an '__isnull' lookup
         if lookup_type == 'isnull':
             filter_value = value == 'True'
-        elif Obj._meta.get_field(field_name).get_internal_type() == 'BooleanField':
+        elif model_field.get_internal_type() == 'BooleanField':
             filter_value = value == 'on'
         else:
             filter_value = value
 
         # Apply the filter
         if filter_value is not None:
-            queryset = queryset.filter(**{filter_key: filter_value})
+            try:
+                queryset = queryset.filter(**{filter_key: filter_value})
+            except Exception:
+                # Ignore invalid lookup/value combinations instead of 500
+                continue
+
+    if invalid_filter_fields:
+        invalid_filter_fields = sorted(set(invalid_filter_fields))
+        return JsonResponse({"error": "Ungültige Filterfelder", "fields": invalid_filter_fields}, status=400)
 
     resource = ObjLSNOResource()
     dataset = resource.export(queryset)
     response = HttpResponse(dataset.xlsx, content_type='application/vnd.ms-excel')
-    response['Content-Disposition'] = f'attachment; filename="{field_name}_export.xlsx"'
+    filename_base = 'objekte' if not filters else 'obj_filter'
+    response['Content-Disposition'] = f'attachment; filename="{filename_base}_export.xlsx"'
     return response
 
 class ObjCreateView(BSModalCreateView):
@@ -1207,7 +1224,7 @@ def ObjektView(request, id):
         queryset=Obj_Ref.objects.select_related('idfk_Ref', 'variante')
     )
 
-    obj = Obj.objects.select_related(
+    obj_queryset = Obj.objects.select_related(
         # Existing relationships
         'idfk_Muenzstand', 'idfk_Herstellung', 'Slg', 'SlgTeil', 'idfk_Nominal', 
         'idfk_Mzstaette', 'Metall', 'Typ', 'faelschung', 'region', 'av_bildtyp', 
@@ -1244,7 +1261,9 @@ def ObjektView(request, id):
         'Typ__schlagworte',
         'idfk_Ref'
         
-    ).get(id=id)
+    )
+
+    obj = get_object_or_404(obj_queryset, id=id)
     
     coin_data = prepare_coin_data(obj)
     
@@ -1754,11 +1773,21 @@ def facet_api(request):
 def get_konkordanzen(request):
     typ_id = request.GET.get('typ', None)
     konkordanzen = []
-    
-    if typ_id:
-        typ = Muenztyp.objects.get(id=typ_id)
-        for konkordanz in typ.Konkordanz.all():
-            konkordanzen.append({"id": konkordanz.id, "titel": str(konkordanz)})
+
+    if not typ_id:
+        return JsonResponse({"konkordanzen": konkordanzen})
+
+    try:
+        typ_id = int(typ_id)
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "Parameter 'typ' muss eine Zahl sein.", "konkordanzen": []}, status=400)
+
+    typ = Muenztyp.objects.filter(id=typ_id).first()
+    if not typ:
+        return JsonResponse({"error": "Muenztyp nicht gefunden.", "konkordanzen": []}, status=404)
+
+    for konkordanz in typ.Konkordanz.all():
+        konkordanzen.append({"id": konkordanz.id, "titel": str(konkordanz)})
 
     return JsonResponse({"konkordanzen": konkordanzen})
 
