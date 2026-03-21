@@ -1,9 +1,6 @@
-STATIC_FILES=151
+STATIC_FILES=144
 REFERENCED_PATHS=42
-POTENTIALLY_UNUSED=110
-Djangoprojekt/css/lightgallery.css
-Djangoprojekt/css/mediaelementplayer.css
-Djangoprojekt/css/swiper.min.css
+POTENTIALLY_UNUSED=103
 Djangoprojekt/fonts/flaticon/font/Flaticon.eot
 Djangoprojekt/fonts/flaticon/font/Flaticon.svg
 Djangoprojekt/fonts/flaticon/font/Flaticon.ttf
@@ -19,10 +16,6 @@ Djangoprojekt/fonts/lg/lg.eot
 Djangoprojekt/fonts/lg/lg.svg
 Djangoprojekt/fonts/lg/lg.ttf
 Djangoprojekt/fonts/lg/lg.woff
-Djangoprojekt/js/admin.js
-Djangoprojekt/js/jquery.bootstrap.modal.forms.js
-Djangoprojekt/js/mediaelement-and-player.min.js
-Djangoprojekt/js/slick.min.js
 Djangoprojekt/scss/_site-base.scss
 Djangoprojekt/scss/_site-blocks.scss
 Djangoprojekt/scss/_site-navbar.scss
