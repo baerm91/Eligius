@@ -1,0 +1,298 @@
+{% extends 'slg/navbar.html' %}
+
+{% block content %}
+<form action="{% url 'Objekt_Update' id=test.id %}" method="post">{% csrf_token %}
+
+    <div class="container-fluid" >
+        <div class="row text-center">
+            <div class="col pt-2">
+                <table width="100%">
+                    <tr>
+                        
+                        <td width="66%" align="left">
+                            <h4><small></small> {{ form.titel }}, {{ form.dat_verb }}</h4>
+                        </td>
+                        <td width="16,5%">
+                            <nav aria-label="Page navigation example">
+                                <ul class="pagination">
+                                    <li class="page-item">
+                                    <a class="page-link" href="../{{ test.id|add:"-10" }}" class="pull-left" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                            <span class="sr-only">Previous</span>
+                                    </a>
+                                    </li>
+                                    <li class="page-item"><a class="page-link" href="../{{ test.id|add:"-2" }}">{{ test.id|add:"-2" }}</a></li>
+                                    <li class="page-item"><a class="page-link" href="../{{ test.id|add:"-1" }}">{{ test.id|add:"-1" }}</a></li>
+                                    <li class="page-item"><a class="page-link" href="../{{ test.id }}">{{ test.id }}</a></li>
+                                    <li class="page-item"><a class="page-link" href="../{{ test.id|add:"1" }}">{{ test.id|add:"1" }}</a></li>
+                                    <li class="page-item"><a class="page-link" href="../{{ test.id|add:"2" }}">{{ test.id|add:"2" }}</a></li>
+                                    <li class="page-item">
+                                    <a class="page-link" href="../{{ test.id|add:"10" }}" class="pull-right" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                            <span class="sr-only">Next</span>
+                                    </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </td>
+                        <td width="16,5%" align="right">
+                            {% if request.user.is_authenticated %}
+                                {% load admin_urls %}
+                                
+                                <a href="{% url 'admin:slg_obj_change' test.pk %}"><i class="material-icons">edit</i></a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+                
+            </div>
+        </div>
+        <div class="row" id="captions">
+            <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4 pt-2 align-top-center" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                <table>
+                    <tbody>
+                        
+                            <tr>
+                                <td>Sammlung:</td>
+                                <td>{{ form.Slg }}</td>
+                                
+                            </tr>
+                        
+                        <tr>
+                            <td>Inv.-Nr.:</td>
+                            <td>{{ form.invnr }}</td>
+                        </tr>
+                        
+                            <tr>
+                                <td>Freigabe:</td>
+                                <td>{{ form.freigabe }}</td>
+                            </tr>
+                        
+                        
+                        
+                            <tr>
+                                <td>Münzstand:</td>
+                                <td>{{ form.idfk_Muenzstand }}</td>
+                            </tr>
+                        
+                        
+                        
+                            <tr>
+                                <td>Herstellung:</td>
+                                <td>{{ form.idfk_Herstellung }}</td>
+                            </tr>
+                            
+                            
+                            <tr>
+                                <td>Münzstätte:</td>
+                                <td>{{ form.idfk_Mzstaette }}</td>
+                                
+                                
+                            </tr>
+                        
+                        
+                            <tr>
+                                <td>Nominal:</td>
+                                <td>{{ form.idfk_Nominal }}</td>
+                                
+                            </tr>
+                        
+                        
+                            <tr>
+                                <td>Metall:</td>
+                                <td>{{ form.Metall }}</td>
+                                
+                            </tr>
+                        
+                        <tr>
+                            <td>Technica:</td>
+                            <td>{{ form.durchmesser|default:""}} mm, {{ form.gewicht|default:""}} g, {{ form.stempelstellung|default:""}} h</td>
+                        </tr>
+                    </tbody>
+                </table>
+                 
+                
+                   
+                
+                
+                <hr width="80%">
+                
+                
+                <div class="form-group">
+                    Literatur:<br>
+                    {{Refs.management_form}}
+                    
+                    <table class="table table-borderless table-sm">
+                        {% for Ref in Refs %}
+                        
+                            {% for field in Ref %}
+                                
+                                <tr>
+                                        <td>{{ field.label_tag }}</td>
+                                        <td>{{ field }}
+                                            
+                                            {% if field.errors %}
+                                                <br>
+                                                {{ field.errors }}
+                                            {% endif %}                                  
+                                        </td>
+                                </tr>
+                                
+                            {% endfor %}
+                        {% endfor %}
+                        
+                    </table>
+                </div>               
+                            
+                    
+            
+                <hr width="80%">
+                Anmerkungen: <p style="text-indent: 40px">{{ form.anmerkung}}</p>
+                               
+            </div>
+            <div class="col-sm-12 col-md-8 col-lg-8 col-xl-8 pt-2 align-top-center" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                <div class="row">
+                        {% if test.SlgTeil_id == 2 %}
+                            <div class="col-md-6">
+                                <div class="item" data-src="{{test.SlgTeil.bildurl}}{{test.img}}a00.jpg">
+                                    {% comment %} <a href="/slg/{{test.id}}/"><img src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{test.img}}Av.webp" alt="thumbnail" class="img-fluid"> {% endcomment %}
+                                    <a href="{{test.get_absolute_url}}"><img src="{{test.SlgTeil.bildurl}}{{test.img}}a00.jpg" alt="Avers" class="img-fluid">
+                                    </a>
+                                </div>    
+                            </div>    
+                            <div class="col-md-6">
+                                <div class="item" data-src="{{test.SlgTeil.bildurl}}{{test.img}}r00.jpg">
+                                        <a href="{{test.get_absolute_url}}"><img src="{{test.SlgTeil.bildurl}}{{test.img}}r00.jpg" alt="Revers" class="img-fluid"></a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="col-md-6">
+                                <div class="item" data-src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{test.img}}Av.JPG">
+                                    {% comment %} <a href="/slg/{{Obj.id}}/"><img src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{test.img}}Av.webp" alt="thumbnail" class="img-fluid"> {% endcomment %}
+                                    <a href="{{test.get_absolute_url}}"><img src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{test.img}}Av.webp" alt="thumbnail" class="img-fluid">
+                                    </a>
+                                </div>    
+                            </div>    
+                            <div class="col-md-6">
+                                <div class="item" data-src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{test.img}}Rv.JPG">
+                                        <a href="{{test.get_absolute_url}}"><img src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{test.img}}Rv.webp" alt="thumbnail" class="img-fluid"></a>
+                                </div>
+                                    
+                                 
+                            </div>
+                        {% endif %}
+                    {% comment %} <div class="col-md-6">
+                        <div class="item" data-src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{test.img}}Av.jpg" data-sub-html="Avers: Inv.-Nr. {{ test.invnr }}, {{ test.durchmesser|default:"-"}} mm, {{ test.gewicht|default:"-"}} g, {{ test.stempelstellung|default:"-"}} h">
+                            <a href="#"><img src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{test.img}}Av.jpg" alt="Avers" class="img-fluid">
+                            </a>
+                        </div>    
+                    </div>
+                    <div class="col-md-6">
+                        <div class="item" data-src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{test.img}}Rv.jpg" data-sub-html="Revers: Inv.-Nr. {{ test.invnr}}, {{ test.durchmesser|default:"-"}} mm, {{ test.gewicht|default:"-"}} g, {{ test.stempelstellung|default:"-"}} h">
+                            <a href="#"><img src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{test.img}}Rv.jpg" alt="Revers" class="img-fluid"></a>
+                        </div>  
+                    </div>       {% endcomment %}
+                </div>
+                <div class="row">
+                    <div class="col-md-6 p-2">
+                        {{form.avleg|default:"-"}}<br>
+                        
+                        . {{form.av_beizeichen}}<br>
+                        
+                        
+                        <hr width="80%">
+                        <div class="form-group">
+                            <select name="av_bildtyp" class="js-example-basic-single" id="AvFormControlSelect2">
+                                    
+                                {% for Avtype in Avtypes %}
+                                            {% if form.av_bildtyp.value == Avtype.id %}
+                                                
+                                                <option id="{{ Avtype.id }}" value="{{Avtype.id}}" selected>{{Avtype.name}}</option>
+                                            
+                                            {% else %}
+                                            <option id="{{ Avtype.id }}" value="{{Avtype.id}}">{{Avtype.name}}</option>
+                                            {% comment %} <option id="{{ Rvtype.rv_bildtyp__id }}" value="{{Rvtype.rv_bildtyp__id}}">{{Rvtype.rv_bildtyp__name}} ({{Rvtype.cc}})</option> {% endcomment %}
+                                            {% endif %}
+                                {% endfor %}
+                            </select>
+                            
+                        </div>
+                        
+                        
+                            {{form.av_bildrand}}
+                        
+                        <hr width="80%">
+                        
+                    </div>
+                    <div class="col-md-6 p-2">
+                        {{form.rvleg|default:"-"}}<br>
+                        
+                            <br>{{form.rv_beizeichen|default:"-"}}
+                        
+                        <hr width="80%">
+
+                        <div class="form-group">
+                            <select name="rv_bildtyp" class="js-example-basic-single" id="RvFormControlSelect2">
+                                    
+                                {% for Rvtype in Rvtypes %}
+                                            {% if form.rv_bildtyp.value == Rvtype.id %}
+                                                
+                                                <option id="{{ Rvtype.id }}" value="{{Rvtype.id}}" selected>{{Rvtype.name}}</option>
+                                            
+                                            {% else %}
+                                            <option id="{{ Rvtype.id }}" value="{{Rvtype.id}}">{{Rvtype.name}}</option>
+                                            {% comment %} <option id="{{ Rvtype.rv_bildtyp__id }}" value="{{Rvtype.rv_bildtyp__id}}">{{Rvtype.rv_bildtyp__name}} ({{Rvtype.cc}})</option> {% endcomment %}
+                                            {% endif %}
+                                {% endfor %}
+                            </select>
+                            
+                        </div>
+                                                
+                        <!-- {{form.rv_bildtyp}} -->
+                        {{form.rv_bildrand}}
+                        
+                        <hr width="80%">
+                        
+                    </div>
+                </div>
+                {{ form.non_field_errors }}
+                <div class="form-group">
+                Personen:<br>
+                {{Personen.management_form}}
+                    
+                    {% for Pform in Personen %}
+                        <div class="row">
+                            {% for field in Pform %}
+                                <div class="col-sm-3">
+                                    <div class="fieldWrapper">
+                                    
+                                        {{ field.errors }}
+                                        {{ field.label_tag }} {{ field }}
+                                        {% if field.help_text %}
+                                        <p class="help">{{ field.help_text|safe }}</p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                
+                </div>
+                    
+            </div>
+        </div>
+    </div>
+    <button type="button" class="update-object btn btn-sm btn-primary" data-id="{% url 'update_object' test.pk %}">
+        <span class="fa fa-pencil"></span>
+    </button>
+    <div class="modal fade" tabindex="-1" role="dialog" id="modal">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content"></div>
+        </div>
+    </div>
+
+    
+    <input type="submit" value="Update">
+</form>
+{% endblock content %}

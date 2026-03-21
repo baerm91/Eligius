@@ -1,0 +1,258 @@
+{% load slg_extras %}
+{% comment %}Funktion, um Umlaute durch HTML-Entities zu ersetzen{% endcomment %}
+{% load i18n %}
+<div class="infinite-item">
+  <a href="{{ obj.get_absolute_url }}" class="text-decoration-none text-inherit">
+    <div class="coin-preview-card">
+      <!-- Sammlungsname -->
+      {% if obj.Slg %}
+        <div class="coin-preview-collection">
+          @ {{ obj.Slg }}
+        </div>
+      {% endif %}
+      <!-- Münzbilder -->
+      <div class="coin-preview-images">
+        <div class="image-container">
+          <img src="{{ obj.get_bild_urls.thumbnail_av }}" 
+               alt="Vorderseite"
+               class="preview-image"
+               onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; this.parentNode.querySelector('.placeholder-text').style.display='flex';">
+          <div class="placeholder-text">
+            <span>Vorderseite</span>
+            <span>Kein Bild</span>
+          </div>
+        </div>
+        <div class="image-container">
+          <img src="{{ obj.get_bild_urls.thumbnail_rv }}" 
+               alt="Rückseite"
+               class="preview-image"
+               onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; this.parentNode.querySelector('.placeholder-text').style.display='flex';">
+          <div class="placeholder-text">
+            <span>Rückseite</span>
+            <span>Kein Bild</span>
+          </div>
+        </div>
+      </div>
+      <!-- Der Titel, der immer sichtbar ist -->
+      {% if obj.Typ.titel %}
+        <div class="preview-title">{{ obj.Typ.titel|safe }}</div>
+      {% else %}
+        <div class="preview-title">{{ obj.titel|default:"Unbestimmt"|safe }}</div> 
+      {% endif %}
+      {% if obj.Typ.dat_verb %}
+        <div class="preview-dat_verb">{{ obj.Typ.dat_verb|safe }}</div>
+      {% else %}
+        <div class="preview-dat_verb">{{ obj.dat_verb|default:"Unbestimmt"|safe }}</div>
+      {% endif %}
+      <!-- Der Titel und Info-Bereich, der nur beim Hover erscheint -->
+      <div class="coin-preview-info hover-content">
+        <div class="preview-badges">
+          {# --- 1. Allgemeine Badges (inkl. Münzstätte UND andere Personen) --- #}
+          <div class="badge-group-general mb-2">
+            {% if obj.Typ %}
+              {# Datierung, Metall, Nominal, Mzstaette... #}
+              {% if obj.Typ.dat_verb %}
+                {% if is_object_list %}
+                  <a href="?{% add_filter_param 'dat_von' obj.Typ.dat_von %}&{% add_filter_param 'dat_bis' obj.Typ.dat_bis %}" class="text-decoration-none d-inline-block mb-1">
+                {% else %}
+                  <a href="/browse/?{% add_filter_param 'dat_von' obj.Typ.dat_von %}&{% add_filter_param 'dat_bis' obj.Typ.dat_bis %}" class="text-decoration-none d-inline-block mb-1">
+                {% endif %}
+                    <span class="badge bg-secondary me-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-days d-inline-block align-text-bottom me-1"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
+                      {{ obj.Typ.dat_verb|safe }}
+                    </span>
+                  </a>
+              {% endif %}
+              {% if obj.Typ.Metall %}
+                {% if is_object_list %}
+                  <a href="?{% add_filter_param 'material' obj.Typ.Metall.name %}" class="text-decoration-none d-inline-block mb-1">
+                {% else %}
+                  <a href="/browse/?{% add_filter_param 'material' obj.Typ.Metall.name %}" class="text-decoration-none d-inline-block mb-1">
+                {% endif %}
+                    <span class="badge bg-warning text-dark me-1">{{ obj.Typ.Metall.name|safe }}</span>
+                  </a>
+              {% endif %}
+              {% if obj.Typ.Nominal %}
+                {% if is_object_list %}
+                  <a href="?{% add_filter_param 'Nominal' obj.Typ.Nominal.name %}" class="text-decoration-none d-inline-block mb-1">
+                {% else %}
+                  <a href="/browse/?{% add_filter_param 'Nominal' obj.Typ.Nominal.name %}" class="text-decoration-none d-inline-block mb-1">
+                {% endif %}
+                    <span class="badge bg-warning text-dark me-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-coins d-inline-block align-text-bottom me-1"><circle cx="8" cy="8" r="6"></circle><path d="M18.09 10.37A6 6 0 1 1 10.34 18"></path><path d="M7 6h1v4"></path><path d="m16.71 13.88.7.71-2.82 2.82"></path></svg>
+                      {{ obj.Typ.Nominal.name|safe }}
+                    </span>
+                  </a>
+              {% endif %}
+              {% if obj.Typ.Mzstaette %}
+                {% if is_object_list %}
+                  <a href="?{% add_filter_param 'Muenzstaette' obj.Typ.Mzstaette.name %}" class="text-decoration-none d-inline-block mb-1">
+                {% else %}
+                  <a href="/browse/?{% add_filter_param 'Muenzstaette' obj.Typ.Mzstaette.name %}" class="text-decoration-none d-inline-block mb-1">
+                {% endif %}
+                  <span class="badge bg-warning text-dark me-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-landmark d-inline-block align-text-bottom me-1"><line x1="3" x2="21" y1="22" y2="22"></line><line x1="6" x2="6" y1="18" y2="11"></line><line x1="10" x2="10" y1="18" y2="11"></line><line x1="14" x2="14" y1="18" y2="11"></line><line x1="18" x2="18" y1="18" y2="11"></line><polygon points="12 2 20 7 4 7"></polygon></svg>
+                    {{ obj.Typ.Mzstaette.name|safe }}
+                  </span>
+                </a>
+              {% endif %}
+            {% endif %}
+
+            {# Praegeherren & Sonstige HIER EINGEFÜGT #}
+            {% for person, funktion, appears_on_rev in obj.typ_personen_mit_funktion %}
+              {% if funktion.id != 2 %} {# Nur Praegeherren & Sonstige anzeigen #}
+                {% if funktion.id == 1 or funktion.id == 6 or funktion.id == 7 %}
+                  {# Praegeherren #}
+                  {% if is_object_list %}
+                    <a href="?{% add_filter_param 'Praegeherren' person.name %}" class="text-decoration-none d-inline-block mb-1">
+                  {% else %}
+                    <a href="/browse/?{% add_filter_param 'Praegeherren' person.name %}" class="text-decoration-none d-inline-block mb-1">
+                  {% endif %}
+                {% else %}
+                  {# Sonstige Personen #}
+                  {% if is_object_list %}
+                    <a href="?{% add_filter_param 'Person' person.name %}" class="text-decoration-none d-inline-block mb-1">
+                  {% else %}
+                    <a href="/browse/?{% add_filter_param 'Person' person.name %}" class="text-decoration-none d-inline-block mb-1">
+                  {% endif %}
+                {% endif %}
+                  <span class="badge bg-primary text-light me-1" title="{{ funktion.name|safe }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users d-inline-block align-text-bottom me-1"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    {{ person.name|safe }}
+                  </span>
+                </a>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          {# --- 2. Wappen (falls vorhanden) --- #}
+          {% if obj.Typ.Wappen %}
+          <div class="badge-group-other mb-2">
+            {# Wappen #}
+            {% for wappen in obj.Typ.Wappen %}
+              {% if is_object_list %}
+                <a href="?{% add_filter_param 'Wappen' wappen.name %}" class="text-decoration-none d-inline-block mb-1">
+              {% else %}
+                <a href="/browse/?{% add_filter_param 'Wappen' wappen.name %}" class="text-decoration-none d-inline-block mb-1">
+              {% endif %}
+                <span class="badge bg-info text-dark me-1" title="Wappen">🛡{{ wappen.name|safe }}</span>
+              </a>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          {# --- 3. Avers Section (Flexbox Layout) --- #}
+          {# Bedingung, um leere Abschnitte zu vermeiden (vereinfacht) #}
+          {% if obj.typ_personen_mit_funktion or obj.av_schlagworte %}
+            {# Flex Container für Label + Badges #}
+            <div class="d-flex align-items-baseline mb-1"> {# align-items-baseline für Text-Ausrichtung #}
+                {# Label (fixe Breite, kein Schrumpfen) #}
+                <div class="flex-shrink-0 pe-2"> {# pe-2 für Abstand #}
+                    <span class="badge bg-light text-dark fw-bold">Avers</span>
+                </div>
+                {# Badge Container (flexibel, kann umbrechen) #}
+                <div class="flex-grow-1">
+                    {# Dargestellte Personen AV #}
+                    {% for person, funktion, appears_on_rev in obj.typ_personen_mit_funktion %}
+                        {% if funktion.id == 2 and not appears_on_rev %}
+                            {% if is_object_list %}
+                                <a href="?{% add_filter_param 'Dargestellte_AV' person.name %}" class="text-decoration-none d-inline-block mb-1">
+                            {% else %}
+                                <a href="/browse/?{% add_filter_param 'Dargestellte_AV' person.name %}" class="text-decoration-none d-inline-block mb-1">
+                            {% endif %}
+                                <span class="badge bg-primary text-light me-1" title="{{ funktion.name|safe }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users d-inline-block align-text-bottom me-1"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                    {{ person.name|safe }}
+                                </span>
+                                </a>
+                        {% endif %}
+                    {% endfor %}
+                    {# Avers-Schlagworte als Badges #}
+                    {% for schlagwort in obj.av_schlagworte %}
+                        {% if is_object_list %}
+                            <a href="?{% add_filter_param 'av_schlagwort' schlagwort.name %}" class="text-decoration-none d-inline-block mb-1">
+                        {% else %}
+                            <a href="/browse/?{% add_filter_param 'av_schlagwort' schlagwort.name %}" class="text-decoration-none d-inline-block mb-1">
+                        {% endif %}
+                            <span class="badge bg-info text-dark me-1" title="Avers Schlagwort">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tags d-inline-block align-text-bottom me-1"><path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"></path><path d="M9.586 5.586A2 2 0 0 0 8.172 5H3a1 1 0 0 0-1 1v5.172a2 2 0 0 0 .586 1.414L8.29 18.29a2.426 2.426 0 0 0 3.42 0l3.58-3.58a2.426 2.426 0 0 0 0-3.42z"></path><circle cx="6.5" cy="9.5" r=".5" fill="currentColor"></circle></svg>
+                                {{ schlagwort.name|safe }}
+                            </span>
+                            </a>
+                    {% endfor %}
+                </div>
+            </div>
+          {% endif %}
+
+          {# --- 4. Revers Section (Row) --- #}
+          {# Bedingung, um leere Abschnitte zu vermeiden (vereinfacht) #}
+          {% if obj.typ_personen_mit_funktion or obj.rv_schlagworte %}
+            {# Flex Container für Label + Badges #}
+            <div class="d-flex align-items-baseline mb-1"> {# align-items-baseline für Text-Ausrichtung #}
+               {# Label (fixe Breite, kein Schrumpfen) #}
+               <div class="flex-shrink-0 pe-2"> {# pe-2 für Abstand #}
+                   <span class="badge bg-light text-dark fw-bold">Revers</span>
+               </div>
+                {# Badge Container (flexibel, kann umbrechen) #}
+               <div class="flex-grow-1">
+                   {# Dargestellte Personen RV #}
+                   {% for person, funktion, appears_on_rev in obj.typ_personen_mit_funktion %}
+                       {% if funktion.id == 2 and appears_on_rev %}
+                           {% if is_object_list %}
+                               <a href="?{% add_filter_param 'Dargestellte_RV' person.name %}" class="text-decoration-none d-inline-block mb-1">
+                           {% else %}
+                               <a href="/browse/?{% add_filter_param 'Dargestellte_RV' person.name %}" class="text-decoration-none d-inline-block mb-1">
+                           {% endif %}
+                               <span class="badge bg-primary text-light me-1" title="{{ funktion.name|safe }}">
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users d-inline-block align-text-bottom me-1"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                   {{ person.name|safe }}
+                               </span>
+                               </a>
+                       {% endif %}
+                   {% endfor %}
+                   {# Revers-Schlagworte als Badges #}
+                   {% for schlagwort in obj.rv_schlagworte %}
+                       {% if is_object_list %}
+                           <a href="?{% add_filter_param 'rv_schlagwort' schlagwort.name %}" class="text-decoration-none d-inline-block mb-1">
+                       {% else %}
+                           <a href="/browse/?{% add_filter_param 'rv_schlagwort' schlagwort.name %}" class="text-decoration-none d-inline-block mb-1">
+                       {% endif %}
+                           <span class="badge bg-info text-dark me-1" title="Revers Schlagwort">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tags d-inline-block align-text-bottom me-1"><path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"></path><path d="M9.586 5.586A2 2 0 0 0 8.172 5H3a1 1 0 0 0-1 1v5.172a2 2 0 0 0 .586 1.414L8.29 18.29a2.426 2.426 0 0 0 3.42 0l3.58-3.58a2.426 2.426 0 0 0 0-3.42z"></path><circle cx="6.5" cy="9.5" r=".5" fill="currentColor"></circle></svg>
+                               {{ schlagwort.name|safe }}
+                           </span>
+                           </a>
+                   {% endfor %}
+               </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </a>
+</div>
+
+<script>
+// JavaScript-Funktion zum Ersetzen von Umlauten in den Titeln
+document.addEventListener('DOMContentLoaded', function() {
+  // Funktion zum Ersetzen von Umlauten
+  function replaceUmlauts(text) {
+    if (!text) return text;
+    return text
+      .replace(/ä/g, '&auml;')
+      .replace(/ö/g, '&ouml;')
+      .replace(/ü/g, '&uuml;')
+      .replace(/Ä/g, '&Auml;')
+      .replace(/Ö/g, '&Ouml;')
+      .replace(/Ü/g, '&Uuml;')
+      .replace(/ß/g, '&szlig;');
+  }
+
+  // Alle Titel und Badges überprüfen
+  document.querySelectorAll('.preview-title, .preview-dat_verb, .badge').forEach(function(element) {
+    if (element.innerHTML) {
+      element.innerHTML = replaceUmlauts(element.innerHTML);
+    }
+  });
+});
+</script> 

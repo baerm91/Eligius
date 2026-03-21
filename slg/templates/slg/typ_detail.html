@@ -1,0 +1,403 @@
+{% extends 'slg/navbar.html' %}
+{% block title %}Eligius - Typ{% endblock title %}
+{% load static %}
+
+{% block content %}
+    <div class="container-fluid" >
+        <div class="row text-center">
+            <div class="col pt-2">
+                <table width="100%">
+                    <thead>
+                        <tr>
+                            
+                            <td width="*"></td>
+                            <td width="*" align="left">
+                                {% if request.user.is_authenticated %}
+                                <a href="{% url 'admin:slg_muenztyp_change' Muenztyp.pk %}">Münztyp: {{Muenztyp.workflow.name}}</a>
+                                
+                            </td>
+                            <td width="*">
+                                
+                                
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination">
+                                        
+                                        <li class="page-item">
+                                        <a class="page-link" href="../{{ Muenztyp.id|add:"-10" }}" class="pull-left" aria-label="Previous">
+                                                <span aria-hidden="true">&laquo;</span>
+                                                <span class="sr-only">Previous</span>
+                                        </a>
+                                        </li>
+                                        <li class="page-item"><a class="page-link" href="../{{ Muenztyp.id|add:"-2" }}">{{ Muenztyp.id|add:"-2" }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ Muenztyp.id|add:"-1" }}">{{ Muenztyp.id|add:"-1" }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ Muenztyp.id }}">{{ Muenztyp.id }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ Muenztyp.id|add:"1" }}">{{ Muenztyp.id|add:"1" }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ Muenztyp.id|add:"2" }}">{{ Muenztyp.id|add:"2" }}</a></li>
+                                        <li class="page-item">
+                                        <a class="page-link" href="../{{ Muenztyp.id|add:"10" }}" class="pull-right" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                                <span class="sr-only">Next</span>
+                                        </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                                {% endif %}
+                            </td>
+                            <td width="16,5%" align="right">
+                                {% if request.user.is_authenticated %}
+                                    {% load admin_urls %}
+                                    <div class="modal fade" tabindex="-1" role="dialog" id="modal">
+                                        <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                    
+                                        </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </thead>
+                </table>
+                <hr>
+            </div>
+        </div>
+        <div class="row" id="captions">
+            <div class="col-md-4 pt-2 align-top-center table-responsive" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                <table class="mx-auto w-auto">
+                    <tbody>
+                        
+                        {% if Muenztyp.muenztyptitel %}
+                        <tr>
+                            <td colspan="2">
+                                <h4>{{ Muenztyp.muenztyptitel }}</h4>
+                            </td>
+                        </tr>
+                        {% endif %}
+                            <tr>
+                                <td>Literatur:</td>
+                                <td><a href="/browse/?Ref={% if Muenztyp.Ref.abk %}{{ Muenztyp.Ref.abk }}{% else %}{{ Muenztyp.Ref.zitat }}{% endif %}">{{ Muenztyp.Ref.zitat }}</a></td>
+                            </tr>
+                            
+                        {% if Muenztyp.link %}
+                            <tr>
+                                <td>Link:</td>
+                                <td>
+                                    <a href="{{ Muenztyp.link }}">{{ Muenztyp.link }}</a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        
+                        {% if Muenztyp.Konkordanz.all %}
+                            <tr>
+                                <td>Konkordanz:</td>
+                                <td>
+                            {% for Konkordanz in Muenztyp.Konkordanz.all %}
+                                {% if forloop.counter == 2 %}, {% endif %}
+                                    {% if Konkordanz.link %}
+                                        {% if Konkordanz.Ref.zitat %}
+                                            <a href="{{ Konkordanz.link }}"><abbr title="{{ Konkordanz.Ref.zitat }}">{{ Konkordanz.Ref }}</abbr>, {{ Konkordanz.nummer }}</a>
+                                        {% else %} 
+                                            <a href="{{ Konkordanz.link }}">{{ Konkordanz.Ref }}, {{ Konkordanz.nummer }}</a>
+                                        {% endif %}
+                                        {% if Konkordanz.variante %}
+                                            (Var.: {{ Konkordanz.variante.name }})
+                                        {% endif %}
+                                        
+                                            <a href="{{Konkordanz.link}}"><i class="bi bi-box-arrow-up-right"></i></a>
+                                        
+                                    {% else %}
+                                        {% if Konkordanz.Ref.zitat %}
+                                            <abbr title="{{ Konkordanz.Ref.zitat }}">{{ Konkordanz.Ref }}</abbr>, {{ Konkordanz.nummer }}
+                                        {% else %} 
+                                            {{ Konkordanz.Ref }}, {{ Konkordanz.nummer }}
+                                        {% endif %}
+                                        {% if Konkordanz.variante %}
+                                            (Var.: {{ Konkordanz.variante.name }})
+                                        {% endif %}
+                                    {% endif %}
+                                    
+                            {% endfor %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                        {% if Muenztyp.typ_ref_set.all %}
+                            <tr>
+                                <td>Ergänzung:</td>
+                                <td>
+                                    {% for i in Muenztyp.typ_ref_set.all %}
+                                        {% if i.link %}
+                                            {% if i.Ref.zitat %}
+                                            <a href="{{ i.link }}"><abbr title="{{ i.Ref.zitat }}">{{ i.Ref }}</abbr>, {{ i.nummer }}</a>
+                                            {% else %} 
+                                            <a href="{{ i.link }}">{{ i.Ref }}, {{ i.nummer }}</a>
+                                            {% endif %}
+                                            {% if i.variante %}
+                                            (Var.: {{ i.variante.name }})
+                                            {% endif %}
+                                            
+                                            <a href="{{i.link}}"><i class="bi bi-box-arrow-up-right"></i></a>
+                                            
+                                            {% else %}
+                                            {% if i.Ref.zitat %}
+                                            <abbr title="{{ i.Ref.zitat }}">{{ i.Ref }}</abbr>, {{ i.nummer }}
+                                            {% else %} 
+                                            {{ i.Ref }}, {{ i.nummer }}
+                                            {% endif %}
+                                            {% if i.variante %}
+                                            (Var.: {{ i.variante.name }})
+                                            {% endif %}
+                                        {% endif %}
+                                    
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                        {% if Muenztyp.Objekttyp %}
+                            <tr>
+                                <td>Objekttyp:</td>
+                                <td>
+                                    {{ Muenztyp.Objekttyp }}
+                                </td>
+                            </tr>
+                        {% endif %}
+                            <tr>
+                                <td>Bearbeitungsstand:</td>
+                                <td>
+                                    {% if Muenztyp.workflow.id != 3 %}
+                                        in Bearbeitung
+                                    {% else %}
+                                        Bearbeitung abgeschlossen
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        <tr><td colspan="2"><hr width="80%"></td></tr>             
+                        {% if Muenztyp.titel %}
+                            <tr>
+                                <td colspan="2">
+                                    <h4>{{ Muenztyp.titel }}, {{ Muenztyp.dat_verb }}</h4>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        
+                        
+                        {% if Muenztyp.Muenzstand %}
+                            <tr>
+                                <td>Münzstand:</td>
+                                <td><a href="/browse/?Muenzstand={{ Muenztyp.Muenzstand }}" title="Browse">{{ Muenztyp.Muenzstand }}</a></td>
+                            </tr>
+                        {% endif %}
+                        {% if Muenztyp.Reichskreis %}
+                            <tr>
+                                <td>Reichskreis:</td>
+                                <td><a href="/browse/?Reichskreis={{ Muenztyp.Reichskreis }}" title="Browse">{{ Muenztyp.Reichskreis }}</a></td>
+                            </tr>
+                        {% endif %}
+                        {% if MztypPersonen %}
+                            {% regroup MztypPersonen by idfk_PersonFunktion as gruppierte_personen %}
+                            {% for gruppe in gruppierte_personen %}
+                                {% if gruppe.grouper.id != 2 %}
+                                    <tr>
+                                        <td>{{ gruppe.grouper }}:</td>
+                                        <td>
+                                            {% for person in gruppe.list %}
+                                                <a href="{% if gruppe.grouper.id == 1 or gruppe.grouper.id == 6 or gruppe.grouper.id == 7 %}/browse/?Praegeherren={{ person.idfk_Person.name }}{% else %}/browse/?Person={{ person.idfk_Person.name }}{% endif %}" title="{% if gruppe.grouper.id == 1 or gruppe.grouper.id == 6 or gruppe.grouper.id == 7 %}Prägeherr{% else %}Person{% endif %}">
+                                                    {{ person.idfk_Person.name }}{% if person.idfk_Person.zeichen %}, Zeichen: {{ person.idfk_Person.zeichen }}{% endif %}
+                                                </a>
+                                                <a href="#theModal" 
+                                                data-title="{{ person.idfk_Person.name }}" 
+                                                data-remote="{% url 'PersonModal' id=person.idfk_Person.id %}" 
+                                                data-footer="{% url 'admin:slg_person_change' person.idfk_Person.id %}" 
+                                                data-toggle="modal" 
+                                                data-target="#theModal" 
+                                                title="Person">
+                                                    <i class="bi bi-box-arrow-up-right"></i>
+                                                </a>
+                                                {% if not forloop.last %}<br>{% endif %}
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if Muenztyp.Mzstaette %}
+                            <tr>
+                                <td>Münzstätte:</td>
+                                <td><a href="/browse/?Muenzstaette={{ Muenztyp.Mzstaette }}" title="Browse">{{ Muenztyp.Mzstaette }}</a></td>
+                                <td><a href="{{ Muenztyp.Mzstaette.name_nom_id }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a></td>
+                            </tr>
+                        {% endif %}
+                        {% if Muenztyp.region %}
+                            <tr>
+                                <td>Region:</td>
+                                <td><a href="/browse/?region={{ Muenztyp.region }}" title="Browse">{{ Muenztyp.region }}</a></td>
+                                <td><a href="{{ Muenztyp.region.name_nom_id }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a></td>
+                            </tr>
+                        {% endif %}
+                        {% if Muenztyp.auflage %}
+                            <tr>
+                                <td>Auflage:</td>
+                                <td>{{ Muenztyp.auflage }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if Muenztyp.beschlussdatum %}
+                            <tr>
+                                <td>Beschlussdatum:</td>
+                                <td>{{ Muenztyp.beschlussdatum|date:"d.m.Y" }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if Muenztyp.Nominal %}
+                            <tr>
+                                <td>Nominal:</td>
+                                <td><a href="/browse/?Nominal={{ Muenztyp.Nominal }}" title="Browse">{{ Muenztyp.Nominal }}</a></td>
+                                {% comment %} <td><a href="{{ Muenztyp.Nominal.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> {% endcomment %}
+                                <td><a href="#theModal" data-title="{{ Muenztyp.Nominal }}" data-footer="{% url 'admin:slg_nominal_change' Muenztyp.Nominal.id %}" data-remote="{% url 'NominalModal' id=Muenztyp.Nominal.id %}" data-toggle="modal" data-target="#theModal" title="Nominal"><i class="bi bi-box-arrow-up-right"></i></small></a></td>
+                                    
+                            </tr>
+                        {% endif %}
+                        {% if Muenztyp.Metall %}
+                            <tr>
+                                <td>Material:</td>
+                                <td><a href="/browse/?material={{ Muenztyp.Metall }}" title="Browse">{{ Muenztyp.Metall }}</a></td>
+                                <td><a href="{{ Muenztyp.Metall.name_nom_id }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a></td>
+                            </tr>
+                        {% endif %}
+                        {% if Muenztyp.Herstellung %}
+                            <tr>
+                                <td>Herstellung:</td>
+                                
+                                <td>{{ Muenztyp.Herstellung }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if Muenztyp.anmerkung %}
+                        <tr><td colspan="2"><hr width="80%"></td></tr>
+                        <tr>
+                            <td>Anmerkungen: </td> 
+                            <td>{{ Muenztyp.anmerkung}}</td>
+                        </tr>
+                        {% endif %}
+                        <tr><td colspan="2"><hr width="80%"></td></tr>
+                        <tr>
+                            <td>Avers:</td>
+                            <td>
+                                
+                                <a href="/browse/?q={{ Muenztyp.avleg }}" title="Browse">{{Muenztyp.avleg|default:"-"}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>
+                                {% if Muenztyp.av_bildtyp %}
+                                    <a href="/browse/?av_bildtyp={{ Muenztyp.av_bildtyp.id }}" title="Browse">{{Muenztyp.av_bildtyp}}</a>
+                                {% endif %}{% if Muenztyp.av_beizeichen %}, {% endif %}
+                                
+                                {% if Muenztyp.av_beizeichen %}
+                                    <a href="/browse/?av_beizeichen={{ Muenztyp.av_beizeichen.id }}" title="Browse">{{Muenztyp.av_beizeichen}}</a><br>
+                                {% else %}
+                                <br>
+                                {% endif %}
+                                <div class="tags">
+                                    {% for i in MztypPersonen %}
+                                            {% if i.appears_on_rev == 0 and i.idfk_PersonFunktion.id == 2 %}
+                                                <a href="/browse/?Dargestellte_AV={{ i.idfk_Person.name }}" title="Browse" rel="tag">{{ i.idfk_Person.name }}</a>                                                
+                                            {% endif %}
+                                    {% endfor %}
+                                    {% for schlagwort in avschlagworte %}
+                                    <a href="/browse/?av_schlagwort={{ schlagwort.schlagwort }}" title="Browse" rel="tag">{{ schlagwort.schlagwort }}</a>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            
+                        </tr>
+                        
+                        <tr>
+                            <td>Revers:</td>
+                            <td>
+                                
+                                <a href="/browse/?q={{ Muenztyp.rvleg }}" title="Browse">{{Muenztyp.rvleg|default:"-"}}</a>
+                                
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>
+                                {% if Muenztyp.rv_bildtyp %}
+                                    <a href="/browse/?rv_bildtyp={{ Muenztyp.rv_bildtyp.id }}" title="Browse">{{Muenztyp.rv_bildtyp}}</a>
+                                {% endif %}{% if Muenztyp.rv_beizeichen %}, {% endif %}
+                                {% if Muenztyp.rv_beizeichen %}
+                                <a href="/browse/?rv_beizeichen={{ Muenztyp.rv_beizeichen.id }}" title="Browse">{{Muenztyp.rv_beizeichen}}</a><br>
+                                {% else %}
+                                <br>
+                                {% endif %}
+                                <div class="tags">
+                            
+                                    {% for i in MztypPersonen %}
+                                            {% if i.appears_on_rev == 1 and i.idfk_PersonFunktion.id == 2 %}
+                                                <a href="/browse/?Dargestellte_RV={{ i.idfk_Person.name }}" title="Browse" rel="tag">{{ i.idfk_Person.name }}</a>
+                                                <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
+                                                
+                                            {% endif %}
+                                    {% endfor %}
+                                    {% for schlagwort in rvschlagworte %}
+                                        <a href="/browse/?rv_schlagwort={{ schlagwort.schlagwort }}" title="Browse" rel="tag">{{ schlagwort.schlagwort }}</a>
+                                    {% endfor %}
+                                    
+                                </div>
+                            </td>
+                        </tr>
+                                
+                            </td>
+                        </tr>          
+                        
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-8 pt-2 align-top-center table-responsive" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                <h5>Mit diesem Typ verbundene Objekte: {{ objekte_page.paginator.count }}</h5>
+                <div class="row infinite-container">
+                    {% for Obj in objekte_page %}
+                        {% include "slg/partials/coin_preview_card_mtoa.html" with obj=Obj light=True %}
+                    {% endfor %}
+                </div>
+
+                {% if objekte_page.has_other_pages %}
+                <nav aria-label="Objekte Paginierung" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if objekte_page.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page=1">&laquo; Erste</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ objekte_page.previous_page_number }}">Vorherige</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&laquo; Erste</span></li>
+                            <li class="page-item disabled"><span class="page-link">Vorherige</span></li>
+                        {% endif %}
+
+                        {% for i in objekte_page.paginator.page_range %}
+                            {% if objekte_page.number == i %}
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+                            {% elif i > objekte_page.number|add:'-3' and i < objekte_page.number|add:'3' %}
+                                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                            {% elif i == objekte_page.number|add:'-3' or i == objekte_page.number|add:'3' %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if objekte_page.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ objekte_page.next_page_number }}">Nächste</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ objekte_page.paginator.num_pages }}">Letzte &raquo;</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">Nächste</span></li>
+                            <li class="page-item disabled"><span class="page-link">Letzte &raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div>
+    </div>
+    {% include "slg/modal.html" %}
+{% endblock content %}
+{% block scripts %}
+    {{block.super}}
+    {% include 'slg/scripte.html' with active_block='jstyp_detail' %}
+{% endblock scripts %}

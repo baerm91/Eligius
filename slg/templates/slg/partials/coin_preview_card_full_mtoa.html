@@ -1,0 +1,390 @@
+{% load slg_extras i18n %}
+{% firstof obj.datierung_verbale obj.metall obj.nominal obj.mzstaette as has_f1 %}
+{% firstof obj.personen_mit_funktion obj.Typ.wappen.all obj.av_schlagworte obj.rv_schlagworte as has_f2 %}
+{% if has_f1 or has_f2 %}
+<div class="coin-preview-info hover-content mt-2">
+  {# 1 · Allgemeine Badges ------------------------------------ #}
+  <div class="badge-group-general mb-2 d-flex flex-wrap gap-1">
+    {# Datierung #} {% if obj.datierung_verbale %}
+    <a
+      href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param dat_von=obj.datierung_von dat_bis=obj.datierung_bis %}"
+      class="badge rounded-pill bg-info bg-opacity-10 text-info border border-info border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1 transition-all"
+      title="{{ obj.datierung_verbale|safe }}"
+      style="
+        background-color: rgba(13, 202, 240, 0.1) !important;
+        color: #087990 !important;
+        border-color: rgba(13, 202, 240, 0.3) !important;
+      "
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-calendar-days me-1"
+      >
+        <path d="M8 2v4"></path>
+        <path d="M16 2v4"></path>
+        <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+        <path d="M3 10h18"></path>
+        <path d="M8 14h.01"></path>
+        <path d="M12 14h.01"></path>
+        <path d="M16 14h.01"></path>
+        <path d="M8 18h.01"></path>
+        <path d="M12 18h.01"></path>
+        <path d="M16 18h.01"></path>
+      </svg>
+      {{ obj.datierung_verbale|truncatechars:18|safe }}
+    </a>
+    {% endif %} {# Metall #} {% if obj.metall %}
+    <a
+      href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param material=obj.metall %}"
+      class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
+      title="{{ obj.metall|safe }}"
+      style="
+        background-color: rgba(108, 117, 125, 0.1) !important;
+        color: #495057 !important;
+        border-color: rgba(108, 117, 125, 0.3) !important;
+      "
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-box me-1"
+      >
+        <path
+          d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"
+        ></path>
+        <path d="m3.3 7 8.7 5 8.7-5"></path>
+        <path d="M12 22V12"></path>
+      </svg>
+      {{ obj.metall|truncatechars:15|safe }}
+    </a>
+    {% endif %} {# Nominal #} {% if obj.nominal %}
+    <a
+      href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Nominal=obj.nominal %}"
+      class="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
+      title="{{ obj.nominal|safe }}"
+      style="
+        background-color: rgba(255, 193, 7, 0.1) !important;
+        color: #997404 !important;
+        border-color: rgba(255, 193, 7, 0.3) !important;
+      "
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-coins me-1"
+      >
+        <circle cx="8" cy="8" r="6"></circle>
+        <path d="M18.09 10.37A6 6 0 1 1 10.34 18"></path>
+        <path d="M7 6h1v4"></path>
+        <path d="m16.71 13.88.7.71-2.82 2.82"></path>
+      </svg>
+      {{ obj.nominal|truncatechars:15|safe }}
+    </a>
+    {% endif %} {# Münzstätte #} {% if obj.mzstaette %}
+    <a
+      href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Muenzstaette=obj.mzstaette %}"
+      class="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
+      title="{{ obj.mzstaette|safe }}"
+      style="
+        background-color: rgba(25, 135, 84, 0.1) !important;
+        color: #146c43 !important;
+        border-color: rgba(25, 135, 84, 0.3) !important;
+      "
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-landmark me-1"
+      >
+        <line x1="3" x2="21" y1="22" y2="22"></line>
+        <line x1="6" x2="6" y1="18" y2="11"></line>
+        <line x1="10" x2="10" y1="18" y2="11"></line>
+        <line x1="14" x2="14" y1="18" y2="11"></line>
+        <line x1="18" x2="18" y1="18" y2="11"></line>
+        <polygon points="12 2 20 7 4 7"></polygon>
+      </svg>
+      {{ obj.mzstaette|truncatechars:18|safe }}
+    </a>
+    {% endif %}
+    {# 2 · Personen (Prägeherren & Sonstige) -------------------- #}
+    {% for p in obj.personen_mit_funktion %}
+    {% if p.function_id != 2 %}
+    {% if p.function_id == 1 or p.function_id == 6 or p.function_id == 7 %}
+    <a
+      href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Praegeherren=p.name %}"
+      class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
+      title="Prägeherr"
+      style="
+        background-color: rgba(13, 110, 253, 0.1) !important;
+        color: #0a58ca !important;
+        border-color: rgba(13, 110, 253, 0.3) !important;
+      "
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-users me-1"
+      >
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+      <span title="{{ p.name|safe }}">{{ p.name|truncatechars:15|safe }}</span>
+    </a>
+    {% else %}
+    <a
+      href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Person=p.name %}"
+      class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
+      title="Person"
+      style="
+        background-color: rgba(13, 110, 253, 0.1) !important;
+        color: #0a58ca !important;
+        border-color: rgba(13, 110, 253, 0.3) !important;
+      "
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-user me-1"
+      >
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+      <span title="{{ p.name|safe }}">{{ p.name|truncatechars:15|safe }}</span>
+    </a>
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+    {# 3 · Wappen (optional) ------------------------------------ #}
+    {% if obj.Typ.wappen.all %}
+    {% for w in obj.Typ.wappen.all %}
+    <a
+      href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Wappen=w.name %}"
+      class="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
+      title="{{ w.name|safe }}"
+      style="
+        background-color: rgba(220, 53, 69, 0.1) !important;
+        color: #b02a37 !important;
+        border-color: rgba(220, 53, 69, 0.3) !important;
+      "
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-shield me-1"
+      >
+        <path
+          d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+        ></path>
+      </svg>
+      <span title="{{ w.name|safe }}">{{ w.name|truncatechars:12|safe }}</span>
+    </a>
+    {% endfor %} {% endif %}
+  </div>
+
+  {# 4 · Avers‑/Revers‑Sektionen ------------------------------------------- #}
+  {# ---------- A V E R S --------------------------------------------------- #}
+  {% if obj.personen_av or obj.av_schlagworte %}
+  <div class="d-flex align-items-baseline mb-1">
+    <div
+      class="flex-shrink-0 pe-2 text-muted fw-bold"
+      style="font-size: 0.8rem"
+    >
+      Av:
+    </div>
+    <div class="flex-grow-1 d-flex flex-wrap gap-1">
+      {# dargestellte Personen Avers #} {% for p in obj.personen_mit_funktion %}
+      {% if p.function_id == 2 and not p.appears_on_rev %}
+      <a
+        href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Dargestellte_AV=p.name %}"
+        class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
+        title="Dargestellte Person"
+        style="
+          background-color: rgba(13, 110, 253, 0.1) !important;
+          color: #0a58ca !important;
+          border-color: rgba(13, 110, 253, 0.3) !important;
+        "
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-user-round me-1"
+        >
+          <circle cx="12" cy="8" r="5"></circle>
+          <path d="M20 21a8 8 0 0 0-16 0"></path>
+        </svg>
+        <span title="{{ p.name|safe }}">
+          {{ p.name|truncatechars:15|safe }}
+        </span>
+      </a>
+      {% endif %}
+      {% endfor %}
+      {# Schlagworte Avers #}
+      {% if obj.av_schlagworte %}
+      {% with kw_list=obj.av_schlagworte|strsplit %}
+      {% for kw in kw_list %}
+      {% if kw %}
+      <a
+        href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param av_schlagwort=kw %}"
+        class="badge rounded-pill bg-light text-secondary border border-secondary border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
+        title="{{ kw|safe }}"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-tag me-1"
+        >
+          <path
+            d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"
+          ></path>
+          <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle>
+        </svg>
+        <span>{{ kw|truncatechars:15|safe }}</span>
+      </a>
+      {% endif %} {% endfor %} {% endwith %} {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% if obj.personen_rv or obj.rv_schlagworte %}
+  <div class="d-flex align-items-baseline mb-1">
+    <div
+      class="flex-shrink-0 pe-2 text-muted fw-bold"
+      style="font-size: 0.8rem"
+    >
+      Rv:
+    </div>
+    <div class="flex-grow-1 d-flex flex-wrap gap-1">
+      {# dargestellte Personen Revers #}
+      {% for p in obj.personen_mit_funktion %}
+      {% if p.function_id == 2 and p.appears_on_rev %}
+      <a
+        href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Dargestellte_RV=p.name %}"
+        class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
+        title="Dargestellte Person"
+        style="
+          background-color: rgba(13, 110, 253, 0.1) !important;
+          color: #0a58ca !important;
+          border-color: rgba(13, 110, 253, 0.3) !important;
+        "
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-user-round me-1"
+        >
+          <circle cx="12" cy="8" r="5"></circle>
+          <path d="M20 21a8 8 0 0 0-16 0"></path>
+        </svg>
+        <span title="{{ p.name|safe }}">
+          {{ p.name|truncatechars:15|safe }}
+        </span>
+      </a>
+      {% endif %}
+      {% endfor %}
+      {# Schlagworte Revers #}
+      {% if obj.rv_schlagworte %}
+      {% with kw_list=obj.rv_schlagworte|strsplit %}
+      {% for kw in kw_list %}
+      {% if kw %}
+      <a
+        href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param rv_schlagwort=kw %}"
+        class="badge rounded-pill bg-light text-secondary border border-secondary border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
+        title="{{ kw|safe }}"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-tag me-1"
+        >
+          <path
+            d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"
+          ></path>
+          <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle>
+        </svg>
+        <span>{{ kw|truncatechars:15|safe }}</span>
+      </a>
+      {% endif %} {% endfor %} {% endwith %} {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

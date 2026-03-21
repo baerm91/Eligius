@@ -1,0 +1,491 @@
+{% load slg_extras %}
+{% include 'slg/search_form.html' %}
+<div class="facets-wrapper">
+    <!-- Aktive Filter -->
+    <div class="active-filters mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <span>Anzahl der Objekte: {{ Objekte.paginator.count }}</span>
+            {% if request.GET %}
+                <a href="?" class="btn btn-sm btn-outline-secondary">Reset</a>
+            {% endif %}
+        </div>
+        {% if active_filters %}
+            <div class="filter-tags mt-2">
+                {% for filter in active_filters %}
+                    <span class="badge bg-primary">
+                        {{ filter.label }}: {{ filter.value }}
+                        <a href="{{ filter.remove_url }}" class="text-white text-decoration-none">×</a>
+                    </span>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Filter Akkordeon -->
+    <div class="accordion" id="filterAccordion">
+        <div class="card">
+            <div class="card-header" id="sammlungenUndTeileHeading">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed d-flex justify-content-between align-items-center w-100" type="button" data-toggle="collapse" data-target="#sammlungenUndTeileCollapse" aria-expanded="false" aria-controls="sammlungenUndTeileCollapse">
+                        Sammlungen und<br>Sammlungsteile
+                        <i class="bi bi-chevron-down accordion-arrow"></i>
+                    </button>
+                </h2>
+            </div>
+            <div id="sammlungenUndTeileCollapse" class="collapse" aria-labelledby="sammlungenUndTeileHeading" data-parent="#filterAccordion">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="SlgSelect">Sammlung</label>
+                        <select name="Slg" class="form-control select2-filter" id="SlgSelect">
+                            <option value="">Alle Sammlungen</option>
+                        </select>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label for="SlgteilSelect">Sammlungsteil</label>
+                        <select name="Slgteil" class="form-control select2-filter" id="SlgteilSelect" disabled>
+                            <option value="">Bitte zuerst eine Sammlung auswählen</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr style="width: 80%;">
+        
+        {% if Avtypes|length > 0 or av_schlagworte|length > 0 %}
+        <div class="card">
+            <div class="card-header" id="vorderseiteHeading">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed d-flex justify-content-between align-items-center w-100" type="button" data-toggle="collapse" data-target="#vorderseiteCollapse" aria-expanded="false" aria-controls="vorderseiteCollapse">
+                        Vorderseite
+                        <i class="bi bi-chevron-down accordion-arrow"></i>
+                    </button>
+                </h2>
+            </div>
+            <div id="vorderseiteCollapse" class="collapse" aria-labelledby="vorderseiteHeading" data-parent="#filterAccordion">
+                <div class="card-body">
+                    
+                    <div class="form-group">
+                        <label>Legende</label>
+                        <input type="text" name="avleg" class="form-control" value="{{ request.GET.avleg }}" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        {% if Avtypes|length > 0 %}
+                        <label for="AvFormControlSelect2">Beschreibungen</label>
+                        <select name="av_bildtyp" multiple class="form-control wide-select select2-filter" id="AvFormControlSelect2">
+                            {% for beschr, Anzahl in Avtypes.items %}
+                                <option value="{{ beschr.1 }}">
+                                    {{ beschr.0 }} ({{ Anzahl }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                    </div>
+                    
+                    {% if av_schlagworte|length > 0 %}
+                    <div class="form-group">
+                        <label for="AvSchlagworteFormControlSelect2">Schlagworte</label>
+                        <input type="text" class="form-control" value="{{ request.GET.av_schlagwort }}" placeholder="">
+                        <select name="av_schlagwort" multiple class="form-control wide-select select2-filter" id="AvSchlagworteFormControlSelect2" size="10">
+                            {% for schlagwort in av_schlagworte %}
+                                <option value="{{ schlagwort.schlagwort__name }}">
+                                    {{ schlagwort.schlagwort__name }} ({{ schlagwort.count }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <label>Dargestellte/r</label>
+                        <input type="text" class="form-control" value="{{ request.GET.Dargestellte_AV }}" placeholder="">
+                        <select name="Dargestellte_AV" multiple class="form-control select2-filter" id="Dargestellte_AVFormControlSelect2" size="10">
+                            {% for Person, Anzahl in Dargestellte_AV.items %}
+                                <option value="{{ Person.0 }}">
+                                    {{ Person.0 }}, {{ Person.1 }} ({{ Anzahl }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr style="width: 80%;">
+        {% endif %}
+        
+        {% if Rvtypes|length > 0 or rv_schlagworte|length > 0 %}
+        <div class="card">
+            <div class="card-header" id="rueckseiteHeading">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed d-flex justify-content-between align-items-center w-100" type="button" data-toggle="collapse" data-target="#rueckseiteCollapse" aria-expanded="false" aria-controls="rueckseiteCollapse">
+                        Rückseite
+                        <i class="bi bi-chevron-down accordion-arrow"></i>
+                    </button>
+                </h2>
+            </div>
+            <div id="rueckseiteCollapse" class="collapse" aria-labelledby="rueckseiteHeading" data-parent="#filterAccordion">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>Legende</label>
+                        <input type="text"name="rvleg" class="form-control" value="{{ request.GET.rvleg }}" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        {% if Rvtypes|length > 0 %}
+                        <label for="RvFormControlSelect2">Beschreibungen</label>
+                        <select name="rv_bildtyp" multiple class="form-control wide-select select2-filter" id="RvFormControlSelect2" size="10">
+                            {% for beschr, Anzahl in Rvtypes.items %}
+                                <option value="{{ beschr.1 }}">
+                                    {{ beschr.0 }} ({{ Anzahl }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                    </div>
+                    
+                    {% if rv_schlagworte|length > 0 %}
+                    <div class="form-group">
+                        <label for="RvSchlagworteFormControlSelect2">Schlagworte</label>
+                        <input type="text" class="form-control" value="{{ request.GET.rv_schlagwort }}" placeholder="">
+                        <select name="rv_schlagwort" multiple class="form-control wide-select select2-filter" id="RvSchlagworteFormControlSelect2" size="10">
+                            {% for schlagwort in rv_schlagworte %}
+                                <option value="{{ schlagwort.schlagwort__name }}" {% if schlagwort.schlagwort__name in request.GET|get_list:'rv_schlagwort' %}selected{% endif %}>
+                                    {{ schlagwort.schlagwort__name }} ({{ schlagwort.count }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <label>Dargestellte/r</label>
+                        <input type="text" class="form-control" value="{{ request.GET.Dargestellte_RV }}" placeholder="">
+                        <select name="Dargestellte_RV" multiple class="form-control select2-filter" id="Dargestellte_AVFormControlSelect2" size="10">
+                            {% for Person, Anzahl in Dargestellte_RV.items %}
+                                <option value="{{ Person.0 }}">
+                                    {{ Person.0 }}, {{ Person.1 }} ({{ Anzahl }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr style="width: 80%;">
+        {% endif %}
+        
+        
+        <div class="card">
+            <div class="card-header" id="personenHeading">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed d-flex justify-content-between align-items-center w-100" type="button" data-toggle="collapse" data-target="#personenCollapse" aria-expanded="false" aria-controls="personenCollapse">
+                        Personen
+                        <i class="bi bi-chevron-down accordion-arrow"></i>
+                    </button>
+                </h2>
+            </div>
+            <div id="personenCollapse" class="collapse" aria-labelledby="personenHeading" data-parent="#filterAccordion">
+                <div class="card-body">
+                    <div class="form-group">
+                        <h5>Münzherr/in</h5>
+                        <input type="text" class="form-control" value="{{ request.GET.Praegeherren }}" placeholder="">
+                        <select name="Praegeherren" multiple class="form-control select2-filter" id="PraegeherrenFormControlSelect2" size="10">
+                            {% for Person, Anzahl in Praegeherren.items %}
+                                <option value="{{ Person.0 }}">
+                                    {{ Person.0 }}, {{ Person.1 }} ({{ Anzahl }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <h5>Weitere Personen</h5>
+                        <input type="text" class="form-control" value="{{ request.GET.Person }}" placeholder="">
+                        <select name="Person" multiple class="form-control select2-filter" id="PersonFormControlSelect2" size="10">
+                            {% for Person, Anzahl in Personen.items %}
+                                <option value="{{ Person.0 }}">
+                                    {{ Person.0 }}, {{ Person.1 }} ({{ Anzahl }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    
+
+                </div>
+            </div>
+        </div>
+        <hr style="width: 80%;">
+        
+        
+        {% if Mints|length > 0 %}
+        <div class="card">
+            <div class="card-header" id="muenzstaettenHeading">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed d-flex justify-content-between align-items-center w-100" type="button" data-toggle="collapse" data-target="#muenzstaettenCollapse" aria-expanded="false" aria-controls="muenzstaettenCollapse">
+                        Münzstätten
+                        <i class="bi bi-chevron-down accordion-arrow"></i>
+                    </button>
+                </h2>
+            </div>
+            <div id="muenzstaettenCollapse" class="collapse" aria-labelledby="muenzstaettenHeading" data-parent="#filterAccordion">
+                <div class="card-body">
+                    <div class="form-group">
+                        <input type="text" class="form-control" value="{{ request.GET.Muenzstaette }}" placeholder="🔍 Münzstätte">
+                        <select name="Muenzstaette" multiple class="form-control select2-filter" id="MintFormControlSelect2" size="10">
+                            {% for Mint, Anzahl in Mints.items %}
+                                <option value="{{ Mint.0 }}">
+                                    {{ Mint.0 }}, {{ Mint.1 }} ({{ Anzahl }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr style="width: 80%;">
+        {% endif %}
+        
+        {% if Nominale|length > 0 %}
+        <div class="card">
+            <div class="card-header" id="nominaleHeading">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed d-flex justify-content-between align-items-center w-100" type="button" data-toggle="collapse" data-target="#nominaleCollapse" aria-expanded="false" aria-controls="nominaleCollapse">
+                        Nominale
+                        <i class="bi bi-chevron-down accordion-arrow"></i>
+                    </button>
+                </h2>
+            </div>
+            <div id="nominaleCollapse" class="collapse" aria-labelledby="nominaleHeading" data-parent="#filterAccordion">
+                <div class="card-body">
+                    <div class="form-group">
+                        <input type="text" class="form-control" value="{{ request.GET.idfk_Nominal }}" placeholder="🔍 Nominal">
+                        <select name="Nominal" multiple class="form-control select2-filter" id="NominalFormControlSelect2" size="10">
+                            {% for Nominal, count in Nominale.items %}
+                                <option value="{{ Nominal }}">
+                                    {{ Nominal }} ({{ count }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr style="width: 80%;">
+        {% endif %}
+        
+        {% if Hmerkmale|length > 0 or Smerkmale|length > 0 %}
+        <div class="card">
+            <div class="card-header" id="merkmaleHeading">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed d-flex justify-content-between align-items-center w-100" type="button" data-toggle="collapse" data-target="#merkmaleCollapse" aria-expanded="false" aria-controls="merkmaleCollapse">
+                        Merkmale
+                        <i class="bi bi-chevron-down accordion-arrow"></i>
+                    </button>
+                </h2>
+            </div>
+            <div id="merkmaleCollapse" class="collapse" aria-labelledby="merkmaleHeading" data-parent="#filterAccordion">
+                <div class="card-body">
+                    {% if Hmerkmale|length > 0 %}
+                    <div class="form-group">
+                        <h5>Herstellungsmerkmale</h5>
+                        <select name="her_merk" multiple class="form-control select2-filter" id="HmerkmaleFormControlSelect2" size="10">
+                            {% for merk in Hmerkmale %}
+                                <option value="{{ merk.name }}">
+                                    {{ merk.name }} ({{ merk.cc }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    {% if Smerkmale|length > 0 %}
+                    <div class="form-group">
+                        <h5>Sekundäre Merkmale</h5>
+                        <select name="sek_merk" multiple class="form-control select2-filter" id="SmerkmaleFormControlSelect2" size="10">
+                            {% for merk in Smerkmale %}
+                                <option value="{{ merk.name }}">
+                                    {{ merk.name }} ({{ merk.cc }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <hr style="width: 80%;">
+        {% endif %}
+        
+        {% if Literatur.items|length > 0 %}
+        <div class="card">
+            <div class="card-header" id="literaturHeading">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed d-flex justify-content-between align-items-center w-100" type="button" data-toggle="collapse" data-target="#literaturCollapse" aria-expanded="false" aria-controls="literaturCollapse">
+                        Literatur
+                        <i class="bi bi-chevron-down accordion-arrow"></i>
+                    </button>
+                </h2>
+            </div>
+            <div id="literaturCollapse" class="collapse" aria-labelledby="literaturHeading" data-parent="#filterAccordion">
+                <div class="card-body">
+                    <div class="form-group">
+                        <input type="text" class="form-control" value="{{ request.GET.Ref }}" placeholder="🔍 Literatur">
+                        <select name="Ref" multiple class="form-control select2-filter" id="RefFormControlSelect2" size="10">
+                            {% for Lit, Anzahl in Literatur.items %}
+                                <option value="{{ Lit }}">
+                                    {{ Lit }} ({{ Anzahl }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr style="width: 80%;">
+        {% endif %}
+        
+        {% if Wappen %}
+        <div class="card">
+            <div class="card-header" id="wappenHeading">
+                <h2 class="mb-0">
+                    <button class="btn btn-link collapsed d-flex justify-content-between align-items-center w-100" type="button" data-toggle="collapse" data-target="#wappenCollapse" aria-expanded="false" aria-controls="wappenCollapse">
+                        Wappen
+                        <i class="bi bi-chevron-down accordion-arrow"></i>
+                    </button>
+                </h2>
+            </div>
+            <div id="wappenCollapse" class="collapse" aria-labelledby="wappenHeading" data-parent="#filterAccordion">
+                <div class="card-body">
+                    <div class="form-group">
+                        <input type="text" class="form-control" value="{{ request.GET.Wappen }}" placeholder="">
+                        <select name="Wappen" multiple class="form-control select2-filter" id="WappenFormControlSelect2" size="10">
+                            {% for wappen, count in Wappen.items %}
+                                <option value="{{ wappen }}">
+                                    {{ wappen }} ({{ count }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr style="width: 80%;">
+        {% endif %}
+        <div class="form-group row">
+            <div class="col-md-6">
+                <input type="number" class="form-control" id="dat_von" name="dat_von" step="1" value="{{ request.GET.jahr_von }}" placeholder="von">
+            </div>
+            <div class="col-md-6">
+                <input type="number" class="form-control" id="dat_bis" name="dat_bis" step="1" value="{{ request.GET.jahr_bis }}" placeholder="bis">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Am Ende der Datei, vor dem schließenden </body> Tag -->
+<script>
+    /***************** Utilities *****************/
+const debounce=(fn,wait=250)=>{let t;return (...a)=>{clearTimeout(t);t=setTimeout(()=>fn.apply(this,a),wait)}};
+const q=(sel)=>document.querySelector(sel);
+
+/***************** Slg – laden *****************/
+function loadSammlungen() {
+    // Get all current URL parameters to maintain filters
+    const currentParams = new URLSearchParams(window.location.search);
+    const facetParams = new URLSearchParams();
+    
+    // Copy all current filter parameters to maintain context
+    for (const [key, value] of currentParams.entries()) {
+        if (key !== 'Slg' && key !== 'Slgteil') {
+            facetParams.append(key, value);
+        }
+    }
+    
+    // Add the facet parameter
+    facetParams.append('facet', 'Slg');
+    
+    // Build the URL with all parameters
+    const url = `/api/facet/?${facetParams.toString()}`;
+    
+    fetch(url)
+        .then(r => r.ok ? r.json() : Promise.reject(r))
+        .then(data => {
+            const sel = q('#SlgSelect');
+            const current = currentParams.get('Slg');
+            sel.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
+
+            if (Array.isArray(data)) {
+                data.forEach(obj => {
+                    const o = document.createElement('option');
+                    o.value = obj.id;
+                    o.textContent = `${obj.name} (${obj.count})`;
+                    if (String(obj.id) === current) o.selected = true;
+                    sel.appendChild(o);
+                });
+            }
+
+            if (window.jQuery && $(sel).data('select2')) $(sel).trigger('change.select2');
+            if (sel.value) loadSlgTeile(sel.value);
+        })
+        .catch(e => console.error('Sammlungen‑Load‑Error', e));
+}
+
+function loadSlgTeile(slgId) {
+    const stSel = q('#SlgteilSelect');
+    if (!stSel) return;
+    stSel.disabled = true;
+    stSel.innerHTML = '<option>Lade…</option>';
+
+    // Get all current URL parameters to maintain filters
+    const currentParams = new URLSearchParams(window.location.search);
+    const facetParams = new URLSearchParams();
+    
+    // Copy all current filter parameters
+    for (const [key, value] of currentParams.entries()) {
+        if (key !== 'Slgteil') {
+            facetParams.append(key, value);
+        }
+    }
+    
+    // Add or update the Slg parameter to match the selected value
+    facetParams.set('Slg', slgId);
+    
+    // Add the facet parameter
+    facetParams.append('facet', 'SlgTeil');
+    
+    // Build the URL with all parameters
+    const url = `/api/facet/?${facetParams.toString()}`;
+
+    fetch(url)
+        .then(r => r.ok ? r.json() : Promise.reject(r))
+        .then(data => {
+            const current = currentParams.get('Slgteil');
+            stSel.innerHTML = '<option value="">Alle Sammlungsteile</option>';
+
+            if (Array.isArray(data)) {
+                data.forEach(item => {
+                    const o = document.createElement('option');
+                    o.value = item.id;
+                    o.textContent = `${item.name} (${item.count})`;
+                    if (String(item.id) === current) o.selected = true;
+                    stSel.appendChild(o);
+                });
+            }
+
+            stSel.disabled = false;
+            if (window.jQuery && $(stSel).data('select2')) $(stSel).trigger('change.select2');
+        })
+        .catch(e => {
+            console.error('SlgTeil‑Load‑Error', e);
+            stSel.innerHTML = '<option>Fehler beim Laden</option>';
+        });
+}
+
+
+/***************** Event Binding *****************/
+document.addEventListener('DOMContentLoaded',()=>{
+    loadSammlungen();                     // initial
+    q('#SlgSelect').addEventListener('change',e=>{
+        const val=e.target.value;
+        if(val) loadSlgTeile(val);
+        else { const st=q('#SlgteilSelect'); st.innerHTML='<option>Bitte zuerst eine Sammlung auswählen</option>'; st.disabled=true; }
+    });
+});
+</script>

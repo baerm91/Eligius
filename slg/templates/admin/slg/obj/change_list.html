@@ -1,0 +1,9 @@
+{% extends "admin/import_export/change_list_export.html" %}
+{% block object-tools-items %}
+    {{ block.super }}
+    <li>
+        <a href="{% url 'export_xlsx' %}?{{ request.GET.urlencode }}" class="button">
+            Export LSNÖ
+        </a>
+    </li>
+{% endblock %}

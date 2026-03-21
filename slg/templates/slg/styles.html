@@ -1,0 +1,1535 @@
+{% load static %}
+
+{# Gemeinsame Styles für alle Seiten #}
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css?family=Josefin+Sans:300i,400,700&display=swap">    
+<link href="https://fonts.googleapis.com/css?family=Josefin+Sans:300i,400,700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+{% comment %} <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Josefin+Sans:300i,400,700&display=swap" />
+</noscript> {% endcomment %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+{% comment %} <link rel="stylesheet" href="{% static 'Djangoprojekt/css/bootstrap.min.css'%}"> {% endcomment %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'Djangoprojekt/css/aos.css'%}">
+<link rel="stylesheet" href="{% static 'Djangoprojekt/css/style.css'%}" type="text/css">
+{% comment %} <link rel="stylesheet" href="{% static 'Djangoprojekt/css/lightgallery.min.css' %}"> {% endcomment %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+    body {
+        font-family: 'Josefin Sans', sans-serif;
+        /* Ggf. auch font-size, line-height anpassen, falls es vorher anders war */
+    }
+
+    /* Oder spezifischer für die Navbar, falls nur dort gewünscht */
+    .site-navbar { /* Oder eine spezifischere Klasse deiner Navbar */
+        font-family: 'Josefin Sans', sans-serif;
+    }
+    .site-navbar .navbar-nav .nav-link {
+        padding-left: 1rem; /* Beispielwert, anpassen nach Bedarf */
+        padding-right: 1rem; /* Beispielwert, anpassen nach Bedarf */
+        /* Evtl. auch padding-top und padding-bottom anpassen */
+    }
+
+    /* Standardmäßig keine Unterstriche für Links */
+    a {
+        text-decoration: none;
+    }
+
+    /* Basis-Styles */
+    .hero-section {
+        padding: 60px 20px;
+        color: #2c3e50;
+        margin: 40px auto;
+        text-align: center;
+        max-width: 1200px;
+        width: 95%;
+    }
+
+    .hero-section .intro-text {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+    
+    .hero-section h1 {
+        margin-bottom: 30px;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 2.5rem;
+    }
+    
+    .welcome-banner {
+        background: linear-gradient(135deg, rgba(10, 129, 209, 0.1) 0%, rgba(10, 129, 209, 0.2) 100%);
+        padding: 10px 25px;
+        border-radius: 30px;
+        display: inline-block;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(10, 129, 209, 0.1);
+    }
+    
+    .welcome-banner h5 {
+        color: #0A81D1;
+        margin: 0;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        font-size: 1.1rem;
+    }
+
+    .intro-text p {
+        color: #505c6e;
+        line-height: 1.8;
+        font-size: 1.1rem;
+        margin-bottom: 40px;
+    }
+
+    /* Feature Boxes */
+    .feature-box {
+        padding: 35px 25px;
+        border-radius: 15px;
+        background: #ffffff;
+        border: none;
+        transition: all 0.3s ease;
+        height: 100%;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+    
+    .feature-box:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(10, 129, 209, 0.1);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        color: #0A81D1;
+        margin-bottom: 25px;
+        transition: all 0.3s ease;
+    }
+
+    /* Collection Cards */
+    .collection-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .collection-card.hidden {
+        opacity: 0;
+        transform: scale(0.9);
+        pointer-events: none;
+    }
+
+    .collection-image {
+        position: relative;
+        width: 100%;
+        padding-top: 66.67%;  /* 3:2 Aspect Ratio */
+        overflow: hidden;
+    }
+
+    .collection-image img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;  /* Wichtig für einheitliche Bilddarstellung */
+    }
+
+    .collection-content {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .collection-title {
+        font-size: 1.25rem;
+        color: #2c3e50;
+        margin-bottom: 12px;
+        font-weight: 600;
+    }
+
+    .collection-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 20px;
+        flex-grow: 1;
+    }
+
+    .collection-links {
+        display: flex;
+        justify-content: space-between;
+        padding: 15px 20px;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .collection-link {
+        color: #0A81D1;
+        text-decoration: none;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .collection-link:hover {
+        color: #0868a7;
+    }
+
+    /* Select2 Styles */
+    .select2-container .select2-selection--single {
+        height: 50px;
+    }
+    
+    .select2-container .select2-selection--single .select2-selection__rendered {
+        line-height: 50px;
+    }
+    
+    .select2-container .select2-selection--multiple {
+        min-height: 50px;
+    }
+
+    /* Tag Styles */
+    .tag-key {
+        margin-right: 5px;
+    }
+    
+    .tags {
+        margin-right: 5px;
+        margin-bottom: 5px;
+        background-color: transparent;
+    }
+    
+    .tags a {
+        white-space: nowrap;
+        border: 1px solid #0A81D1;
+        border-radius: 2rem;
+        padding: .25rem .85rem;
+        background-color: transparent;
+        color: #0A81D1;
+        transition: all 0.3s ease;
+    }
+    
+    .tags a:hover {
+        background-color: #0A81D1;
+        color: white;
+    }
+
+    /* Search Container */
+    .search-container {
+        width: 100%;
+        max-width: 220px;
+    }
+    
+    .search-fields input.form-control,
+    .search-form select,
+    #rubrikSelect {
+        width: 95% !important;
+        max-width: 100%;
+    }
+    
+    /* Optimierung der linken Spalte */
+    @media (min-width: 768px) {
+        .col-md-3.col-lg-2 {
+            max-width: 220px;
+            flex: 0 0 220px;
+            padding-right: 0;
+        }
+        
+        /* Entsprechend rechte Spalte anpassen */
+        .col-md-9.col-lg-10 {
+            flex: 1;
+            max-width: calc(100% - 220px);
+        }
+    }
+
+    /* Typography */
+    h2, h3 {
+        font-variant: small-caps;
+        text-rendering: auto;
+    }
+
+    /* Table Styles */
+    table td {
+        display: table-cell;
+        vertical-align: top;
+        padding-right: 10px;
+    }
+
+    /* Image Styles */
+    .image {
+        width: 100%;
+        height: auto;
+    }
+    
+    .img-box {
+        position: relative;
+        width: 100%;
+    }
+
+    /* Accordion Styles */
+    .accordion .card {
+        margin-bottom: 0;
+        background-color: transparent;
+        border: none;
+    }
+    
+    .accordion .card-header {
+        padding: 5px;
+        background-color: transparent;
+        border: none;
+    }
+    
+    .accordion .btn-link {
+        padding: 0;
+        color: #000;
+        text-decoration: none;
+        width: 100%;
+        text-align: left;
+    }
+
+    /* Profile Card Styles */
+    .profile-card-5 {
+        margin-top: 20px;
+    }
+    
+    .profile-card-5 .card-img-block {
+        width: 91%;
+        margin: 0 auto;
+        position: relative;
+        top: -20px;
+    }
+
+    /* Utility Classes */
+    .icon {
+        color: #0A81D1;
+    }
+    
+    #a {
+        color: #0A81D1;
+    }
+    
+    .inf {
+        visibility: hidden;
+    }
+    
+    .inf:hover {
+        visibility: visible;
+        color: #0A81D1;
+    }
+
+    /* Münzgalerie Grid and Container Styles */
+    .infinite-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .infinite-item {
+        padding: 5px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Object Container Styles */
+    .hovereffect {
+        position: relative;
+        padding: 10px;
+        border-radius: 10px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background-color: transparent;
+    }
+
+    /* Collection/Coin Info Styles */
+    .slg-info {
+        position: absolute;
+        top: -5px;
+        left: 0;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 2px 8px;
+        font-size: 0.75rem;
+        z-index: 5;
+        border-radius: 0 0 5px 0;
+        color: #495057;
+    }
+
+    .object-info {
+        padding: 5px 0;
+        font-size: 0.85rem;
+        line-height: 1.3;
+        text-align: center;
+        color: #333;
+    }
+
+    /* Image Container and Wrapper Styles - Fixed Dimensions */
+    .image-container {
+        width: 150px;
+        height: 150px;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: white;
+        border-radius: 2px;
+    }
+
+    .image-wrapper {
+        width: 100%;
+        height: 0;
+        padding-bottom: 100%; /* Square aspect ratio */
+        background: transparent;
+        border-radius: 4px;
+        overflow: hidden;
+        text-align: center;
+        position: relative;
+    }
+
+    .image-wrapper a {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: inherit !important;
+        text-decoration: none !important;
+    }
+
+    .image-wrapper img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    /* Placeholder Styles - Consistent Sizing */
+    .placeholder-text {
+        width: 80px;
+        height: 80px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        
+        /* Positionierung */
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        
+        /* Styling */
+        background-color: rgba(240, 240, 240, 0.3);
+        border: 1px solid rgba(108, 117, 125, 0.2);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        
+        /* Text und Layout */
+        display: none;  /* Standardmäßig versteckt */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        
+        /* Typografie */
+        font-size: 0.75rem;
+        color: #6c757d;
+        line-height: 1.2;
+    }
+
+    /* Zusätzliche Klasse für versteckte Platzhalter */
+    .placeholder-text.hidden {
+        display: none;
+    }
+
+    /* Fix for broken images - hide all traces of broken image icons */
+    .image-wrapper a img {
+        color: transparent !important;
+        font-size: 0 !important;
+    }
+    
+    .image-wrapper a img[alt] {
+        color: transparent !important;
+        font-size: 0 !important;
+    }
+    
+    .image-wrapper a img::before,
+    .image-wrapper a img::after {
+        display: none !important;
+    }
+
+    /* More specific selector to override Bootstrap */
+    .image-wrapper img, 
+    .infinite-container .infinite-item .image-wrapper img {
+        max-width: 100% !important;
+        max-height: 100% !important;
+        object-fit: contain !important;
+        width: auto !important;
+        height: auto !important;
+        vertical-align: middle !important;
+        display: inline-block !important;
+    }
+
+    /* Make sure img-fluid class doesn't override our settings */
+    .image-wrapper img.img-fluid {
+        max-width: 100% !important;
+        max-height: 100% !important;
+        object-fit: contain !important;
+        width: auto !important;
+        height: auto !important;
+    }
+
+    /* No Image Message */
+    .no-coins-message {
+        padding: 20px;
+        text-align: center;
+        color: #6c757d;
+        width: 100%;
+    }
+
+    /* Search Button Styles */
+    .search-button {
+        background: linear-gradient(135deg, #0A81D1 0%, #0868a7 100%);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(10, 129, 209, 0.2);
+    }
+
+    .search-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(10, 129, 209, 0.3);
+        background: linear-gradient(135deg, #0868a7 0%, #064d7a 100%);
+    }
+
+    .search-button i {
+        margin-right: 8px;
+    }
+
+    /* Checkbox Styles */
+    .search-container input[type="checkbox"] {
+        margin-right: 5px;
+    }
+
+    .search-container label {
+        color: #495057;
+        font-size: 0.9rem;
+    }
+
+    /* Search Container Spacing */
+    .search-container {
+        margin: 20px 0;
+    }
+
+    .search-container .text-center {
+        margin-bottom: 15px;
+    }
+
+    /* Latest Coins Section */
+    .latest-coins-section {
+        padding: 60px 0;
+        background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+        position: relative;
+        margin-bottom: 40px;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .section-header h2 {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        position: relative;
+        display: inline-block;
+    }
+
+    .section-header h2::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        background: #0A81D1;
+        border-radius: 3px;
+    }
+
+    .section-header p {
+        color: #6c757d;
+        max-width: 700px;
+        margin: 0 auto;
+        font-size: 1.1rem;
+    }
+
+    .latest-coins-container {
+        display: flex;
+        gap: 20px;
+        overflow-x: auto;
+        padding: 20px 0;
+        margin: 0 60px;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+        max-width: 100%;
+        white-space: nowrap;
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        &::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+
+    .coin-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .coin-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 0.85rem;
+    }
+
+    .coin-collection {
+        font-weight: bold;
+    }
+
+    .coin-date {
+        color: #666;
+    }
+
+    .coin-title {
+        font-weight: 500;
+        font-size: 0.95rem;
+        margin-top: 10px;
+    }
+
+    .card-link {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+
+    /* Navigation Arrows */
+    .nav-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+
+    .nav-arrow:hover {
+        background: #0A81D1;
+        color: white;
+        box-shadow: 0 6px 15px rgba(10, 129, 209, 0.2);
+    }
+
+    .nav-arrow.prev {
+        left: 15px;
+    }
+
+    .nav-arrow.next {
+        right: 15px;
+    }
+
+    /* Collections Section */
+    .collections-section {
+        padding: 60px 0;  /* Mehr vertikaler Abstand */
+        background: #fff;
+    }
+
+    .collections-section h4 {
+        margin-bottom: 40px;  /* Mehr Abstand nach unten */
+        color: #2c3e50;
+    }
+
+    .collections-grid {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);  /* 1 Spalte auf mobilen Geräten */
+        gap: 30px;  /* Größerer Abstand zwischen den Karten */
+        max-width: 1000px;  /* Begrenzte Breite für bessere Lesbarkeit */
+        margin: 0 auto;  /* Zentrieren */
+        padding: 0 20px;
+    }
+
+    /* Media Queries für größere Bildschirme */
+    @media (min-width: 768px) {
+        .collections-grid {
+            grid-template-columns: repeat(2, 1fr);  /* 2 Spalten auf Tablets */
+        }
+    }
+
+    @media (min-width: 1200px) {
+        .collections-grid {
+            grid-width: repeat(2, 1fr);  /* 2 Spalten auf Desktop */
+        }
+    }
+
+    .collection-filters {
+        margin-bottom: 40px;
+        text-align: center;
+    }
+
+    .filter-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .filter-btn {
+        padding: 8px 16px;
+        border-radius: 20px;
+        color: #2c3e50;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+    }
+
+    .filter-btn:hover {
+        background: #e9ecef;
+        color: #2c3e50;
+        text-decoration: none;
+    }
+
+    .filter-btn.active {
+        background: #0A81D1;
+        color: white;
+        border-color: #0A81D1;
+    }
+
+    /* Verbesserte Styles für die Suchbox */
+    .search-box {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+
+    .search-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        text-align: center;
+        position: relative;
+        display: inline-block;
+    }
+
+    .search-title::after {
+        content: "";
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #0A81D1, transparent);
+    }
+
+    .search-input-group {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .search-input-group .search-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px 15px 12px 45px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-color: white;
+    }
+
+    .search-input:focus {
+        border-color: #0A81D1;
+        box-shadow: 0 0 0 3px rgba(10, 129, 209, 0.1);
+        outline: none;
+    }
+
+    .search-button {
+        background: linear-gradient(135deg, #0A81D1 0%, #0868a7 100%);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(10, 129, 209, 0.2);
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .search-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(10, 129, 209, 0.3);
+        background: linear-gradient(135deg, #0868a7 0%, #064d7a 100%);
+    }
+
+    .search-categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 20px 0;
+        justify-content: center;
+    }
+
+    .search-category {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 20px;
+        padding: 8px 15px;
+        font-size: 0.9rem;
+        color: #495057;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .search-category:hover, .search-category.active {
+        background-color: #e3f2fd;
+        border-color: #0A81D1;
+        color: #0A81D1;
+    }
+
+    .search-category i {
+        margin-right: 5px;
+    }
+
+    .search-tip {
+        background-color: #e3f2fd;
+        border-left: 3px solid #0A81D1;
+        padding: 12px 15px;
+        margin-top: 20px;
+        border-radius: 0 5px 5px 0;
+        font-size: 0.9rem;
+        color: #495057;
+    }
+
+    .search-tip i {
+        color: #0A81D1;
+        margin-right: 8px;
+    }
+
+    /* Verbesserte Select-Styles */
+    .select2-container--default .select2-selection--single {
+        height: 45px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 8px 15px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 45px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 28px;
+        color: #495057;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #0A81D1;
+    }
+
+    /* Responsive Anpassungen */
+    @media (max-width: 768px) {
+        .search-categories {
+            gap: 8px;
+        }
+        
+        .search-category {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+    }
+
+    /* Offizin Symbol Styles */
+    .offizin-symbol {
+        display: inline-block;
+        height: 1.2em;
+        width: auto;
+        vertical-align: middle;
+        margin: 0 0.2em;
+    }
+    
+    /* For links containing offizin symbols */
+    a .offizin-symbol {
+        filter: brightness(0.8);
+        transition: filter 0.3s ease;
+    }
+    
+    a:hover .offizin-symbol {
+        filter: brightness(1);
+    }
+    
+    /* For offizin symbols in tags */
+    .tags a .offizin-symbol {
+        height: 1em;
+    }
+
+    /* Vergrößerbare Bilder */
+    .zoomable-image {
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+        position: relative;
+        z-index: 3; /* Höchster z-index */
+    }
+
+    .image-wrapper:hover .zoomable-image {
+        transform: scale(1.1);
+    }
+
+    /* Lightbox für vergrößerte Bilder */
+    .coin-lightbox {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .coin-lightbox.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .lightbox-content {
+        max-width: 90%;
+        max-height: 90%;
+        position: relative;
+    }
+
+    .lightbox-image {
+        max-width: 100%;
+        max-height: 90vh;
+        object-fit: contain;
+    }
+
+    .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: white;
+        font-size: 30px;
+        cursor: pointer;
+        z-index: 1001;
+    }
+
+    .lightbox-nav {
+        position: absolute;
+        top: 50%;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 20px;
+        transform: translateY(-50%);
+    }
+
+    .lightbox-nav button {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 24px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .lightbox-nav button:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Debugging-Styles für die Münzkarten */
+    .no-coins-message {
+        padding: 20px;
+        text-align: center;
+        color: #6c757d;
+        width: 100%;
+    }
+
+    /* No Image Placeholder */
+    .no-image {
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border-radius: 4px;
+        color: #666;
+    }
+
+    .image-placeholder {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+
+    /* Specific styles for coin carousel on index page */
+    .coin-image-wrapper {
+        width: 100%;
+        padding-bottom: 100%; /* Square aspect ratio */
+        position: relative;
+        background: transparent;
+        border-radius: 4px;
+        overflow: hidden;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .coin-image-wrapper img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background-color: white;
+    }
+
+    .coin-placeholder-text {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: rgba(240, 240, 240, 0.3);
+        border: 1px solid rgba(108, 117, 125, 0.2);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 0.75rem;
+        color: #6c757d;
+        box-shadow: none;
+        text-align: center;
+        line-height: 1.2;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    /* Fix for broken images in coin carousel */
+    .coin-image-wrapper img {
+        color: transparent !important;
+        font-size: 0 !important;
+    }
+
+    /* Detail Styles for Object Pages - Optimierte Version */
+    .coin-details {
+        display: flex;
+        flex-direction: column;
+        max-width: fit-content;
+        margin: 0 auto; /* Zentriert den Block in der Spalte */
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        width: 100%;
+        gap: 20px; /* Fester Abstand zwischen Label und Value */
+    }
+
+    .detail-label {
+        flex: 0 0 auto;
+        text-align: left;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .detail-value {
+        flex: 0 1 auto;
+        text-align: right;
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 70%; /* Verhindert, dass der Wert zu breit wird */
+    }
+
+    .full-width {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .detail-separator {
+        border: none;
+        border-top: 1px solid #e0e0e0;
+        margin: 15px auto;
+        width: 80%;
+    }
+
+    /* Responsive Anpassungen */
+    @media (min-width: 768px) and (max-width: 1199px) {
+        .coin-details {
+            max-width: 100%; /* Bei mittleren Bildschirmen volle Breite nutzen */
+        }
+        
+        .detail-row {
+            gap: 15px; /* Etwas kleinerer Abstand */
+        }
+        
+        .detail-value {
+            max-width: 60%;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .coin-details {
+            max-width: 100%;
+            width: 100%; /* Volle Breite auf mobilen Geräten */
+            overflow-x: hidden; /* Verhindert horizontales Scrollen */
+        }
+        
+        .detail-row {
+            flex-direction: column; /* Übereinander statt nebeneinander */
+            gap: 2px; /* Kleinerer Abstand */
+            margin-bottom: 12px; /* Mehr Abstand zwischen den Zeilen */
+        }
+        
+        .detail-label, .detail-value {
+            text-align: left;
+            max-width: 100%;
+            width: 100%; /* Volle Breite für beide Elemente */
+        }
+        
+        .detail-value {
+            padding-left: 10px; /* Leichter Einzug für bessere Lesbarkeit */
+            border-left: 2px solid #eaeaea; /* Visuelle Trennung */
+        }
+    }
+
+    /* Add a debugging outline if needed */
+    /* .detail-row, .detail-label, .detail-value {
+        border: 1px dashed rgba(255,0,0,0.2);
+    } */
+
+    /* Münzkarten-Styles */
+    .coin-card {
+        border-radius: 8px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        height: 100%;
+        background: white;
+    }
+
+    .coin-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .coin-images {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .image-wrapper {
+        position: relative;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .image-wrapper img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .image-wrapper:hover img {
+        transform: scale(1.05);
+    }
+
+    .image-wrapper .badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        font-size: 0.75rem;
+        opacity: 0.8;
+        z-index: 2;
+    }
+
+    
+
+    /* Objektinformationen */
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+    }
+
+    .card-text {
+        color: #6c757d;
+    }
+
+    .metadata-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    /* Infinite Scroll Container */
+    .infinite-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .infinite-item {
+        break-inside: avoid;
+    }
+
+    #load-more {
+        padding: 2rem 0;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        position: relative;
+        width: 80px;
+        height: 13px;
+    }
+
+    .loading-spinner::after {
+        content: " ";
+        display: block;
+        border-radius: 50%;
+        width: 0;
+        height: 0;
+        margin: 8px;
+        box-sizing: border-box;
+        border: 16px solid #0A81D1;
+        border-color: #0A81D1 transparent #0A81D1 transparent;
+        animation: loading-spinner 1.2s infinite;
+    }
+
+    @keyframes loading-spinner {
+        0% {
+            transform: rotate(0);
+            animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+        }
+        50% {
+            transform: rotate(180deg);
+            animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Responsive Anpassungen */
+    @media (max-width: 768px) {
+        .infinite-container {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.5rem;
+            padding: 0.5rem;
+        }
+
+        .image-wrapper img {
+            height: 150px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+        }
+    }
+
+    /* Münz-Preview Styles */
+    .coin-preview-card {
+        position: relative;
+        overflow: visible;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 4px;
+        height: auto;
+        min-height: fit-content;
+        transition: transform 0.2s, box-shadow 0.2s;
+        flex: 0 0 200px;
+        margin-right: 20px;
+    }
+
+    .hover-content {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+    }
+    
+    .coin-preview-card:hover .hover-content {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .coin-preview-images {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .preview-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: white;
+        border-radius: 2px;
+        padding: 2px; /* Gibt etwas Abstand zum Rand */
+    }
+
+    .coin-preview-info {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        padding: 8px 0;
+    }
+
+    .preview-title {
+        color: #2c3e50;
+        font-weight: 500;
+        line-height: 1.1;
+        margin: 4px 0 2px 0;
+        white-space: wrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.8rem;
+        text-align: left;
+        z-index: 2;
+        position: relative;
+        background: white;
+        padding: 0 4px;
+    }
+    .preview-dat_verb {
+        color: #495057;
+        font-weight: 500;
+        line-height: 1.1;
+        margin: 4px 0 2px 0;
+        white-space: wrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.7rem;
+        text-align: left;
+        z-index: 2;
+        position: relative;
+        background: white;
+        padding: 0 4px;
+    }
+
+    .preview-badges {
+        transition: opacity 0.3s, transform 0.3s;
+        opacity: 0;
+        transform: translateY(20px);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        overflow-y: visible;
+        line-height: 0.9;
+    }
+
+    .coin-preview-card:hover .preview-badges,
+    .coin-preview-card:focus-within .preview-badges {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .preview-metadata {
+        color: #6c757d;
+        font-size: 0.7rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Responsive Anpassungen */
+    @media (max-width: 576px) {
+        .preview-image {
+            height: 100px;
+        }
+        
+        .coin-preview-info {
+            font-size: 0.75rem;
+        }
+    }
+
+    /* Filter Styles */
+    .facets-wrapper {
+        padding: 15px;
+        background: #fff;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+    }
+
+    .accordion-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        background: #f8f9fa;
+    }
+
+    .accordion-button:not(.collapsed) {
+        background: #e9ecef;
+        color: #2c3e50;
+    }
+
+    .filter-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .filter-tags .badge {
+        padding: 0.5em 0.8em;
+        font-weight: normal;
+        font-size: 0.8rem;
+    }
+
+    .filter-tags .badge a {
+        margin-left: 0.5em;
+        opacity: 0.8;
+    }
+
+    .filter-tags .badge a:hover {
+        opacity: 1;
+    }
+
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+        border-color: #dee2e6;
+        height: 35px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 33px;
+        font-size: 0.9rem;
+    }
+
+    /* Responsive Anpassungen */
+    @media (max-width: 768px) {
+        .facets-wrapper {
+            padding: 10px;
+        }
+    }
+
+    /* Lesbarkeit für Badges mit dunklem Hintergrund verbessern */
+    .badge.bg-secondary,
+    .badge.bg-success,
+    .badge.bg-dark,
+    .badge.bg-primary {
+        color: #fff !important;
+    }
+
+    /* Collection Preview Styles */
+    .coin-preview-collection {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-size: 0.7rem;
+        margin-bottom: 4px;
+        font-weight: normal;
+        font-style: italic;
+        padding: 2px 4px;
+        border-radius: 2px;
+    }
+
+    .coin-preview-collection:hover {
+        opacity: 1;
+    }
+
+    /* Preview Badges */
+    .preview-badges .badge {
+        font-size: 0.7rem;
+        padding: 0.25em 0.5em;
+        margin-right: 0.2rem;
+        margin-bottom: 0.15rem;
+        font-weight: normal;
+        white-space: normal;
+        display: inline-block;
+        max-width: 100%;
+        line-height: 1.1;
+    }
+
+    /* Ensure preview images in context columns are not cropped */
+    .context-col .preview-image {
+        object-fit: contain; /* Override object-fit: cover from .context-col img */
+    }
+
+</style>
+

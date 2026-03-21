@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CSV Graph Visualisierung (D3)</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body { 
+        margin: 0; 
+        font-family: Arial, sans-serif;
+      }
+      #controls {
+        position: absolute;
+        z-index: 100;
+        margin: 10px;
+        background: rgba(255,255,255,0.9);
+        padding: 15px;
+        border-radius: 8px;
+        max-width: 300px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+      }
+      #controls.hidden {
+        transform: translateX(-100%);
+      }
+      #legend {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255,255,255,0.9);
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        max-height: 80vh;
+        overflow-y: auto;
+        transition: transform 0.3s ease;
+      }
+      #legend.hidden {
+        transform: translateX(100%);
+      }
+      .menu-toggle {
+        position: absolute;
+        z-index: 101;
+        background: rgba(255,255,255,0.9);
+        border: none;
+        border-radius: 8px;
+        padding: 10px;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      }
+      #controls-toggle {
+        top: 10px;
+        left: 10px;
+      }
+      #legend-toggle {
+        top: 10px;
+        right: 10px;
+      }
+      .menu-toggle.active {
+        background: #007bff;
+        color: white;
+      }
+      #graph {
+        width: 100vw;
+        height: 100vh;
+        background: #000011;
+      }
+      .node-label {
+        font-size: 12px;
+        fill: white;
+        pointer-events: none;
+      }
+      .link {
+        stroke: #999;
+        stroke-opacity: 0.6;
+      }
+      .node {
+        stroke: #fff;
+        stroke-width: 1.5px;
+      }
+      #tooltip {
+        position: absolute;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        border-radius: 4px;
+        font-size: 12px;
+        pointer-events: none;
+        display: none;
+        z-index: 1000;
+      }
+    </style>
+    <!-- D3.js und PapaParse -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  </head>
+  <body>
+    <!-- Hamburger Menu Buttons -->
+    <button id="controls-toggle" class="menu-toggle active">
+      <i class="bi bi-gear-fill"></i>
+    </button>
+    <button id="legend-toggle" class="menu-toggle active">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <div id="controls" class="card">
+      <div class="card-body">
+        <div class="mb-3">
+          <label for="csvFile" class="form-label">CSV-Datei auswählen:</label>
+          <input type="file" class="form-control" id="csvFile" accept=".csv" />
+        </div>
+        
+        <div id="columnSelectors" style="display: none;">
+          <div class="mb-3">
+            <label for="sourceColumn" class="form-label">Quelle (runde Knoten):</label>
+            <select class="form-select" id="sourceColumn"></select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="targetColumn" class="form-label">Ziel (viereckige Knoten):</label>
+            <select class="form-select" id="targetColumn"></select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="sourceColorColumn" class="form-label">Farbspalte für Quellknoten:</label>
+            <select class="form-select" id="sourceColorColumn"></select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="targetColorColumn" class="form-label">Farbspalte für Zielknoten:</label>
+            <select class="form-select" id="targetColorColumn"></select>
+          </div>
+          
+          <button id="updateGraph" class="btn btn-primary w-100 mb-3">Graph aktualisieren</button>
+          <button id="toggleSimulation" class="btn btn-secondary w-100">Simulation pausieren</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="graph"></div>
+    <div id="tooltip"></div>
+
+    <!-- Bootstrap Icons CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Bootstrap JS Bundle mit Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      // Globale Variablen
+      let csvData = null;
+      let simulation = null;
+      let svg = null;
+      let colorMaps = {
+        source: {},
+        target: {}
+      };
+      let isSimulationPaused = false;
+      
+      // Farbpalette für Kategorien
+      const colorPalette = [
+        "#e6194B", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", 
+        "#42d4f4", "#f032e6", "#bfef45", "#fabed4", "#469990", "#dcbeff", 
+        "#9A6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", 
+        "#000075", "#a9a9a9", "#ffffff", "#000000"
+      ];
+
+      let selectedCategory = null;
+      
+      // SVG initialisieren
+      function initializeSVG() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        
+        svg = d3.select("#graph")
+          .append("svg")
+          .attr("width", width)
+          .attr("height", height);
+
+        // Glow-Filter definieren
+        const defs = svg.append("defs");
+        const filter = defs.append("filter")
+          .attr("id", "glow");
+
+        filter.append("feGaussianBlur")
+          .attr("stdDeviation", "3")
+          .attr("result", "coloredBlur");
+
+        const feMerge = filter.append("feMerge");
+        feMerge.append("feMergeNode")
+          .attr("in", "coloredBlur");
+        feMerge.append("feMergeNode")
+          .attr("in", "SourceGraphic");
+        
+        // Zoom-Funktionalität hinzufügen
+        const zoom = d3.zoom()
+          .scaleExtent([0.1, 10])
+          .on("zoom", (event) => {
+            svg.select("g").attr("transform", event.transform);
+          });
+        
+        svg.call(zoom);
+        svg.append("g");
+      }
+
+      // Event-Listener für Datei-Upload
+      document.getElementById('csvFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+              csvData = results.data;
+              const headers = results.meta.fields || [];
+              
+              // Dropdown-Menüs füllen
+              const dropdowns = ['sourceColumn', 'targetColumn', 'sourceColorColumn', 'targetColorColumn'];
+              dropdowns.forEach(id => {
+                const dropdown = document.getElementById(id);
+                dropdown.innerHTML = '';
+                
+                if (id.includes('Color')) {
+                  const option = document.createElement('option');
+                  option.value = '';
+                  option.text = '-- Keine --';
+                  dropdown.appendChild(option);
+                }
+                
+                headers.forEach(header => {
+                  const option = document.createElement('option');
+                  option.value = header;
+                  option.text = header;
+                  dropdown.appendChild(option);
+                  
+                  if (id === 'sourceColumn' && header.toLowerCase().includes('source')) {
+                    dropdown.value = header;
+                  }
+                  if (id === 'targetColumn' && header.toLowerCase().includes('target')) {
+                    dropdown.value = header;
+                  }
+                });
+              });
+              
+              document.getElementById('columnSelectors').style.display = 'block';
+              updateGraph();
+            }
+          });
+        }
+      });
+
+      // Event-Listener für den Update-Button
+      document.getElementById('updateGraph').addEventListener('click', updateGraph);
+
+      // Toggle-Button Event Listener hinzufügen (nach den anderen Event Listeners)
+      document.getElementById('toggleSimulation').addEventListener('click', function() {
+        isSimulationPaused = !isSimulationPaused;
+        this.textContent = isSimulationPaused ? 'Simulation fortsetzen' : 'Simulation pausieren';
+        
+        if (isSimulationPaused) {
+          simulation.stop();
+        } else {
+          simulation.restart();
+        }
+      });
+
+      // Funktion zum Aktualisieren des Graphen
+      function updateGraph() {
+        if (!csvData) return;
+        
+        const sourceColumn = document.getElementById('sourceColumn').value;
+        const targetColumn = document.getElementById('targetColumn').value;
+        const sourceColorColumn = document.getElementById('sourceColorColumn').value;
+        const targetColorColumn = document.getElementById('targetColorColumn').value;
+        
+        if (!sourceColumn || !targetColumn) {
+          alert("Bitte wähle Quell- und Zielspalten aus.");
+          return;
+        }
+        
+        // Graph-Daten vorbereiten
+        const nodes = new Map();
+        const links = [];
+        
+        csvData.forEach(row => {
+          const sourceId = row[sourceColumn];
+          const targetId = row[targetColumn];
+          
+          if (!sourceId || !targetId) return;
+          
+          if (!nodes.has(sourceId)) {
+            nodes.set(sourceId, {
+              id: sourceId,
+              nodeType: 'source',
+              group: sourceColorColumn ? row[sourceColorColumn] : 'default',
+              color: sourceColorColumn ? 
+                getColorForCategory(row[sourceColorColumn], 'source') : 
+                '#ffffff'
+            });
+          }
+          
+          if (!nodes.has(targetId)) {
+            nodes.set(targetId, {
+              id: targetId,
+              nodeType: 'target',
+              group: targetColorColumn ? row[targetColorColumn] : 'default',
+              color: targetColorColumn ? 
+                getColorForCategory(row[targetColorColumn], 'target') : 
+                '#ffffff'
+            });
+          }
+          
+          links.push({
+            source: sourceId,
+            target: targetId
+          });
+        });
+
+        // D3 Simulation erstellen
+        if (simulation) simulation.stop();
+        
+        simulation = d3.forceSimulation(Array.from(nodes.values()))
+          .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+          .force("charge", d3.forceManyBody().strength(-300))
+          .force("center", d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2))
+          .force("collision", d3.forceCollide().radius(30));
+
+        // SVG neu erstellen
+        d3.select("#graph svg").remove();
+        initializeSVG();
+        
+        const g = svg.select("g");
+        
+        // Links zeichnen
+        const link = g.append("g")
+          .selectAll("line")
+          .data(links)
+          .join("line")
+          .attr("class", "link");
+        
+        // Tooltip div
+        const tooltip = d3.select("#tooltip");
+        
+        // Knoten zeichnen
+        const node = g.append("g")
+          .selectAll(".node")
+          .data(Array.from(nodes.values()))
+          .join("g")
+          .attr("class", "node")
+          .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended))
+          .on("mouseover", function(event, d) {
+            tooltip
+              .style("display", "block")
+              .html(`ID: ${d.id}`);
+            
+            // Position des Tooltips aktualisieren
+            const [x, y] = d3.pointer(event, document.body);
+            tooltip
+              .style("left", (x + 10) + "px")
+              .style("top", (y - 10) + "px");
+          })
+          .on("mousemove", function(event) {
+            // Tooltip mit der Maus mitbewegen
+            const [x, y] = d3.pointer(event, document.body);
+            tooltip
+              .style("left", (x + 10) + "px")
+              .style("top", (y - 10) + "px");
+          })
+          .on("mouseout", function() {
+            tooltip.style("display", "none");
+          });
+        
+        // Knotenformen zeichnen
+        node.each(function(d) {
+          const el = d3.select(this);
+          if (d.nodeType === 'source') {
+            el.append("circle")
+              .attr("r", 10)
+              .attr("fill", d => d.color);
+          } else {
+            el.append("rect")
+              .attr("x", -8)
+              .attr("y", -8)
+              .attr("width", 16)
+              .attr("height", 16)
+              .attr("fill", d => d.color);
+          }
+        });
+        
+        // Labels hinzufügen
+        node.append("text")
+          .attr("class", "node-label")
+          .attr("dx", 12)
+          .attr("dy", 4)
+          .text(d => {
+            // Verwende Farbspalte für Label falls vorhanden, sonst ID
+            if (d.nodeType === 'source' && sourceColorColumn) {
+              return d.group;
+            } else if (d.nodeType === 'target' && targetColorColumn) {
+              return d.group;
+            }
+            return d.id;
+          });
+        
+        // Klick-Handler für Knoten hinzufügen
+        node.on("click", function(event, d) {
+          highlightSimilarNodes(d);
+        });
+        
+        // Simulation aktualisieren
+        simulation.on("tick", () => {
+          link
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+          
+          node.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+        
+        // Legende erstellen
+        createLegend();
+      }
+
+      // Drag-Funktionen
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        event.subject.fx = event.subject.x;
+        event.subject.fy = event.subject.y;
+      }
+
+      function dragged(event) {
+        event.subject.fx = event.x;
+        event.subject.fy = event.y;
+      }
+
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0);
+        event.subject.fx = null;
+        event.subject.fy = null;
+      }
+
+      // Hilfsfunktionen
+      function getColorForCategory(category, type) {
+        if (!category) return '#ffffff';
+        
+        if (!colorMaps[type][category]) {
+          const colorIndex = Object.keys(colorMaps[type]).length % colorPalette.length;
+          colorMaps[type][category] = colorPalette[colorIndex];
+        }
+        
+        return colorMaps[type][category];
+      }
+
+      // Toggle-Funktionen für Menüs
+      document.getElementById('controls-toggle').addEventListener('click', function() {
+        const controls = document.getElementById('controls');
+        const button = this;
+        controls.classList.toggle('hidden');
+        button.classList.toggle('active');
+      });
+
+      document.getElementById('legend-toggle').addEventListener('click', function() {
+        const legend = document.getElementById('legend');
+        const button = this;
+        if (legend) {
+          legend.classList.toggle('hidden');
+          button.classList.toggle('active');
+        }
+      });
+
+      // Legende erstellen (angepasst)
+      function createLegend() {
+        const existingLegend = document.getElementById('legend');
+        if (existingLegend) existingLegend.remove();
+        
+        const legend = document.createElement('div');
+        legend.id = 'legend';
+        
+        // Prüfe, ob Legend-Toggle ausgeschaltet ist
+        if (!document.getElementById('legend-toggle').classList.contains('active')) {
+          legend.classList.add('hidden');
+        }
+        
+        // Quellknoten-Legende
+        if (Object.keys(colorMaps.source).length > 0) {
+          const sourceTitle = document.createElement('b');
+          sourceTitle.textContent = 'Quellknoten (rund)';
+          legend.appendChild(sourceTitle);
+          legend.appendChild(document.createElement('br'));
+          
+          Object.entries(colorMaps.source).forEach(([cat, col]) => {
+            const div = document.createElement('div');
+            const span = document.createElement('span');
+            span.textContent = '⬤ ';
+            span.style.color = col;
+            
+            div.appendChild(span);
+            div.appendChild(document.createTextNode(cat));
+            div.style.cursor = 'pointer';
+            div.onclick = () => toggleCategoryHighlight('source', cat);
+            legend.appendChild(div);
+          });
+        }
+        
+        // Zielknoten-Legende
+        if (Object.keys(colorMaps.target).length > 0) {
+          legend.appendChild(document.createElement('br'));
+          const targetTitle = document.createElement('b');
+          targetTitle.textContent = 'Zielknoten (viereckig)';
+          legend.appendChild(targetTitle);
+          legend.appendChild(document.createElement('br'));
+          
+          Object.entries(colorMaps.target).forEach(([cat, col]) => {
+            const div = document.createElement('div');
+            const span = document.createElement('span');
+            span.textContent = '■ ';
+            span.style.color = col;
+            
+            div.appendChild(span);
+            div.appendChild(document.createTextNode(cat));
+            div.style.cursor = 'pointer';
+            div.onclick = () => toggleCategoryHighlight('target', cat);
+            legend.appendChild(div);
+          });
+        }
+        
+        document.body.appendChild(legend);
+      }
+
+      function toggleCategoryHighlight(type, category) {
+        if (selectedCategory && selectedCategory.type === type && selectedCategory.category === category) {
+          selectedCategory = null;
+        } else {
+          selectedCategory = { type, category };
+        }
+        
+        const nodes = d3.selectAll(".node");
+        nodes.each(function(d) {
+          const node = d3.select(this);
+          const shape = node.select(d.nodeType === 'source' ? "circle" : "rect");
+          
+          if (!selectedCategory) {
+            shape
+              .attr("fill", d.color)
+              .style("filter", "none");
+          } else {
+            const isSelected = d.nodeType === type && d.group === category;
+            shape
+              .attr("fill", isSelected ? d.color : '#888888')
+              .style("filter", isSelected ? "url(#glow)" : "none");
+          }
+        });
+        
+        const links = d3.selectAll(".link");
+        links.style("stroke", function(d) {
+          if (!selectedCategory) return '#999';
+          
+          const sourceNode = nodes.data().find(n => n.id === d.source.id);
+          const targetNode = nodes.data().find(n => n.id === d.target.id);
+          const isSourceSelected = sourceNode.nodeType === type && sourceNode.group === category;
+          const isTargetSelected = targetNode.nodeType === type && targetNode.group === category;
+          
+          return (isSourceSelected || isTargetSelected) ? '#ffffff' : '#888888';
+        });
+      }
+
+      function highlightSimilarNodes(clickedNode) {
+        const nodes = d3.selectAll(".node");
+        const links = d3.selectAll(".link");
+        
+        // Finde alle Nodes der gleichen Kategorie
+        const similarNodes = nodes.data().filter(n => 
+          n.nodeType === clickedNode.nodeType && n.group === clickedNode.group
+        );
+        
+        // Finde alle verbundenen Nodes (auch von ähnlichen Nodes)
+        const connectedNodeIds = new Set();
+        links.each(function(d) {
+          // Prüfe für den geklickten Node
+          if (d.source.id === clickedNode.id) {
+            connectedNodeIds.add(d.target.id);
+          } else if (d.target.id === clickedNode.id) {
+            connectedNodeIds.add(d.source.id);
+          }
+          
+          // Prüfe für alle ähnlichen Nodes
+          similarNodes.forEach(similarNode => {
+            if (d.source.id === similarNode.id) {
+              connectedNodeIds.add(d.target.id);
+            } else if (d.target.id === similarNode.id) {
+              connectedNodeIds.add(d.source.id);
+            }
+          });
+        });
+
+        nodes.each(function(d) {
+          const node = d3.select(this);
+          const shape = node.select(d.nodeType === 'source' ? "circle" : "rect");
+          
+          // Gleicher Typ und gleiche Gruppe ODER verbundener Node
+          const isSimilar = (d.nodeType === clickedNode.nodeType && d.group === clickedNode.group);
+          const isConnected = connectedNodeIds.has(d.id);
+          
+          shape
+            .attr("fill", isSimilar || isConnected ? d.color : '#888888')
+            .style("filter", (isSimilar || isConnected) ? "url(#glow)" : "none");
+        });
+        
+        links.style("stroke", function(d) {
+          const sourceNode = nodes.data().find(n => n.id === d.source.id);
+          const targetNode = nodes.data().find(n => n.id === d.target.id);
+          
+          const isSourceSimilar = sourceNode.nodeType === clickedNode.nodeType && 
+                                 sourceNode.group === clickedNode.group;
+          const isTargetSimilar = targetNode.nodeType === clickedNode.nodeType && 
+                                 targetNode.group === clickedNode.group;
+          
+          // Verbindungen zu allen ähnlichen Nodes oder verbundenen Nodes hervorheben
+          const isConnectedToSimilar = connectedNodeIds.has(d.source.id) || 
+                                     connectedNodeIds.has(d.target.id);
+          
+          return (isSourceSimilar || isTargetSimilar || isConnectedToSimilar) ? '#ffffff' : '#888888';
+        });
+      }
+
+      // Initial SVG erstellen
+      initializeSVG();
+    </script>
+  </body>
+</html>

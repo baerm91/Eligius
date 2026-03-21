@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline</title>
+    <style>
+      html {
+        height: 100%;
+      }
+      
+      body {
+        height: inherit;
+        display: flex;
+        flex-direction: column;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+    
+      div.header h1 {
+        display: block;
+        text-align: center;
+      }
+
+      div.header h2 {
+        font-size: 1.1em;
+        font-weight: 400;
+        color: #cfd7de;
+        max-width: 30rem;
+        margin: auto;
+      }
+      
+      div.header h3 {
+        display: block;
+        text-align: center;
+        margin-top: 2rem;
+      }
+      
+      div.item {
+        display: flex;
+        flex: auto;
+        overflow-y: auto;
+        padding: 0rem 1rem 0rem 1rem;
+      }
+      
+      #timeline {
+        position: relative;
+        display: table;
+        height: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 2rem;
+      }
+
+      /* Vertikale Linie */
+      #timeline div:after {
+        content: "";
+        width: 1px;
+        position: absolute;
+        top: 0.5rem;
+        bottom: 0rem;
+        left: 58.5px;
+        z-index: 2;
+        background: #C5C5C5;
+      }
+      #timeline h3 {
+        position: -webkit-sticky;
+        position: sticky;
+        
+        color: #888;
+        margin: 0;
+        font-size: 1em;
+        font-weight: 400;
+      }
+      
+      #timeline section.year {
+        position: relative;
+      }
+      
+      #timeline section.year section {
+        position: relative;
+        padding-bottom: 1.25em;
+        margin-bottom: 1.2em;
+      }
+      #timeline section.year section h4 {
+        position: absolute;
+        bottom: 0;
+        font-size: 0.9em;
+        font-weight: 400;
+        line-height: 1.2em;
+        margin: 0;
+        padding: 0 0 0 89px;
+        color: #C5C5C5;
+      }
+      #timeline section.year section h6 {
+        position: absolute;
+        
+        font-size: 0.9em;
+        font-weight: 400;
+        
+        color: #C5C5C5;
+      } 
+      
+      #timeline section.year section ul {
+        list-style-type: none;
+        padding: 0 0 0 75px;
+        margin: -1.35rem 0 1em;
+        max-width: 50rem;
+      }
+      
+      #timeline section.year section ul:last-child {
+        margin-bottom: 0;
+      }
+      #timeline section.year section ul:first-of-type:after {
+        content: "";
+        width: 10px;
+        height: 10px;
+        background: #C5C5C5;
+        border: 2px solid #FFFFFF;
+        -webkit-border-radius: 50%;
+        -moz-border-radius: 50%;
+        -ms-border-radius: 50%;
+        border-radius: 50%;
+        position: absolute;
+        left: 54px;
+        top: 5px;
+        z-index: 2;
+      }
+      #timeline section.year section ul li {
+        margin-left: 1rem;
+      }
+      #timeline section.year section ul li:before {
+        content: "•";
+        margin-left: -0.8rem;
+      }
+      #timeline section.year section ul li:not(:first-child) {
+        margin-top: 0.5rem;
+      }
+      
+      .zeile {
+        display: flex;
+      }
+
+      /* Bootstrap Klassen für die Modal-Komponente */
+      .badge {
+        display: inline-block;
+        padding: 0.25em 0.4em;
+        font-size: 75%;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+      }
+      
+      .badge-info {
+        color: #fff;
+        background-color: #17a2b8;
+      }
+      
+      .container {
+        width: 100%;
+        padding-right: 15px;
+        padding-left: 15px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+      
+      @media (min-width: 576px) {
+        .container {
+          max-width: 540px;
+        }
+      }
+      
+      @media (min-width: 768px) {
+        .container {
+          max-width: 720px;
+        }
+      }
+      
+      @media (min-width: 992px) {
+        .container {
+          max-width: 960px;
+        }
+      }
+      
+      @media (min-width: 1200px) {
+        .container {
+          max-width: 1140px;
+        }
+      }
+    </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h3 id="timeline-title">Ereignisse</h3>
+    </div>
+    <div class="item">
+      <div id="timeline">
+        <div id="timeline-content">
+          <!-- Hier werden die Zeitleisten-Informationen dynamisch eingefügt -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal-Template für Personen -->
+  <div class="modal fade" id="theModal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalLabel"></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Hier wird der Inhalt des Modals dynamisch geladen -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Schließen</button>
+          <a href="#" class="btn btn-primary" target="_blank">Details</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // JavaScript-Funktion zum Laden der Daten von einer REST API und Aufbau der Zeitleiste
+    async function loadTimelineData(apiUrl, params = {}) {
+      try {
+        // URL mit Parametern aufbauen
+        const url = new URL(apiUrl, window.location.origin);
+        
+        // Parameter zur URL hinzufügen
+        Object.keys(params).forEach(key => {
+          if (params[key]) {
+            url.searchParams.append(key, params[key]);
+          }
+        });
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        // Optional: Setze den Titel der Zeitleiste
+        if (data.title) {
+          document.getElementById('timeline-title').innerText = data.title;
+        } else if (data.name) {
+          document.getElementById('timeline-title').innerText = data.name;
+        }
+        
+        // Timeline-Inhalt erstellen
+        const timelineContent = document.getElementById('timeline-content');
+        let currentYear = null;
+        let timelineHTML = '';
+        let sectionOpen = false;
+        
+        // Bestimmen, welches Array von Ereignissen zu verwenden ist
+        const events = data.informationen || data.ereignisse || data.events || [];
+        
+        if (events.length > 0) {
+          events.forEach((info, index) => {
+            const year = info.dat_von;
+            
+            // Wenn ein neues Jahr beginnt, schließe die vorherige Sektion und öffne eine neue
+            if (year !== currentYear) {
+              if (sectionOpen) {
+                timelineHTML += '</ul></section></section>';
+              }
+              
+              currentYear = year;
+              timelineHTML += `<section class="year">
+                <h3>${year}</h3>
+                <section>
+                  <ul>`;
+              sectionOpen = true;
+            }
+            
+            // Füge die Information hinzu
+            timelineHTML += `<li>
+              ${info.information || info.beschreibung || info.text || ''}<br>
+              <span style="float:right;">
+                ${info.referenzen ? info.referenzen.map(ref => 
+                  `<abbr title="${ref.zitat || ''}"><small>${ref.name || ref.bezeichnung || ''}${ref.nummer ? ', ' + ref.nummer : ''}</small></abbr>`
+                ).join(', ') : ''}
+              </span>
+              <span style="text-align:left;color:#afaeae">
+                ${info.dat_verb || info.datum_verbal || ''}
+              </span>
+              <p style="text-align:right;color:#afaeae">
+                ${info.personen ? info.personen.map(person => 
+                  `<a href="#theModal" data-title="${person.name}" data-remote="/api/person/${person.id}/" 
+                   data-footer="/admin/slg/person/${person.id}/change/" data-toggle="modal" 
+                   data-target="#theModal" class="badge badge-info" title="Person">${person.name}</a>`
+                ).join(' ') : ''}
+              </p>
+            </li>`;
+          });
+          
+          // Schließe die letzte Sektion
+          if (sectionOpen) {
+            timelineHTML += '</ul></section></section>';
+          }
+        } else {
+          timelineHTML = '<p>Keine Ereignisse gefunden für den gewählten Zeitraum.</p>';
+        }
+        
+        // Setze den Timeline-Inhalt
+        timelineContent.innerHTML = timelineHTML;
+        
+        // Event-Listener für Modal-Dialoge hinzufügen
+        setupModalListeners();
+        
+      } catch (error) {
+        console.error('Fehler beim Laden der Zeitleisten-Daten:', error);
+        document.getElementById('timeline-content').innerHTML = 
+          '<p>Fehler beim Laden der Daten. Bitte versuchen Sie es später erneut.</p>';
+      }
+    }
+    
+    // Modal-Funktionalität
+    function setupModalListeners() {
+      document.querySelectorAll('[data-target="#theModal"]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const modal = document.getElementById('theModal');
+          const title = this.getAttribute('data-title');
+          const remoteUrl = this.getAttribute('data-remote');
+          const footerUrl = this.getAttribute('data-footer');
+          
+          // Setze Modal-Titel
+          modal.querySelector('.modal-title').innerText = title;
+          
+          // Lade Inhalt
+          fetch(remoteUrl)
+            .then(response => response.text())
+            .then(html => {
+              modal.querySelector('.modal-body').innerHTML = html;
+            })
+            .catch(error => {
+              console.error('Fehler beim Laden des Modal-Inhalts:', error);
+              modal.querySelector('.modal-body').innerHTML = '<p>Fehler beim Laden der Daten</p>';
+            });
+          
+          // Setze Footer-Link
+          modal.querySelector('.modal-footer a').href = footerUrl;
+          
+          // Öffne Modal (muss durch Bootstrap-Code ergänzt werden)
+        });
+      });
+    }
+    
+    // Wenn die Seite geladen wird, holen wir die Daten von der API
+    document.addEventListener('DOMContentLoaded', function() {
+      // URL und Parameter aus URL-Parametern holen
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      // API-Endpunkt ermitteln - entweder für eine Sammlung oder für allgemeine Ereignisse
+      let apiUrl = '/api/ereignisse/'; // Standard-API für Ereignisse
+      
+      // Parameter für die API-Anfrage
+      const apiParams = {
+        dat_von: urlParams.get('von'),
+        dat_bis: urlParams.get('bis'),
+        sammlung: urlParams.get('sammlung'),
+        person: urlParams.get('person'),
+        thema: urlParams.get('thema')
+      };
+      
+      // Wenn eine spezifische API-URL angegeben ist, verwende diese
+      if (urlParams.get('api_url')) {
+        apiUrl = urlParams.get('api_url');
+      }
+      
+      loadTimelineData(apiUrl, apiParams);
+    });
+  </script>
+</body>
+</html> 

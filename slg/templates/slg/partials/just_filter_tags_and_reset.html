@@ -1,0 +1,30 @@
+{% load slg_extras %}
+{% load custom_tags %}
+
+{% for key, values in request.GET.lists %}
+    {% if key in filter_config %}
+        {% with config=filter_config|get_item:key %}
+            {% for value in values %}
+                {% if value %}
+                    <div class="tags mr-2 mb-2">
+                        <a href="{% remove_query_value request.get_full_path key value %}" rel="tag" class="btn btn-outline-secondary btn-sm">
+                            <span class="tag-key">{{ config.display_name }}:</span>
+                            {% if config.model %}
+                                <strong>{{ key|get_display_name:value }}</strong>
+                            {% else %}
+                                <strong>{{ value }}</strong>
+                            {% endif %}
+                            <span class="close-icon ml-1">&times;</span>
+                        </a>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endwith %}
+    {% endif %}
+{% endfor %}
+
+{% if request.GET|length > 0 %}
+    <div class="tag-wrapper ml-2 mb-2">
+        <a href="." rel="tag" class="btn btn-sm">Reset</a>
+    </div>
+{% endif %} 

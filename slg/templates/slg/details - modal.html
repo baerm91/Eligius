@@ -1,0 +1,611 @@
+{% extends 'slg/navbar.html' %}
+{% block title %}Eligius - Objekt{% endblock title %}
+{% load static %}
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/lightgallery.min.css'%}" defer>
+    <style>
+        
+        .coin-details {
+            display: flex;
+            flex-direction: column;
+            max-width: 100%;
+            margin-left: 0;
+            margin-right: auto;
+            align-items: flex-start;
+        }
+        
+        @media (min-width: 768px) {
+            .coin-details {
+                align-items: flex-start;
+                margin-left: 0;
+                margin-right: auto;
+            }
+        }
+        
+        .detail-row {
+            display: flex; /* Arrange label and value in a row */
+            justify-content: flex-start; /* Aligns items to the left */
+            margin-bottom: 10px; /* Space between rows */
+            width: 100%; /* Ensures the row takes full width */
+        }
+        
+        .detail-label {
+            flex: 0 0 150px; /* Fixed width for labels */
+            text-align: right; /* Aligns label text to the right */
+            font-weight: bold;
+            margin-right: 10px; /* Space between label and value */
+            white-space: nowrap; /* Prevents label text from wrapping */
+        }
+        
+        .detail-value {
+            flex: 1; /* Allows the value to fill the remaining space */
+            text-align: left; /* Aligns value text to the left */
+            white-space: nowrap; /* Prevents value text from wrapping */
+        }
+        
+        .full-width {
+            flex-direction: column;
+            align-items: flex-start; /* Aligns content to the left */
+            width: 100%; /* Makes it take the full width of the parent */
+        }
+        
+        .detail-separator {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 15px auto;
+            width: 80%;
+        }
+        
+        
+        
+        
+    </style>
+{% endblock stylesheets %}
+
+{% block content %}
+
+    {% if request.user.is_authenticated %}
+    <div class="container-fluid" >
+        <div class="row text-center">
+            <div class="col pt-2">
+                <table width="100%">
+                    <thead>
+                        <tr>
+                            
+                            <td width="*"></td>
+                            <td width="*" align="left">
+                                <a href="{% url 'admin:slg_obj_change' test.pk %}">Münze: {{test.workflow.name}}</a> <br>
+                                {% if test.Typ is not null %}
+                                    <a href="{% url 'admin:slg_muenztyp_change' test.Typ.pk %}">Münztyp: {{ coin_data.Typ.workflow.name }}</a>
+                                {% else %}
+                                    Typ: nicht definiert{{Mztyp.workflow.name}}
+                                {% endif %}
+                            </td>
+                            <td width="*">
+                                
+                                
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination">
+                                        
+                                        <li class="page-item">
+                                        <a class="page-link" href="../{{ test.id|add:"-10" }}" class="pull-left" aria-label="Previous">
+                                                <span aria-hidden="true">&laquo;</span>
+                                                <span class="sr-only">Previous</span>
+                                        </a>
+                                        </li>
+                                        <li class="page-item"><a class="page-link" href="../{{ test.id|add:"-2" }}">{{ test.id|add:"-2" }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ test.id|add:"-1" }}">{{ test.id|add:"-1" }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ test.id }}">{{ test.id }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ test.id|add:"1" }}">{{ test.id|add:"1" }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ test.id|add:"2" }}">{{ test.id|add:"2" }}</a></li>
+                                        <li class="page-item">
+                                        <a class="page-link" href="../{{ test.id|add:"10" }}" class="pull-right" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                                <span class="sr-only">Next</span>
+                                        </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </td>
+                            
+                        </tr>
+                    </thead>
+                </table>
+                <hr>
+            </div>
+        </div>
+        {% else %}
+        <div class="row text-center">
+            <br>
+        </div>
+        {% endif %}
+        
+        <div class="row" id="captions">
+            <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4 pt-2 align-top-center table-responsive" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                <div class="coin-details">
+                    {% if coin_data.titel %}
+                        <div class="detail-row full-width">
+                            <h4>{{ coin_data.titel }}{% if coin_data.dat_verb %}, {{ coin_data.dat_verb }}{% endif %}</h4>
+                        </div>
+                    {% endif %}
+                    
+                    {% if coin_data.slg %}
+                        <div class="detail-row">
+                            <div class="detail-label">Sammlung:</div>
+                            <div class="detail-value"><a href="/browse/?Slg={{ coin_data.slg.id }}" title="Durchsuchen">{{ coin_data.slg }}</a></div>
+                        </div>
+                    {% endif %}
+                    {% if coin_data.slgteil %}
+                        <div class="detail-row">
+                            <div class="detail-label">Sammlungsteil:</div>
+                            <div class="detail-value"><a href="/browse/?Slgteil={{ coin_data.slgteil.id }}" title="Durchsuchen">{{ coin_data.slgteil }}</a></div>
+                        </div>
+                    {% endif %}
+                    <div class="detail-row">
+                        <div class="detail-label">Inv.-Nr.:</div>
+                        <div class="detail-value">{{ coin_data.invnr }}</div>
+                    </div>
+                    {% if coin_data.objekttyp %}
+                        <div class="detail-row">
+                            <div class="detail-label">Objekttyp:</div>
+                            <div class="detail-value">
+                                <a href="/browse/?objekttyp={{ coin_data.objekttyp.id }}" title="Durchsuchen">{{ coin_data.objekttyp }}</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    
+                        <div class="detail-row">
+                            <div class="detail-label">Bearbeitungsstand:</div>
+                            <div class="detail-value">
+                                {{coin_data.workflow.name}}
+                            </div>
+                        </div>
+                    
+                            
+                    {% if coin_data.faelschung %}
+                        <div class="detail-row">
+                            <div class="detail-label">Fälschung:</div>
+                            <div class="detail-value">{{ coin_data.faelschung }}</div>
+                        </div>
+                    {% endif %}
+                    <div class="detail-separator"></div>
+                                                
+                    {% if coin_data.muenzstand %}
+                        <div class="detail-row">
+                            <div class="detail-label">Münzstand:</div>
+                            <div class="detail-value"><a href="/browse/?muenzstand={{ coin_data.muenzstand }}" title="Durchsuchen">{{ coin_data.muenzstand }}</a></div>
+                        </div>
+                    {% endif %}
+                    {% if coin_data.reichskreis %}
+                        <div class="detail-row">
+                            <div class="detail-label">Reichskreis:</div>
+                            <div class="detail-value"><a href="/browse/?reichskreis={{ coin_data.reichskreis }}" title="Durchsuchen">{{ coin_data.reichskreis }}</a></div>
+                        </div>
+                    {% endif %}
+
+                    {% if coin_data.personen %}
+                        {% for i in coin_data.personen %}
+                            {% if i.idfk_PersonFunktion.id != 2 %}
+                                <div class="detail-row">
+                                    
+                                    <div class="detail-label">{{ i.idfk_PersonFunktion }}:</div>
+                                    <div class="detail-value"><a href="/browse/?Ppl={{ i.idfk_Person.name }}" title="Durchsuchen">{{ i.idfk_Person.name }}{% if i.idfk_Person.zeichen %}, Zeichen: {{i.idfk_Person.zeichen}}{% endif %}</a></div>
+                                    {% comment %} <td><a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> {% endcomment %}
+                                    <div class="detail-value"><a href="#theModal" data-title="{{ i.idfk_Person.name }}" data-remote="{% url 'PersonModal' id=i.idfk_Person.id %}" data-footer="{% url 'admin:slg_person_change' i.idfk_Person.id %}" data-toggle="modal" data-target="#theModal" class="badge badge-warning" title="Person">i</small></a></div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    
+
+                    {% if coin_data.mzstaette %}
+                        <div class="detail-row">
+                            <div class="detail-label">Münzstätte:</div>
+                            <div class="detail-value"><a href="/browse/?mint={{ coin_data.mzstaette }}" title="Durchsuchen">{{ coin_data.mzstaette }}{% if coin_data.mzstaette.zeichen %}, Zeichen: {{coin_data.mzstaette.zeichen}}{% endif %}</a></div>
+                            <div class="detail-value"><a href="{{ coin_data.mzstaette.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></div>
+                        </div>
+                    {% endif %}
+                    {% if coin_data.region %}
+                        <div class="detail-row">
+                            <div class="detail-label">Region:</div>
+                            <div class="detail-value"><a href="/browse/?region={{ coin_data.region }}" title="Durchsuchen">{{ coin_data.region }}</a></div>
+                            <div class="detail-value"><a href="{{ coin_data.region.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></div>
+                        </div>
+                    {% endif %}
+
+
+                    {% if coin_data.nominal %}
+                        <div class="detail-row">
+                            <div class="detail-label">Nominal:</div>
+                            <div class="detail-value"><a href="/browse/?idfk_Nominal={{ coin_data.nominal }}" title="Durchsuchen">{{ coin_data.nominal }}</a></div>
+                            {% comment %} <td><a href="{{ coin_data.nominal.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> {% endcomment %}
+                            <div class="detail-value"><a href="#theModal" data-title="{{ coin_data.nominal }}" data-remote="{% url 'NominalModal' id=coin_data.nominal.id %}" data-footer="{% url 'admin:slg_nominal_change' coin_data.nominal.id %}" data-toggle="modal" data-target="#theModal" class="badge badge-warning" title="Nominal">i</small></a></div>
+                        </div>
+                    {% endif %}
+
+                    {% if coin_data.metall %}
+                        <div class="detail-row">
+                            <div class="detail-label">Metall:</div>
+                            <div class="detail-value"><a href="/browse/?material={{ coin_data.metall }}" title="Durchsuchen">{{ coin_data.metall }}</a></div>
+                            <div class="detail-value"><a href="{{ coin_data.metall.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></div>
+                        </div>
+                    {% endif %}
+                    {% if coin_data.herstellung %}
+                        <div class="detail-row">
+                            <div class="detail-label">Herstellung:</div>
+                            
+                            <div class="detail-value">{{ coin_data.herstellung }}</div>
+                        </div>
+                    {% endif %}
+                    {% if coin_data.Herstellungsmerkmale.all or coin_data.sekundaere_Merkmale.all %}
+                        <div class="detail-row">
+                            <div class="detail-label" style="vertical-align: top;">Merkmale:</div>
+                            <div class="detail-value">
+                            {% for Merkmal in coin_data.Herstellungsmerkmale.all %}
+                                <a href="/browse/?her_merk={{Merkmal.name}}">{{ Merkmal.name }}</a> <br>
+                            {% endfor %}
+                            {% for Merkmal in coin_data.sekundaere_Merkmale.all %}
+                                <a href="/browse/?sek_merk={{Merkmal.name}}">{{ Merkmal.name }}</a><br>
+                            {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="detail-row">
+                        <div class="detail-label">Technica:</div>
+                        <div class="detail-value">{{ coin_data.durchmesser|default:"-"}} mm, {{ coin_data.gewicht|default:"-"}} g, {{ coin_data.stempelstellung|default:"-"}} h</div>
+                    </div>
+                    
+                    
+                    
+                    {% if coin_data.idfk_Ref %}
+                    <div class="detail-separator"></div>
+                    <div class="detail-row">
+                        <div class="detail-label">Referenz{% if coin_data.Typ_unsicher %} <u>unsicher</u>{% endif %}:</div>
+                        
+                    </div>
+                    
+                    
+                    <div class="detail-row">
+                        <div class="detail-value">
+                            <ul>
+                                {% if coin_data.Typ.Ref %}
+                                <li> 
+                                    
+                                    {% if coin_data.Typ.link %}
+                                        {% if coin_data.Typ.Ref.zitat %}
+                                            <a href="{{coin_data.Typ.get_absolute_url}}"><abbr title="{{ coin_data.Typ.Ref.zitat }}">{{ coin_data.Typ.Ref }}</abbr>, {{ coin_data.Typ.nummer }}</a>
+                                        {% else %} 
+                                            <a href="{{ coin_data.Typ.get_absolute_url }}">{{ coin_data.Typ.Ref }}, {{ coin_data.Typ.nummer }}</a>
+                                        {% endif %}
+                                        {% if coin_data.Typ.variante %}
+                                            (Var.: {{ coin_data.Typ.variante.name }})
+                                        {% endif %}
+                                        {% if coin_data.Typ.hlink != 'nolink' %}
+                                            <a href="#theModal" data-remote="{{coin_data.Typ.hlink}}" data-toggle="modal" data-target="#theModal" class="badge badge-info" title="Preview">P</a>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if coin_data.Typ.Ref.zitat %}
+                                        <a href="{{ coin_data.Typ.get_absolute_url }}"><abbr title="{{ coin_data.Typ.Ref.zitat }}">{{ coin_data.Typ.Ref }}</abbr>, {{ coin_data.Typ.nummer }}</a>
+                                        {% else %} 
+                                        <a href="{{ coin_data.Typ.get_absolute_url }}">{{ coin_data.Typ.Ref }}, {{ coin_data.Typ.nummer }}</a>
+                                        {% endif %}
+                                        {% if coin_data.Typ.variante %}
+                                            (Var.: {{ coin_data.Typ.variante.name }})
+                                        {% else %}
+                                        {% endif %}
+                                    {% endif %}
+                                    
+                                {% else %}
+                                <li>bisher unbestimmt</li>
+                                {% endif %}
+                                
+                                {% for Konkordanz in coin_data.Konkordanz %}
+                                    =
+                                    {% if Konkordanz.link %}
+                                        {% if Konkordanz.Ref.zitat %}
+                                            <a href="{{ Konkordanz.get_absolute_url }}"><abbr title="{{ Konkordanz.Ref.zitat }}">{{ Konkordanz.Ref }}</abbr>, {{ Konkordanz.nummer }}</a>
+                                        {% else %} 
+                                            <a href="{{ Konkordanz.get_absolute_url }}">{{ Konkordanz.Ref }}, {{ Konkordanz.nummer }}</a>
+                                        {% endif %}
+                                        {% if Konkordanz.variante %}
+                                            (Var.: {{ Konkordanz.variante.name }})
+                                        {% endif %}
+                                        {% if Konkordanz.hlink != 'nolink' %}
+                                            <a href="#theModal" data-remote="{{Konkordanz.hlink}}" data-toggle="modal" data-target="#theModal" class="badge badge-info" title="Preview">P</a>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if Konkordanz.Ref.zitat %}
+                                            <a href="{{ Konkordanz.get_absolute_url }}"><abbr title="{{ Konkordanz.Ref.zitat }}">{{ Konkordanz.Ref }}</abbr>, {{ Konkordanz.nummer }}</a>
+                                        {% else %} 
+                                            <a href="{{ Konkordanz.get_absolute_url }}">{{ Konkordanz.Ref }}, {{ Konkordanz.nummer }}</a>
+                                        {% endif %}
+                                        {% if Konkordanz.variante %}
+                                            (Var.: {{ Konkordanz.variante.name }})
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% if coin_data.obj_ref_set.all %}
+                    <div class="detail-row">
+                        <div class="detail-label">Objektbiographie:</div>
+                        
+                    </div>
+                    {% endif %}
+                    <div class="detail-row">
+                            <div class="detail-value">
+                                <ul>
+                                {% for i in coin_data.obj_ref_set.all %}
+                                    <li> 
+                                        
+                                        {% if i.link %}
+                                            {% if i.idfk_Ref.zitat %}
+                                            <a href="{{ i.idfk_Ref.get_absolute_url }}"><abbr title="{{ i.idfk_Ref.zitat }}">{{ i.idfk_Ref }}</abbr>, {{ i.nummer }}</a>
+                                            {% else %} 
+                                            <a href="{{ i.idfk_Ref.get_absolute_url }}">{{ i.idfk_Ref }}, {{ i.nummer }}</a>
+                                            {% endif %}
+                                            {% if i.variante %}
+                                            (Var.: {{ i.variante.name }})
+                                            {% endif %}
+                                        
+                                        
+                                            {% if i.hlink != 'nolink' %}
+                                            <a href="#theModal" data-remote="{{i.hlink}}" data-toggle="modal" data-target="#theModal" class="badge badge-info" title="Preview">P</a>
+                                            {% endif %}                                        
+                                        
+                                        {% else %}
+                                            {% if i.idfk_Ref.zitat %}
+                                            <abbr title="{{ i.idfk_Ref.zitat }}">{{ i.idfk_Ref }}</abbr>, {{ i.nummer }}
+                                            {% else %} 
+                                            {{ i.idfk_Ref }}, {{ i.nummer }}
+                                            {% endif %}
+                                            {% if i.variante %}
+                                            (Var.: {{ i.variante.name }})
+                                            {% endif %}
+                                        {% endif %}
+                                        
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            
+                            
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if coin_data.Typ.typ_ref_set.all %}
+                    <div class="detail-row">
+                        <div class="detail-label">Ergänzende Literatur:</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-value">
+                            <ul>
+                                <li>
+                                    {% for i in coin_data.Typ.typ_ref_set.all %}
+                                        {% if i.link %}
+                                            {% if i.Ref.zitat %}
+                                            <a href="{{ i.link }}"><abbr title="{{ i.Ref.zitat }}">{{ i.Ref }}</abbr>, {{ i.nummer }}</a>
+                                            {% else %} 
+                                            <a href="{{ i.link }}">{{ i.Ref }}, {{ i.nummer }}</a>
+                                            {% endif %}
+                                            {% if i.variante %}
+                                            (Var.: {{ i.variante.name }})
+                                            {% endif %}
+                                            {% if i.hlink != 'nolink' %}
+                                            <a href="#theModal" data-remote="{{i.hlink}}" data-toggle="modal" data-target="#theModal" class="badge badge-info" title="Preview">P</a>
+                                            {% endif %}
+                                            {% else %}
+                                            {% if i.Ref.zitat %}
+                                            <abbr title="{{ i.Ref.zitat }}">{{ i.Ref }}</abbr>, {{ i.nummer }}
+                                            {% else %} 
+                                            {{ i.Ref }}, {{ i.nummer }}
+                                            {% endif %}
+                                            {% if i.variante %}
+                                            (Var.: {{ i.variante.name }})
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if coin_data.anmerkung %}
+                    <div class="detail-separator"></div>
+                    <div class="detail-row">
+                        <div class="detail-label" style="vertical-align: top;">Anmerkungen: </div> 
+                        <div class="detail-value">{{ coin_data.anmerkung}}</div>
+                    </div>
+                    {% endif %}
+                    {% comment %} <div class="detail-separator"></div>
+                    <div class="detail-row">
+                        <div class="detail-label"><a href="#" onclick="toggle_visibility('logs');">Metadaten:</a></div>
+                        <div class="detail-value"></div>
+                    </div>
+                    <div class="detail-row" id="logs" style="visibility:hidden">
+                        <div class="detail-value" >
+                            <ul>
+                    {% for logentry in coin_data.logentries %}
+                                <li>{{logentry.action_time|date:"d.m.Y"}}: {{logentry.user}}
+                                </li>
+                                
+                    {% endfor %}  
+                            </ul>
+                        </div>
+                    </div>           {% endcomment %}
+                </div>
+            </div>
+            
+            <div class="col-sm-12 col-md-8 col-lg-8 col-xl-8 pt-2 align-top-center">
+            <div class="row"></div>
+            <div class="row">
+                
+                {% with bild_urls=coin_data.bild_urls %}
+                    {% if bild_urls %}
+                        <div class="col-md-6">
+                            <div class="item" data-src="{{ bild_urls.av }}">
+                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.av }}" alt="Avers" class="lazyload img-fluid"></a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="item" data-src="{{ bild_urls.rv }}">
+                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.rv }}" alt="Revers" class="lazyload img-fluid"></a>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            
+                        
+            <div class="row">
+                <div class="col-md-6 p-2 text-center">
+                    <hr width="80%">
+                    
+                    {% if coin_data.avleg %}
+                        <a href="/browse/?q={{coin_data.avleg|default:"-"}}">{{coin_data.avleg|default:"-"}}</a>
+                    {% endif %}
+                    <br>
+                    
+                    {% if coin_data.av_bildtyp %}
+                    <a href="/browse/?av_bildtyp={{ coin_data.av_bildtyp.id }}" title="Durchsuchen">{{coin_data.av_bildtyp}}</a>{% if coin_data.av_beizeichen_display or coin_data.av_offizin_display %}, {% endif %}
+                    {% endif %}
+                    {% if coin_data.av_beizeichen_display %}
+                        <a href="/browse/?av_beizeichen={{coin_data.av_beizeichen.id|default:"-"}}">{{coin_data.av_beizeichen_display}}</a>
+                    {% endif %}
+                    {% if coin_data.av_offizin_display %}
+                        {% if coin_data.av_beizeichen_display %}, {% endif %}
+                        <a href="/browse/?av_offizin={{coin_data.av_offizin.id|default:"-"}}">{{coin_data.av_offizin_display}}</a>
+                    {% endif %}
+
+                    
+                    
+                        
+                    <!-- <hr width="80%"> -->
+                    
+                    
+                    <div class="tags">
+                        <!-- {% if coin_data.Ppl %}
+                        {% endif %} -->
+                        {% comment %} {% if 'Wappen' in coin_data.av_bildtyp.name %} Wappen: {% endif %}
+                        {% if 'Wappen' in coin_data.av_bildtyp.name %} Wappen: {% endif %} {% endcomment %}
+                        
+                        {% for i in coin_data.wappen %}
+                                {% if i.appears_on_rev == 0 %}
+                                    
+                                    🛡{{ i.wappen.name }}
+                                    {% comment %} <a href="/browse/?wappen={{ i.wappen.name }}" title="Durchsuchen" rel="tag">{{ i.wappen.name }}</a> {% endcomment %}
+                                    <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
+                                {% endif %}
+                                {% if forloop.last %} <br> {% endif %}
+                        {% endfor %}
+                        
+                        {% for i in coin_data.personen %}
+                                {% if i.appears_on_rev == 0 and i.idfk_PersonFunktion.id == 2 %}
+                                    <a href="/browse/?Ppl={{ i.idfk_Person.name }}" title="Durchsuchen" rel="tag">{{ i.idfk_Person.name }}</a>
+                                    <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
+                                    
+                                {% endif %}
+                        {% endfor %}
+                        {% for schlagwort in coin_data.av_schlagworte %}
+                        <a href="/browse/?av_schlagwort={{ schlagwort.schlagwort.name }}" title="Durchsuchen" rel="tag">{{ schlagwort.schlagwort }}</a>
+                        {% endfor %}
+                        {% if coin_data.av_bildrand %}
+                        <a href="/browse/?av_bildrand={{ coin_data.av_bildrand.id }}" title="Durchsuchen" rel="tag">{{coin_data.av_bildrand}}</a>
+                        {% endif %}
+                    </div>
+
+                    
+                    
+                </div>
+                
+                <div class="col-md-6 p-2 text-center">
+                    <hr width="80%">
+                    
+                    {% if coin_data.rvleg %}
+                        <a href="/browse/?q={{coin_data.rvleg|default:"-"}}">{{coin_data.rvleg|default:"-"}}</a>
+                    {% endif %}
+                    <br>
+                    
+                    {% if coin_data.rv_bildtyp %}
+                    <a href="/browse/?rv_bildtyp={{ coin_data.rv_bildtyp.id }}" title="Durchsuchen">{{coin_data.rv_bildtyp}}</a>{% if coin_data.rv_beizeichen_display or coin_data.rv_offizin_display %}, {% endif %}
+                    {% endif %}
+                    {% if coin_data.rv_beizeichen_display %}
+                        <a href="/browse/?rv_beizeichen={{coin_data.rv_beizeichen.id|default:"-"}}">{{coin_data.rv_beizeichen_display}}</a>
+                    {% endif %}
+                    {% if coin_data.rv_offizin_display %}
+                        {% if coin_data.rv_beizeichen_display %}, {% endif %}
+                        <a href="/browse/?rv_offizin={{coin_data.rv_offizin.id|default:"-"}}">{{coin_data.rv_offizin_display}}</a>
+                    {% endif %}
+                    
+                    
+                    <div class="tags">
+                        <!-- {% if coin_data.Ppl %}
+                        {% endif %} -->
+                        {% comment %} {% if 'Wappen' in coin_data.rv_bildtyp.name %} Wappen: {% endif %}
+                        {% if 'Wappen' in coin_data.rv_bildtyp.name %} Wappen: {% endif %} {% endcomment %}
+                        {% for i in coin_data.wappen %}
+                                {% if i.appears_on_rev == 1 %}
+                                    
+                                    🛡{{ i.wappen.name }}
+                                    {% comment %} <a href="/browse/?wappen={{ i.wappen.name }}" title="Durchsuchen" rel="tag">{{ i.wappen.name }}</a> {% endcomment %}
+                                    <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
+                                {% endif %}
+                                {% if forloop.last %} <br> {% endif %}
+                        {% endfor %}
+                        {% for i in coin_data.personen %}
+                                {% if i.appears_on_rev == 1 and i.idfk_PersonFunktion.id == 2 %}
+                                    <a href="/browse/?Ppl={{ i.idfk_Person.name }}" title="Durchsuchen" rel="tag">{{ i.idfk_Person.name }}</a>
+                                    <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
+                                    
+                                {% endif %}
+                        {% endfor %}
+                        {% for schlagwort in coin_data.rv_schlagworte %}
+                            <a href="/browse/?rv_schlagwort={{ schlagwort.schlagwort.name }}" title="Durchsuchen" rel="tag">{{ schlagwort.schlagwort }}</a>
+                        {% endfor %}
+                        {% if coin_data.rv_bildrand %}
+                            <a href="/browse/?rv_bildrand={{ coin_data.rv_bildrand.id }}" title="Durchsuchen" rel="tag">{{coin_data.rv_bildrand}}</a>
+                        {% endif %}
+                    </div>
+
+                   
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% include "slg/modal.html" %}
+{% endblock content %}
+{% block scripts %}
+    {{block.super}}
+    <script src="{% static 'Djangoprojekt/js/lightgallery-all.min.js'%}"></script>
+    <script src="{% static 'Djangoprojekt/js/jquery.mousewheel.min.js'%}"></script>
+    <script type="text/javascript">
+        $(document).ready(function(e){
+            $('#captions').lightGallery({
+                selector: '.item',
+                showThumbByDefault: false,
+                preload: 2,
+            });
+        });
+        $('#theModal').on('show.bs.modal', function (e) {
+        var button = $(e.relatedTarget);
+        var modal = $(this);
+        modal.find('.modal-title').text(button.data("title"));
+        modal.find('.modal-body').load(button.data("remote"));
+        modal.find(".modal-footer a").attr("href", button.data("footer"));
+        });
+        $("#theModal").on('hidden', function () {
+            $(this).data('bs.modal', null);
+        });
+        function toggle_visibility(id) {
+        var e = document.getElementById(id);
+        e.style.visibility = ((e.style.visibility!='hidden') ? 'hidden' : 'visible');
+        }
+  </script>
+    
+
+{% endblock scripts %}

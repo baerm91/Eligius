@@ -1,0 +1,42 @@
+{% extends 'slg/navbar.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Excel-Daten anhand von OCRE-Links anreichern</h2>
+    <p>Hier können Sie eine <code>.xlsx</code> Datei hochladen, in der OCRE-Links stehen. Das System sucht den passenden
+        Münztyp in der Datenbank und fügt die Felder <strong>Av-Beschreibung, Rv-Beschreibung, Workflowschritt und
+            Münztyptitel</strong> in neue Spalten ein.</p>
+
+    {% if messages %}
+    <div class="mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show"
+            role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <form action="{% url 'excel_ocre_enrich' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="excel_file" class="form-label">Wählen Sie eine .xlsx Datei</label>
+                    <input class="form-control" type="file" id="excel_file" name="excel_file" accept=".xlsx" required>
+                </div>
+                <div class="mb-3">
+                    <label for="ocre_column" class="form-label">Spaltenname der OCRE-Links <small
+                            class="text-muted">(genau so wie in der Excel 1. Zeile geschrieben)</small></label>
+                    <input type="text" class="form-control" id="ocre_column" name="ocre_column"
+                        placeholder="z.B. OCRE-Link oder URI" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Datei anreichern und herunterladen</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

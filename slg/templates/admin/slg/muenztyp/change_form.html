@@ -1,0 +1,110 @@
+{% extends 'admin/change_form.html' %}
+
+{% block submit_buttons_top %}
+    {{ block.super }}
+    <div class="submit-row">
+            <a href="https://docs.google.com/document/d/16rBGQX2GNfjsvODTmS5Q4aagxKB-tLSehmIi5glQiAI/edit?usp=sharing#heading=h.teqqwajur7zl" target="_blank"><input type="button" value="Handbuch"/></a>
+    </div>
+
+{% endblock %}
+{% block submit_buttons_bottom %}
+    {{ block.super }}
+    <div class="submit-row">
+            <input type="submit" value="Download Münztyp" name="_download_infos">
+    </div>
+
+{% endblock %}
+
+{% block admin_change_form_document_ready %}
+{{ block.super }}
+
+<script type="text/javascript">
+    
+    document.getElementById("add_id_Konkordanz").onclick = function() {
+        var add_konkordanz_url = document.getElementById("add_id_Konkordanz").href;
+        var avleg = document.getElementById("id_avleg");
+        var av_bildtyp = document.getElementById("id_av_bildtyp");
+        var rvleg = document.getElementById("id_rvleg");
+        var rv_bildtyp = document.getElementById("id_rv_bildtyp");
+        var titel = document.getElementById("id_titel");
+        var Objekttyp = document.getElementById("id_Objekttyp");
+        var Muenzstand = document.getElementById("id_Muenzstand");
+        var Reichskreis = document.getElementById("id_Reichskreis");
+        var Mzstaette = document.getElementById("id_Mzstaette");
+        var region = document.getElementById("id_region");
+        var Nominal = document.getElementById("id_Nominal");
+        var Metall = document.getElementById("id_Metall");
+        var dat_verb = document.getElementById("id_dat_verb");
+        var dat_von = document.getElementById("id_dat_von");
+        var dat_bis = document.getElementById("id_dat_bis");
+        var av_beizeichen = document.getElementById("id_av_beizeichen");
+        var rv_beizeichen = document.getElementById("id_rv_beizeichen");
+        var rand = document.getElementById("id_rand");
+        var search = "";
+        if (avleg.value){
+            search = search + "&avleg=" + avleg.value;
+        }
+        if (av_bildtyp.value){
+            search = search + "&av_bildtyp=" + av_bildtyp.value;
+        }
+        if (rvleg.value){
+            search = search + "&rvleg=" + rvleg.value;
+        }
+        if (rv_bildtyp.value){
+            search = search + "&rv_bildtyp=" + rv_bildtyp.value;
+        }
+        if (titel.value){
+            search = search + "&titel=" + titel.value;
+        }
+        if (Muenzstand.value){
+            search = search + "&Muenzstand=" + Muenzstand.value;
+        }
+        if (Reichskreis.value){
+            search = search + "&Reichskreis=" + Reichskreis.value;
+        }
+        if (Objekttyp.value){
+            search = search + "&Objekttyp=" + Objekttyp.value;
+        }
+        if (Mzstaette.value){
+            search = search + "&Mzstaette=" + Mzstaette.value;
+        }
+        if (region.value){
+            search = search + "&region=" + region.value;
+        }
+        if (Nominal.value){
+            search = search + "&Nominal=" + Nominal.value;
+        }
+        if (Metall.value){
+            search = search + "&Metall=" + Metall.value;
+        }
+        if (dat_verb.value){
+            search = search + "&dat_verb=" + dat_verb.value;
+        }
+        if (dat_von.value){
+            search = search + "&dat_von=" + dat_von.value;
+        }
+        if (dat_bis.value){
+            search = search + "&dat_bis=" + dat_bis.value;
+        }
+        if (av_beizeichen.value){
+            search = search + "&av_beizeichen=" + av_beizeichen.value;
+        }
+        if (rv_beizeichen.value){
+            search = search + "&rv_beizeichen=" + rv_beizeichen.value;
+        }
+        if (rand.value){
+            search = search + "&rand=" + rand.value;
+        }
+        document.getElementById("add_id_Konkordanz").href = add_konkordanz_url + search;
+        
+    };
+
+    
+
+
+
+   
+    
+</script>
+
+{% endblock %}

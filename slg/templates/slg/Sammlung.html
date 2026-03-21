@@ -1,0 +1,339 @@
+{% extends 'slg/navbar.html' %}
+{% block title %}Eligius - Sammlung{% endblock title %}
+{% load static %}
+{% block stylesheets %}
+    {{ block.super }}
+    <style>
+      
+      
+      
+      html {
+        height: 100%;
+      }
+      
+      body {
+        height: inherit;
+        display: flex;
+        flex-direction: column;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+    
+      div.header h1 {
+        display: block;
+        text-align: center;
+      }
+
+      div.header h2 {
+        font-size: 1.1em;
+        font-weight: 400;
+        color: #cfd7de;
+        max-width: 30rem;
+        margin: auto;
+      }
+      
+      div.header h3 {
+        display: block;
+        text-align: center;
+        margin-top: 2rem;
+      }
+      
+      div.item {
+        display: flex;
+        flex: auto;
+        overflow-y: auto;
+        padding: 0rem 1rem 0rem 1rem;
+      }
+      
+      #timeline {
+        position: relative;
+        display: table;
+        height: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 2rem;
+      }
+
+      {% comment %} Vertikale Linie {% endcomment %}
+      #timeline div:after {
+        content: "";
+        width: 1px;
+        position: absolute;
+        top: 0.5rem;
+        bottom: 0rem;
+        left: 58.5px;
+        z-index: 2;
+        background: #C5C5C5;
+      }
+      #timeline h3 {
+        position: -webkit-sticky;
+        position: sticky;
+        
+        color: #888;
+        margin: 0;
+        font-size: 1em;
+        font-weight: 400;
+      }
+      
+      #timeline section.year {
+        position: relative;
+      }
+      
+      #timeline section.year section {
+        position: relative;
+        padding-bottom: 1.25em;
+        margin-bottom: 1.2em;
+      }
+      #timeline section.year section h4 {
+        position: absolute;
+        bottom: 0;
+        font-size: 0.9em;
+        font-weight: 400;
+        line-height: 1.2em;
+        margin: 0;
+        padding: 0 0 0 89px;
+        color: #C5C5C5;
+      }
+      #timeline section.year section h6 {
+        position: absolute;
+        
+        font-size: 0.9em;
+        font-weight: 400;
+        
+        color: #C5C5C5;
+      } 
+      
+      #timeline section.year section ul {
+        list-style-type: none;
+        padding: 0 0 0 75px;
+        margin: -1.35rem 0 1em;
+        max-width: 50rem;
+      }
+      
+      #timeline section.year section ul:last-child {
+        margin-bottom: 0;
+      }
+      #timeline section.year section ul:first-of-type:after {
+        content: "";
+        width: 10px;
+        height: 10px;
+        background: #C5C5C5;
+        border: 2px solid #FFFFFF;
+        -webkit-border-radius: 50%;
+        -moz-border-radius: 50%;
+        -ms-border-radius: 50%;
+        border-radius: 50%;
+        position: absolute;
+        left: 54px;
+        top: 5px;
+        z-index: 2;
+      }
+      #timeline section.year section ul li {
+        margin-left: 1rem;
+      }
+      #timeline section.year section ul li:before {
+        content: "•";
+        margin-left: -0.8rem;
+        {% comment %} padding-right: 0.5rem; {% endcomment %}
+      }
+      #timeline section.year section ul li:not(:first-child) {
+        margin-top: 0.5rem;
+      }
+      
+      .zeile {
+        display: flex;
+      }
+      
+      /* Loader-Animation */
+      .loader {
+        border: 5px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 5px solid #3498db;
+        width: 50px;
+        height: 50px;
+        -webkit-animation: spin 2s linear infinite;
+        animation: spin 2s linear infinite;
+        margin: 20px auto;
+      }
+
+      @-webkit-keyframes spin {
+        0% { -webkit-transform: rotate(0deg); }
+        100% { -webkit-transform: rotate(360deg); }
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      </style>
+      
+        
+{% endblock stylesheets %}
+{% block content %}
+{% comment %} {% load qurl %} {% endcomment %}
+{% load slg_extras %}
+
+<div class="container">
+  <p>
+  <img src="{{Sammlung.cover}}" class="img-fluid rounded" alt="Responsive image">
+  </p>
+</div>
+<br>
+<div class="container">
+  <div class="header">
+    
+    <h1>{{Sammlung.name}}</h1>
+    {{Sammlung.beschreibung}}
+  </div>
+</div>
+<br>
+<div class="container">
+  <div class="header">
+    
+    <h3 id="timeline-title">Geschichte der Münzsammlung</h3>
+    {% comment %} <h2>A timeline that shows bitcoin History from the idea all the way to present day.</h2> {% endcomment %}
+  </div>
+  <div class="item">
+    <div id="timeline">
+      <div id="timeline-content">
+        <!-- Hier werden die Zeitleisten-Informationen dynamisch eingefügt -->
+        <div class="loader"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% include "slg/modal.html" %}
+{% endblock content %}
+{% block scripts %}
+  {{block.super}}
+  <script type="text/javascript">
+    // Modal-Funktionalität
+    $('#theModal').on('show.bs.modal', function (e) {
+      var button = $(e.relatedTarget);
+      var modal = $(this);
+      modal.find('.modal-title').text(button.data("title"));
+      modal.find('.modal-body').load(button.data("remote"));
+      modal.find(".modal-footer a").attr("href", button.data("footer"));
+    });
+    
+    function toggle_visibility(id) {
+      var e = document.getElementById(id);
+      e.style.visibility = ((e.style.visibility!='hidden') ? 'hidden' : 'visible');
+    }
+
+    // Timeline-Daten über REST-API laden
+    async function loadTimelineData() {
+      try {
+        // API URL mit Sammlungs-ID
+        const apiUrl = `/api/ereignisse/?sammlung={{ Sammlung.id }}`;
+        
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Optional: Setze den Titel der Zeitleiste
+        if (data.title) {
+          document.getElementById('timeline-title').innerText = data.title;
+        }
+        
+        // Timeline-Inhalt erstellen
+        const timelineContent = document.getElementById('timeline-content');
+        let currentYear = null;
+        let timelineHTML = '';
+        let sectionOpen = false;
+        
+        // Bestimmen, welches Array von Ereignissen zu verwenden ist
+        const events = data.ereignisse || [];
+        
+        if (events.length > 0) {
+          events.forEach((info, index) => {
+            const year = info.dat_von;
+            
+            // Wenn ein neues Jahr beginnt, schließe die vorherige Sektion und öffne eine neue
+            if (year !== currentYear) {
+              if (sectionOpen) {
+                timelineHTML += '</ul></section></section>';
+              }
+              
+              currentYear = year;
+              timelineHTML += `<section class="year">
+                <h3>${year}</h3>
+                <section>
+                  <ul>`;
+              sectionOpen = true;
+            }
+            
+            // Referenzen formatieren
+            let referenzenHtml = '';
+            if (info.referenzen && info.referenzen.length > 0) {
+              referenzenHtml = info.referenzen.map((ref, i) => 
+                `${i > 0 ? ', ' : ''}<abbr title="${ref.zitat || ''}"><small>${ref.name}${ref.nummer ? ', ' + ref.nummer : ''}</small></abbr>`
+              ).join('');
+            }
+            
+            // Personen formatieren
+            let personenHtml = '';
+            if (info.personen && info.personen.length > 0) {
+              personenHtml = info.personen.map(person => 
+                `<a href="#theModal" data-title="${person.name}" data-remote="/slg/person/${person.id}/" 
+                 data-footer="/admin/slg/person/${person.id}/change/" data-toggle="modal" 
+                 data-target="#theModal" class="badge badge-info" title="Person">${person.name}</a>`
+              ).join(' ');
+            }
+            
+            // Füge die Information hinzu
+            timelineHTML += `<li>
+              ${info.information}<br>
+              <span style="float:right;">
+                ${referenzenHtml}<br>
+              </span>
+              <span style="text-align:left;color:#afaeae">
+                ${info.dat_verb || ''}
+              </span>
+              <p style="text-align:right;color:#afaeae">
+                ${personenHtml}
+              </p>
+            </li>`;
+          });
+          
+          // Schließe die letzte Sektion
+          if (sectionOpen) {
+            timelineHTML += '</ul></section></section>';
+          }
+        } else {
+          timelineHTML = '<p>Keine Ereignisse für diese Sammlung gefunden.</p>';
+        }
+        
+        // Setze den Timeline-Inhalt
+        timelineContent.innerHTML = timelineHTML;
+        
+        // Stelle sicher, dass die Modal-Funktionalität für die neuen Elemente funktioniert
+        setupModalListeners();
+        
+      } catch (error) {
+        console.error('Fehler beim Laden der Zeitleisten-Daten:', error);
+        document.getElementById('timeline-content').innerHTML = 
+          '<p>Fehler beim Laden der Daten. Bitte versuchen Sie es später erneut.</p>';
+      }
+    }
+    
+    // Modal-Funktionalität für dynamisch hinzugefügte Elemente
+    function setupModalListeners() {
+      document.querySelectorAll('[data-target="#theModal"]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          var button = $(this);
+          var modal = $('#theModal');
+          modal.find('.modal-title').text(button.data("title"));
+          modal.find('.modal-body').load(button.data("remote"));
+          modal.find(".modal-footer a").attr("href", button.data("footer"));
+        });
+      });
+    }
+    
+    // Lade die Timeline-Daten, wenn die Seite geladen ist
+    document.addEventListener('DOMContentLoaded', loadTimelineData);
+  </script>
+{% endblock scripts %}

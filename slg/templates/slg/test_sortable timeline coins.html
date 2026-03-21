@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SortableJS Geteilte Liste</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .list-container {
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #ffffff;
+            width: 40%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .list-container h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        li {
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: grab;
+            color: #555;
+        }
+        li:hover {
+            background-color: #f0f0f0;
+        }
+        .nested-list ul.event-sublist {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            min-height: 40px;
+            margin-top: 8px;
+            border-left: 2px dashed #e0e0e0;
+            padding-left: 10px;
+            align-items: center;
+        }
+        .nested-list > li {
+            background-color: #e9efff;
+            font-weight: bold;
+        }
+        .coin {
+            width: 35px;
+            height: 35px;
+            background-color: gold;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #4a3800;
+            border: 2px solid darkgoldenrod;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            font-weight: bold;
+            margin-bottom: 0;
+        }
+        .sortable-ghost {
+            opacity: 0.7;
+            background-color: #c8ebfb;
+        }
+        .sortable-drag {
+             opacity: 0.9 !important;
+        }
+        .arrows {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            font-size: 2.5rem;
+            color: #888;
+            user-select: none;
+            min-width: 60px;
+        }
+        .arrows .arrow-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            font-size: 2.5rem;
+        }
+        #simpleList {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            flex-wrap: wrap;
+            min-height: 40px;
+            align-items: center;
+        }
+        #simpleList li {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="list-container">
+        <h3>Historische Ereignisse</h3>
+        <ul id="nestedListRoot" class="nested-list">
+            <li>
+                Erstes Konzil von Nicäa (325 n.Chr.)
+                <ul class="event-sublist"></ul>
+            </li>
+            <li>
+                Krönung Karls des Großen (800 n.Chr.)
+                <ul class="event-sublist"></ul>
+            </li>
+            <li>
+                Entdeckung Amerikas (1492)
+                <ul class="event-sublist"></ul>
+            </li>
+            <li>
+                Französische Revolution (1789)
+                <ul class="event-sublist"></ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="arrows">
+        <div class="arrow-row">
+            <span>&#8592;</span>
+            <span>&#8594;</span>
+        </div>
+        <div style="font-size:1rem; color:#aaa;">Drag & Drop</div>
+    </div>
+
+    <div class="list-container">
+        <h3>Münzsammlung</h3>
+        <ul id="simpleList">
+            <li class="coin">M1</li>
+            <li class="coin">M2</li>
+            <li class="coin">M3</li>
+            <li class="coin">M4</li>
+            <li class="coin">M5</li>
+            <li class="coin">M6</li>
+        </ul>
+    </div>
+
+    <script>
+        const sharedGroupName = 'shared-coins';
+
+        // Rechte einfache Liste (Münzsammlung)
+        new Sortable(document.getElementById('simpleList'), {
+            group: sharedGroupName,
+            animation: 150,
+            fallbackOnBody: true,
+            swapThreshold: 0.65
+        });
+
+        // Linke verschachtelte Liste (Historische Ereignisse)
+        const eventSublists = document.querySelectorAll('#nestedListRoot .event-sublist');
+        eventSublists.forEach(sublist => {
+            new Sortable(sublist, {
+                group: sharedGroupName,
+                animation: 150,
+                fallbackOnBody: true,
+                swapThreshold: 0.65
+            });
+        });
+    </script>
+
+</body>
+</html>

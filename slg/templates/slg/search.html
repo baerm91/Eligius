@@ -1,0 +1,95 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="search-box">
+                <h2 class="search-title">Freie Textsuche</h2>
+                
+                <form id="searchForm" method="GET" action="{% url 'slg:browse' %}">
+                    <input type="hidden" id="searchTypeField" name="search_type" value="q">
+                    
+                    <div class="search-input-group">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" class="search-input" id="searchInput" placeholder="Geben Sie Ihren Suchbegriff ein..." value="{{ request.GET.q|default:'' }}">
+                    </div>
+                    
+                    <div class="search-categories">
+                        <div class="search-category {% if not request.GET.search_type or request.GET.search_type == 'q' %}active{% endif %}" data-value="q">
+                            <i class="bi bi-card-heading"></i> Titel
+                        </div>
+                        <div class="search-category {% if request.GET.search_type == 'invnr' %}active{% endif %}" data-value="invnr">
+                            <i class="bi bi-upc"></i> Inventarnummer
+                        </div>
+                        <div class="search-category {% if request.GET.search_type == 'Muenzstaette' %}active{% endif %}" data-value="Muenzstaette">
+                            <i class="bi bi-building"></i> Münzstätte
+                        </div>
+                        <div class="search-category {% if request.GET.search_type == 'Person' %}active{% endif %}" data-value="Person">
+                            <i class="bi bi-person"></i> Person
+                        </div>
+                        <div class="search-category {% if request.GET.search_type == 'Nominal' %}active{% endif %}" data-value="Nominal">
+                            <i class="bi bi-coin"></i> Nominal
+                        </div>
+                        <div class="search-category {% if request.GET.search_type == 'material' %}active{% endif %}" data-value="material">
+                            <i class="bi bi-circle-square"></i> Metall
+                        </div>
+                        <div class="search-category {% if request.GET.search_type == 'avleg' %}active{% endif %}" data-value="avleg">
+                            <i class="bi bi-type"></i> Avers-Legende
+                        </div>
+                        <div class="search-category {% if request.GET.search_type == 'rvleg' %}active{% endif %}" data-value="rvleg">
+                            <i class="bi bi-type"></i> Revers-Legende
+                        </div>
+                    </div>
+                    
+                    <div class="search-options mt-4 row">
+                        <div class="col-md-6 m-auto">
+                            <label for="bestimmungSelect" class="form-label text-start fw-bold text-muted small mb-1" style="font-size: 0.85em;">Bestimmungsgrad</label>
+                            <select id="bestimmungSelect" name="unbestimmt" class="form-select" style="width: 100%;">
+                                <option value="" {% if not request.GET.unbestimmt %}selected{% endif %}>Alle Objekte</option>
+                                <option value="False" {% if request.GET.unbestimmt == 'False' %}selected{% endif %}>Nur bestimmte Objekte</option>
+                                <option value="True" {% if request.GET.unbestimmt == 'True' %}selected{% endif %}>Nur unbestimmte Objekte</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="search-button">
+                        <i class="bi bi-search"></i> Suchen
+                    </button>
+                </form>
+                
+                <div class="search-tip">
+                    <i class="bi bi-lightbulb-fill"></i>
+                    <strong>Tipp:</strong> Wählen Sie eine Suchkategorie für präzisere Ergebnisse oder nutzen Sie die erweiterten Filter für komplexe Suchen.
+                </div>
+                
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="collapse" data-target="#advancedFilters">
+                        <i class="bi bi-sliders"></i> Erweiterte Filter anzeigen
+                    </button>
+                </div>
+            </div>
+
+            <div id="advancedFilters" class="collapse">
+                <!-- Hier kommen die erweiterten Filter -->
+                <div class="advanced-filters-box">
+                    <h3>Erweiterte Filteroptionen</h3>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="dateRangeStart">Zeitraum von:</label>
+                                <input type="number" class="form-control" id="dateRangeStart" name="date_from" placeholder="z.B. -100">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="dateRangeEnd">bis:</label>
+                                <input type="number" class="form-control" id="dateRangeEnd" name="date_to" placeholder="z.B. 500">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Weitere Filter hier -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

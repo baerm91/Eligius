@@ -1,0 +1,52 @@
+{% extends 'slg/navbar.html' %}
+{% load static %}
+
+{% block title %}Eligius - Über uns{% endblock title %}
+
+{% block stylesheets %}
+    {{ block.super }}
+    {% include 'slg/styles.html' %}
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="about-header text-center mb-5">
+                <h1>Über Eligius</h1>
+                <p class="lead">Eine Plattform für numismatische Sammlungen aus Österreich</p>
+            </div>
+            
+            <div class="about-section mb-5">
+                <h2>Das Projekt</h2>
+                <p>Eligius wurde von Martin Baer und Wolfgang Szaivert ins Leben gerufen – aus dem Wunsch heraus, eine digitale Lösung zu schaffen, die sich den besonderen Anforderungen numismatischer Sammlungen anpasst. Münzsammlungen von großer historischer Bedeutung lagern in österreichischen Klöstern, Museen und öffentlichen Einrichtungen – doch oft bleiben sie wenig bekannt und schwer zugänglich. Unsere Mission ist es, das zu ändern, indem wir eine Plattform bieten, die flexibel anpassbar ist. So können auch Sammlungen mit begrenzten Mitteln ihre Münzen umfassend digital erschließen und langfristig sichern. Bereits jetzt umfasst Eligius bedeutende Bestände aus öffentlichen und klösterlichen Sammlungen.</p>
+            </div>
+            
+            <div class="about-section mb-5">
+                <h2>Unsere Vision</h2>
+                <p>Wir wollen Eligius weiterentwickeln zu einer Sammlung, die jede Münze als Teil eines größeren Geflechts aus Geschichte, Wirtschaft und Kultur zeigt. Statt nur Material oder Prägung zu beschreiben, soll die Datenbank künftig Verknüpfungen sichtbar machen – zu den Ereignissen hinter ihrer Entstehung, den Zielen der Münzstätten und dem Alltag der Menschen, die sie in Händen hielten. Ziel ist es, jede Münze zu einem Fenster in ihre Zeit zu machen, das über das Prägeprogramm hinausreicht und sie mit den Strömungen ihrer Epoche verbindet.</p>
+            </div>
+            
+            <div class="about-section mb-5">
+                <h2>Zusammenarbeit</h2>
+                <p>Wir denken an die Zukunft: Gemeinsam mit den Sammlungen entwickeln wir Eligius kontinuierlich weiter und passen es an ihre Bedürfnisse an. Das Projekt lebt vom Austausch mit numismatischen Einrichtungen, Forschenden und Begeisterten. Durch die Zusammenarbeit entstehen Synergien, die Insellösungen vermeiden und einen Mehrwert für die Öffentlichkeit schaffen.</p>
+            </div>
+            
+            <div class="about-section mb-5">
+                <h2>Partner</h2>
+                <p>Eligius wird unterstützt durch die Expertise der Landessammlungen Niederösterreich, des Instituts für Numismatik und Geldgeschichte der Universität Wien und der Universität für Weiterbildung Krems.</p>
+            </div>
+            
+            <div class="about-section">
+                <h2>Mitmachen</h2>
+                <p>Wir laden alle österreichischen Sammlungen – klösterliche wie öffentliche – ein, sich uns anzuschließen, um ihre Objekte gemeinsam mit anderen auf Eligius zu präsentieren und den Zugang zu diesen numismatischen Zeugnissen zu öffnen. Haben Sie Fragen oder möchten Sie teilnehmen? Kontaktieren Sie uns unter <a href="mailto:martin.baer@donau-uni.ac.at">martin.baer@donau-uni.ac.at</a>.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+    {{ block.super }}
+    {% include 'slg/scripte.html' with active_block='jsnavbar' %}
+{% endblock scripts %}

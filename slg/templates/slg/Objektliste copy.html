@@ -1,0 +1,182 @@
+{% extends 'slg/navbar.html' %}
+{% block content %}
+{% load qurl %}
+{% load slg_extras %}
+
+Anzahl der Datensätze: {{ Anzahl }}
+<form method="GET" action=".">
+  <div class="input-group">
+  {% comment %} <div class="form-group"> {% endcomment %}
+    
+    {% comment %} <span class="input-group-btn">
+      <select id="searchdd" class="btn">
+        <option selected="" value="q">All</option>
+        <option value="q">Titel, Inv.-Nr.</option>
+        <option value="avleg">Av.-Legende</option>
+        <option value="avbeschr">Av.-Beschreibung</option>
+        <option value="rvleg">Rv.-Legende</option>
+        <option value="rvbeschr">Rv.-Beschreibung</option>
+      </select>
+    </span> {% endcomment %}
+    <input id="search" type="text" class="form-control" name="q" placeholder="Suche...">
+  </div>
+  
+      {% comment %} <input class="form-control" id="Avbildtypen" type="text" placeholder="{{Avtypes|length}} Av.-Bildtypen...."> {% endcomment %}
+    <div class="form-group">
+      <label for="AvFormControlSelect2">{{Avtypes|length}} Av.-Bildtypen....
+      {% if Avtypes|length > 6 %}
+          <select name="av_bildtyp" multiple="multiple" class="js-example-basic-single" id="AvFormControlSelect2" size="9">
+      {% else %}
+          <select name="av_bildtyp" multiple="multiple" class="js-example-basic-single" id="AvFormControlSelect2" size="{{Avtypes|length}}"  style="overflow:hidden">
+      {% endif %}
+          {% for Avtype in Avtypes %}
+                      {% if Avtype.av_bildtyp__name in request.GET|get_list:'av_bildtyp' %}
+                      <option id="{{ Avtype.av_bildtyp__id }}" value="{{Avtype.av_bildtyp__id}}" selected>{{Avtype.av_bildtyp__name}} ({{Avtype.cc}})</option>
+                      {% else %}
+                      <option id="{{ Avtype.av_bildtyp__id }}" value="{{Avtype.av_bildtyp__id}}">{{Avtype.av_bildtyp__name}} ({{Avtype.cc}})</option>
+                      {% endif %}
+          {% endfor %}
+          </select>
+      </label>
+    </div>
+    <div class="form-group">
+      <label for="RvFormControlSelect2">{{Rvtypes|length}} Rv.-Bildtypen....
+      {% comment %} <input class="form-control" id="Rvbildtypen" type="text" placeholder="{{Rvtypes|length}} Rv.-Bildtypen...."> {% endcomment %}
+      {% if Rvtypes|length > 6 %}
+          <select name="rv_bildtyp" multiple="multiple" class="js-example-basic-single" id="RvFormControlSelect2" size="9">
+      {% else %}
+          <select name="rv_bildtyp" multiple="multiple" class="js-example-basic-single" id="RvFormControlSelect2" size="{{Rvtypes|length}}"  style="overflow:hidden">
+      {% endif %}
+          {% for Rvtype in Rvtypes %}
+                      {% if Rvtype.rv_bildtyp__name in request.GET|get_list:'rv_bildtyp' %}
+                      <option id="{{ Rvtype.rv_bildtyp__id }}" value="{{Rvtype.rv_bildtyp__id}}" selected>{{Rvtype.rv_bildtyp__name}} ({{Rvtype.cc}})</option>
+                      {% else %}
+                      <option id="{{ Rvtype.rv_bildtyp__id }}" value="{{Rvtype.rv_bildtyp__id}}">{{Rvtype.rv_bildtyp__name}} ({{Rvtype.cc}})</option>
+                      {% endif %}
+          {% endfor %}
+          </select>
+      </label>
+    </div>
+  {% include 'slg/filter-tags.html' %}
+
+{% comment %} value wurde als string übergeben und nicht als array wie gewünscht
+<form class='form-horizontal' role='form' method="GET" action=".">
+  <div class='form-group'>
+    <div class='col-xs-9'>
+      <input class='form-control input-lg js-tag-input' name="q" id='tag-input-33' placeholder='Suche im Titel' type='text'>
+    </div>
+    
+    <div class='col-xs-3'>
+      <button class='btn btn-primary btn-lg btn-block check' type='submit'>
+      Send
+      </submit>
+    </div>
+  </div>
+</form> {% endcomment %}
+
+
+{% comment %} <form method="GET" action="."> {% endcomment %}
+  
+    
+  
+  {% comment %} <input type="submit" class="btn btn-primary">
+</form>
+<form method="GET" action="."> {% endcomment %}
+  {% comment %} <div class="form-row">
+    <div class="col">
+    
+      <input id="search" type="search" class="form-control" name="q" value="" placeholder="Suche...">
+      <button class="btn-search" type="button" type="submit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                  <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path>
+                </svg>
+              </button>
+    </div>
+  </div> {% endcomment %}
+  {% comment %} <div class="form-row">
+    <div class="col">
+    
+      <input type="search" class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Suche...">
+      
+    </div>
+  </div> {% endcomment %}
+  {% comment %} <div class="form-row">
+    {% for field in Form %}
+      <div class="col fieldWrapper">
+          {{ field.label_tag }}<br> {{ field }}
+      </div>
+    {% endfor %}
+  </div> {% endcomment %}
+  
+  
+
+  {% comment %} <button type="submit" class="btn btn-primary">Suche</button> {% endcomment %}
+{% comment %} {{Form.as_p}} {% endcomment %}
+{% comment %} </form> {% endcomment %}
+
+
+
+{% comment %} <label for="id_label_single">
+  Click this to highlight the single select element
+
+  <select class="js-example-basic-single js-states form-control" id="id_label_single"></select>
+</label> {% endcomment %}
+
+{% comment %} <div class="site-section"> {% endcomment %}
+    <div class="container-fluid" >
+      {% comment %} <div class="row" id="captions" data-aos="zoom-in" data-aos-duration="4000" data-aos-delay="1500" > {% endcomment %}
+      <div class="row">
+        <div class="col-md-9">
+          <div class="row infinite-container" id="captions">
+            {% for Obj in Objekte %}
+                <div class="col-sm-6 col-md-4 col-lg-3 col-xl-3 pt-3 pb-3 align-self-center infinite-item">
+                  
+                      <div class="hovereffect">
+                        {% comment %} <div class="item" data-aos="fade-up" data-aos-offset="400" data-src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{Obj.img}}Av.jpg" data-sub-html="Avers: Inv.-Nr. {{Obj.invnr}}, {{Obj.durchmesser|default:"-"}} mm, {{Obj.gewicht|default:"-"}} g, {{Obj.stempelstellung|default:"-"}} h"> {% endcomment %}
+                        
+                        {% if Obj.idfk_SlgTeil_id == 2 %}
+                          <div data-src="{{Obj.idfk_SlgTeil.bildurl}}{{Obj.img}}a00.jpg">
+                              {% comment %} <a href="/slg/{{Obj.id}}/"><img src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{Obj.img}}Av.webp" alt="thumbnail" class="img-fluid"> {% endcomment %}
+                              <a href="{{Obj.get_absolute_url}}"><img src="{{Obj.idfk_SlgTeil.bildurl}}thumbails/{{Obj.img}}a00.webp" alt="thumbnail" class="img-fluid">
+                              </a>
+                          </div>    
+                          <div data-src="{{Obj.idfk_SlgTeil.bildurl}}{{Obj.img}}r00.jpg">
+                                <a href="{{Obj.get_absolute_url}}"><img src="{{Obj.idfk_SlgTeil.bildurl}}thumbails/{{Obj.img}}r00.webp" alt="thumbnail" class="img-fluid"></a>
+                            </div>
+                            <div class="align-self-bottom">{{Obj.titel}}, {{ Obj.dat_verb }}</div>
+                          </div> 
+                        {% else %}
+                          <div data-src="http://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{Obj.img}}Av.jpg">
+                              {% comment %} <a href="/slg/{{Obj.id}}/"><img src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{Obj.img}}Av.webp" alt="thumbnail" class="img-fluid"> {% endcomment %}
+                              <a href="{{Obj.get_absolute_url}}"><img src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{Obj.img}}Av.webp" alt="thumbnail" class="img-fluid">
+                              </a>
+                          </div>    
+                          <div data-src="http://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{Obj.img}}Rv.jpg">
+                                <a href="{{Obj.get_absolute_url}}"><img src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{Obj.img}}Rv.webp" alt="thumbnail" class="img-fluid"></a>
+                            </div>
+                            <div class="align-self-bottom">{{Obj.titel}}, {{ Obj.dat_verb }}</div>
+                          </div> 
+
+                        {% endif %}
+                        
+                        {% comment %} <div class="item" data-aos="fade-up" data-aos-offset="400" data-src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{Obj.img}}Rv.jpg" data-sub-html="Revers: Inv.-Nr. {{Obj.invnr}}, {{Obj.durchmesser|default:"-"}} mm, {{Obj.gewicht|default:"-"}} g, {{Obj.stempelstellung|default:"-"}} h"> {% endcomment %}
+                      
+                </div>
+            {% empty %}
+              <p>Keine Objekte gefunden.</p>
+            {% endfor %}
+          </div>
+          {% if Objekte.has_next %}
+            <a class="infinite-more-link" href="?page={{ Objekte.next_page_number }}{{ getvars }}">More</a>
+          {% endif %}
+        </div>
+        {% include 'slg/facet-lists.html' %}
+
+      </div>
+        
+          
+    </div>
+</form>
+{% comment %} </div> {% endcomment %}
+
+{% endblock content %}

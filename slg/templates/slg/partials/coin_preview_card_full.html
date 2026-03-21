@@ -1,0 +1,226 @@
+{% load slg_extras i18n %}
+
+{% firstof obj.Typ.dat_verb obj.Typ.Metall obj.Typ.Nominal obj.Typ.Mzstaette as has_f1 %}
+{% firstof obj.typ_personen_mit_funktion obj.Typ.wappen.all obj.av_schlagworte obj.rv_schlagworte as has_f2 %}
+{% if has_f1 or has_f2 %}
+<div class="coin-preview-info hover-content">
+
+  {# 1 · Allgemeine Badges ------------------------------------ #}
+  <div class="badge-group-general mb-2">
+
+    {# Datierung #}
+    {% if obj.Typ.dat_verb %}
+    <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param dat_von=obj.Typ.dat_von dat_bis=obj.Typ.dat_bis %}"
+      class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
+      title="{{ obj.Typ.dat_verb|safe }}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="lucide lucide-calendar-days d-inline-block align-text-bottom me-1">
+        <path d="M8 2v4"></path>
+        <path d="M16 2v4"></path>
+        <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+        <path d="M3 10h18"></path>
+        <path d="M8 14h.01"></path>
+        <path d="M12 14h.01"></path>
+        <path d="M16 14h.01"></path>
+        <path d="M8 18h.01"></path>
+        <path d="M12 18h.01"></path>
+        <path d="M16 18h.01"></path>
+      </svg>
+      <small><strong>{{ obj.Typ.dat_verb|truncatechars:15|safe }}</strong></small>
+    </a>
+    {% endif %}
+
+    {# Metall #}
+    {% if obj.Typ.Metall %}
+    <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param material=obj.Typ.Metall.name %}"
+      class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
+      title="{{ obj.Typ.Metall.name|safe }}">
+      {# Consider adding a generic 'metal' or 'material' SVG icon here if you have one, with me-1 class #}
+      <small><strong>{{ obj.Typ.Metall.name|truncatechars:15|safe }}</strong></small>
+    </a>
+    {% endif %}
+
+    {# Nominal #}
+    {% if obj.Typ.Nominal %}
+    <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Nominal=obj.Typ.Nominal.name %}"
+      class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
+      title="{{ obj.Typ.Nominal.name|safe }}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="lucide lucide-coins d-inline-block align-text-bottom me-1">
+        <circle cx="8" cy="8" r="6"></circle>
+        <path d="M18.09 10.37A6 6 0 1 1 10.34 18"></path>
+        <path d="M7 6h1v4"></path>
+        <path d="m16.71 13.88.7.71-2.82 2.82"></path>
+      </svg>
+      <small><strong>{{ obj.Typ.Nominal.name|truncatechars:15|safe }}</strong></small>
+    </a>
+    {% endif %}
+
+    {# Münzstätte #}
+    {% if obj.Typ.Mzstaette %}
+    <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Muenzstaette=obj.Typ.Mzstaette.name %}"
+      class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
+      title="{{ obj.Typ.Mzstaette.name|safe }}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="lucide lucide-landmark d-inline-block align-text-bottom me-1">
+        <line x1="3" x2="21" y1="22" y2="22"></line>
+        <line x1="6" x2="6" y1="18" y2="11"></line>
+        <line x1="10" x2="10" y1="18" y2="11"></line>
+        <line x1="14" x2="14" y1="18" y2="11"></line>
+        <line x1="18" x2="18" y1="18" y2="11"></line>
+        <polygon points="12 2 20 7 4 7"></polygon>
+      </svg>
+      <small><strong>{{ obj.Typ.Mzstaette.name|truncatechars:15|safe }}</strong></small>
+    </a>
+    {% endif %}
+    {# 2 · Personen (Prägeherren & Sonstige) -------------------- #}
+    {% for person, funktion, appears_on_rev in obj.typ_personen_mit_funktion %}
+    {% if funktion.id != 2 %} {# Not "Dargestellte Person" #}
+    {% if funktion.id == 1 or funktion.id == 6 or funktion.id == 7 %} {# Prägeherren #}
+    <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Praegeherren=person.name %}"
+      class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
+      title="{{ funktion.name|safe }}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="lucide lucide-users d-inline-block align-text-bottom me-1">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+      <small><strong title="{{ person.name|safe }}">{{ person.name|truncatechars:15|safe }}</strong></small>
+    </a>
+    {% else %} {# Alle anderen Personen #}
+    <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Person=person.name %}"
+      class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
+      title="{{ funktion.name|safe }}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="lucide lucide-users d-inline-block align-text-bottom me-1">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+      <small><strong title="{{ person.name|safe }}">{{ person.name|truncatechars:15|safe }}</strong></small>
+    </a>
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+
+
+    {# 3 · Wappen (optional) ------------------------------------ #}
+    {% if obj.Typ.wappen.all %}
+    {% for w in obj.Typ.wappen.all %}
+    <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Wappen=w.name %}"
+      class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
+      title="{{ w.name|safe }}">
+      <small><strong class="me-1">🛡</strong><strong>{{ w.name|truncatechars:10|safe }}</strong></small>
+    </a>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+  {# 4 · Avers‑/Revers‑Sektionen ------------------------------------------- #}
+
+  {# ---------- A V E R S --------------------------------------------------- #}
+  {% if obj.typ_personen_mit_funktion or obj.av_schlagworte %}
+  <div class="d-flex align-items-baseline mb-1">
+    <div class="flex-shrink-0 pe-2">
+      <span
+        class="btn btn-outline-secondary btn-sm disabled rounded-pill py-0 px-1"><small><strong>Av:</strong></small></span>
+    </div>
+    <div class="flex-grow-1">
+      {# dargestellte Personen Avers #}
+      {% for p,f,appears_on_rev in obj.typ_personen_mit_funktion %}
+      {% if f.id == 2 and not appears_on_rev %}
+      <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Dargestellte_AV=p.name %}"
+        class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
+        title="{{ f.name|safe }}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="lucide lucide-users d-inline-block align-text-bottom me-1">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <small><strong title="{{ p.name|safe }}">{{ p.name|truncatechars:12|safe }}</strong></small>
+      </a>
+      {% endif %}
+      {% endfor %}
+
+      {# Schlagworte Avers #}
+      {% for kw in obj.av_schlagworte %}
+      <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param av_schlagwort=kw.name %}"
+        class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
+        title="{{ kw.name|safe }}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="lucide lucide-tags d-inline-block align-text-bottom me-1">
+          <path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"></path>
+          <path
+            d="M9.586 5.586A2 2 0 0 0 8.172 5H3a1 1 0 0 0-1 1v5.172a2 2 0 0 0 .586 1.414L8.29 18.29a2.426 2.426 0 0 0 3.42 0l3.58-3.58a2.426 2.426 0 0 0 0-3.42z">
+          </path>
+          <circle cx="6.5" cy="9.5" r=".5" fill="currentColor"></circle>
+        </svg>
+        <small><strong>{{ kw.name|truncatechars:10|safe }}</strong></small>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ---------- R E V E R S -------------------------------------------------- #}
+  {% if obj.typ_personen_mit_funktion or obj.rv_schlagworte %}
+  <div class="d-flex align-items-baseline mb-1">
+    <div class="flex-shrink-0 pe-2">
+      <span
+        class="btn btn-outline-secondary btn-sm rounded-pill disabled py-0 px-1"><small><strong>Rv:</strong></small></span>
+    </div>
+    <div class="flex-grow-1">
+      {# dargestellte Personen Revers #}
+      {% for p,f,appears_on_rev in obj.typ_personen_mit_funktion %}
+      {% if f.id == 2 and appears_on_rev %}
+      <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Dargestellte_RV=p.name %}"
+        class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
+        title="{{ f.name|safe }}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="lucide lucide-users d-inline-block align-text-bottom me-1">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <small><strong title="{{ p.name|safe }}">{{ p.name|truncatechars:12|safe }}</strong></small>
+      </a>
+      {% endif %}
+      {% endfor %}
+
+      {# Schlagworte Revers #}
+      {% for kw in obj.rv_schlagworte %}
+      <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param rv_schlagwort=kw.name %}"
+        class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
+        title="{{ kw.name|safe }}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="lucide lucide-tags d-inline-block align-text-bottom me-1">
+          <path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"></path>
+          <path
+            d="M9.586 5.586A2 2 0 0 0 8.172 5H3a1 1 0 0 0-1 1v5.172a2 2 0 0 0 .586 1.414L8.29 18.29a2.426 2.426 0 0 0 3.42 0l3.58-3.58a2.426 2.426 0 0 0 0-3.42z">
+          </path>
+          <circle cx="6.5" cy="9.5" r=".5" fill="currentColor"></circle>
+        </svg>
+        <small><strong>{{ kw.name|truncatechars:10|safe }}</strong></small>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endif %}

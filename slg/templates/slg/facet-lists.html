@@ -1,0 +1,948 @@
+{% load slg_extras %} {% include 'slg/search_form.html' %}
+
+<style>
+  /* Premium Styling for Filter Facets */
+  .facets-wrapper {
+    background: #fdfdfd;
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .facets-wrapper .accordion {
+    --bs-accordion-bg: transparent;
+    --bs-accordion-border-width: 0;
+  }
+
+  .facets-wrapper .accordion-item {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px !important;
+    margin-bottom: 8px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .facets-wrapper .accordion-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  .facets-wrapper .accordion-button {
+    font-weight: 600;
+    color: #495057;
+    padding: 1rem 1.25rem;
+    background-color: #fff;
+    box-shadow: none !important;
+  }
+
+  .facets-wrapper .accordion-button:not(.collapsed) {
+    background-color: #eef2f7;
+    color: #0d6efd;
+  }
+
+  .facets-wrapper .accordion-body {
+    padding: 1rem 1.25rem;
+    background-color: #fff;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .facets-wrapper .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .facets-wrapper .form-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .facets-wrapper label {
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .facets-wrapper h5 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .date-filter-container {
+    padding: 1rem;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+</style>
+<div class="facets-wrapper">
+  <!-- Filter Akkordeon -->
+  <div class="accordion" id="filterAccordion">
+    <!-- Sammlungen -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="sammlungenUndTeileHeading">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#sammlungenUndTeileCollapse"
+          aria-expanded="false"
+          aria-controls="sammlungenUndTeileCollapse"
+        >
+          <i class="bi bi-collection me-2 text-primary"></i>
+          Sammlungen und Sammlungsteile
+        </button>
+      </h2>
+      <div
+        id="sammlungenUndTeileCollapse"
+        class="accordion-collapse collapse"
+        aria-labelledby="sammlungenUndTeileHeading"
+        data-bs-parent="#filterAccordion"
+      >
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="SlgSelect">Sammlung</label>
+            <select
+              name="Slg"
+              class="form-control select2-filter"
+              id="SlgSelect"
+            >
+              <option value="">Alle Sammlungen</option>
+            </select>
+          </div>
+          <div class="form-group mt-3">
+            <label for="SlgteilSelect">Sammlungsteil</label>
+            <select
+              name="SlgTeil"
+              class="form-control select2-filter"
+              id="SlgteilSelect"
+              disabled
+            >
+              <option value="">Bitte zuerst eine Sammlung auswählen</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vorderseite -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="vorderseiteHeading">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#vorderseiteCollapse"
+          aria-expanded="false"
+          aria-controls="vorderseiteCollapse"
+        >
+          <i class="bi bi-front me-2 text-primary"></i>
+          Vorderseite
+        </button>
+      </h2>
+      <div
+        id="vorderseiteCollapse"
+        class="accordion-collapse collapse"
+        aria-labelledby="vorderseiteHeading"
+        data-bs-parent="#filterAccordion"
+      >
+        <div class="accordion-body">
+          <div class="form-group">
+            <label>Legende</label>
+            <input
+              type="text"
+              name="avleg"
+              class="form-control text-input-filter"
+              value="{{ request.GET.avleg }}"
+              placeholder="Suchen..."
+            />
+          </div>
+          <div class="form-group mt-3">
+            <label for="AvBildtypSelect">Beschreibungen</label>
+            <select
+              name="av_bildtyp"
+              id="AvBildtypSelect"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+          <div class="form-group mt-3">
+            <label for="AvSchlagworteFormControlSelect2">Schlagworte</label>
+            <select
+              name="av_schlagwort"
+              id="AvSchlagworteFormControlSelect2"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+          <div class="form-group mt-3">
+            <label>Dargestellte/r</label>
+            <select
+              name="Dargestellte_AV"
+              id="AvDargestellteSelect"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rückseite -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="rueckseiteHeading">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#rueckseiteCollapse"
+          aria-expanded="false"
+          aria-controls="rueckseiteCollapse"
+        >
+          <i class="bi bi-back me-2 text-primary"></i>
+          Rückseite
+        </button>
+      </h2>
+      <div
+        id="rueckseiteCollapse"
+        class="accordion-collapse collapse"
+        aria-labelledby="rueckseiteHeading"
+        data-bs-parent="#filterAccordion"
+      >
+        <div class="accordion-body">
+          <div class="form-group">
+            <label>Legende</label>
+            <input
+              type="text"
+              name="rvleg"
+              class="form-control text-input-filter"
+              value="{{ request.GET.rvleg }}"
+              placeholder="Suchen..."
+            />
+          </div>
+          <div class="form-group mt-3">
+            <label for="RvBildtypSelect">Beschreibungen</label>
+            <select
+              name="rv_bildtyp"
+              id="RvBildtypSelect"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+          <div class="form-group mt-3">
+            <label for="RvSchlagworteFormControlSelect2">Schlagworte</label>
+            <select
+              name="rv_schlagwort"
+              id="RvSchlagworteFormControlSelect2"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+          <div class="form-group mt-3">
+            <label>Dargestellte/r</label>
+            <select
+              name="Dargestellte_RV"
+              id="RvDargestellteSelect"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personen -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="personenHeading">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#personenCollapse"
+          aria-expanded="false"
+          aria-controls="personenCollapse"
+        >
+          <i class="bi bi-people me-2 text-primary"></i>
+          Personen
+        </button>
+      </h2>
+      <div
+        id="personenCollapse"
+        class="accordion-collapse collapse"
+        aria-labelledby="personenHeading"
+        data-bs-parent="#filterAccordion"
+      >
+        <div class="accordion-body">
+          <div class="form-group">
+            <h5>Münzherr/in</h5>
+            <select
+              name="Praegeherren"
+              id="PraegeherrenSelect"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+          <div class="form-group mt-3">
+            <h5>Weitere Personen</h5>
+            <select
+              name="Person"
+              id="PersonSelect"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Münzstätten -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="muenzstaettenHeading">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#muenzstaettenCollapse"
+          aria-expanded="false"
+          aria-controls="muenzstaettenCollapse"
+        >
+          <i class="bi bi-bank me-2 text-primary"></i>
+          Münzstätten
+        </button>
+      </h2>
+      <div
+        id="muenzstaettenCollapse"
+        class="accordion-collapse collapse"
+        aria-labelledby="muenzstaettenHeading"
+        data-bs-parent="#filterAccordion"
+      >
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="MzstaetteSelect">Ort</label>
+            <select
+              name="Muenzstaette"
+              id="MzstaetteSelect"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nominale -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="nominaleHeading">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#nominaleCollapse"
+          aria-expanded="false"
+          aria-controls="nominaleCollapse"
+        >
+          <i class="bi bi-coin me-2 text-primary"></i>
+          Nominale
+        </button>
+      </h2>
+      <div
+        id="nominaleCollapse"
+        class="accordion-collapse collapse"
+        aria-labelledby="nominaleHeading"
+        data-bs-parent="#filterAccordion"
+      >
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="NominalSelect">Ausprägung</label>
+            <select
+              id="NominalSelect"
+              name="Nominal"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Material -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="materialHeading">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#materialCollapse"
+          aria-expanded="false"
+          aria-controls="materialCollapse"
+        >
+          <i class="bi bi-boxes me-2 text-primary"></i>
+          Material
+        </button>
+      </h2>
+      <div
+        id="materialCollapse"
+        class="accordion-collapse collapse"
+        aria-labelledby="materialHeading"
+        data-bs-parent="#filterAccordion"
+      >
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="MaterialSelect">Beschaffenheit</label>
+            <select
+              name="material"
+              id="MaterialSelect"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Merkmale -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="merkmaleHeading">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#merkmaleCollapse"
+          aria-expanded="false"
+          aria-controls="merkmaleCollapse"
+        >
+          <i class="bi bi-tags me-2 text-primary"></i>
+          Merkmale
+        </button>
+      </h2>
+      <div
+        id="merkmaleCollapse"
+        class="accordion-collapse collapse"
+        aria-labelledby="merkmaleHeading"
+        data-bs-parent="#filterAccordion"
+      >
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="HmerkSelect">Herstellungsmerkmale</label>
+            <select
+              name="her_merk"
+              class="form-control select2-filter"
+              id="HmerkSelect"
+              multiple
+            >
+              <option value="">Alle Herstellungsmerkmale</option>
+            </select>
+          </div>
+          <div class="form-group mt-3">
+            <label for="SmerkSelect">Sekundäre Merkmale</label>
+            <select
+              name="sek_merk"
+              class="form-control select2-filter"
+              id="SmerkSelect"
+              multiple
+            >
+              <option value="">Alle sekundären Merkmale</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Literatur -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="literaturHeading">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#literaturCollapse"
+          aria-expanded="false"
+          aria-controls="literaturCollapse"
+        >
+          <i class="bi bi-book me-2 text-primary"></i>
+          Literatur
+        </button>
+      </h2>
+      <div
+        id="literaturCollapse"
+        class="accordion-collapse collapse"
+        aria-labelledby="literaturHeading"
+        data-bs-parent="#filterAccordion"
+      >
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="LiteraturSelect">Referenz</label>
+            <select
+              name="Ref"
+              id="LiteraturSelect"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wappen -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="wappenHeading">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#wappenCollapse"
+          aria-expanded="false"
+          aria-controls="wappenCollapse"
+        >
+          <i class="bi bi-shield me-2 text-primary"></i>
+          Wappen
+        </button>
+      </h2>
+      <div
+        id="wappenCollapse"
+        class="accordion-collapse collapse"
+        aria-labelledby="wappenHeading"
+        data-bs-parent="#filterAccordion"
+      >
+        <div class="accordion-body">
+          <div class="form-group">
+            <label for="WappenSelect">Bezeichnung</label>
+            <select
+              name="Wappen"
+              id="WappenSelect"
+              class="form-control select2-filter"
+              multiple
+            ></select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Datierung -->
+  <div class="date-filter-container">
+    <label>
+      <i class="bi bi-calendar-range me-2 text-primary"></i>
+      Datierung
+    </label>
+    <div class="row gx-2 mt-2">
+      <div class="col-6">
+        <input
+          type="number"
+          class="form-control text-input-filter form-control-sm"
+          id="dat_von"
+          name="dat_von"
+          step="1"
+          value="{{ request.GET.jahr_von }}"
+          placeholder="von"
+        />
+      </div>
+      <div class="col-6">
+        <input
+          type="number"
+          class="form-control text-input-filter form-control-sm"
+          id="dat_bis"
+          name="dat_bis"
+          step="1"
+          value="{{ request.GET.jahr_bis }}"
+          placeholder="bis"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Am Ende der Datei, vor dem schließenden </body> Tag -->
+<script>
+  /***************** Utilities *****************/
+  const debounce = (fn, wait = 250) => {
+      let t;
+      return (...a) => {
+          clearTimeout(t);
+          t = setTimeout(() => fn.apply(this, a), wait);
+      };
+  };
+  const q = sel => document.querySelector(sel);
+
+  /* ---------- Helper, den jedes Facet benutzt ------------------- */
+  function buildFacetUrl(facetField, extra = {}) {
+      const p = new URLSearchParams(window.location.search);
+
+      // Parameter entfernen, aber NICHT bei Kombination von Personen-Facets
+      const personFacets = ['Praegeherren', 'Dargestellte_AV', 'Dargestellte_RV', 'Person'];
+
+      if (personFacets.includes(facetField)) {
+          // Bei Personenfacetten keine anderen Personenfilter entfernen
+          // Damit das Backend die richtigen Daten für jedes Facet liefern kann
+      } else {
+          // Für andere Facettentypen nur den aktuellen Parameter entfernen
+          p.delete(facetField);
+      }
+
+      // Neue Parameter hinzufügen
+      Object.entries(extra).forEach(([k, v]) => p.set(k, v));
+      p.append('facet', facetField);
+
+      return p.toString();
+  }
+
+  /* ---------- Generic select2 autocomplete ---------------------- */
+  function initFacetAutocomplete(paramName, selectorId, placeholder, useNameAsId = false) {
+      const $sel = $(selectorId);
+      if ($sel.data('select2')) $sel.select2('destroy');
+
+      $sel.select2({
+          placeholder,
+          allowClear: true,
+          ajax: {
+              delay: 250,
+              url: () => '/api/facet/?' + buildFacetUrl(paramName),
+              data: params => ({ term: params.term }),
+              processResults: data => ({
+                  results: data.map(o => ({
+                      id: useNameAsId ? o.name : (o.id ?? o.name),
+                      text: `${o.name} (${o.count})`
+                  }))
+              }),
+              cache: true,
+              minimumInputLength: 0,
+              quietMillis: 250
+          }
+      });
+
+      /* ---- vorausgewählte Werte wiederherstellen ---------------- */
+      const current = new URLSearchParams(window.location.search).getAll(paramName);
+      $sel.find('option:not(:first)').remove();
+
+      current.forEach(val => {
+          fetch(`/api/facet/?facet=${paramName}&${paramName}=${encodeURIComponent(val)}`)
+              .then(r => r.json())
+              .then(arr => {
+                  const o = arr.find(x => String(x.id ?? x.name) === val || x.name === val);
+                  const txt = o ? `${o.name} (${o.count})` : `${val} (0)`;
+                  if ($sel.find(`option[value="${val}"]`).length === 0) {
+                      $sel.append(new Option(txt, val, true, true)).trigger('change.select2');
+                  }
+              })
+              .catch(() => {
+                  $sel.append(new Option(`${val} (0)`, val, true, true)).trigger('change.select2');
+              });
+      });
+  }
+
+  /* ---------- Slg & SlgTeil (unverändert) ----------------------- */
+  function fillSelect(sel, data, paramName) {
+      /* Fügt Datensätze in ein <select> ein und stellt bereits gewählte
+         Werte wieder her.  */
+
+      const selected = new URLSearchParams(window.location.search)
+          .getAll(paramName)                                   // Array!
+          .map(String);
+
+      /* 0) Platzhalter + Reset -------------------------------------- */
+      sel.innerHTML = '';
+      sel.appendChild(new Option('Alle …', ''));
+
+      /* 1) Haupt-Daten einfügen ------------------------------------- */
+      const returned = new Set();
+
+      data.forEach(o => {
+          const value = String(o.id ?? o.name);               // Wert immer String
+          returned.add(value);
+
+          const label = `${o.name ?? o.label ?? o.bezeichnung ?? value} (${o.count})`;
+          const isSel = selected.includes(value);
+
+          sel.appendChild(new Option(label, value, isSel, isSel));
+      });
+
+      /* 2) Fehlende, aber ausgewählte IDs nachladen ----------------- */
+      selected.forEach(v => {
+          if (returned.has(v)) return;             // ist schon drin
+
+          fetch(`/api/facet/?facet=${paramName}&${paramName}=${encodeURIComponent(v)}`)
+              .then(r => r.json())
+              .then(arr => {
+                  const o = arr.find(x => String(x.id ?? x.name) === v);
+                  const label = o ? `${o.name ?? o.label ?? o.bezeichnung ?? v} (${o.count})`
+                      : `(ID ${v}) (0)`;
+                  sel.appendChild(new Option(label, v, true, true));
+                  if (window.jQuery && $(sel).data('select2')) $(sel).trigger('change');
+              })
+              .catch(() => {
+                  sel.appendChild(new Option(`(ID ${v}) (0)`, v, true, true));
+              });
+      });
+
+      /* 3) Select2 auffrischen -------------------------------------- */
+      sel.disabled = false;
+      if (window.jQuery && $(sel).data('select2')) $(sel).trigger('change');
+  }
+
+  function loadSammlungen() {
+      fetch('/api/facet/?' + buildFacetUrl('Slg'))
+          .then(r => r.json())
+          .then(data => {
+              const sel = document.getElementById('SlgSelect');
+              fillSelect(sel, data, 'Slg');
+
+              if (window.jQuery) {
+                  const $sel = $(sel);
+                  if (!$sel.data('select2')) {
+                      $sel.select2({ placeholder: 'Sammlung wählen …' })
+                          .on('select2:select select2:unselect', onFacetChange);
+                      allowClear: true
+                  } else {
+                      $sel.trigger('change.select2');
+                  }
+              }
+
+              const v = sel.value;
+              if (v) loadSlgTeile(v);
+          })
+          .catch(e => console.error('Slg-Load-Error', e));
+  }
+
+  function loadSlgTeile(slgId) {
+      const sel = document.getElementById('SlgteilSelect');
+      sel.disabled = true;
+      sel.innerHTML = '<option>Lade …</option>';
+
+      fetch('/api/facet/?' + buildFacetUrl('SlgTeil', { Slg: slgId }))
+          .then(r => r.json())
+          .then(data => {
+              fillSelect(sel, data, 'SlgTeil');
+
+              if (window.jQuery) {
+                  const $sel = $(sel);
+                  if (!$sel.data('select2')) {
+                      $sel.select2({ placeholder: 'Sammlungsteil wählen …' });
+                  }
+                  $sel.prop('disabled', false).trigger('change.select2');
+              } else {
+                  sel.disabled = false;
+              }
+          })
+          .catch(e => {
+              console.error('SlgTeil-Load-Error', e);
+              sel.innerHTML = '<option>Fehler beim Laden</option>';
+          });
+  }
+
+  /* ---------- Spezialfacetten per Alias ------------------------- */
+  {% comment %} Wenn dieser Parameter auf true gesetzt ist, wird o.name als id  {% endcomment %}
+  const initMuenzstaettenAutocomplete = () =>
+      initFacetAutocomplete('Muenzstaette', '#MzstaetteSelect', 'Münzstätte suchen …', true);
+  const initNominalAutocomplete = () =>
+      initFacetAutocomplete('Nominal', '#NominalSelect', 'Nominal suchen …', true);
+  const initHerMerkAutocomplete = () =>
+      initFacetAutocomplete('her_merk', '#HmerkSelect', 'Herstellungsmerkmale suchen …', true);
+  const initSekMerkAutocomplete = () =>
+      initFacetAutocomplete('sek_merk', '#SmerkSelect', 'Sekundäre Merkmale suchen …', true);
+  const initPraegeherrenAutocomplete = () =>
+      initFacetAutocomplete('Praegeherren', '#PraegeherrenSelect', 'Prägeherren suchen …', true);
+  const initPersonAutocomplete = () =>
+      initFacetAutocomplete('Person', '#PersonSelect', 'Personen suchen …', true);
+  const initWappenAutocomplete = () =>
+      initFacetAutocomplete('Wappen', '#WappenSelect', 'Wappen suchen …', true);
+  const initAvBildtypAutocomplete = () =>
+      initFacetAutocomplete('av_bildtyp', '#AvBildtypSelect', 'Beschreibungen suchen …');
+  const initRvBildtypAutocomplete = () =>
+      initFacetAutocomplete('rv_bildtyp', '#RvBildtypSelect', 'Beschreibungen suchen …');
+  const initAvSchlagworteAutocomplete = () =>
+      initFacetAutocomplete('av_schlagwort', '#AvSchlagworteFormControlSelect2', 'Schlagworte suchen …', true);
+  const initRvSchlagworteAutocomplete = () =>
+      initFacetAutocomplete('rv_schlagwort', '#RvSchlagworteFormControlSelect2', 'Schlagworte suchen …', true);
+  const initAvDargestellteAutocomplete = () => {
+      const selector = '#AvDargestellteSelect';
+      if (document.querySelector(selector)) {
+          initFacetAutocomplete('Dargestellte_AV', selector, 'Dargestellte/r suchen …', true);
+      } else {
+          console.warn('Element not found:', selector);
+      }
+  };
+  const initRvDargestellteAutocomplete = () => {
+      const selector = '#RvDargestellteSelect';
+      if (document.querySelector(selector)) {
+          initFacetAutocomplete('Dargestellte_RV', selector, 'Dargestellte/r suchen …', true);
+      } else {
+          console.warn('Element not found:', selector);
+      }
+  };
+  const initLiteraturAutocomplete = () =>
+      initFacetAutocomplete('Ref', '#LiteraturSelect', 'Referenz suchen …', true);
+  const initMaterialAutocomplete = () =>
+      initFacetAutocomplete('material', '#MaterialSelect', 'Material suchen …', true);
+
+  /* ---------- Facet-Änderung ------------------------------------ */
+  const onFacetChange = evt => {
+      const sel = evt.target;
+      const name = sel.name;
+      const p = new URLSearchParams(window.location.search);
+
+      p.delete(name);
+      ([].concat($(sel).val() || [])).forEach(v => p.append(name, v));
+      if (name === 'Slg') p.delete('SlgTeil');
+
+      updateHistoryForBfcache(p);
+
+      loadSammlungen();
+      initMuenzstaettenAutocomplete();
+      initNominalAutocomplete();
+      initHerMerkAutocomplete();
+      initSekMerkAutocomplete();
+      initPraegeherrenAutocomplete();
+      initPersonAutocomplete();
+      initWappenAutocomplete();
+      initAvBildtypAutocomplete();
+      initRvBildtypAutocomplete();
+      initAvSchlagworteAutocomplete();
+      initRvSchlagworteAutocomplete();
+      initAvDargestellteAutocomplete();
+      initRvDargestellteAutocomplete();
+      initLiteraturAutocomplete();
+      initMaterialAutocomplete();
+  };
+
+  /* ---------- Text Input Änderung ------------------------------- */
+  const onTextInputChange = debounce(evt => {
+      const input = evt.target;
+      const name = input.name;
+      const value = input.value.trim();
+      const p = new URLSearchParams(window.location.search);
+
+      if (value) {
+          p.set(name, value);
+      } else {
+          p.delete(name);
+      }
+
+      updateHistoryForBfcache(p);
+
+      // Facets neu laden nach Text-Änderung
+      loadSammlungen();
+      initMuenzstaettenAutocomplete();
+      initNominalAutocomplete();
+      initHerMerkAutocomplete();
+      initSekMerkAutocomplete();
+      initPraegeherrenAutocomplete();
+      initPersonAutocomplete();
+      initWappenAutocomplete();
+      initAvBildtypAutocomplete();
+      initRvBildtypAutocomplete();
+      initAvSchlagworteAutocomplete();
+      initRvSchlagworteAutocomplete();
+      initAvDargestellteAutocomplete();
+      initRvDargestellteAutocomplete();
+      initLiteraturAutocomplete();
+      initMaterialAutocomplete();
+  }, 500);
+
+  /* ---------- Freitextsuche ------------------------------------ */
+  function writeSearchToUrl() {
+      const p = new URLSearchParams(window.location.search);
+
+      const termIn = $('#searchInput');
+
+      const key = termIn.attr('name');
+      const term = termIn.val().trim();
+
+      if (key) {
+          if (term) {
+              p.set(key, term);
+          } else {
+              p.delete(key);
+          }
+      }
+
+      p.delete('unbestimmt');
+      const indefVal = $('#bestimmungSelect').val();
+      if (indefVal) {
+          p.set('unbestimmt', indefVal);
+      }
+
+      updateHistoryForBfcache(p);
+  }
+
+  function executeSearch() {
+      writeSearchToUrl();
+      window.location.href = window.location.pathname + window.location.search;
+  }
+
+  /***************** Event Binding *****************/
+  document.addEventListener('DOMContentLoaded', () => {
+      /* 1. Facets initialisieren */
+      loadSammlungen();
+      initMuenzstaettenAutocomplete();
+      initNominalAutocomplete();
+      initHerMerkAutocomplete();
+      initSekMerkAutocomplete();
+      initPraegeherrenAutocomplete();
+      initPersonAutocomplete();
+      initWappenAutocomplete();
+      initAvBildtypAutocomplete();
+      initRvBildtypAutocomplete();
+      initAvSchlagworteAutocomplete();
+      initRvSchlagworteAutocomplete();
+      initAvDargestellteAutocomplete();
+      initRvDargestellteAutocomplete();
+      initLiteraturAutocomplete();
+      initMaterialAutocomplete();
+
+      /* 2. Change-Events für alle Select2-Filter */
+      $(document).on('select2:select select2:unselect', '.select2-filter', onFacetChange);
+
+      /* 3. Change-Events für Text-Input-Filter */
+      $(document).on('input', '.text-input-filter', onTextInputChange);
+
+      /* 4. Enter-Taste für sofortige Suche */
+      $(document).on('keyup', '.text-input-filter', function (e) {
+          if (e.key === 'Enter') {
+              const input = e.target;
+              const name = input.name;
+              const value = input.value.trim();
+              const p = new URLSearchParams(window.location.search);
+
+              if (value) {
+                  p.set(name, value);
+              } else {
+                  p.delete(name);
+              }
+
+              // Sofort zur neuen URL navigieren
+              window.location.href = window.location.pathname + '?' + p.toString();
+          }
+      });
+
+      /* ---------- Freitextsuche -------------------- */
+      const catSel = $('#rubrikSelect');
+      const termIn = $('#searchInput');
+      const indefSel = $('#bestimmungSelect');
+
+      catSel.on('change', () => termIn.attr('name', catSel.val()));
+      $('#freitextForm').on('submit', function (e) {
+          if (window.location.pathname.includes('/browse')) {
+              e.preventDefault();
+              executeSearch();
+          }
+      });
+      termIn.on('keyup', e => { if (e.key === 'Enter') $('#freitextForm').submit(); });
+      indefSel.on('change', () => $('#freitextForm').submit());
+  });
+
+  // BFCache-kompatible History Updates
+  function updateHistoryForBfcache(params) {
+      // Kleinere Verzögerung um Browser-Optimierungen zu ermöglichen
+      requestAnimationFrame(() => {
+          history.replaceState(null, '', '?' + params.toString());
+      });
+  }
+</script>

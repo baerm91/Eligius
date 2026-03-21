@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css?family=Josefin+Sans:300i,400,700" rel="stylesheet">    
+    {% load static %}
+    
+    {% comment %} <link rel="stylesheet" href="{% static 'Djangoprojekt/fonts/icomoon/style.css'%}"> {% endcomment %}
+
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/bootstrap.min.css'%}">
+    {% comment %} <link rel="stylesheet" href="{% static 'Djangoprojekt/css/magnific-popup.css'%}"> {% endcomment %}
+    {% comment %} <link rel="stylesheet" href="{% static 'Djangoprojekt/css/jquery-ui.css'%}"> {% endcomment %}
+    {% comment %} <link rel="stylesheet" href="{% static 'Djangoprojekt/css/owl.carousel.min.css'%}"> {% endcomment %}
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/owl.theme.default.min.css'%}">
+
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/lightgallery.min.css'%}">    
+    
+    {% comment %} <link rel="stylesheet" href="{% static 'Djangoprojekt/css/bootstrap-datepicker.css'%}"> {% endcomment %}
+
+    {% comment %} <link rel="stylesheet" href="{% static 'Djangoprojekt/fonts/flaticon/font/flaticon.css'%}"> {% endcomment %}
+    
+    {% comment %} <link rel="stylesheet" href="{% static 'Djangoprojekt/css/swiper.css'%}"> {% endcomment %}
+
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/aos.css'%}">
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/select2.min.css'%}">
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/style.css'%}" type="text/css">
+    {% comment %} <link rel="stylesheet" href="{% static 'Djangoprojekt/css/bootstrap-tagsinput.css'%}" type="text/css">
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/bootstrap-table.min.css'%}" type="text/css"> {% endcomment %}
+    <link rel='stylesheet' href='https://sliptree.github.io/bootstrap-tokenfield/dist/css/bootstrap-tokenfield.css'>
+    <link rel='stylesheet' href='https://sliptree.github.io/bootstrap-tokenfield/dist/css/tokenfield-typeahead.css'>
+    <link rel='stylesheet' href='https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap.min.css'>
+    <link rel='stylesheet' href='https://cdn.datatables.net/scroller/2.0.1/css/scroller.dataTables.min.css'>
+    <link rel='stylesheet' href='https://cdn.datatables.net/scroller/2.0.1/js/dataTables.scroller.min.js'>
+    
+    <style>
+        .form-horizontal {
+      margin-top: 10px;
+    }
+
+    </style>
+    {{ Form.media.css }}
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    {% comment %} <!-- CSS for the effects-->
+    <link href="{% static 'Djangoprojekt/css/effects.min.css'%}" rel="stylesheet"> {% endcomment %}
+    <!-- CSS for ICONS-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css">
+  
+    
+
+    <title>Numothek</title>
+    
+
+    <style>
+      {% comment %} /* Container needed to position the overlay. Adjust the width as needed */
+      .container {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+      } {% endcomment %}
+
+      
+
+      /* Make the image to responsive */
+      .image {
+        width: 100%;
+        height: auto;
+      } 
+      
+      .img-box {
+        position: relative;
+        width: 100%;
+      }
+
+      .img-box img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      
+      .icon{
+        color: #0A81D1;
+      }
+      
+      #a{
+        color: #0A81D1;
+      }
+
+      .inf {
+        visibility: hidden;        
+      }
+
+      .inf:hover {
+        visibility: visible;
+        color: #0A81D1;
+        
+      }
+
+      .hovereffect {
+        width: 100%;
+        height: 100%;
+        float: left;
+        overflow: hidden;
+        position: relative;
+        text-align: center;
+        cursor: default;
+      }
+
+      .hovereffect img {
+        display: block;
+        position: relative;
+        -webkit-transform: scale(1);
+        -ms-transform: scale(1);
+        transform: scale(1);
+        -webkit-transition: all 0.35s;
+        transition: all 0.35s;
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .hovereffect:hover img {
+        -webkit-transform: scale(1);
+        -ms-transform: scale(1);
+        transform: scale(1);
+        filter: brightness(1.2);
+        -webkit-filter: brightness(1.2);
+      }
+
+      .hovereffect:hover ~ .inf {
+        visibility: visible;
+      }
+
+      
+      .wrapper {
+          display: flex;
+          height: 100vh;
+          flex-wrap: wrap;
+          margin: 2 auto;
+          justify-content: flex-start;
+          align-items: flex-start;
+      }
+
+      .left {
+          
+          width: 500px;
+          padding: 2em;
+          float: left;
+      }
+      .right {
+          margin: auto;
+          justify-content: flex-start;
+          
+          width: 200px;
+          
+          padding-right: 20px;
+      }
+
+      
+    </style>
+
+</head>
+<body>
+  <div class="site-wrap">
+
+    <div class="site-mobile-menu">
+      <div class="site-mobile-menu-header">
+        <div class="site-mobile-menu-close mt-3">
+          <span class="icon-close2 js-menu-toggle"></span>
+        </div>
+      </div>
+      <div class="site-mobile-menu-body"></div>
+    </div>
+    <header class="site-navbar py-3 border-bottom" role="banner">
+
+      <div class="container-fluid">
+        <div class="row align-items-center">
+          
+          <div class="col-6 col-xl-2" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+            <h2 class="mb-0"><a href="/" class="text-black h2 mb-0">Numothek</a></h2>
+          </div>
+          <div class="col-10 col-md-8 d-none d-xl-block" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+            <nav class="site-navigation position-relative text-right text-lg-center" role="navigation">
+
+              <ul class="site-menu js-clone-nav mx-auto d-none d-lg-block">
+                <li><a href="/">Home</a></li>
+                <li><a href="/slg/objekte">Browse</a></li>
+                <li><a href="about.html">Über</a></li>
+                <li><a href="contact.html">Kontakt</a></li>
+                <li><a href="/admin">Login</a></li>
+              </ul>
+            </nav>
+          </div>
+
+          <div class="col-6 col-xl-2 text-right" data-aos="fade-down">
+            <div class="d-none d-xl-inline-block">
+              
+            </div>
+
+            <div class="d-inline-block d-xl-none ml-md-0 mr-auto py-3" style="position: relative; top: 3px;"><a href="#" class="site-menu-toggle js-menu-toggle text-black"><span class="icon-menu h3"></span></a></div>
+
+          </div>
+
+        </div>
+      </div>
+      
+    </header>
+
+
+
+    {% comment %} <div class="navbar-fixed" >
+        <nav class="nav-extended">
+        
+            <div class="nav-wrapper blue darken-1 z-depth-2">
+                <a href="#" class="brand-logo">Stift Heiligenkreuz</a>
+                <ul id="nav-mobile" class="right hide-on-med-and-down">
+                    <li><a href="#">Sammlungen</a></li>
+                    <li><a href="#">Browse</a></li>
+                    <li><a href="#"><i class="material-icons">language</i></a></li>
+                    <li><a href="/admin"><i class="material-icons">account_box</i></a></li>
+                </ul>
+            </div>
+
+        </nav>
+    </div> {% endcomment %}
+
+    {% comment %} <div class="container"> {% endcomment %}
+    <div class="container">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+        <script src="{% static 'Djangoprojekt/js/jquery-3.3.1.min.js'%}"></script>
+        <script src="{% static 'Djangoprojekt/js/jquery-migrate-3.0.1.min.js'%}" ></script>
+        <script src="{% static 'Djangoprojekt/js/jquery-ui.js'%}" ></script>
+        <script src="{% static 'Djangoprojekt/js/popper.min.js'%}" ></script>
+        <script src="{% static 'Djangoprojekt/js/bootstrap.min.js'%}" ></script>
+        <script src="{% static 'Djangoprojekt/js/owl.carousel.min.js'%}" ></script>
+        <script src="{% static 'Djangoprojekt/js/jquery.stellar.min.js'%}" ></script>
+        <script src="{% static 'Djangoprojekt/js/jquery.countdown.min.js'%}" ></script>
+        <script src="{% static 'Djangoprojekt/js/jquery.magnific-popup.min.js'%}" ></script>
+        {% comment %} <script src="{% static 'Djangoprojekt/js/bootstrap-datepicker.min.js'%}"></script> {% endcomment %}
+        <script src="{% static 'Djangoprojekt/js/swiper.min.js'%}"></script>
+        <script src="{% static 'Djangoprojekt/js/aos.js'%}"></script>
+        <script src="{% static 'Djangoprojekt/js/jquery.waypoints.min.js' %}" ></script>
+        <script src="{% static 'Djangoprojekt/js/infinite.min.js' %}" ></script>
+
+        <script src="{% static 'Djangoprojekt/js/picturefill.min.js'%}" ></script>
+        {% comment %} <script src="{% static 'Djangoprojekt/js/lightgallery-all.min.js'%}"></script> {% endcomment %}
+        <script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery.min.js"></script>
+        <script src="{% static 'Djangoprojekt/js/jquery.mousewheel.min.js'%}" ></script>
+
+        <script src="{% static 'Djangoprojekt/js/main.js'%}" ></script>
+        <script src="{% static 'Djangoprojekt/js/select2.min.js'%}"></script>
+        <script src="{% static 'Djangoprojekt/js/jquery-3.3.1.slim.min.js'%}" ></script>
+        {% comment %} <script src="{% static 'Djangoprojekt/js/bootstrap-tagsinput.js'%}"></script>
+        <script src="{% static 'Djangoprojekt/js/bootstrap-table.min.js'%}"></script> {% endcomment %}
+        <script src='https://sliptree.github.io/bootstrap-tokenfield/docs-assets/js/typeahead.bundle.min.js' ></script>
+        <script src='https://sliptree.github.io/bootstrap-tokenfield/dist/bootstrap-tokenfield.js' ></script>
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js"></script>
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap.min.js"></script>
+        {% comment %} <script id="rendered-js">
+          (function () {
+            
+            $('#tag-input-33').tokenfield();
+            }).call(this); 
+
+          //# sourceURL=coffeescript
+                //# sourceURL=pen.js
+        </script> {% endcomment %}
+        <script>
+        $(document).ready(function(){
+          $("#Personen").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#PersonFormControlSelect2 *").filter(function() {
+              $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+          });
+          $("#Nominalien").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#NominalFormControlSelect2 *").filter(function() {
+              $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+          });
+          $("#Mints").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#MintFormControlSelect2 *").filter(function() {
+              $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+          });
+          $("#Refs").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#RefFormControlSelect2 *").filter(function() {
+              $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+          });
+          $("#Avbildtypen").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#AvFormControlSelect2 *").filter(function() {
+              $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+          });
+          $("#Rvbildtypen").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#RvFormControlSelect2 *").filter(function() {
+              $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+          });
+          
+          $('table.display').DataTable({
+            "lengthChange": false,
+            {% comment %} "pageLength": 5,
+            "info":     false, {% endcomment %}
+            "paging": false,
+            "deferRender":    true,
+            "scrollY":        300,
+            "scrollCollapse": true,
+            "scroller":       true,
+            "stripeClasses":[],
+            language: {
+              searchPlaceholder: "Suche Beschreibungen...",
+              search: "",
+            },
+            
+            
+          });
+          {% comment %} oTable = $('table.display').DataTable();   //pay attention to capital D, which is mandatory to retrieve "api" datatables' object, as @Lionel said
+          $('#Search_AvTypes').keyup(function(){
+                oTable.search($(this).val()).draw() ;
+          }); {% endcomment %}
+        });
+        </script>
+        <script>
+          AOS.init({
+            startEvent: 'load',
+            
+          });
+        </script>
+        <script>
+            $(document).ready(function(e){
+              $('#captions').lightGallery({
+                selector: '.item',
+                showThumbByDefault: false,
+                preload: 2,
+                
+              });
+              $('.js-example-basic-single').select2();
+              $("#searchdd").change(function(){
+                var str=$(this).val();
+                $("#search").attr("name",str);
+              });
+            });
+            $('#theModal').on('show.bs.modal', function (e) {
+              var button = $(e.relatedTarget);
+              var modal = $(this); 
+              modal.find('.modal-body').load(button.data("remote"));
+              
+            });
+            
+            
+        </script>
+        <script>
+          var infinite = new Waypoint.Infinite({
+            element: $('.infinite-container')[0],
+            onBeforePageLoad: function () {
+              $('.loading').show();
+            },
+            onAfterPageLoad: function ($items) {
+              $('.loading').hide();
+            }
+          });
+        </script>
+        <script>
+        $(function(){
+          $('#search').keyup(function(){	
+            var current_query = $('#search').val();
+            if (current_query !== "") {
+              $(".list-group li").hide();
+              $(".list-group li").each(function(){
+                var current_keyword = $(this).text();
+                if (current_keyword.indexOf(current_query) >=0) {
+                  $(this).show();    	 	
+                };
+              });    	
+            } else {
+              $(".list-group li").show();
+            };
+          });
+        });
+        </script>
+        
+        {% comment %} <script>
+          $("test").tagsinput('items');
+          $("test").tagsinput({
+            confirmKeys: [14]
+            onTagExists: function(item, $tag) {
+              $tag.hide().fadeIn();
+            }
+          }); 
+          $('.bootstrap-tagsinput').on('keypress keydown keyup', function (e) {
+            if (e.keyCode == 13) {
+              e.preventDefault();
+            }
+          });
+          
+        </script> {% endcomment %}
+        
+        {{ Form.media.js }}
+        
+
+</body>
+</html>

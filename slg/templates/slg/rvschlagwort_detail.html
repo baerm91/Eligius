@@ -1,0 +1,188 @@
+{% extends 'slg/navbar.html' %}
+{% block title %}Eligius - Rv.-Schlagworte{% endblock title %}
+{% load static %}
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/lightgallery.min.css'%}" defer>
+{% endblock stylesheets %}
+{% block content %}
+    <div class="container-fluid" >
+        <div class="row text-center">
+            <div class="col pt-2">
+                <table width="100%">
+                    <thead>
+                        <tr>
+                            
+                            <td width="*"></td>
+                            <td width="*" align="left">
+                                {% if request.user.is_authenticated %}
+                            </td>
+                            <td width="*">
+                                
+                                
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination">
+                                        
+                                        <li class="page-item">
+                                        <a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"-10" }}" class="pull-left" aria-label="Previous">
+                                                <span aria-hidden="true">&laquo;</span>
+                                                <span class="sr-only">Previous</span>
+                                        </a>
+                                        </li>
+                                        <li class="page-item"><a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"-2" }}">{{ rvbildtypen.schlagworte.id|add:"-2" }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"-1" }}">{{ rvbildtypen.schlagworte.id|add:"-1" }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ rvbildtypen.schlagworte.id }}">{{ rvbildtypen.schlagworte.id }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"1" }}">{{ rvbildtypen.schlagworte.id|add:"1" }}</a></li>
+                                        <li class="page-item"><a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"2" }}">{{ rvbildtypen.schlagworte.id|add:"2" }}</a></li>
+                                        <li class="page-item">
+                                        <a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"10" }}" class="pull-right" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                                <span class="sr-only">Next</span>
+                                        </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                                {% endif %}
+                            </td>
+                            <td width="16,5%" align="right">
+                                {% if request.user.is_authenticated %}
+                                    {% load admin_urls %}
+                                    <div class="modal fade" tabindex="-1" role="dialog" id="modal">
+                                        <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                    
+                                        </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </thead>
+                </table>
+                <hr>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col pt-2">
+                <input class="form-control" id="Suche" type="text" placeholder="Suche.." autofocus>
+                <table width="100%">
+                    <tbody>
+                        {% for bildtyp in rvbildtypen %}
+                          
+                            <tr id="RvBildtypen" data-toggle="collapse" data-target="#typen{{forloop.counter}}" class="accordion-toggle">
+                                <td colspan="2"><button class="btn btn-default btn-xs">{{bildtyp.name}}</button></td>
+                                <td>{% if request.user.is_authenticated %}<a href="{% url 'admin:slg_rvbildtyp_change' bildtyp.pk %}">bearbeiten</a>{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td class="hiddenRow">
+                                <div id="typen{{forloop.counter}}" class="row infinite-container accordian-body collapse">
+                                    {% for Typ in bildtyp.rvmztypen.all %}
+                                    
+                                    <div class="col-sm-6 col-md-3 col-lg-3 col-xl-2 pt-3 pb-3 align-self-center infinite-item">
+                                        <div class="hovereffect">
+                                            {% for mz in Typ.objekte.all|slice:"0:1" %}
+                                            {% if mz.SlgTeil_id == 2 %}
+                                                <div data-src="{{mz.SlgTeil.bildurl}}{{mz.img}}a00.jpg">
+                                                    <a href="{{mz.get_absolute_url}}"><img data-src="{{mz.SlgTeil.bildurl}}thumbails/{{mz.img}}a00.webp" alt="thumbnail" class="img-fluid lazyload">
+                                                    </a>
+                                                </div>    
+                                                <div data-src="{{mz.SlgTeil.bildurl}}{{mz.img}}r00.jpg">
+                                                    <a href="{{mz.get_absolute_url}}"><img data-src="{{mz.SlgTeil.bildurl}}thumbails/{{mz.img}}r00.webp" alt="thumbnail" class="img-fluid lazyload"></a>
+                                                </div>
+                                            {% elif mz.Slg_id == 2 %}
+                                                
+                                                <div data-src="{{mz.Slg.bildurl}}/{{mz.invnr}}a00.jpg">
+                                                    <a href="{{mz.get_absolute_url}}"><img data-src="{{mz.Slg.bildurl}}/thumbnails/{{mz.invnr}}a00.webp" alt="thumbnail" class="img-fluid lazyload"></a>
+                                                </div>    
+                                                
+                                            
+                                                <div data-src="{{mz.Slg.bildurl}}/{{mz.invnr}}r00.jpg">
+                                                        <a href="{{mz.get_absolute_url}}"><img data-src="{{mz.Slg.bildurl}}/thumbnails/{{mz.invnr}}r00.webp" alt="thumbnail" class="img-fluid lazyload"></a>
+                                                </div>
+                                                
+                                            {% else %}
+                                                <div data-src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{mz.img}}Av.jpg">
+                                                    <a href="{{mz.get_absolute_url}}"><img data-src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{mz.img}}Av.webp" alt="thumbnail" class="img-fluid lazyload">
+                                                    </a>
+                                                </div>    
+                                                <div data-src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/{{mz.img}}Rv.jpg">
+                                                    <a href="{{mz.get_absolute_url}}"><img data-src="https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{mz.img}}Rv.webp" alt="thumbnail" class="img-fluid lazyload"></a>
+                                                </div>
+                                            {% endif %}
+                                                
+                                                  
+                                            {% endfor %}
+                                                <div class="align-self-bottom a"><br><a href="{{Typ.get_absolute_url}}">{{Typ.muenztyptitel}}<br>{{Typ.dat_verb}}</a>
+                                                </div>
+                                        </div>
+                                    </div> 
+                                            
+                                    
+                                    {%empty%}
+                                        keine Objekte
+                                    {% endfor %}
+                                </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <hr>
+            </div>
+        </div>
+
+    <div>
+    </div>
+    
+{% endblock content %}
+{% block scripts %}
+    {{block.super}}
+    <script src="{% static 'Djangoprojekt/js/lightgallery-all.min.js'%}"></script>
+    <script src="{% static 'Djangoprojekt/js/jquery.mousewheel.min.js'%}"></script>
+    <script type="text/javascript">
+        $(document).ready(function(e){
+            $('#captions').lightGallery({
+                selector: '.item',
+                showThumbByDefault: false,
+                preload: 2,
+            });
+            $("#Suche").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#RvBildtypen ").filter(function() {
+                  $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+
+        $('#theModal').on('show.bs.modal', function (e) {
+        var button = $(e.relatedTarget);
+        var modal = $(this); 
+        modal.find('.modal-body').load(button.data("remote"));
+        });
+
+        function toggle_visibility(id) {
+        var e = document.getElementById(id);
+        e.style.visibility = ((e.style.visibility!='hidden') ? 'hidden' : 'visible');
+        }
+
+        
+    </script>
+    <script>
+        var infinite = new Waypoint.Infinite({
+          element: $('.infinite-container')[0],
+          onBeforePageLoad: function () {
+            $('.loading').show();
+          },
+          onAfterPageLoad: function ($items) {
+            $('.loading').hide();
+          }
+        });
+    
+        function toggle_visibility(id) {
+        var e = document.getElementById(id);
+        e.style.visibility = ((e.style.visibility!='hidden') ? 'hidden' : 'visible');
+        }
+    </script>
+
+{% endblock scripts %}

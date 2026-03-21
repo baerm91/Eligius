@@ -1,0 +1,78 @@
+{% load i18n static slg_extras %}
+{% with light=light|default:False %}
+<div class="infinite-item">
+  <a href="{{ obj.get_absolute_url }}" class="text-decoration-none text-inherit">
+    <div class="coin-preview-card{% if light %} coin-preview-card--light{% endif %}">
+
+      {# --- Sammlungsname ---------------------------------------------------- #}
+      {% if obj.Slg %}
+        <div class="coin-preview-collection">@ {{ obj.Slg }}</div>
+      {% endif %}
+
+      {# --- Münzbilder ------------------------------------------------------- #}
+      <div class="coin-preview-images">
+        <div class="image-container">
+          <img loading="lazy" decoding="async"
+               src="{{ obj.get_bild_urls.thumbnail_av }}"
+               alt="{% trans 'Avers' %}"  class="preview-image"
+               onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                        this.parentNode.querySelector('.placeholder-text').style.display='flex';">
+          <div class="placeholder-text">
+            <span>{% trans 'Avers' %}</span><span>{% trans 'Kein Bild' %}</span>
+          </div>
+        </div>
+        <div class="image-container">
+          <img loading="lazy" decoding="async"
+               src="{{ obj.get_bild_urls.thumbnail_rv }}"
+               alt="{% trans 'Revers' %}" class="preview-image"
+               onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                        this.parentNode.querySelector('.placeholder-text').style.display='flex';">
+          <div class="placeholder-text">
+            <span>{% trans 'Revers' %}</span><span>{% trans 'Kein Bild' %}</span>
+          </div>
+        </div>
+      </div>
+
+      {# --- Titel & Datierung – IMMER sichtbar ------------------------------ #}
+      <div class="preview-title">
+        {% if obj.Typ and obj.Typ.titel %}
+            {{ obj.Typ.titel|safe }}
+        {% elif obj.titel %}
+            {{ obj.titel|safe }}
+        {% elif obj.Typ and obj.Typ.muenztyptitel %}
+            {{ obj.Typ.muenztyptitel|safe }}
+        {% else %}
+            Unbestimmt
+        {% endif %}
+      </div>
+      {# --- Datierung ----------------------------------------------------------- #}
+      <div class="preview-dat_verb">
+        {% if obj.Typ and obj.Typ.dat_verb %}
+            {{ obj.Typ.dat_verb|safe }}
+        {% elif obj.dat_verb %}
+            {{ obj.dat_verb|safe }}
+        {% else %}
+            <!-- leer lassen oder Platzhalter -->
+        {% endif %}
+      </div>
+
+      {# --- Hover‑Infos ------------------------------------------------------ #}
+      {% if not light %}
+        {% include "slg/partials/coin_preview_card_full.html" with obj=obj %}
+        {#  Umlaut‑Quick‑Fix wie im Alt‑Template; darf bleiben, ist günstig  #}
+        <script defer>
+          document.addEventListener('DOMContentLoaded', () => {
+            const repl = t => t && t
+              .replace(/ä/g,'&auml;').replace(/ö/g,'&ouml;').replace(/ü/g,'&uuml;')
+              .replace(/Ä/g,'&Auml;').replace(/Ö/g,'&Ouml;').replace(/Ü/g,'&Uuml;')
+              .replace(/ß/g,'&szlig;');
+            document.querySelectorAll('.preview-title,.preview-dat_verb,.badge')
+                    .forEach(el => el.innerHTML = repl(el.innerHTML));
+          });
+        </script>
+      {% endif %}
+
+    </div>
+  </a>
+</div>
+{% endwith %}

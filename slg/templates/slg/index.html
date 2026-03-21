@@ -1,0 +1,337 @@
+{% extends 'slg/navbar.html' %}
+{% load static %}
+
+{% block content %}
+
+
+<!-- New intro section from the image -->
+<div class="container text-center mt-5 mb-5 hero-section">
+    <div class="welcome-banner mb-3">
+        <h5>Willkommen bei ELIGIUS</h5>
+    </div>
+    
+    <h1 class="mb-4">Die digitale Plattform für historische Münzsammlungen in Österreich</h1>
+    
+    <div class="intro-text mx-auto mb-5" style="max-width: 800px;">
+        <p>ELIGIUS Numotheca Austriaca ist ein umfassendes digitales Archiv, das klösterliche und öffentliche Münzsammlungen in Österreich dokumentiert, präsentiert und für Forschungszwecke zugänglich macht. Die Plattform verbindet jahrhundertealtes numismatisches Erbe mit moderner Digitaltechnologie.</p>
+    </div>
+
+    <!-- Feature boxes -->
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="feature-box">
+                    <div class="feature-icon">
+                        <i class="bi bi-database"></i>
+                    </div>
+                    <h4>Umfangreiche Datenbank</h4>
+                    <p>Über 69.000 katalogisierte Münzobjekte und mehr als 12.600 Münztypen aus verschiedenen Epochen.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-box">
+                    <div class="feature-icon">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <h4>Erweiterte Suchfunktionen</h4>
+                    <p>Detaillierte Such- und Filtermöglichkeiten für Wissenschaftler und Numismatik-Enthusiasten.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-box">
+                    <div class="feature-icon">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                    <h4>Kontinuierlich aktualisiert</h4>
+                    <p>Regelmäßige Ergänzungen und Verbesserungen durch ein Team von Experten und Wissenschaftlern.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5">
+        <a href="#sammlungen" class="btn btn-primary rounded-pill px-4 py-2 mr-3 shadow-sm">
+            <i class="bi bi-coin mr-2"></i> Sammlungen entdecken
+        </a>
+        <a href="#kontakt" class="btn btn-outline-primary rounded-pill px-4 py-2 shadow-sm">
+            <i class="bi bi-envelope mr-2"></i> Kontakt aufnehmen
+        </a>
+    </div>
+</div>
+
+
+<div class="latest-coins-section">
+    <div class="section-header">
+        <h2>Numismatica</h2>
+        <p>Die neuesten Ergänzungen und Aktualisierungen</p>
+    </div>
+
+    <button class="nav-arrow prev" onclick="scrollCoins('left')">
+        <i class="bi bi-chevron-left"></i>
+    </button>
+
+    <div class="latest-coins-container" id="coinsContainer">
+        {% for entry in latest_entries %}
+            {% include "slg/partials/coin_preview_card.html" with obj=entry %}
+        {% empty %}
+        <div class="no-coins-message">
+            <i class="bi bi-exclamation-circle"></i>
+            <p>Derzeit sind keine aktuellen Münzobjekte verfügbar.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <button class="nav-arrow next" onclick="scrollCoins('right')">
+        <i class="bi bi-chevron-right"></i>
+    </button>
+</div>
+
+
+
+<div id="sammlungen" class="collections-section">
+    <h4 class="text-center">Klösterliche und öffentliche Münzsammlungen in Österreich</h4>
+    
+    <!-- Kategorie-Filter mit data-Attributen statt Links -->
+    <div class="collection-filters">
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-category="all">
+                Alle Sammlungen
+            </button>
+            {% for kategorie in kategorien %}
+            <button class="filter-btn" data-category="{{ kategorie.id }}">
+                {{ kategorie.name }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="collections-grid" id="collectionsGrid"></div>
+</div>
+<br>
+<div id="stats" class="card-group container-fluid justify-content-center">
+  <!-- Hier werden die Kennzahlen eingefügt -->
+</div>
+
+<br>
+
+<!-- Contact form section at the end of the page -->
+<div id="kontakt" class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="contact-form-container">
+                <h2 class="text-center mb-2">Kontakt</h2>
+                <p class="text-center text-muted mb-4">Haben Sie Fragen oder Anregungen? Kontaktieren Sie uns.</p>
+                
+                <form method="POST" action="{% url 'kontakt' %}" class="contact-form">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email">E-Mail</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="betreff">Betreff</label>
+                        <select class="form-control" id="betreff" name="betreff" required>
+                            <option selected disabled>Bitte wählen Sie</option>
+                            <option>Allgemeine Anfrage</option>
+                            <option>Technische Unterstützung</option>
+                            <option>Forschungsanfrage</option>
+                            <option>Kooperationsanfrage</option>
+                            <option>Sonstiges</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="nachricht">Nachricht</label>
+                        <textarea class="form-control" id="nachricht" name="nachricht" rows="5" required></textarea>
+                    </div>
+                    
+                    <div class="text-right">
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Nachricht senden</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM fully loaded and parsed"); // Debug 1: Bestätigung, dass DOM bereit ist
+
+  const collectionsGridElement = document.getElementById('collectionsGrid');
+  const coinsContainerElement = document.getElementById('coinsContainer');
+
+  console.log("Element #collectionsGrid:", collectionsGridElement); // Debug 2: Existiert das Element?
+  console.log("Element #coinsContainer:", coinsContainerElement); // Debug 3: Existiert das Element?
+
+  if (collectionsGridElement) {
+    fetch('/api/collections/')
+      .then(r => {
+        if (!r.ok) throw new Error(`Collections API Fehler: ${r.status}`);
+        return r.json();
+      })
+      .then(colls => {
+        console.log("Sammlungen Daten:", colls); // Debug 4
+        collectionsGridElement.innerHTML =
+          colls.map(col => `
+            <div class="collection-card" data-category="${col.kategorie?.id || 'none'}">
+              <div class="collection-image">
+                <img class="lazyload" data-src="${col.cover || ''}" alt="${col.name}">
+              </div>
+              <div class="collection-content">
+                <h5 class="collection-title">${col.name}</h5>
+                <p class="collection-description">${col.beschreibung ? col.beschreibung.split(' ').slice(0, 20).join(' ') + (col.beschreibung.split(' ').length > 20 ? '…' : '') : ''}</p>
+              </div>
+              <div class="collection-links">
+                <a href="${col.absolute_url}" class="collection-link">
+                  <i class="bi bi-info-circle"></i>
+                  Mehr Informationen
+                </a>
+                <a href="/browse/?q=&Slg=${col.id}&dat_von=&dat_bis=" class="collection-link">
+                  <i class="bi bi-collection"></i>
+                  Objekte
+                </a>
+              </div>
+            </div>
+          `).join('');
+        setupCollectionFilters();
+      })
+      .catch(error => {
+        console.error("Fehler beim Laden der Sammlungen:", error);
+        collectionsGridElement.innerHTML = '<p class="text-danger">Fehler beim Laden der Sammlungen.</p>';
+      });
+  } else {
+    console.error("FEHLER: Element mit ID 'collectionsGrid' nicht im DOM gefunden!");
+  }
+
+  // Stats nachladen
+  const statsElement = document.getElementById('stats');
+  if (statsElement) {
+    fetch('/api/stats/')
+      .then(r => r.json())
+      .then(stats => {
+        statsElement.innerHTML = `
+          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
+            <div class="card text-center border-light">
+              <div class="card-body">
+                <h4 class="card-title">${stats.anzahl_qs}</h4>
+                <p class="card-text">Objekte</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
+            <div class="card text-center border-light">
+              <div class="card-body">
+                <h4 class="card-title">${stats.anzahl_mt}</h4>
+                <p class="card-text">Typen</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
+            <div class="card text-center border-light">
+              <div class="card-body">
+                <h4 class="card-title">${stats.anzahl_person}</h4>
+                <p class="card-text">Personen</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
+            <div class="card text-center border-light">
+              <div class="card-body">
+                <h4 class="card-title">${stats.anzahl_mstaetten}</h4>
+                <p class="card-text">Münzstätten</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
+            <div class="card text-center border-light">
+              <div class="card-body">
+                <h4 class="card-title">${stats.max_min_datierung.dat_von__min}</h4>
+                <p class="card-text">Ältestes Objekt</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
+            <div class="card text-center border-light">
+              <div class="card-body">
+                <h4 class="card-title">${stats.max_min_datierung.dat_von__max}</h4>
+                <p class="card-text">Jüngstes Objekt</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
+            <div class="card text-center border-light">
+              <div class="card-body">
+                <h4 class="card-title">${stats.max_min_gewicht.gewicht__min} g</h4>
+                <p class="card-text">leichtestes Objekt</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
+            <div class="card text-center border-light">
+              <div class="card-body">
+                <h4 class="card-title">${stats.max_min_gewicht.gewicht__max} g</h4>
+                <p class="card-text">schwerstes Objekt</p>
+              </div>
+            </div>
+          </div>
+        `;
+      })
+      .catch(error => {
+        statsElement.innerHTML = '<p class="text-danger">Fehler beim Laden der Kennzahlen.</p>';
+        console.error("Fehler beim Laden der Kennzahlen:", error);
+      });
+  }
+});
+
+function setupCollectionFilters() {
+  const filterButtons = document.querySelectorAll('.filter-btn');
+  const collectionCards = document.querySelectorAll('.collection-card');
+
+  if (filterButtons.length > 0 && collectionCards.length > 0) {
+    function filterCollections(category) {
+      collectionCards.forEach(card => {
+        if (category === 'all' || card.dataset.category === category) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    filterButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        filterCollections(this.dataset.category);
+      });
+    });
+  }
+}
+
+// Funktion zum Scrollen der Münzen (für die Pfeile)
+function scrollCoins(direction) {
+  const container = document.getElementById('coinsContainer');
+  console.log("Scroll-Funktion aufgerufen:", direction); // Debug: Scroll-Funktion
+  
+  if (container) {
+    const scrollAmount = 300; // Anpassen nach Bedarf
+    if (direction === 'left') {
+      container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    } else {
+      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  } else {
+    console.error("FEHLER: Container für Scroll nicht gefunden!"); // Debug: Scroll-Container fehlt
+  }
+}
+</script>
+
+{% endblock content %}

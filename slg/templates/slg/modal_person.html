@@ -1,0 +1,45 @@
+{% load i18n %}
+<p class="text-center">
+  <table>
+    {% if Person.dat_verb %}<tr><td>Lebensdaten: </td><td>{{Person.dat_verb}}</td></tr>{% endif %}
+    {% if not Person.WikiDe and not Definition %}<tr><td>Kurzbeschreibung: </td><td>{{Person.beschreibung}}</td></tr>{% endif %}
+    {% if Person.zeichen %}<tr><td>Zeichen/Signatur: </td><td>{{Person.zeichen}}</td></tr>{% endif %}
+    {% if Person.dat_verb or not Person.WikiDe or Person.zeichen or not Definition%}<tr><td colspan="2"><hr width="80%"></td></tr>{% endif %}
+    {% if Person.name_nom_id %}
+    <tr><td><a href="{{Person.name_nom_id}}" class="badge badge-info">Nomisma:</a></td><td>{{Definition}}</td></tr>
+    {% endif %}
+    <tr><td>{% if Person.WikiDe %}<a href="{{Person.WikiDe}}" class="badge badge-info">Wikipedia:</a></td><td>{% elif Person.WikiEn%}<a href="{{Person.WikiEn}}" class="badge badge-info">Wikipedia:</a></td><td>{% endif %}{% if WikiBild %}<img src="{{WikiBild}}" alt="WikiBild" style="float:right">{% endif %}{% if Person.WikiEn or Person.WikiDe %}{{Wiki}}{% else %}{% endif %}</td></tr>
+    <tr><td>Links:</td><td>
+      {% if Person.Zisterzienserlexikon %}<a href="{{Person.Zisterzienserlexikon}}" class="badge badge-info">Zisterzienserlexikon</a>{% endif %}
+      {% if Person.Benediktinerlexikon %}<a href="{{Person.Benediktinerlexikon}}" class="badge badge-info">Benediktinerlexikon</a>{% endif %}
+      
+      {% if Person.WikiEn %}<a href="{{Person.WikiEn}}" class="badge badge-info">Wikipedia (En)</a>{% endif %}
+      {% if Person.GeschichteWikiWien %}<a href="{{Person.GeschichteWikiWien}}" class="badge badge-info">GeschichteWikiWien</a>{% endif %}
+      {% if Person.BiographiePortal %}<a href="{{Person.BiographiePortal}}" class="badge badge-info">BiographiePortal</a>{% endif %}
+      {% if Person.DeutscheDigitaleBib %}<a href="{{Person.DeutscheDigitaleBib}}" class="badge badge-info">DeutscheDigitaleBib</a>{% endif %}
+      {% if Person.DNB %}<a href="{{Person.DNB}}" class="badge badge-info">DNB</a>{% endif %}
+      {% if Person.VIAF %}<a href="{{Person.VIAF}}" class="badge badge-info">VIAF</a>{% endif %}
+      {% if Person.DB %}<a href="{{Person.DB}}" class="badge badge-info">DB</a>{% endif %}
+      {% for link in Exactmatch %}
+        <a href="{{link.link}}" class="badge badge-info">{{link.link}}</a>
+      {% endfor %}
+    </td></tr>
+    <tr><td colspan="2">Weitere Quellen:</td></tr>
+    {%for quelle in Person.person_ref_set.all%}
+    <tr>
+      <td>
+        -
+        </td>
+      <td>
+        {% if not quelle.link %}
+        {{quelle.Ref}}, {{quelle.nummer}}
+        {% elif quelle.nummer and quelle.link != "Webseite"%}
+        <a href="{{quelle.link}}" class="badge badge-info">{{quelle.Ref}}, {{quelle.nummer}}</a>
+        {% elif quelle.link %}
+        <a href="{{quelle.link}}" class="badge badge-info">{{quelle.link}}</a>
+        {% endif %}
+      </td>
+    </tr>
+    {%endfor%}
+  </table>
+</p>

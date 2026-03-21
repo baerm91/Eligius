@@ -1,0 +1,13 @@
+{% load i18n %}
+<p class="text-center">
+  <table>
+    {% if Nominal.name_nom_id %}
+    <tr><td><a href="{{Nominal.name_nom_id}}" class="badge badge-info">Nomisma:</a></td><td>{{Definition}}</td></tr>
+    {% endif %}
+    <tr><td>Links:</td><td>
+      {% for link in Exactmatch %}
+        <a href="{{link.link}}" class="badge badge-info">{{link.link}}</a>
+      {% endfor %}
+    </td></tr>
+  </table>
+</p>

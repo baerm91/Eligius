@@ -1,0 +1,19 @@
+{% load slg_extras %}
+{% load custom_tags %}
+
+<div class="active-filters-container bg-light p-3 rounded">
+  <div class="d-flex justify-content-between align-items-start">
+    <div class="object-count">
+      Anzahl der Objekte: {{ Anzahl }}
+    </div>
+    
+    <div class="active-filters">
+      {% if request.GET %}
+        <div class="text-right mb-2">Aktive Filter</div>
+        <div class="d-flex flex-wrap justify-content-end">
+          {% include "slg/partials/just_filter_tags_and_reset.html" %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

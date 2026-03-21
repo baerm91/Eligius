@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katalog</title>
+    <style>
+        body {
+            font-family: "Times New Roman", serif;
+            line-height: 1.6;
+            margin: 2cm;
+            background-color: white;
+            color: #333;
+            counter-reset: entry-counter;
+        }
+        .catalog-header {
+            text-align: center;
+            margin-bottom: 3cm;
+            border-bottom: 2px solid #333;
+            padding-bottom: 1cm;
+        }
+        .catalog-title {
+            font-size: 24pt;
+            font-weight: bold;
+            margin-bottom: 10pt;
+        }
+        .catalog-subtitle {
+            font-size: 14pt;
+            color: #666;
+            font-style: italic;
+        }
+        .title-group {
+            margin-bottom: 1.5em;
+            page-break-inside: avoid;
+        }
+        .group-title {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.8em;
+            text-align: left;
+            padding: 0.3em 0;
+            border-bottom: 1px solid #ccc;
+        }
+        .catalog-entry {
+            margin-bottom: 0.8em;
+            padding: 0.3em 0;
+            border-bottom: 1px dotted #ddd;
+            display: flex;
+            align-items: flex-start;
+            page-break-inside: avoid;
+            counter-increment: entry-counter;
+        }
+        .entry-header {
+            display: flex;
+            align-items: baseline;
+            margin-right: 1em;
+            gap: 0.5em;
+        }
+        .entry-number {
+            font-weight: bold;
+            min-width: 2em;
+            color: #666;
+        }
+        .entry-number::before {
+            content: counter(entry-counter) ".";
+        }
+        .entry-content {
+            flex-grow: 1;
+            line-height: 1.4;
+        }
+        .entry-main {
+            margin-bottom: 0.3em;
+        }
+        .entry-details {
+            font-size: 11pt;
+            color: #555;
+            margin-left: 1em;
+        }
+        .muenzstaette {
+            font-weight: 500;
+        }
+        .nominal {
+            font-style: italic;
+        }
+        .datierung {
+            color: #666;
+        }
+        .literatur {
+            font-weight: 500;
+            color: #000;
+            margin-left: 1.5em;
+        }
+        .anmerkung {
+            font-weight: 500;
+            color: #000;
+            margin-left: 1.5em;
+            font-style: italic;
+        }
+        .fundkontext {
+            color: #777;
+            font-size: 10pt;
+        }
+        .av-description,
+        .rv-description {
+            color: #555;
+            font-size: 10pt;
+        }
+        .measurements {
+            font-size: 10pt;
+            color: #666;
+            text-align: right;
+            min-width: 12em;
+        }
+        .technical-data {
+            display: flex;
+            /* gap: 1em; */
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .additional-data {
+            font-size: 9pt;
+            color: #777;
+            text-align: right;
+            margin-top: 0.2em;
+            font-style: italic;
+        }
+        .invnr {
+            font-weight: bold;
+            color: #000;
+        }
+        .technical-data sup {
+            font-size: 0.7em;
+            line-height: 0;
+            position: relative;
+            vertical-align: baseline;
+            top: -0.5em;
+            margin-left: 0;
+            padding-left: 0;
+        }
+        /* Print-Styles */
+        @media print {
+            body {
+                margin: 1cm;
+                background: white;
+            }
+            .title-group {
+                page-break-inside: avoid;
+            }
+            .catalog-entry {
+                page-break-inside: avoid;
+            }
+            .group-title {
+                page-break-after: avoid;
+            }
+        }
+        /* Responsive Design für kleinere Bildschirme */
+        @media (max-width: 768px) {
+            body {
+                margin: 1em;
+            }
+            .catalog-entry {
+                flex-direction: column;
+            }
+            .entry-header {
+                margin-bottom: 0.5em;
+            }
+            .measurements {
+                text-align: left;
+                margin-top: 0.5em;
+            }
+            .technical-data {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="catalog-header">
+        <div class="catalog-title">Münzkatalog</div>
+        <div class="catalog-subtitle">{{ catalog_groups|length }} Gruppen mit {{ total_objects|default:"Mehreren" }} Objekten</div>
+    </div>
+
+    {% for group in catalog_groups %}
+        <div class="title-group">            
+            <div class="group-title">{{ group.title }}</div>
+            {% for obj in group.objects %}
+                <div class="catalog-entry">
+                    <div class="entry-header">
+                        <span class="entry-number"></span>
+                        <span class="invnr">{{ obj.invnr }}</span>
+                    </div>
+                    <div class="entry-content">
+                        <div class="entry-main">
+                            {% if obj.muenzstaette %}
+                                <span class="muenzstaette">{{ obj.muenzstaette }}</span>{% if obj.nominal or obj.datierung or obj.literatur or obj.anmerkung or obj.av_beizeichen or obj.rv_beizeichen %},{% endif %}
+                            {% endif %}
+                            {% if obj.nominal %}
+                                <span class="nominal">{{ obj.nominal }}</span>{% if obj.datierung or obj.literatur or obj.anmerkung or obj.av_beizeichen or obj.rv_beizeichen %},{% endif %}
+                            {% endif %}
+                            {% if obj.datierung %}
+                                <span class="datierung">{{ obj.datierung }}</span>{% if obj.literatur or obj.anmerkung or obj.av_beizeichen or obj.rv_beizeichen %},{% endif %}
+                            {% endif %}
+                            {% if obj.literatur %}
+                                <span class="literatur">{{ obj.literatur }}</span>{% if obj.av_beizeichen or obj.rv_beizeichen %},{% endif %}
+                            {% elif obj.anmerkung %}
+                                <span class="anmerkung">{{ obj.anmerkung }}</span>{% if obj.av_beizeichen or obj.rv_beizeichen %},{% endif %}
+                            {% endif %}
+                            {% if obj.av_beizeichen %}
+                                <span class="av-beizeichen">{{ obj.av_beizeichen }}</span>{% if obj.rv_beizeichen %},{% endif %}
+                            {% endif %}
+                            {% if obj.rv_beizeichen %}
+                                <span class="rv-beizeichen">{{ obj.rv_beizeichen }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if not obj.has_typ %}
+                            {% if obj.avleg or obj.av_bildtyp %}
+                                <div class="entry-details">
+                                    <span class="av-description">Av: {% if obj.avleg %}{{ obj.avleg }}{% endif %}{% if obj.avleg and obj.av_bildtyp %}. {% endif %}{% if obj.av_bildtyp %}{{ obj.av_bildtyp }}{% endif %}</span>
+                                </div>
+                            {% endif %}
+                            {% if obj.rvleg or obj.rv_bildtyp %}
+                                <div class="entry-details">
+                                    <span class="rv-description">Rv: {% if obj.rvleg %}{{ obj.rvleg }}{% endif %}{% if obj.rvleg and obj.rv_bildtyp %}. {% endif %}{% if obj.rv_bildtyp %}{{ obj.rv_bildtyp }}{% endif %}</span>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if obj.fundkontext %}
+                            <div class="entry-details">
+                                <span class="fundkontext">Fundnr./Fundjahr: {{ obj.fundkontext }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="measurements">
+                        <div class="technical-data">
+                            {% if obj.gewicht %}
+                                {{ obj.gewicht|floatformat:2 }}g
+                            {% endif %}
+                            {% if obj.durchmesser %}
+                                {% if obj.gewicht %}, {% endif %}{{ obj.durchmesser|floatformat:1 }}mm
+                            {% endif %}
+                            {% if obj.stempelstellung %}{% if obj.gewicht or obj.durchmesser %}, {% endif %}{{obj.stempelstellung}}<sup>h</sup>{% endif %}{% if obj.abnutzung %}, A{{ obj.abnutzung }}{% endif %}
+                        </div>
+                        {% if obj.herstellungsmerkmale or obj.sekundaere_merkmale or obj.faelschung %}
+                            <div class="additional-data">
+                                {% if obj.herstellungsmerkmale %}{{ obj.herstellungsmerkmale }}{% endif %}{% if obj.sekundaere_merkmale %}{% if obj.herstellungsmerkmale %}, {% endif %}{{ obj.sekundaere_merkmale }}{% endif %}{% if obj.faelschung %}{% if obj.herstellungsmerkmale or obj.sekundaere_merkmale %}, {% endif %}{{ obj.faelschung }}{% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="catalog-entry" style="counter-increment: none;">
+                    <div class="entry-header">
+                        <span class="entry-number" style="color: #999;">-</span>
+                        <span class="invnr" style="color: #999;">-</span>
+                    </div>
+                    <div class="entry-content">
+                        <em>Keine Objekte in dieser Gruppe</em>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% empty %}
+        <div class="title-group">
+            <p><em>Keine Gruppen zu generieren.</em></p>
+        </div>
+    {% endfor %}
+    
+    <div style="margin-top: 3cm; padding-top: 1cm; border-top: 1px solid #ccc; text-align: center; color: #666; font-size: 10pt;">
+        Katalog erstellt am {{ "now"|date:"d.m.Y H:i" }} Uhr
+    </div>
+</body>
+</html> 

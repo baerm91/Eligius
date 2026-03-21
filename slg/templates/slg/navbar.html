@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}Eligius{% endblock title %}</title>
+    {% block meta_tags %}{% endblock meta_tags %}
+    
+    {% block stylesheets %}
+      {% load static %}
+      {% include 'slg/styles.html' with active_block='cssnavbar' %}
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" />
+    {% endblock stylesheets %}
+    
+    <!-- Google Analytics wird nur geladen, wenn Cookies akzeptiert wurden -->
+    <script>
+      function loadGoogleAnalytics() {
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-5D038YT858';
+        document.head.appendChild(script);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-5D038YT858');
+      }
+    </script>
+</head>
+<body>
+  <div class="site-wrap">
+
+    
+    <header class="site-navbar py-3 border-bottom" role="banner">
+      <div class="container-fluid">
+        <div class="row align-items-center">
+          
+          <div class="col-6 col-xl-3" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+            <h2 class="mb-0"><a href="/" class="text-black h2 mb-0 text-decoration-none"><em>Eligius.</em></a></h2><h6>Numotheca Austriaca</h6>
+          </div>
+          
+          <!-- Hamburger-Menü-Button für mobile Geräte -->
+          <div class="col-6 d-xl-none text-right">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu">
+              <span class="navbar-toggler-icon">&#9776;</span>
+            </button>
+          </div>
+          
+          <!-- Menü für Desktop und Mobile -->
+          <div class="col-12 col-xl-6 text-center">
+            <nav class="navbar-expand-xl">
+              <div class="collapse navbar-collapse justify-content-center" id="navbarMenu">
+                <ul class="navbar-nav">
+                  <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                  <li class="nav-item"><a class="nav-link" href="/browse">Browse</a></li>
+                  <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">Über</a></li>
+                  <li class="nav-item"><a class="nav-link" href="/#kontakt">Kontakt</a></li>
+                  <li class="nav-item"><a class="nav-link" href="/admin">Login</a></li>
+                </ul>
+              </div>
+            </nav>
+          </div>
+
+          <!-- Leerer Bereich für Ausgleich -->
+          <div class="col-xl-3 d-none d-xl-block"></div>
+
+        </div>
+      </div>
+      
+    </header>
+
+    <div class="container-fluid">
+        {% block content %}
+        {% endblock %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"></script>
+    <script>
+    window.addEventListener("load", function(){
+      window.cookieconsent.initialise({
+        "palette": {
+          "popup": {
+            "background": "#edeff5",
+            "text": "#838391"
+          },
+          "button": {
+            "background": "#4b81e8"
+          }
+        },
+        "theme": "classic",
+        "position": "bottom",
+        "type": "opt-in",
+        "content": {
+          "message": "Diese Website verwendet Cookies, um Ihnen das beste Erlebnis auf unserer Webseite zu ermöglichen.",
+          "dismiss": "Ablehnen",
+          "allow": "Akzeptieren",
+          "link": "Mehr erfahren",
+          "href": "datenschutzerklaerung.html"
+        },
+        onInitialise: function(status) {
+          if (status === cookieconsent.status.allow) {
+            loadGoogleAnalytics();
+          }
+        },
+        onStatusChange: function(status) {
+          if (status === cookieconsent.status.allow) {
+            loadGoogleAnalytics();
+          }
+        }
+      })
+    });
+    </script>
+  </div>
+  {% block scripts %}
+    {% include 'slg/scripte.html' with active_block='jsnavbar' %}
+  {% endblock scripts %}
+</body>
+</html>

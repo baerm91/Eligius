@@ -1,0 +1,173 @@
+{% extends 'slg/navbar.html' %}
+{% block title %}Eligius - Browse{% endblock title %}
+{% load static %}
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/lightgallery.min.css'%}">
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/select2.min.css'%}">
+{% endblock stylesheets %}
+{% block content %}
+{% load slg_extras %}
+
+
+<form method="GET" action=".">
+
+  <div class="form-group">
+    <input id="search" type="search" class="form-control" name="q" style="text-align:center;" placeholder="Suche nach Inv.-Nr., Av.-Leg., Rv.-Leg. oder Zitatnr." autofocus>
+  </div>
+  
+  
+    
+  {% include 'slg/filter-tags.html' %}
+
+    <div class="container-fluid" >
+      <div class="row">
+        <div class="col-md-9">
+          <div class="row infinite-container">
+            {% for Obj in Objekte %}
+                <div class="col-sm-6 col-md-3 col-lg-3 col-xl-2 pt-3 pb-3 align-self-center infinite-item">
+                        <div class="hovereffect">
+                          {% with bild_urls=Obj.get_bild_urls %}
+                              {% if bild_urls %}
+                                  <div data-src="{{ bild_urls.av }}">
+                                      <a href="{{ Obj.get_absolute_url }}"><img src="{{ bild_urls.thumbnail_av }}" alt="thumbnail" class="img-fluid"></a>
+                                  </div>
+                                  <div data-src="{{ bild_urls.rv }}">
+                                      <a href="{{ Obj.get_absolute_url }}"><img src="{{ bild_urls.thumbnail_rv }}" alt="thumbnail" class="img-fluid"></a>
+                                  </div>
+                              {% endif %}
+                          {% endwith %}
+                            <div class="align-self-bottom a">{{Obj.Slg}}<br>
+                              {% if Obj.titel %}
+                                {{Obj.titel}}<br>
+                                {% if Obj.dat_verb %}{{ Obj.dat_verb }}{% endif %}
+                              {% elif Obj.Typ %}
+                                {{Obj.Typ.titel}}<br>
+                                {% if Obj.Typ.dat_verb %}{{ Obj.Typ.dat_verb }}{% endif %}
+                              {% else %}
+                                unbestimmt
+                              {% endif %}
+                            </div>
+                        </div>
+                </div>
+            {% empty %}
+              <p>Keine Objekte gefunden.</p>
+            {% endfor %}
+          </div>
+        </div>
+        {% if Objekte.has_next %}
+          <a class="infinite-more-link" href="?page={{ Objekte.next_page_number }}{{ getvars }}"></a>
+        {% endif %}
+        {% include 'slg/facet-lists.html' %}
+      </div>
+        
+          
+    </div>
+</form>
+{% comment %} </div> {% endcomment %}
+
+{% endblock content %}
+{% block scripts %}
+  {{block.super}}
+  <script src="{% static 'Djangoprojekt/js/select2.min.js'%}"></script>
+  <script src="{% static 'Djangoprojekt/js/jquery.waypoints.min.js' %}"></script>
+  <script src="{% static 'Djangoprojekt/js/infinite.min.js' %}"></script>
+  <script src="{% static 'Djangoprojekt/js/jquery.mousewheel.min.js'%}"></script>
+
+  <script>
+    $(document).ready(function() {
+      // Filter function
+      function filterDropdown(inputSelector, dropdownSelector) {
+          $(inputSelector).on("keyup", function() {
+              var value = $(this).val().toLowerCase();
+              $(dropdownSelector + " *").filter(function() {
+                  $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+              });
+          });
+      }
+  
+      // Apply filter function to different dropdowns
+      filterDropdown("#Personen", "#PersonFormControlSelect2");
+      filterDropdown("#Nominalien", "#NominalFormControlSelect2");
+      // ... (Repeat for other dropdowns)
+  
+      $('.js-example-basic-single').select2({
+          width: 'resolve'
+      });
+  
+      var placeholder = "Wähle aus {{Rvtypes|length}} Bildtypen....";
+      $('#RvFormControlSelect2').select2({
+          placeholder: placeholder,
+          escapeMarkup: function(m) { 
+              return m; 
+          }
+      });
+  
+      $('#AvFormControlSelect2').select2({
+          placeholder: "Wähle aus {{Avtypes|length}} Bildtypen...."
+      });
+      
+      $("#searchdd").change(function(){
+          var str=$(this).val();
+          $("#search").attr("name",str);
+      });
+  
+      $('#theModal').on('show.bs.modal', function (e) {
+          var button = $(e.relatedTarget);
+          var modal = $(this); 
+          modal.find('.modal-body').load(button.data("remote"));
+      });
+  
+      var infinite = new Waypoint.Infinite({
+          element: $('.infinite-container')[0],
+          onBeforePageLoad: function () {
+              $('.loading').show();
+          },
+          onAfterPageLoad: function ($items) {
+              $('.loading').hide();
+          }
+      });
+  
+      function toggle_visibility(id) {
+          var e = document.getElementById(id);
+          e.style.visibility = ((e.style.visibility!='hidden') ? 'hidden' : 'visible');
+      }
+  
+      $('#search').keyup(function(){    
+          var current_query = $('#search').val();
+          if (current_query !== "") {
+              $(".list-group li").hide();
+              $(".list-group li").each(function(){
+                  var current_keyword = $(this).text();
+                  if (current_keyword.indexOf(current_query) >=0) {
+                      $(this).show();              
+                  };
+              });        
+          } else {
+              $(".list-group li").show();
+          };
+      });
+  
+      // Event-Delegation für anklickbare Links
+      $(document).ready(function() {
+        // Wenn das Formular abgesendet wird
+        $("form").submit(function(e) {
+            e.preventDefault();
+    
+            // Holen Sie sich die aktuellen URL-Parameter
+            var params = new URLSearchParams(window.location.search);
+    
+            // Durchlaufen Sie alle Formularelemente und fügen Sie sie den Parametern hinzu
+            $(this).serializeArray().forEach(function(item) {
+                params.set(item.name, item.value);
+            });
+    
+            // Leiten Sie zur neuen URL um
+            window.location.href = window.location.pathname + "?" + params.toString();
+        });
+      });
+    });
+  
+  </script>
+  
+{% endblock scripts %}

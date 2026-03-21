@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Unterlagszettel</title>
+  <style>
+    body {
+      margin: 0.5cm;
+      font-family: Arial, sans-serif;
+      font-size: 5pt;
+    }
+    .sheet {
+      display: grid;
+      grid-template-columns: repeat(5, 3.5cm);
+      grid-template-rows: repeat(8, 3.5cm);
+      gap: 0;
+      page-break-after: always; /* Seitenumbruch nach jedem Sheet */
+    }
+    .sheet:last-child {
+      page-break-after: auto; /* Kein Seitenumbruch nach dem letzten Sheet */
+    }
+    .card {
+      width: 3.5cm;
+      height: 3.5cm;
+      box-sizing: border-box;
+      border: 1px solid black;
+      padding: 2px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 5pt;
+    }
+    .title-nominal-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 2px;
+      min-height: fit-content;
+    }
+    .title-section {
+      flex: 1;
+      overflow: hidden;
+      word-wrap: break-word;
+      line-height: 1.1;
+      font-size: 6pt;
+      font-weight: 600;
+      min-width: 0;
+    }
+    .nominal-section {
+      flex-shrink: 0;
+      padding: 1px 2px;
+      border: 0.5pt solid #666;
+      border-radius: 2px;
+      background-color: #f8f8f8;
+      font-size: 5pt;
+      line-height: 1.1;
+      max-width: 0.6cm;
+      text-align: center;
+      word-wrap: break-word;
+      min-height: 8pt;
+    }
+    .row.split {
+      display: flex;
+      justify-content: space-between;
+    }
+    .row.block {
+      display: flex;
+      flex-direction: column;
+    }
+    .row.two-column {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 2px;
+    }
+    .left-column {
+      flex: 1;
+      overflow: hidden;
+      word-wrap: break-word;
+      line-height: 1.1;
+      font-size: 5pt;
+    }
+    .right-column {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      font-size: 5pt;
+      line-height: 1.1;
+      min-width: 0.8cm;
+    }
+    .divider-horizontal {
+      border-top: 0.3pt solid #000;
+      margin: 1px 0;
+    }
+    .text-truncate {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .multiline-text {
+      overflow: hidden;
+      word-wrap: break-word;
+      line-height: 1.1;
+      font-size: 5pt;
+    }
+    .full-width {
+      overflow: hidden;
+      word-wrap: break-word;
+      font-size: 6pt;
+      font-weight: bold;
+      background-color: #dcdcdc;
+      border: 0.5pt solid #c2c2c2;
+      border-radius: 2px;
+      padding: 1px 3px;
+      display: block;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .mint-location {
+      overflow: hidden;
+      word-wrap: break-word;
+      line-height: 1.1;
+      font-size: 5pt;
+    }
+    .rv-beizeichen {
+      overflow: hidden;
+      word-wrap: break-word;
+      line-height: 1.1;
+      font-size: 4.5pt;
+      font-style: italic;
+      color: #444;
+    }
+    .fund-info {
+      overflow: hidden;
+      word-wrap: break-word;
+      line-height: 1.1;
+      font-size: 4pt;
+      font-weight: normal;
+      color: #666;
+    }
+    @media print {
+      body {
+        margin: 0.5cm;
+      }
+      .sheet {
+        page-break-inside: avoid;
+        page-break-after: always;
+      }
+      .sheet:last-child {
+        page-break-after: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  {% for coin in coins %}
+    {% if forloop.counter0|divisibleby:40 %}
+      {% if not forloop.first %}</div>{% endif %}
+      <div class="sheet">
+    {% endif %}
+    
+    <div class="card">
+      <div class="title-nominal-row">
+        <div class="title-section" title="{{ coin.titel }}">{{ coin.titel }}</div>
+        {% if coin.nominal %}
+        <div class="nominal-section" title="{{ coin.nominal }}">{{ coin.nominal|slice:":3" }}</div>
+        {% endif %}
+      </div>
+      <div class="divider-horizontal"></div>
+      <div class="row">
+        <span class="mint-location" title="{{ coin.muenzstaette_datierung }}">{{ coin.muenzstaette_datierung }}</span>
+      </div>
+      <div class="divider-horizontal"></div>
+      <div class="row two-column">
+        <div class="left-column" title="{{ coin.kurzzitat }}">{{ coin.kurzzitat }}</div>
+        <div class="right-column">
+          {% if coin.gewicht %}<div>{{ coin.gewicht }}g</div>{% endif %}
+          {% if coin.durchmesser %}<div>{{ coin.durchmesser }}mm</div>{% endif %}
+          {% if coin.stempelstellung %}<div>{{ coin.stempelstellung }}<sup>h</sup></div>{% endif %}
+        </div>
+      </div>
+      {% if coin.rv_beizeichen %}
+      <div class="row">
+        <span class="rv-beizeichen" title="{{ coin.rv_beizeichen }}">{{ coin.rv_beizeichen }}</span>
+      </div>
+      {% endif %}
+      <div class="divider-horizontal"></div>
+      {% if coin.fund_nr_jahr %}
+      <div class="row">
+        <span class="fund-info" title="{{ coin.fund_nr_jahr }}">{{ coin.fund_nr_jahr }}</span>
+      </div>
+      {% endif %}
+      <div class="row">
+        <span class="full-width" title="Inv.: {{ coin.inventarnummer }}">{{ coin.inventarnummer }}</span>
+      </div>
+    </div>
+    
+    {% if forloop.last %}</div>{% endif %}
+  {% endfor %}
+</body>
+</html> 

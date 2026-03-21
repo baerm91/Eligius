@@ -1,0 +1,317 @@
+{% load slg_extras %}
+{% comment %} <div> {% endcomment %}
+    {% comment %} <form method="GET" action="."> {% endcomment %}
+    {% comment %} <div class="form-group">
+    <select id="test" multiple data-role="tagsinput" name="q">
+    </select>
+    </div> {% endcomment %}
+
+    
+
+
+
+    <div class="form-group">
+    {% comment %} <input type="text" class="form-control form-control-sm" name="q" placeholder="Suche nach Titel, Inv.-Nr."> {% endcomment %}
+    {% if request.GET.avleg %}
+        {% for param in request.GET|get_list:'avleg' %}
+            {% if param != "" %}
+            <input type="hidden" name="avleg" value="{{ param }}">
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    </div>
+    <div class="form-group">
+    {% comment %} <input type="text" class="form-control form-control-sm" name="q" placeholder="Suche nach Titel, Inv.-Nr."> {% endcomment %}
+    {% if request.GET.excl_avleg %}
+        {% for param in request.GET|get_list:'excl_avleg' %}
+            {% if param != "" %}
+            <input type="hidden" name="excl_avleg" value="{{ param }}">
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    </div>
+    <div class="form-group">
+    {% comment %} <input type="text" class="form-control form-control-sm" name="q" placeholder="Suche nach Titel, Inv.-Nr."> {% endcomment %}
+    {% if request.GET.rvleg %}
+        {% for param in request.GET|get_list:'rvleg' %}
+            {% if param != "" %}
+            <input type="hidden" name="rvleg" value="{{ param }}">
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    </div>
+    <div class="form-group">
+    {% comment %} <input type="text" class="form-control form-control-sm" name="q" placeholder="Suche nach Titel, Inv.-Nr."> {% endcomment %}
+    {% if request.GET.excl_rvleg %}
+        {% for param in request.GET|get_list:'excl_rvleg' %}
+            {% if param != "" %}
+            <input type="hidden" name="excl_rvleg" value="{{ param }}">
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    </div>
+    <div class="form-group">
+    {% comment %} <input type="text" class="form-control form-control-sm" name="q" placeholder="Suche nach Titel, Inv.-Nr."> {% endcomment %}
+    {% if request.GET.q %}
+        {% for param in request.GET|get_list:'q' %}
+            {% if param != "" %}
+            <input type="hidden" name="q" value="{{ param }}">
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    </div>
+    <div class="form-group">
+    {% comment %} <input type="text" class="form-control form-control-sm" name="avbeschr" placeholder="Suche nach Av.-Beschr..."> {% endcomment %}
+    {% if request.GET.avbeschr %}
+        {% for param in request.GET|get_list:'avbeschr' %}
+            {% if param != "" %}
+            <input type="hidden" name="avbeschr" value="{{ param }}">
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    {% if request.GET.excl_avbeschr %}
+        {% for param in request.GET|get_list:'excl_avbeschr' %}
+            {% if param != "" %}
+            <input type="hidden" name="excl_avbeschr" value="{{ param }}">
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    </div>
+    <div class="form-group">
+    {% comment %} <input type="text" class="form-control form-control-sm" name="rvbeschr" placeholder="Suche nach Rv.-Beschr..."> {% endcomment %}
+    {% if request.GET.rvbeschr %}
+        {% for param in request.GET|get_list:'rvbeschr' %}
+            {% if param != "" %}
+            <input type="hidden" name="rvbeschr" value="{{ param }}">
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    {% if request.GET.excl_rvbeschr %}
+        {% for param in request.GET|get_list:'excl_rvbeschr' %}
+            {% if param != "" %}
+            <input type="hidden" name="excl_rvbeschr" value="{{ param }}">
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    </div>
+
+
+
+
+    
+    <div class="form-group">
+    {% comment %} <label for="exampleFormControlSelect2">Personen</label> {% endcomment %}
+    <input class="form-control" id="Personen" type="text" placeholder="{{Personen|length}} Personen....">
+        {% if Personen|length > 6 %}
+            <select name="Ppl" multiple class="form-control" id="PersonFormControlSelect2" size="6">
+        {% else %}
+            <select name="Ppl" multiple class="form-control" id="PersonFormControlSelect2" size="{{Personen|length|add:1}}" style="overflow:hidden">
+        {% endif %}
+        {% for Personenrolle in Personenrollen %}
+                    <optgroup label="{{Personenrolle.Ppl__obj_person__idfk_PersonFunktion__name}}">
+            {% for Person in Personen %}
+                {% if Personenrolle.Ppl__obj_person__idfk_PersonFunktion__name == Person.Ppl__obj_person__idfk_PersonFunktion__name %}
+                        {% if Person.Ppl__name in request.GET|get_list:'Ppl' %}
+                            <option id="{{Person.Ppl__name}}" selected value="{{Person.Ppl__name}}">{{Person.Ppl__name}} ({{Person.cc}})</option>
+                        {% else %}
+                            <option id="{{Person.Ppl__name}}" value="{{Person.Ppl__name}}">{{Person.Ppl__name}} ({{Person.cc}})</option>
+                        {% endif %}
+                {% endif %}
+            {% endfor %}
+                    </optgroup>
+        {% endfor %}
+            </select>
+    </div> 
+    <div class="form-group">
+    {% comment %} <label for="exampleFormControlSelect2">Münzstätten</label> {% endcomment %}
+            <input class="form-control" id="Mints" type="text" placeholder="{{Mints|length}} Münzstätten....">
+
+            {% if Mints|length > 6 %}
+                <select name="mint" multiple class="form-control" id="MintFormControlSelect2" size="8">
+            {% else %}  
+                <select name="mint" multiple class="form-control" id="MintFormControlSelect2" size="8">
+            {% endif %}  
+
+            {% for Region in Regions %}
+            <optgroup label="{{Region.idfk_Mzstaette__region__name}}">
+            {% for Mint in Mints %}
+                {% if Region.idfk_Mzstaette__region__name == Mint.idfk_Mzstaette__region__name %}
+                        {% if Mint.idfk_Mzstaette__name in request.GET|get_list:'mint' %}
+                            <option id="{{Mint.idfk_Mzstaette__name}}" value="{{Mint.idfk_Mzstaette__name}}" selected>{{Mint.idfk_Mzstaette__name}} ({{Mint.cc}})</option>
+                        {% else %}
+                            <option id="{{Mint.idfk_Mzstaette__name}}" value="{{Mint.idfk_Mzstaette__name}}">{{Mint.idfk_Mzstaette__name}} ({{Mint.cc}})</option>
+                        {% endif %}
+                {% endif %}
+            {% endfor %}
+            </optgroup>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="form-group">
+        {% comment %} <label for="exampleFormControlSelect2">Nominale</label> {% endcomment %}
+        <input class="form-control" id="Nominalien" type="text" placeholder="{{Nominale|length}} Nominalien....">
+        {% if Nominale|length > 6 %}
+            <select name="idfk_Nominal" multiple class="form-control" id="NominalFormControlSelect2" size="6">
+        {% else %}
+            <select name="idfk_Nominal" multiple class="form-control" id="NominalFormControlSelect2" size="{{Nominale|length}}"  style="overflow:hidden">
+        {% endif %}
+        {% for Nominal in Nominale %}
+                    {% if Nominal.idfk_Nominal__name in request.GET|get_list:'idfk_Nominal' %}
+                    <option id="{{Nominal.idfk_Nominal__name}}" value="{{Nominal.idfk_Nominal__name}}" selected>{{Nominal.idfk_Nominal__name}} ({{Nominal.cc}})</option>
+                    {% else %}
+                    <option id="{{Nominal.idfk_Nominal__name}}" value="{{Nominal.idfk_Nominal__name}}">{{Nominal.idfk_Nominal__name}} ({{Nominal.cc}})</option>
+                    {% endif %}
+        {% endfor %}
+            </select>
+    </div>
+        <div class="form-group">
+        <input class="form-control" id="Refs" type="text" placeholder="{{Literatur|length}} Referenzierungen....">
+        {% if Literatur|length > 6 %}
+            <select name="idfk_Ref" multiple class="form-control" id="RefFormControlSelect2" size="6">
+        {% else %}
+            <select name="idfk_Ref" multiple class="form-control" id="RefFormControlSelect2" size="{{Literatur|length}}"  style="overflow:hidden">
+        {% endif %}
+        {% for Lit in Literatur %}
+                    {% if Lit.idfk_Ref__abk in request.GET|get_list:'idfk_Ref' %}
+                    <option id="{{Lit.idfk_Ref__abk}}" value="{{Lit.idfk_Ref__abk}}" selected>{{Lit.idfk_Ref__abk}} ({{Lit.cc}})</option>
+                    {% else %}
+                    <option id="{{Lit.idfk_Ref__abk}}" value="{{Lit.idfk_Ref__abk}}">{{Lit.idfk_Ref__abk}} ({{Lit.cc}})</option>
+                    {% endif %}
+        {% endfor %}
+            </select>
+    </div>
+    {% comment %} <div class="form-group">
+    <input class="form-control" id="Avbildtypen" type="text" placeholder="{{Avtypes|length}} Av.-Bildtypen....">
+    {% if Avtypes|length > 6 %}
+        <select name="av_bildtyp" multiple class="js-example-basic-single" id="AvFormControlSelect2" size="9">
+    {% else %}
+        <select name="av_bildtyp" multiple class="js-example-basic-single" id="AvFormControlSelect2" size="{{Avtypes|length}}"  style="overflow:hidden">
+    {% endif %}
+        {% for Avtype in Avtypes %}
+                    {% if Avtype.av_bildtyp__name in request.GET|get_list:'av_bildtyp' %}
+                    <option id="{{ Avtype.av_bildtyp__id }}" value="{{Avtype.av_bildtyp__id}}" selected>{{Avtype.av_bildtyp__name}} ({{Avtype.cc}})</option>
+                    {% else %}
+                    <option id="{{ Avtype.av_bildtyp__id }}" value="{{Avtype.av_bildtyp__id}}">{{Avtype.av_bildtyp__name}} ({{Avtype.cc}})</option>
+                    {% endif %}
+        {% endfor %}
+    </select>
+    </div> {% endcomment %}
+    {% comment %} <div class="form-group">
+    <input class="form-control" id="Rvbildtypen" type="text" placeholder="{{Rvtypes|length}} Rv.-Bildtypen....">
+    {% if Rvtypes|length > 6 %}
+        <select name="rv_bildtyp" multiple class="form-control" id="RvFormControlSelect2" size="9">
+    {% else %}
+        <select name="rv_bildtyp" multiple class="form-control" id="RvFormControlSelect2" size="{{Rvtypes|length}}"  style="overflow:hidden">
+    {% endif %}
+        {% for Rvtype in Rvtypes %}
+                    {% if Rvtype.rv_bildtyp__name in request.GET|get_list:'rv_bildtyp' %}
+                    <option id="{{ Rvtype.rv_bildtyp__id }}" value="{{Rvtype.rv_bildtyp__id}}" selected>{{Rvtype.rv_bildtyp__name}} ({{Rvtype.cc}})</option>
+                    {% else %}
+                    <option id="{{ Rvtype.rv_bildtyp__id }}" value="{{Rvtype.rv_bildtyp__id}}">{{Rvtype.rv_bildtyp__name}} ({{Rvtype.cc}})</option>
+                    {% endif %}
+        {% endfor %}
+        </select>
+    </div> {% endcomment %}
+    <div class="form-group">
+    {% comment %} <div class="col-xs-1"> {% endcomment %}
+        <input type="number" class="form-control form-control-sm" name="dat_von" value="{{ request.GET.dat_von }}" size="4" placeholder="von">
+    {% comment %} </div> {% endcomment %}
+    {% comment %} </div>
+    <div class="form-group"> {% endcomment %}
+    {% comment %} <div class="col-xs-1"> {% endcomment %}
+        <input type="number" class="form-control form-control-sm" name="dat_bis" value="{{ request.GET.dat_bis }}" size="4" placeholder="bis">
+    {% comment %} </div> {% endcomment %}
+    </div>
+    {% comment %} <input type="text" class="form-control" name="dat_von" value="{{ request.GET.dat_von }}" placeholder="von">
+    <input type="text" class="form-control" name="dat_bis" value="{{ request.GET.dat_bis }}" placeholder="bis"> {% endcomment %}
+    
+    <div class="form-group">
+        {% comment %} <input class="form-control" id="Search_AvTypes" type="text" placeholder="{{AvTypes|length}} Av.-Beschreibungen...."> {% endcomment %}
+        <table id="AvTypes" class="display compact" style="width:100%">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th style="width:80%">Av.-Beschr.</th>
+                    <th></th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                {% for Avtype in Avtypes %}
+                <tr>
+                            
+                    <td>
+                        {% comment %} {{ request.GET|get_list:'av_bildtyp' }} {% endcomment %}
+                        {% comment %} {{ Avtype.av_bildtyp__id }} {% endcomment %}
+                        {% if Avtype.av_bildtyp__id in request.GET|get_list:'av_bildtyp' %}
+                       
+                        asasa
+                            <input class="form-control" type="checkbox" id="{{ Avtype.av_bildtyp__id }}" name="av_bildtyp" value="{{Avtype.av_bildtyp__id}}" aria-label="..." checked>
+                        {% else %}
+                            <input class="form-control" type="checkbox" id="{{ Avtype.av_bildtyp__id }}" name="av_bildtyp" value="{{Avtype.av_bildtyp__id}}" aria-label="...">
+                        {% endif %}
+                    </td>
+                    <td>{{Avtype.av_bildtyp__name}}</td>
+                    <td>{{Avtype.cc}}</td>
+                    
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <table id="RvTypes" class="display compact">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Rv.-Beschr.</th>
+                    <th></th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                {% for Rvtype in Rvtypes %}
+                <tr>
+                            
+                    <td>
+                        {% if Rvtype.rv_bildtyp__id in request.GET|get_list:'rv_bildtyp' %}
+                            <input class="form-control" type="checkbox" id="{{ Rvtype.rv_bildtyp__id }}" name="rv_bildtyp" value="{{Rvtype.rv_bildtyp__id}}" aria-label="..." checked>
+                        {% else %}
+                            <input class="form-control" type="checkbox" id="{{ Rvtype.rv_bildtyp__id }}" name="rv_bildtyp" value="{{Rvtype.rv_bildtyp__id}}" aria-label="...">
+                        {% endif %}
+                    </td>
+                    <td>{{Rvtype.rv_bildtyp__name}}</td>
+                    <td>{{Rvtype.cc}}</td>
+                    
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <input type="submit" class="btn btn-primary">
+    {% comment %} {% if request.GET|length > 0 %} {% endcomment %}
+        {% comment %} <a href="." role="button" class="btn btn-danger">Reset</a> {% endcomment %}
+    <input type="reset" class="btn btn-danger">
+    {% comment %} {% endif %} {% endcomment %}
+    {% comment %} <button type="submit" class="btn btn-primary">Suche</button> {% endcomment %}
+        
+        
+        {% comment %} <div class="form-group">
+            <label for="AvFormControlSelect2">{{Avtypes|length}} Av.-Bildtypen....
+            {% if Avtypes|length > 6 %}
+                <select name="av_bildtyp" multiple="multiple" class="js-example-basic-single" id="AvFormControlSelect2" size="9">
+            {% else %}
+                <select name="av_bildtyp" multiple="multiple" class="js-example-basic-single" id="AvFormControlSelect2" size="{{Avtypes|length}}"  style="overflow:hidden">
+            {% endif %}
+                {% for Avtype in Avtypes %}
+                            {% if Avtype.av_bildtyp__id in request.GET|get_list:'av_bildtyp' %}
+                            <option id="{{ Avtype.av_bildtyp__id }}" value="{{Avtype.av_bildtyp__id}}" selected>{{Avtype.av_bildtyp__name}} ({{Avtype.cc}})</option>
+                            {% else %}
+                            <option id="{{ Avtype.av_bildtyp__id }}" value="{{Avtype.av_bildtyp__id}}">{{Avtype.av_bildtyp__name}} ({{Avtype.cc}})</option>
+                            {% endif %}
+                {% endfor %}
+                </select>
+            </label>
+        </div> {% endcomment %}
+    
+{% comment %} </div> {% endcomment %}

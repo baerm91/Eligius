@@ -1,0 +1,63 @@
+{% load i18n static slg_extras %}
+{% with light=light|default:False %}
+<div class="infinite-item">
+  <a href="{% url 'Objekt' obj.obj_id %}" class="text-decoration-none text-inherit">
+    <div class="coin-preview-card{% if light %} coin-preview-card--light{% endif %}">
+
+      {# --- Sammlungsname ---------------------------------------------------- #}
+      {% if obj.Slg %}
+        <div class="coin-preview-collection">@ {{ obj.Slg }}</div>
+      {% endif %}
+
+      {# --- Münzbilder ------------------------------------------------------- #}
+      <div class="coin-preview-images">
+        <div class="image-container">
+          <img loading="lazy" decoding="async"
+               src="{{ obj.thumbnail_av_url|default:'' }}"
+               alt="{% trans 'Avers' %}"  class="preview-image"
+               onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                        this.parentNode.querySelector('.placeholder-text').style.display='flex';">
+          <div class="placeholder-text">
+            <span>{% trans 'Avers' %}</span><span>{% trans 'Kein Bild' %}</span>
+          </div>
+        </div>
+        <div class="image-container">
+          <img loading="lazy" decoding="async"
+               src="{{ obj.thumbnail_rv_url|default:'' }}"
+               alt="{% trans 'Revers' %}" class="preview-image"
+               onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                        this.parentNode.querySelector('.placeholder-text').style.display='flex';">
+          <div class="placeholder-text">
+            <span>{% trans 'Revers' %}</span><span>{% trans 'Kein Bild' %}</span>
+          </div>
+        </div>
+      </div>
+
+      {# --- Titel & Datierung – IMMER sichtbar ------------------------------ #}
+      <div class="preview-title">
+        {{ obj.objekttitel|default:"Unbestimmt"|safe }}
+      </div>
+      {# --- Datierung ----------------------------------------------------------- #}
+      <div class="preview-dat_verb">
+        {{ obj.datierung_verbale|default:""|safe }}
+      </div>
+
+      {# --- Hover‑Infos ------------------------------------------------------ #}
+      {% if not light %}
+        {% include "slg/partials/coin_preview_card_full_mtoa.html" with obj=obj %}
+        <script defer>
+          document.addEventListener('DOMContentLoaded', () => {
+            const repl = t => t && t
+              .replace(/ä/g,'&auml;').replace(/ö/g,'&ouml;').replace(/ü/g,'&uuml;')
+              .replace(/Ä/g,'&Auml;').replace(/Ö/g,'&Ouml;').replace(/Ü/g,'&Uuml;')
+              .replace(/ß/g,'&szlig;');
+            document.querySelectorAll('.preview-title,.preview-dat_verb,.badge')
+                    .forEach(el => el.innerHTML = repl(el.innerHTML));
+          });
+        </script>
+      {% endif %}
+
+    </div>
+  </a>
+</div>
+{% endwith %}

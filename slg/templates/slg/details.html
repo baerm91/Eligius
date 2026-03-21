@@ -1,0 +1,2871 @@
+{% extends "slg/navbar.html" %}
+{% block title %}{{ coin_data.slg }}: {{ coin_data.invnr }} - {{ coin_data.titel }}{% endblock title %}
+
+{% block meta_tags %}
+    <meta name="description" content="Details zur Münze {{ coin_data.invnr }} aus der Sammlung {{ coin_data.slg }}: {{ coin_data.titel }}. {% if coin_data.personen %}{% for person in coin_data.personen.all %}{% if person.idfk_PersonFunktion.id == 1 %}{{ person.idfk_Person.name }}{% endif %}{% endfor %}. {% endif %}{% if coin_data.mzstaette %}{{ coin_data.mzstaette }}. {% endif %}{% if coin_data.nominal %}{{ coin_data.nominal }}. {% endif %}{% if coin_data.dat_verb %}{{ coin_data.dat_verb }}.{% endif %}">
+    {# Add more specific keywords if desired #}
+    <meta name="keywords" content="Münze, Numismatik, {{ coin_data.slg }}, {{ coin_data.invnr }}{% if coin_data.titel %}, {{ coin_data.titel }}{% endif %}{% if coin_data.personen %}{% for person in coin_data.personen.all %}{% if person.idfk_PersonFunktion.id == 1 %}, {{ person.idfk_Person.name }}{% endif %}{% endfor %}{% endif %}{% if coin_data.mzstaette %}, {{ coin_data.mzstaette }}{% endif %}{% if coin_data.nominal %}, {{ coin_data.nominal }}{% endif %}{% if coin_data.metall %}, {{ coin_data.metall }}{% endif %}{% if coin_data.dat_verb %}, {{ coin_data.dat_verb }}{% endif %}">
+    
+    {# Open Graph tags for social media sharing #}
+    <meta property="og:title" content="{{ coin_data.slg }}: {{ coin_data.invnr }} - {{ coin_data.titel }}" />
+    <meta property="og:description" content="Details zur Münze {{ coin_data.invnr }} aus der Sammlung {{ coin_data.slg }}: {{ coin_data.titel }}. Weitere Informationen und Bilder auf Eligius." />
+    {% with bild_urls=coin_data.bild_urls %}
+        {% if bild_urls.av %}
+            <meta property="og:image" content="{{ bild_urls.av }}" />
+        {% endif %}
+        {% if bild_urls.rv %}
+            <meta property="og:image" content="{{ bild_urls.rv }}" />
+        {% endif %}
+    {% endwith %}
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
+    <meta property="og:type" content="article" /> 
+{% endblock meta_tags %}
+
+{% load static %}
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'Djangoprojekt/css/lightgallery.min.css'%}" defer>
+    
+    
+{% endblock stylesheets %}
+
+{% block content %}
+
+    {% if request.user.is_authenticated %}
+    <div class="container-fluid" >
+        <div class="row text-center">
+            <div class="col pt-2">
+                <table width="100%">
+                    <thead>
+                        <tr>
+                            
+                            <td width="*"></td>
+                            <td width="*" align="left">
+                                <a href="{% url 'admin:slg_obj_change' test.pk %}">Münze: {% if not test.workflow.name %}in Bearbeitung {% else %}{{test.workflow.name}}{%endif%} </a> <br>
+                                {% if test.Typ is not null %}
+                                    <a href="{% url 'admin:slg_muenztyp_change' test.Typ.pk %}">Münztyp: {{ coin_data.Typ.workflow.name }}</a>
+                                {% else %}
+                                    Typ: nicht definiert{{Mztyp.workflow.name}}
+                                {% endif %}
+                            </td>
+                            <td width="*">
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination" id="invnr-navigation">
+                                        <li class="page-item">
+                                            <a class="page-link" href="#" id="prev10" aria-label="Previous">
+                                                <span aria-hidden="true">&laquo;</span>
+                                                <span class="sr-only">Previous</span>
+                                            </a>
+                                        </li>
+                                        <li class="page-item"><a class="page-link" href="#" id="prev2"></a></li>
+                                        <li class="page-item"><a class="page-link" href="#" id="prev1"></a></li>
+                                        <li class="page-item"><a class="page-link" href="#" id="current"></a></li>
+                                        <li class="page-item"><a class="page-link" href="#" id="next1"></a></li>
+                                        <li class="page-item"><a class="page-link" href="#" id="next2"></a></li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="#" id="next10" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                                <span class="sr-only">Next</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+
+                                <script>
+                                function updateNavigation() {
+                                    const currentInvnr = '{{ coin_data.invnr }}';
+                                    const slgId = '{{ coin_data.slg.id }}';
+                                    const slgteilId = '{{ coin_data.slgteil.id }}';
+
+                                    fetch(`/api/adjacent-invnrs/?invnr=${currentInvnr}&slg_id=${slgId}&slgteil_id=${slgteilId}`)
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            document.getElementById('prev2').textContent = data.prev2 || '';
+                                            document.getElementById('prev2').href = data.prev2_id ? `/objekt/${data.prev2_id}/` : '#';
+                                            document.getElementById('prev1').textContent = data.prev1 || '';
+                                            document.getElementById('prev1').href = data.prev1_id ? `/objekt/${data.prev1_id}/` : '#';
+                                            document.getElementById('current').textContent = data.current;
+                                            document.getElementById('current').href = `/objekt/${data.current_id}/`;
+                                            document.getElementById('next1').textContent = data.next1 || '';
+                                            document.getElementById('next1').href = data.next1_id ? `/objekt/${data.next1_id}/` : '#';
+                                            document.getElementById('next2').textContent = data.next2 || '';
+                                            document.getElementById('next2').href = data.next2_id ? `/objekt/${data.next2_id}/` : '#';
+                                            
+                                            document.getElementById('prev10').href = data.prev2_id ? `/objekt/${data.prev2_id}/` : '#';
+                                            document.getElementById('next10').href = data.next2_id ? `/objekt/${data.next2_id}/` : '#';
+                                        });
+                                }
+                                
+                                document.addEventListener('DOMContentLoaded', updateNavigation);
+                                </script>
+                                
+                            </td>
+                            
+                        </tr>
+                    </thead>
+                </table>
+                <hr>
+            </div>
+        </div>
+        {% else %}
+        <div class="row text-center">
+            <br>
+        </div>
+        {% endif %}
+        
+        {% if coin_data.titel %}
+        <div class="row">
+            <div class="col-12">
+                <div class="detail-row full-width">
+                    <h4>{{ coin_data.titel }}{% if coin_data.dat_verb %}, {{ coin_data.dat_verb }}{% endif %}</h4>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="row" id="captions">
+            <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4 pt-2 align-top-center table-responsive" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                <div class="coin-details">
+                    
+                    {% if coin_data.slg %}
+                        <div class="detail-row">
+                            <div class="detail-label">Sammlung:</div>
+                            <div class="detail-value"><a href="/browse/?Slg={{ coin_data.slg.id }}" title="Durchsuchen">{{ coin_data.slg }}</a></div>
+                        </div>
+                    {% endif %}
+                    {% if coin_data.slgteil %}
+                        <div class="detail-row">
+                            <div class="detail-label">Sammlungsteil:</div>
+                            <div class="detail-value"><a href="/browse/?Slg={{ coin_data.slg.id }}&SlgTeil={{ coin_data.slgteil.id }}" title="Sammlungsteil">{{ coin_data.slgteil }}</a></div>
+                        </div>
+                    {% endif %}
+                    <div class="detail-row">
+                        <div class="detail-label">Inv.-Nr.:</div>
+                        <div class="detail-value">{{ coin_data.invnr }}</div>
+                    </div>
+                    {% if coin_data.objekttyp %}
+                        <div class="detail-row">
+                            <div class="detail-label">Objekttyp:</div>
+                            <div class="detail-value">
+                                <a href="/browse/?objekttyp={{ coin_data.objekttyp.id }}" title="Objekttyp">{{ coin_data.objekttyp }}</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    
+                        <div class="detail-row">
+                            <div class="detail-label">Bearbeitungsstand:</div>
+                            <div class="detail-value">
+                                {% if not coin_data.Typ %}
+                                    Münze bisher unbestimmt
+                                {% elif coin_data.Typ.workflow.id != 3 or test.workflow.id != 3 %}
+                                    in Bearbeitung
+                                {% else %}
+                                    Bearbeitung abgeschlossen
+                                {% endif %}
+                            </div>
+                        </div>
+                    
+                            
+                    {% if coin_data.faelschung %}
+                        <div class="detail-row">
+                            <div class="detail-label">Fälschung:</div>
+                            <div class="detail-value">{{ coin_data.faelschung }}</div>
+                        </div>
+                    {% endif %}
+                    <div class="detail-separator"></div>
+                                                
+                    {% if coin_data.muenzstand %}
+                        <div class="detail-row">
+                            <div class="detail-label">Münzstand:</div>
+                            <div class="detail-value"><a href="/browse/?Muenzstand={{ coin_data.muenzstand }}" title="Münzstand">{{ coin_data.muenzstand }}</a></div>
+                        </div>
+                    {% endif %}
+                    {% if coin_data.reichskreis %}
+                        <div class="detail-row">
+                            <div class="detail-label">Reichskreis:</div>
+                            <div class="detail-value"><a href="/browse/?Reichskreis={{ coin_data.reichskreis }}" title="Reichskreis">{{ coin_data.reichskreis }}</a></div>
+                        </div>
+                    {% endif %}
+
+                    {% if coin_data.personen %}
+                        {% regroup coin_data.personen by idfk_PersonFunktion as grouped_persons %}
+                        {% for group in grouped_persons %}
+                            {% if group.grouper.id != 2 %}
+                                <div class="detail-row">
+                                    <div class="detail-label">{{ group.grouper }}:</div>
+                                    <div class="detail-value">
+                                        {% for person in group.list %}
+                                            {% if group.grouper.id == 1 or group.grouper.id == 6 or group.grouper.id == 7 %}
+                                                <a href="/browse/?Praegeherren={{ person.idfk_Person.name }}" title="Prägeherr">
+                                            {% else %}
+                                                <a href="/browse/?Person={{ person.idfk_Person.name }}" title="Person">
+                                            {% endif %}
+                                                {{ person.idfk_Person.name }}{% if person.idfk_Person.zeichen %}, Zeichen: {{person.idfk_Person.zeichen}}{% endif %}
+                                            </a>
+                                            <a href="#theModal" data-title="{{ person.idfk_Person.name }}" data-remote="{% url 'PersonModal' id=person.idfk_Person.id %}" data-footer="{% url 'admin:slg_person_change' person.idfk_Person.id %}" data-toggle="modal" data-target="#theModal" title="Person">
+                                                <i class="bi bi-box-arrow-up-right"></i>
+                                            </a>
+                                            {% if not forloop.last %}<br>{% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if coin_data.auflage %}
+                        <div class="detail-row">
+                            <div class="detail-label">Auflage:</div>
+                            <div class="detail-value">
+                                {{ coin_data.auflage }}
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if coin_data.ausgabedatum %}
+                        <div class="detail-row">
+                            <div class="detail-label">Ausgabedatum:</div>
+                            <div class="detail-value">{{ coin_data.ausgabedatum|date:"d.m.Y" }}</div>
+                        </div>
+                    {% endif %}
+                    {% if coin_data.beschlussdatum %}
+                        <div class="detail-row">
+                            <div class="detail-label">Beschlussdatum:</div>
+                            <div class="detail-value">{{ coin_data.beschlussdatum|date:"d.m.Y" }}</div>
+                        </div>
+                    {% endif %}
+
+                    {% if coin_data.mzstaette %}
+                        <div class="detail-row">
+                            <div class="detail-label">Münzstätte:</div>
+                            <div class="detail-value"><a href="/browse/?Muenzstaette={{ coin_data.mzstaette }}" title="Münzstätte">{{ coin_data.mzstaette }}{% if coin_data.mzstaette.zeichen %}, Zeichen: {{coin_data.mzstaette.zeichen}}{% endif %}</a><a href="{{ coin_data.mzstaette.name_nom_id }}" title="Nomisma" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a></div>
+                            
+                        </div>
+                    {% endif %}
+                    {% if coin_data.region %}
+                        <div class="detail-row">
+                            <div class="detail-label">Region:</div>
+                            <div class="detail-value"><a href="/browse/?region={{ coin_data.region }}" title="Region">{{ coin_data.region }}</a>
+                            <a href="{{ coin_data.region.name_nom_id }}" title="Nomisma" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a></div>
+                        </div>
+                    {% endif %}
+
+
+                    {% if coin_data.nominal %}
+                        <div class="detail-row">
+                            <div class="detail-label">Nominal:</div>
+                            <div class="detail-value"><a href="/browse/?Nominal={{ coin_data.nominal }}" title="Nominal">{{ coin_data.nominal }}</a>
+                            <a href="{{ coin_data.nominal.name_nom_id }}" title="Nomisma" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a></div>
+                        </div>
+                    {% endif %}
+
+                    {% if coin_data.metall %}
+                        <div class="detail-row">
+                            <div class="detail-label">Material:</div>
+                            <div class="detail-value"><a href="/browse/?material={{ coin_data.metall }}" title="Material">{{ coin_data.metall }}</a>
+                            <a href="{{ coin_data.metall.name_nom_id }}" title="Nomisma" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a></div>
+                        </div>
+                    {% endif %}
+                    {% if coin_data.herstellung %}
+                        <div class="detail-row">
+                            <div class="detail-label">Herstellung:</div>
+                            
+                            <div class="detail-value">{{ coin_data.herstellung }}</div>
+                        </div>
+                    {% endif %}
+                    {% if coin_data.Herstellungsmerkmale or coin_data.sekundaere_Merkmale %}
+                        <div class="detail-row">
+                            <div class="detail-label" style="vertical-align: top;">Merkmale:</div>
+                            <div class="detail-value">
+                            {% for Merkmal in coin_data.Herstellungsmerkmale %}
+                                <a href="/browse/?her_merk={{Merkmal.name}}">{{ Merkmal.name }}</a> <br>
+                            {% endfor %}
+                            {% for Merkmal in coin_data.sekundaere_Merkmale %}
+                                <a href="/browse/?sek_merk={{Merkmal.name}}">{{ Merkmal.name }}</a><br>
+                            {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="detail-row">
+                        <div class="detail-label">Technica:</div>
+                        <div class="detail-value">{{ coin_data.durchmesser|default:"-"}} mm, {{ coin_data.gewicht|default:"-"}} g, {{ coin_data.stempelstellung|default:"-"}} h</div>
+                    </div>
+                    
+                    
+                    
+                    {% if coin_data.idfk_Ref and coin_data.Typ %}
+                    <div class="detail-separator"></div>
+                    <div class="detail-row">
+                        <div class="detail-label">Referenz{% if coin_data.Typ_unsicher %} <u>unsicher</u>{% endif %}:</div>
+                        
+                    </div>
+                    
+                    
+                    <div class="detail-row">
+                        <div class="detail-value">
+                            <ul>
+                                {% if coin_data.Typ.Ref %}
+                                <li> 
+                                    
+                                    {% if coin_data.Typ.link %}
+                                        {% if coin_data.Typ.Ref.zitat %}
+                                            <a href="{{coin_data.Typ.get_absolute_url}}"><abbr title="{{ coin_data.Typ.Ref.zitat }}">{{ coin_data.Typ.Ref }}</abbr>, {{ coin_data.Typ.nummer }}</a>
+                                        {% else %} 
+                                            <a href="{{ coin_data.Typ.get_absolute_url }}">{{ coin_data.Typ.Ref }}, {{ coin_data.Typ.nummer }}</a>
+                                        {% endif %}
+                                        {% if coin_data.Typ.variante %}
+                                            (Var.: {{ coin_data.Typ.variante.name }})
+                                        {% endif %}
+                                        
+                                        <a href="{{coin_data.Typ.link}}" target="_blank" rel="noopener noreferrer" title="Externer Link">
+                                            <i class="bi bi-box-arrow-up-right"></i>
+                                        </a>    
+                                        
+                                    {% else %}
+                                        {% if coin_data.Typ.Ref.zitat %}
+                                        <a href="{{ coin_data.Typ.get_absolute_url }}"><abbr title="{{ coin_data.Typ.Ref.zitat }}">{{ coin_data.Typ.Ref }}</abbr>, {{ coin_data.Typ.nummer }}</a>
+                                        {% else %} 
+                                        <a href="{{ coin_data.Typ.get_absolute_url }}">{{ coin_data.Typ.Ref }}, {{ coin_data.Typ.nummer }}</a>
+                                        {% endif %}
+                                        {% if coin_data.Typ.variante %}
+                                            (Var.: {{ coin_data.Typ.variante.name }})
+                                        {% else %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                                
+                                {% for Konkordanz in coin_data.Konkordanz %}
+                                    =
+                                    {% if Konkordanz.link %}
+                                        {% if Konkordanz.Ref.zitat %}
+                                            <a href="{{ Konkordanz.get_absolute_url }}"><abbr title="{{ Konkordanz.Ref.zitat }}">{{ Konkordanz.Ref }}</abbr>, {{ Konkordanz.nummer }}</a>
+                                        {% else %} 
+                                            <a href="{{ Konkordanz.get_absolute_url }}">{{ Konkordanz.Ref }}, {{ Konkordanz.nummer }}</a>
+                                        {% endif %}
+                                        {% if Konkordanz.variante %}
+                                            (Var.: {{ Konkordanz.variante.name }})
+                                        {% endif %}
+                                        {% if Konkordanz.hlink != 'nolink' %}
+                                            <a href="{{Konkordanz.link}}" target="_blank" rel="noopener noreferrer" title="Externer Link">
+                                                <i class="bi bi-box-arrow-up-right"></i>
+                                            </a>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if Konkordanz.Ref.zitat %}
+                                            <a href="{{ Konkordanz.get_absolute_url }}"><abbr title="{{ Konkordanz.Ref.zitat }}">{{ Konkordanz.Ref }}</abbr>, {{ Konkordanz.nummer }}</a>
+                                        {% else %} 
+                                            <a href="{{ Konkordanz.get_absolute_url }}">{{ Konkordanz.Ref }}, {{ Konkordanz.nummer }}</a>
+                                        {% endif %}
+                                        {% if Konkordanz.variante %}
+                                            (Var.: {{ Konkordanz.variante.name }})
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% if coin_data.obj_ref_set.all %}
+                    <div class="detail-row">
+                        <div class="detail-label">Objektbiographie:</div>
+                        
+                    </div>
+                    {% endif %}
+                    <div class="detail-row">
+                            <div class="detail-value">
+                                <ul>
+                                {% for i in coin_data.obj_ref_set.all %}
+                                    <li> 
+                                        
+                                        {% if i.link %}
+                                            {% if i.idfk_Ref.zitat %}
+                                            <a href="{{ i.idfk_Ref.get_absolute_url }}"><abbr title="{{ i.idfk_Ref.zitat }}">{{ i.idfk_Ref }}</abbr>, {{ i.nummer }}</a>
+                                            {% else %} 
+                                            <a href="{{ i.idfk_Ref.get_absolute_url }}">{{ i.idfk_Ref }}, {{ i.nummer }}</a>
+                                            {% endif %}
+                                            {% if i.variante %}
+                                            (Var.: {{ i.variante.name }})
+                                            {% endif %}
+                                        
+                                        
+                                            {% if i.hlink != 'nolink' %}
+                                            <a href="{{i.link}}" target="_blank" rel="noopener noreferrer" title="Externer Link">
+                                                <i class="bi bi-box-arrow-up-right"></i>
+                                            </a>
+                                            {% endif %}                                        
+                                        
+                                        {% else %}
+                                            {% if i.idfk_Ref.zitat %}
+                                            <abbr title="{{ i.idfk_Ref.zitat }}">{{ i.idfk_Ref }}</abbr>, {{ i.nummer }}
+                                            {% else %} 
+                                            {{ i.idfk_Ref }}, {{ i.nummer }}
+                                            {% endif %}
+                                            {% if i.variante %}
+                                            (Var.: {{ i.variante.name }})
+                                            {% endif %}
+                                        {% endif %}
+                                        
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            
+                            
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if coin_data.Typ.typ_ref_set.all %}
+                    <div class="detail-row">
+                        <div class="detail-label">Ergänzende Literatur:</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-value">
+                            <ul>
+                                <li>
+                                    {% for i in coin_data.Typ.typ_ref_set.all %}
+                                        {% if i.link %}
+                                            {% if i.Ref.zitat %}
+                                            <a href="{{ i.link }}"><abbr title="{{ i.Ref.zitat }}">{{ i.Ref }}</abbr>, {{ i.nummer }}</a>
+                                            {% else %} 
+                                            <a href="{{ i.link }}">{{ i.Ref }}, {{ i.nummer }}</a>
+                                            {% endif %}
+                                            {% if i.variante %}
+                                            (Var.: {{ i.variante.name }})
+                                            {% endif %}
+                                            {% if i.hlink != 'nolink' %}
+                                                <a href="{{i.link}}" target="_blank" rel="noopener noreferrer" title="Externer Link">
+                                                    <i class="bi bi-box-arrow-up-right"></i>
+                                                </a>
+                                            {% endif %}
+                                            {% else %}
+                                            {% if i.Ref.zitat %}
+                                            <abbr title="{{ i.Ref.zitat }}">{{ i.Ref }}</abbr>, {{ i.nummer }}
+                                            {% else %} 
+                                            {{ i.Ref }}, {{ i.nummer }}
+                                            {% endif %}
+                                            {% if i.variante %}
+                                            (Var.: {{ i.variante.name }})
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if coin_data.anmerkung %}
+                    <div class="detail-separator"></div>
+                    <div class="detail-row">
+                        <div class="detail-label" style="vertical-align: top;">Anmerkungen: </div> 
+                        <div class="detail-value">{{ coin_data.anmerkung}}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% comment %} <div class="detail-separator"></div>
+                    <div class="detail-row">
+                        <div class="detail-label"><a href="#" onclick="toggle_visibility('logs');">Metadaten:</a></div>
+                        <div class="detail-value"></div>
+                    </div>
+                    <div class="detail-row" id="logs" style="visibility:hidden">
+                        <div class="detail-value" >
+                            <ul>
+                    {% for logentry in coin_data.logentries %}
+                                <li>{{logentry.action_time|date:"d.m.Y"}}: {{logentry.user}}
+                                </li>
+                                
+                    {% endfor %}  
+                            </ul>
+                        </div>
+                    </div>           {% endcomment %}
+
+                    
+                </div>
+            </div>
+            
+            <div class="col-sm-12 col-md-8 col-lg-8 col-xl-8 pt-2 align-top-center" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+            <div class="row"></div>
+            <div class="row" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                
+                {% with bild_urls=coin_data.bild_urls %}
+                    {% if bild_urls %}
+                        <div class="col-md-6" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                            <div class="item" data-src="{{ bild_urls.av }}">
+                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.av }}" alt="Avers" class="lazyload img-fluid"></a>
+                            </div>
+                        </div>
+                        <div class="col-md-6" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                            <div class="item" data-src="{{ bild_urls.rv }}">
+                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.rv }}" alt="Revers" class="lazyload img-fluid"></a>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            
+                        
+            <div class="row">
+                <div class="col-md-6 p-2 text-center">
+                    <hr width="80%">
+                    
+                    {% if coin_data.avleg %}
+                        <a href="/browse/?avleg={{coin_data.avleg|default:"-"}}">{{coin_data.avleg|default:"-"}}</a>
+                    {% endif %}
+                    <br>
+                    
+                    {% if coin_data.av_bildtyp %}
+                    <a href="/browse/?av_bildtyp={{ coin_data.av_bildtyp.id }}" title="Av.-Bildbeschreibung">{{coin_data.av_bildtyp}}</a>{% if coin_data.av_beizeichen_display or coin_data.av_offizin_display %}, {% endif %}
+                    {% endif %}
+                    {% if coin_data.av_beizeichen_display %}
+                        <a href="/browse/?av_beizeichen={{coin_data.av_beizeichen.id|default:"-"}}" title="Beizeichen">{{coin_data.av_beizeichen_display|safe}}</a>
+                    {% endif %}
+                    {% if coin_data.av_offizin_display %}
+                        {% if coin_data.av_beizeichen_display %}, {% endif %}
+                        <a href="/browse/?av_offizin={{coin_data.av_offizin.id|default:"-"}}" title="Beizeichen">{{coin_data.av_offizin_display}}</a>
+                    {% endif %}
+
+                    
+                    
+                        
+                    <!-- <hr width="80%"> -->
+                    
+                    
+                    <div class="tags">
+                        <!-- {% if coin_data.Person %}
+                        {% endif %} -->
+                        {% comment %} {% if 'Wappen' in coin_data.av_bildtyp.name %} Wappen: {% endif %}
+                        {% if 'Wappen' in coin_data.av_bildtyp.name %} Wappen: {% endif %} {% endcomment %}
+                        
+                        {% for i in coin_data.wappen %}
+                                {% if i.appears_on_rev == 0 %}
+                                    
+                                    <a href="/browse/?Wappen={{ i.wappen.name }}" title="Wappen" rel="tag">🛡{{ i.wappen.name }}</a>
+                                {% endif %}
+                                {% if forloop.last %} <br> {% endif %}
+                        {% endfor %}
+                        
+                        {% for i in coin_data.personen %}
+                                {% if i.appears_on_rev == 0 and i.idfk_PersonFunktion.id == 2 %}
+                                    <a href="/browse/?Dargestellte_AV={{ i.idfk_Person.name }}" title="Dargestellte/r" rel="tag">{{ i.idfk_Person.name }}</a>
+                                    <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
+                                    
+                                {% endif %}
+                        {% endfor %}
+                        {% for schlagwort in coin_data.av_schlagworte %}
+                        <a href="/browse/?av_schlagwort={{ schlagwort.schlagwort.name }}" title="Schlagwort" rel="tag">{{ schlagwort.schlagwort }}</a>
+                        {% endfor %}
+                        {% if coin_data.av_bildrand %}
+                        <a href="/browse/?av_bildrand={{ coin_data.av_bildrand.id }}" title="Bildrand" rel="tag">{{coin_data.av_bildrand}}</a>
+                        {% endif %}
+                    </div>
+
+                    
+                    
+                </div>
+                
+                <div class="col-md-6 p-2 text-center">
+                    <hr width="80%">
+                    
+                    {% if coin_data.rvleg %}
+                        <a href="/browse/?rvleg={{coin_data.rvleg|default:"-"}}">{{coin_data.rvleg|default:"-"}}</a>
+                    {% endif %}
+                    <br>
+                    
+                    {% if coin_data.rv_bildtyp %}
+                    <a href="/browse/?rv_bildtyp={{ coin_data.rv_bildtyp.id }}" title="Rv.-Beschreibung">{{coin_data.rv_bildtyp}}</a>{% if coin_data.rv_beizeichen_display or coin_data.rv_offizin_display %}, {% endif %}
+                    {% endif %}
+                    {% if coin_data.rv_beizeichen_display %}
+                        <a href="/browse/?rv_beizeichen={{coin_data.rv_beizeichen.id|default:"-"}}" title="Beizeichen">{{coin_data.rv_beizeichen_display|safe}}</a>
+                    {% endif %}
+                    {% if coin_data.rv_offizin_display %}
+                        {% if coin_data.rv_beizeichen_display %}, {% endif %}
+                        <a href="/browse/?rv_offizin={{coin_data.rv_offizin.id|default:"-"}}" title="Beizeichen">{{coin_data.rv_offizin_display}}</a>
+                    {% endif %}
+                    
+                    
+                    <div class="tags">
+                        {% for i in coin_data.wappen %}
+                                {% if i.appears_on_rev == 1 %}
+                                    <a href="/browse/?Wappen={{ i.wappen.name }}" title="Wappen" rel="tag">🛡{{ i.wappen.name }}</a>
+                                {% endif %}
+                                {% if forloop.last %} <br> {% endif %}
+                        {% endfor %}
+                        {% for i in coin_data.personen %}
+                                {% if i.appears_on_rev == 1 and i.idfk_PersonFunktion.id == 2 %}
+                                    <a href="/browse/?Dargestellte_RV={{ i.idfk_Person.name }}" title="Dargestellte/r" rel="tag">{{ i.idfk_Person.name }}</a>
+                                    <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
+                                    
+                                {% endif %}
+                        {% endfor %}
+                        {% for schlagwort in coin_data.rv_schlagworte %}
+                            <a href="/browse/?rv_schlagwort={{ schlagwort.schlagwort.name }}" title="Schlagwort" rel="tag">{{ schlagwort.schlagwort }}</a>
+                        {% endfor %}
+                        {% if coin_data.rv_bildrand %}
+                            <a href="/browse/?rv_bildrand={{ coin_data.rv_bildrand.id }}" title="Rv.-Beschreibung" rel="tag">{{coin_data.rv_bildrand}}</a>
+                        {% endif %}
+                    </div>
+
+                   
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% include "slg/modal.html" %}
+
+<!-- Fügen Sie diesen Button in der Nähe der Objektdetails ein -->
+<button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#editModal">
+    <i class="bi bi-pencil"></i> Änderung vorschlagen
+</button>
+
+<!-- Modal für Änderungsvorschläge -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Änderung vorschlagen</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" method="POST" action="{% url 'objekt_aenderung' objekt_id=test.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="edit_suggestion">
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        Hier können Sie Änderungen oder Ergänzungen zu diesem Objekt vorschlagen. 
+                        Ihre Vorschläge werden von unserem Team geprüft und gegebenenfalls übernommen.
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="name">Ihr Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="email">Ihre E-Mail *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="feld">Zu änderndes Feld *</label>
+                        <select class="form-control" id="feld" name="feld" required>
+                            <option value="">Bitte wählen Sie</option>
+                            <option value="titel">Titel</option>
+                            <option value="avleg">Vorderseite Legende</option>
+                            <option value="rvleg">Rückseite Legende</option>
+                            <option value="avbeschr">Vorderseite Beschreibung</option>
+                            <option value="rvbeschr">Rückseite Beschreibung</option>
+                            <option value="material">Material</option>
+                            <option value="gewicht">Gewicht</option>
+                            <option value="durchmesser">Durchmesser</option>
+                            <option value="datierung">Datierung</option>
+                            <option value="sonstiges">Sonstiges</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="alter_wert">Aktueller Wert</label>
+                        <textarea class="form-control" id="alter_wert" name="alter_wert" rows="2"></textarea>
+                        <small class="form-text text-muted">Bitte geben Sie den aktuellen Wert an, falls vorhanden.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="neuer_wert">Vorgeschlagener neuer Wert</label>
+                        <textarea class="form-control" id="neuer_wert" name="neuer_wert" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="begruendung">Begründung</label>
+                        <textarea class="form-control" id="begruendung" name="begruendung" rows="3" required></textarea>
+                        <small class="form-text text-muted">Bitte begründen Sie Ihren Änderungsvorschlag und geben Sie nach Möglichkeit Quellen an.</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-primary" id="manualSubmitBtn">Änderung vorschlagen</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript für Formularvalidierung und Handling -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editForm = document.getElementById('editForm');
+    const feldSelect = document.getElementById('feld');
+    const alterWertInput = document.getElementById('alter_wert');
+    const manualSubmitBtn = document.getElementById('manualSubmitBtn');
+    
+    // Manuelles Absenden des Formulars
+    manualSubmitBtn.addEventListener('click', function() {
+        // Überprüfen Sie, ob alle erforderlichen Felder ausgefüllt sind
+        if (editForm.checkValidity()) {
+            // Direkte Übermittlung des Formulars ohne den normalen Button-Submit
+            editForm.submit();
+        } else {
+            // Triggere die Browser-Validierung
+            editForm.reportValidity();
+        }
+    });
+
+    // Aktuellen Wert basierend auf Feldauswahl setzen
+    feldSelect.addEventListener('change', function() {
+        const selectedField = this.value;
+        let currentValue = '';
+        
+        switch(selectedField) {
+            case 'titel':
+                currentValue = '{{ coin_data.titel|default:"" }}';
+                break;
+            case 'avleg':
+                currentValue = '{{ coin_data.avleg|default:"" }}';
+                break;
+            case 'rvleg':
+                currentValue = '{{ coin_data.rvleg|default:"" }}';
+                break;
+            case 'avbeschr':
+                currentValue = '{{ coin_data.avbeschr|default:"" }}';
+                break;
+            case 'rvbeschr':
+                currentValue = '{{ coin_data.rvbeschr|default:"" }}';
+                break;
+            case 'material':
+                currentValue = '{{ coin_data.material|default:"" }}';
+                break;
+            case 'gewicht':
+                currentValue = '{{ coin_data.gewicht|default:"" }}';
+                break;
+            case 'durchmesser':
+                currentValue = '{{ coin_data.durchmesser|default:"" }}';
+                break;
+            case 'datierung':
+                currentValue = '{{ coin_data.dat_verb|default:"" }}';
+                break;
+            default:
+                currentValue = '';
+        }
+        
+        alterWertInput.value = currentValue;
+    });
+});
+</script>
+
+{% if request.user.is_authenticated %}
+<!-- Münzkontext Visualisierungsbereich -->
+<div class="container-fluid mt-5">
+  <h4 class="mb-3" id="contextAnalysisTitle">Münzkontext-Analyse</h4>
+  
+  <!-- Ansicht-Umschalter -->
+  <div class="mb-3 text-end">
+    <span class="me-2">Ansicht:</span>
+    <div class="btn-group" role="group" aria-label="Ansicht wählen">
+      <button type="button" id="matrixViewBtn" class="btn btn-outline-dark active">
+        <i class="bi bi-grid-3x3-gap"></i> Matrix
+      </button>
+      <button type="button" id="timelineViewBtn" class="btn btn-outline-dark">
+        <i class="bi bi-calendar-event"></i> Zeitleiste
+      </button>
+    </div>
+  </div>
+  
+  <style>
+    .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .matrix-cell {
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .matrix-cell.highlighted {
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.5);
+      z-index: 1;
+    }
+    
+    .matrix-cell .coin-count {
+      position: absolute;
+      top: 5px;
+      right: 8px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border-radius: 10px;
+      padding: 0 6px;
+      font-size: 11px;
+    }
+
+    .chart-container {
+      height: 150px;
+      position: relative;
+    }
+
+    #singleChart {
+      height: 300px;
+    }
+
+    .motif-item {
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+    }
+
+    .matrix-header {
+      font-weight: bold;
+      text-align: center;
+      background-color: #f8f9fa;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+    }
+
+    .matrix-row-header {
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      background-color: #f8f9fa;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+    }
+
+    .matrix-grid {
+      display: grid;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .pie-tooltip {
+      position: absolute;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border-radius: 4px;
+      pointer-events: none;
+      font-size: 12px;
+      z-index: 1000;
+    }
+    
+    .coin-thumbnail {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .loading-spinner {
+      text-align: center;
+      padding: 2rem;
+    }
+    
+    .motif-stats {
+      margin-top: 1rem;
+    }
+    
+    .current-motif {
+      background-color: rgba(13, 110, 253, 0.1);
+      border-left: 4px solid #0d6efd;
+      padding-left: 8px;
+    }
+
+    /* Timeline Styling */
+    #timeline-view {
+      display: none;
+    }
+
+    .timeline-container {
+      position: relative;
+      margin: 20px 0;
+    }
+
+    {% comment %} .timeline-container::after {
+      content: '';
+      position: absolute;
+      width: 2px;
+      background: #ccc;
+      top: 0;
+      bottom: 0;
+      left: 50px;
+      margin-left: -1px;
+    } {% endcomment %}
+
+    .timeline-item {
+      padding: 10px 40px 10px 70px;
+      position: relative;
+      margin-bottom: 15px;
+    }
+
+    .timeline-item::after {
+      content: '';
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background-color: white;
+      border: 2px solid #ccc;
+      border-radius: 50%;
+      top: 15px;
+      left: 49px;
+      margin-left: -7px;
+      z-index: 1;
+    }
+
+    .timeline-item.event-coin::after {
+      background-color: #20c997;
+      border-color: #0d6efd;
+    }
+
+    .timeline-item.event-historical::after {
+      background-color: #ffc107;
+      border-color: #dc3545;
+    }
+
+    .timeline-date {
+      position: absolute;
+      width: 40px;
+      text-align: right;
+      left: 0;
+      top: 12px;
+      font-weight: bold;
+      color: #888;
+    }
+
+    .timeline-content {
+      padding: 10px 15px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      position: relative;
+    }
+
+    .timeline-content h3 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    .year-divider {
+      text-align: center;
+      font-weight: bold;
+      margin: 20px 0;
+      color: #666;
+      position: relative;
+      z-index: 2;
+    }
+
+    .year-divider span {
+      background: white;
+      padding: 0 10px;
+    }
+  </style>
+
+  <!-- Sortable Timeline CSS -->
+  <style>
+    /* Sortable Timeline Styling */
+    .sortable-timeline-container {
+      padding: 20px 0;
+    }
+
+    .list-container {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 8px;
+      background-color: #ffffff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      height: 100%;
+    }
+
+    .list-container h4 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+
+    .nested-list ul,
+    #simpleList {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .nested-list li,
+    #simpleList li {
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: grab;
+      color: #555;
+    }
+
+    .nested-list li:hover,
+    #simpleList li:hover {
+      background-color: #f0f0f0;
+    }
+
+    .nested-list ul.event-sublist {
+      display: flex;
+      flex-direction: row;
+      gap: 15px;
+      min-height: 20px;
+      margin-top: 10px;
+      border-left: 2px dashed #e0e0e0;
+      padding-left: 15px;
+      align-items: flex-start;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      transition: min-height 0.3s ease, padding 0.3s ease, background-color 0.3s ease;
+      flex-wrap: wrap;
+      max-width: calc(100% - 20px);
+      overflow: visible;
+    }
+
+    .nested-list ul.event-sublist:not(:empty) {
+      min-height: 110px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      background-color: rgba(168, 184, 255, 0.1);
+      border-left-color: #a8b8ff;
+      border-radius: 0 8px 8px 0;
+      height: auto;
+    }
+
+    .nested-list > li {
+      background-color: #e9efff;
+      font-weight: bold;
+      padding: 15px;
+      margin-bottom: 12px;
+      overflow: visible;
+      min-height: auto;
+    }
+
+    .event-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .event-header strong {
+      color: #2c5aa0;
+      font-size: 16px;
+      flex: 1;
+    }
+
+    .event-date {
+      color: #666;
+      font-weight: normal;
+      font-size: 14px;
+      margin-left: 10px;
+      white-space: nowrap;
+    }
+
+    .event-description {
+      font-weight: normal;
+      color: #444;
+      font-size: 14px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      font-style: italic;
+    }
+
+    .event-persons {
+      font-weight: normal;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .event-persons strong {
+      color: #2c5aa0;
+      font-weight: bold;
+    }
+
+    .event-item {
+      border-radius: 8px;
+      border: 1px solid #d0d7ff;
+      transition: all 0.2s ease;
+      overflow: visible;
+      height: auto;
+    }
+
+    .event-item:hover {
+      box-shadow: 0 2px 8px rgba(44, 90, 160, 0.15);
+      border-color: #a8b8ff;
+    }
+
+    .event-sublist {
+      margin-top: 12px !important;
+      border-left-color: #a8b8ff !important;
+    }
+
+    .coin {
+      width: 90px;
+      height: 90px;
+      background-color: gold;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #4a3800;
+      border: 2px solid darkgoldenrod;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+      font-weight: bold;
+      margin-bottom: 0;
+      cursor: grab;
+      transition: transform 0.2s ease;
+    }
+
+    .coin:hover {
+      transform: scale(1.05);
+    }
+
+    .coin img {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .sortable-ghost {
+      opacity: 0.7;
+      background-color: #c8ebfb;
+    }
+
+    .sortable-drag {
+      opacity: 0.9 !important;
+    }
+
+    .arrows {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      font-size: 1.5rem;
+      color: #888;
+      user-select: none;
+      min-width: 40px;
+    }
+
+    .arrows .arrow-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 5px;
+      font-size: 1.5rem;
+    }
+
+    #simpleList {
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      flex-wrap: wrap;
+      min-height: 100px;
+      align-items: flex-start;
+      padding: 8px;
+      justify-content: center;
+    }
+
+    #simpleList li {
+      margin-bottom: 8px;
+    }
+
+    .sticky-coins {
+      position: sticky;
+      top: 20px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+
+    .sticky-coins h4 {
+      position: sticky;
+      top: 0;
+      background-color: #ffffff;
+      z-index: 10;
+      margin: 0 -15px 15px -15px;
+      padding: 10px 15px;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+
+  <div class="loading-spinner" id="loadingSpinner">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Lade Kontextdaten...</p>
+  </div>
+  
+  <div id="contextContent" class="d-none">
+    <div class="row">
+      <!-- Hauptbereich für Diagramme und Timeline -->
+      <div class="col-lg-9">
+        <!-- Steuerelemente -->
+        <div class="mb-3">
+          <div id="selectedMotifInfo" class="text-muted small text-end"></div>
+        </div>
+        
+        <!-- Top Motifs -->
+        <div class="mb-4">
+          <h5>Münzstätten</h5>
+          <div id="motifSelector" class="d-flex flex-wrap"></div>
+        </div>
+        
+        <!-- Einzeldiagramm-Ansicht -->
+        <div id="singleChartView" class="border rounded p-4 mb-4">
+          <h3 id="singleChartTitle" class="text-center mb-3"></h3>
+          <div id="singleChart" class="d-flex justify-content-center"></div>
+        </div>
+        
+        <!-- Matrix-Ansicht -->
+        <div id="matrixView" class="mb-4" style="display: none;">
+          <div id="matrixContainer"></div>
+        </div>
+        
+        <!-- Timeline-Ansicht (neu) - Ersetzt durch Sortable Timeline -->
+        <div id="timeline-view" class="border rounded p-4 mb-4">
+          <h3 id="timelineTitle" class="text-center mb-4">Historische Ereignisse & Münzen</h3>
+          
+          <div class="sortable-timeline-container">
+            <div class="row">
+              <!-- Linke Spalte: Historische Ereignisse -->
+              <div class="col-md-8">
+                <div class="list-container">
+                  <h4>Historische Ereignisse</h4>
+                  <ul id="nestedListRoot" class="nested-list">
+                    <!-- Ereignisse werden hier dynamisch geladen -->
+                  </ul>
+            </div>
+          </div>
+              
+              <!-- Mittlere Spalte: Pfeile -->
+              <div class="col-md-1 d-flex align-items-start justify-content-center pt-4">
+                <div class="arrows">
+                  <div class="arrow-row">
+                    <span>&#8592;</span>
+                    <span>&#8594;</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Rechte Spalte: Münzsammlung -->
+              <div class="col-md-3">
+                <div class="list-container sticky-coins">
+                  <h4>Münzen aus Eligius</h4>
+                  <ul id="simpleList">
+                    <!-- Münzen werden hier dynamisch geladen -->
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Informationsbereich -->
+      <div class="col-lg-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title d-flex align-items-center mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle me-2" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+              </svg>
+              <span id="sidePanelTitle">Motiv-Info</span>
+            </h5>
+            <div id="motifDetails" class="small"></div>
+            
+            <div class="motif-stats mt-4" id="motifStats">
+              <h6 class="mb-2">Aktuelles Motiv</h6>
+              <div id="currentMotifStats"></div>
+              
+              <h6 class="mt-4 mb-2">Motivverteilung</h6>
+              <div id="motifTimeline" class="small"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SortableJS für Drag & Drop -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+<!-- D3.js für Diagramme -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<!-- JavaScript Code für die Münzanalyse -->
+<script>
+  // Globale Variablen für Kontext-Daten
+  let coinContextData = null;
+  let selectedMotifId = null; // Will store MINT ID or null
+  let showMatrix = false;
+  let showTimeline = false; // Neue Variable für Timeline-Ansicht
+  let motifColors = {};
+  let currentCoinReverseMotifId = null;
+  let currentCoinMintName = null; // Store the current coin's mint name
+  let matrixCreated = false; // Flag for matrix creation
+  let timelineCreated = false; // Flag for timeline creation
+  {% if coin_data.rv_bildtyp and coin_data.rv_bildtyp.id %}
+    currentCoinReverseMotifId = {{ coin_data.rv_bildtyp.id }};
+  {% endif %}
+  {% if coin_data.mzstaette %}
+    currentCoinMintName = "{{ coin_data.mzstaette }}";
+  {% endif %}
+  
+  // DOM-Elemente
+  const matrixViewBtn = document.getElementById("matrixViewBtn");
+  const timelineViewBtn = document.getElementById("timelineViewBtn");
+  const singleChartView = document.getElementById("singleChartView");
+  const matrixView = document.getElementById("matrixView");
+  const timelineView = document.getElementById("timeline-view");
+  const motifSelector = document.getElementById("motifSelector");
+  const selectedMotifInfo = document.getElementById("selectedMotifInfo");
+  const motifDetails = document.getElementById("motifDetails");
+  const motifStats = document.getElementById("motifStats");
+  const currentMotifStats = document.getElementById("currentMotifStats");
+  const motifTimeline = document.getElementById("motifTimeline");
+  const singleChartTitle = document.getElementById("singleChartTitle");
+  const singleChart = document.getElementById("singleChart");
+  const matrixContainer = document.getElementById("matrixContainer");
+  const loadingSpinner = document.getElementById("loadingSpinner");
+  const contextContent = document.getElementById("contextContent");
+  const sidePanelTitle = document.getElementById("sidePanelTitle");
+
+  // Farben für die Diagramme
+  const colors = ["#20c997", "#0d6efd", "#ffc107", "#dc3545", "#6610f2"];
+
+  // Event-Listener für die View-Buttons
+  matrixViewBtn.addEventListener("click", function() {
+    matrixViewBtn.classList.add("active");
+    timelineViewBtn.classList.remove("active");
+    
+    showMatrix = true;
+    showTimeline = false;
+    timelineCreated = false; // Reset timeline flag when switching to matrix
+    
+    updateViewVisibility();
+    
+    // Update sidebar
+    sidePanelTitle.textContent = "Motiv-Info";
+    motifStats.style.display = "block";
+    updateMotifDetails(true);
+  });
+  
+  timelineViewBtn.addEventListener("click", function() {
+    timelineViewBtn.classList.add("active");
+    matrixViewBtn.classList.remove("active");
+    
+    showTimeline = true;
+    showMatrix = false;
+    selectedMotifId = null;
+    matrixCreated = false; // Reset matrix flag when switching to timeline
+    
+    updateViewVisibility();
+    if (!timelineCreated) {
+      loadTimelineData();
+      timelineCreated = true;
+    }
+    
+    // Update sidebar
+    sidePanelTitle.textContent = "Ereignis-Info";
+    motifStats.style.display = "none";
+    motifDetails.innerHTML = `
+      <p>Diese Zeitleiste zeigt historische Ereignisse und Münzprägungen während der Regierungszeit.</p>
+      <p>Klicken Sie auf ein Ereignis für weitere Details.</p>
+    `;
+  });
+  
+  function updateViewVisibility() {
+    if (showTimeline) {
+      timelineView.style.display = "block";
+      singleChartView.style.display = "none";
+      matrixView.style.display = "none";
+    } else if (showMatrix) {
+      matrixView.style.display = "block";
+      singleChartView.style.display = "none";
+      timelineView.style.display = "none";
+      if (!matrixCreated) {
+        createMatrixView();
+        matrixCreated = true;
+      }
+    } else {
+      singleChartView.style.display = "block";
+      matrixView.style.display = "none";
+      timelineView.style.display = "none";
+    }
+  }
+
+  // API-Daten laden
+  async function fetchCoinContextData() {
+    try {
+      const coinId = {{ test.id }}; // Die ID der aktuellen Münze
+      const response = await fetch(`/api/muenzen/${coinId}/kontext/`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Loaded context data:", data); // Debug log
+      loadingSpinner.classList.add("d-none");
+      contextContent.classList.remove("d-none");
+      
+      // Setze die Daten und initialisiere die Visualisierung
+      coinContextData = data;
+      
+      // Update the main title for the context analysis section
+      const contextTitleElement = document.getElementById('contextAnalysisTitle');
+      if (contextTitleElement) { // Check if element exists
+        let titleText = "Münzkontext-Analyse"; // Default fallback
+        if (data.ruler_motif_stats) {
+            const rulerName = data.ruler_motif_stats.ruler_name;
+            const periodStart = data.ruler_motif_stats.period_start;
+            const periodEnd = data.ruler_motif_stats.period_end;
+
+            if (rulerName) {
+              titleText = `Vergleich der Prägungen von ${rulerName}`;
+              if (periodStart && periodEnd) {
+                titleText += ` im Zeitraum ${periodStart} – ${periodEnd}`;
+              } else if (periodStart) {
+                titleText += ` (ab ${periodStart})`;
+              } else if (periodEnd) {
+                titleText += ` (bis ${periodEnd})`;
+              }
+            } else if (periodStart && periodEnd) {
+                titleText = `Münzkontext-Analyse im Zeitraum ${periodStart} – ${periodEnd}`;
+            } else if (periodStart) {
+                titleText = `Münzkontext-Analyse ab ${periodStart}`;
+            } else if (periodEnd) {
+                titleText = `Münzkontext-Analyse bis ${periodEnd}`;
+            }
+        }
+        contextTitleElement.textContent = titleText;
+      }
+      
+      // Setze den ausgewählten ID und Ansichtsmodus
+      if (data.staetten && Object.keys(data.staetten).length > 0) {
+        // Default to first mint
+        selectedMotifId = parseInt(Object.keys(data.staetten)[0]); 
+        showMatrix = false;
+        showTimeline = false;
+        
+        // If we have the current coin's mint name, try to find and select it
+        if (currentCoinMintName) {
+          // Look for the mint that matches the current coin's mint
+          Object.entries(data.staetten).forEach(([mintIdStr, mintInfo]) => {
+            if (mintInfo.name === currentCoinMintName) {
+              selectedMotifId = parseInt(mintIdStr);
+              console.log("Found and selected current coin's mint:", currentCoinMintName, "with ID:", selectedMotifId);
+            }
+          });
+        }
+      } else {
+        // No mints available. Default to matrix view.
+        showMatrix = true; 
+        showTimeline = false;
+        selectedMotifId = null;
+      }
+      console.log("Initial selected mint ID:", selectedMotifId, "showMatrix:", showMatrix);
+      
+      // Erstelle globale Farbzuordnung für alle Motive
+      const colorScale = d3.scaleOrdinal(d3.schemeTableau10);
+      Object.values(data.staetten || {}).forEach(mint => {
+        Object.keys(mint.rows || {}).forEach(motifId => {
+          if (!motifColors[motifId]) {
+            motifColors[motifId] = colorScale(motifId);
+          }
+        });
+      });
+      
+      // UI initialisieren
+      initializeUI();
+    } catch (error) {
+      console.error('Fehler beim Laden der Kontextdaten:', error);
+      loadingSpinner.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          Fehler beim Laden der Kontextdaten: ${error.message}
+        </div>
+      `;
+    }
+  }
+
+  // Initialisierung der Münzstätten-Auswahl
+  function initializeMotifSelector() {
+    if (!coinContextData) return; // coinContextData might exist even without staetten
+    
+    motifSelector.innerHTML = "";
+    
+    // 1. Create the "Matrix View" toggle button
+    const matrixToggleButton = document.createElement("button");
+    matrixToggleButton.className = `btn btn-${showMatrix ? "primary" : "outline-secondary"} btn-sm motif-item`;
+    matrixToggleButton.textContent = "Gesamtübersicht Matrix";
+    matrixToggleButton.title = "Zeigt eine Matrix aller Münzstätten und deren Motive";
+    
+    matrixToggleButton.addEventListener("click", () => {
+      showMatrix = true;
+      showTimeline = false;
+      selectedMotifId = null; // No single mint is selected when matrix is shown
+      
+      updateViewVisibility();
+      
+      if (coinContextData && Object.keys(coinContextData.staetten || {}).length > 0) { // Check if staetten exist for matrix
+        createMatrixView();
+      } else if (coinContextData) { // If no staetten, matrix view might still be attempted or show a message
+        createMatrixView(); // Allow createMatrixView to handle missing staetten if necessary
+      }
+      // Update UI
+      matrixViewBtn.classList.add("active");
+      timelineViewBtn.classList.remove("active");
+      updateUI();
+    });
+    motifSelector.appendChild(matrixToggleButton);
+    
+    // 2. Create buttons for each mint (if staetten exist)
+    if (coinContextData.staetten) {
+        const mints = Object.entries(coinContextData.staetten);
+        
+        mints.forEach(([mintIdStr, mintInfo]) => {
+          const mintId = parseInt(mintIdStr);
+          const button = document.createElement("button");
+          // A mint button is primary if !showMatrix AND it's the selectedMotifId AND !showTimeline
+          const isSelected = !showMatrix && !showTimeline && selectedMotifId === mintId;
+          
+          button.className = `btn btn-${isSelected ? "primary" : "outline-secondary"} btn-sm motif-item`;
+          button.textContent = mintInfo.name;
+          button.title = mintInfo.name;
+          
+          button.addEventListener("click", () => {
+            showMatrix = false;
+            showTimeline = false;
+            selectedMotifId = mintId;
+            
+            updateViewVisibility();
+            // Update UI
+            matrixViewBtn.classList.remove("active");
+            timelineViewBtn.classList.remove("active");
+            updateUI(); 
+          });
+          
+          motifSelector.appendChild(button);
+        });
+    }
+  }
+
+  // Aktualisiert die Anzeige der ausgewählten Münzstätte oder Matrix-Status
+  function updateSelectedMotifInfo() {
+    if (!coinContextData) return;
+
+    // Entferne alle Statusmeldungen - diese sind nicht mehr nötig
+    selectedMotifInfo.textContent = "";
+    
+    /* Original Code - auskommentiert
+    if (showTimeline) {
+      selectedMotifInfo.textContent = "Zeitleistenansicht aktiv";
+    } else if (showMatrix) {
+      selectedMotifInfo.textContent = "Gesamtübersicht (Matrix) aktiv";
+    } else if (selectedMotifId && coinContextData.staetten && coinContextData.staetten[selectedMotifId]) {
+      const selectedMint = coinContextData.staetten[selectedMotifId];
+      if (selectedMint) {
+        selectedMotifInfo.textContent = `Ausgewählte Münzstätte: ${selectedMint.name}`;
+      } else {
+        selectedMotifInfo.textContent = "Ausgewählte Münzstätte nicht gefunden.";
+      }
+    } else if (!selectedMotifId && !showMatrix && coinContextData.staetten && Object.keys(coinContextData.staetten).length > 0) {
+      selectedMotifInfo.textContent = "Bitte eine Münzstätte auswählen.";
+    } else if (!coinContextData.staetten || Object.keys(coinContextData.staetten).length === 0) {
+      selectedMotifInfo.textContent = "Keine Münzstätten verfügbar.";
+    } else {
+      selectedMotifInfo.textContent = ""; // Default to empty if no specific state applies
+    }
+    */
+  }
+
+  // Add at the top with other global variables
+  let timelineDataCache = null;
+
+  // Neue Sortable Timeline-Daten laden
+  async function loadTimelineData() {
+    if (!coinContextData || !coinContextData.ruler_motif_stats) {
+      document.getElementById('nestedListRoot').innerHTML = '<li>Keine Zeitleisten-Daten verfügbar</li>';
+      document.getElementById('simpleList').innerHTML = '<li>Keine Münzen verfügbar</li>';
+      return;
+    }
+    
+    // Daten für die Timeline zusammenstellen
+    const ruler = coinContextData.ruler_motif_stats.ruler_name || "Unbekannter Herrscher";
+    const startYear = coinContextData.ruler_motif_stats.period_start;
+    const endYear = coinContextData.ruler_motif_stats.period_end;
+    
+    if (!startYear || !endYear) {
+      document.getElementById('nestedListRoot').innerHTML = '<li>Keine Zeitangaben verfügbar</li>';
+      document.getElementById('simpleList').innerHTML = '<li>Keine Münzen verfügbar</li>';
+      return;
+    }
+    
+    try {
+      // API-Aufruf für Ereignisse - erweitert um zusätzliche Felder
+      const response = await fetch(`/api/ereignisse/?von=${startYear}&bis=${endYear}&person=${ruler}&include_details=true`);
+      
+      if (!response.ok) {
+        throw new Error(`Fehler beim Laden der Ereignisse: ${response.status}`);
+      }
+      
+      const eventData = await response.json();
+      console.log("Event data loaded:", eventData);
+      
+      // Erstelle Ereignisliste für linke Seite
+      createEventsList(eventData.ereignisse || []);
+      
+      // Erstelle Münzliste für rechte Seite
+      createCoinsList();
+      
+      // Initialisiere SortableJS
+      initializeSortable();
+      
+    } catch (error) {
+      console.error("Fehler beim Laden der Timeline:", error);
+      document.getElementById('nestedListRoot').innerHTML = `<li>Fehler: ${error.message}</li>`;
+      document.getElementById('simpleList').innerHTML = '<li>Keine Münzen verfügbar</li>';
+    }
+  }
+
+  // Erstelle die Ereignisliste (linke Seite)
+  function createEventsList(events) {
+    const nestedListRoot = document.getElementById('nestedListRoot');
+    nestedListRoot.innerHTML = '';
+    
+    if (!events || events.length === 0) {
+      nestedListRoot.innerHTML = '<li>Keine Ereignisse gefunden</li>';
+      return;
+    }
+    
+    // Sortiere Ereignisse nach Datum
+    events.sort((a, b) => a.dat_von - b.dat_von);
+    
+    events.forEach(event => {
+      const eventItem = document.createElement('li');
+      
+      // Erstelle erweiterte Ereignisdarstellung
+      let eventHtml = `
+        <div class="event-header">
+          <strong>${event.name || 'Historisches Ereignis'}</strong>
+          <span class="event-date">(${event.dat_verb || event.dat_von || 'Unbekanntes Datum'})</span>
+        </div>
+      `;
+      
+      // Füge längere Beschreibung hinzu, falls vorhanden
+      if (event.information && event.information.trim() !== '' && event.information !== event.name) {
+        eventHtml += `
+          <div class="event-description">
+            ${event.information}
+          </div>
+        `;
+      }
+      
+      // Füge Personen hinzu - verschiedene mögliche Formate berücksichtigen
+      let personsToShow = [];
+      if (event.personen) {
+        if (Array.isArray(event.personen)) {
+          // Personen als Array von Objekten mit {id, name}
+          personsToShow = event.personen.map(person => {
+            if (typeof person === 'object' && person.name) {
+              return person.name;
+            } else if (typeof person === 'string') {
+              return person;
+            } else {
+              return String(person);
+            }
+          });
+        } else if (typeof event.personen === 'string') {
+          personsToShow = [event.personen];
+        } else if (event.personen.length) {
+          personsToShow = Array.from(event.personen);
+        }
+      }
+      
+      // Alternative: Falls "person" Feld existiert
+      if (personsToShow.length === 0 && event.person) {
+        if (typeof event.person === 'object' && event.person.name) {
+          personsToShow = [event.person.name];
+        } else {
+          personsToShow = [event.person];
+        }
+      }
+      
+      if (personsToShow.length > 0) {
+        eventHtml += `
+          <div class="event-persons">
+            <small><strong>Personen:</strong> ${personsToShow.join(', ')}</small>
+          </div>
+        `;
+      }
+      
+      // Füge die Münz-Dropzone hinzu
+      eventHtml += `<ul class="event-sublist"></ul>`;
+      
+      eventItem.innerHTML = eventHtml;
+      eventItem.className = 'event-item'; // Für besseres Styling
+      nestedListRoot.appendChild(eventItem);
+    });
+  }
+
+  // Erstelle die Münzliste (rechte Seite)
+  function createCoinsList() {
+    const simpleList = document.getElementById('simpleList');
+    simpleList.innerHTML = '';
+    
+    if (!coinContextData || !coinContextData.staetten) {
+      simpleList.innerHTML = '<li class="coin">M1</li><li class="coin">M2</li><li class="coin">M3</li>';
+      return;
+    }
+    
+    // Sammle Münzen aus allen Münzstätten
+    const coins = [];
+    let coinCounter = 1;
+    
+    Object.values(coinContextData.staetten).forEach(mint => {
+      if (!mint.rows) return;
+      
+      Object.entries(mint.rows).forEach(([motifId, motifInfo]) => {
+        if (!motifInfo || !motifInfo.cells) return;
+        
+        // Finde die erste Münze mit einem Bild für dieses Motiv
+        Object.values(motifInfo.cells).forEach(cell => {
+          if (!cell || !cell.thumb) return;
+          
+          coins.push({
+              id: cell.id,
+              thumb: cell.thumb,
+              url: cell.url,
+              name: motifInfo.name || `Motiv ${motifId}`,
+              motifId: motifId,
+              // Neue Tooltip-Daten
+              avleg: cell.avleg || "",
+              rvleg: cell.rvleg || "",
+              av_bildtyp: cell.av_bildtyp || "",
+              rv_bildtyp: cell.rv_bildtyp || "",
+              invnr: cell.invnr || ""
+          });
+        });
+      });
+    });
+    
+    // Begrenze auf maximal 10 Münzen für bessere Übersicht
+    const limitedCoins = coins.slice(0, 10);
+    
+    if (limitedCoins.length === 0) {
+      // Fallback: Verwende simulierte Münzen
+      for (let i = 1; i <= 6; i++) {
+        const coinLi = document.createElement('li');
+        coinLi.className = 'coin';
+        coinLi.textContent = `M${i}`;
+        simpleList.appendChild(coinLi);
+      }
+    } else {
+      // Verwende echte Münzen
+      limitedCoins.forEach((coin, index) => {
+        const coinLi = document.createElement('li');
+        coinLi.className = 'coin';
+        
+        // Erstelle erweiterten Tooltip
+        let tooltipText = `${coin.name}`;
+        if (coin.invnr) {
+          tooltipText += ` (${coin.invnr})`;
+        }
+        if (coin.avleg || coin.rvleg || coin.av_bildtyp || coin.rv_bildtyp) {
+          tooltipText += '\n';
+          if (coin.avleg) {
+            tooltipText += `Av: ${coin.avleg}`;
+          }
+          if (coin.av_bildtyp) {
+            if (coin.avleg) tooltipText += ' - ';
+            tooltipText += `${coin.av_bildtyp}`;
+          }
+          if (coin.avleg || coin.av_bildtyp) {
+            tooltipText += '\n';
+          }
+          if (coin.rvleg) {
+            tooltipText += `Rv: ${coin.rvleg}`;
+          }
+          if (coin.rv_bildtyp) {
+            if (coin.rvleg) tooltipText += ' - ';
+            tooltipText += `${coin.rv_bildtyp}`;
+          }
+        }
+        
+        coinLi.title = tooltipText;
+        
+        if (coin.thumb) {
+          const img = document.createElement('img');
+          img.src = coin.thumb;
+          img.alt = coin.name;
+          coinLi.appendChild(img);
+        } else {
+          coinLi.textContent = `M${index + 1}`;
+        }
+        
+        simpleList.appendChild(coinLi);
+      });
+    }
+  }
+
+  // Initialisiere SortableJS für Drag & Drop
+  function initializeSortable() {
+    const sharedGroupName = 'shared-coins';
+
+    // Rechte Liste (Münzsammlung)
+    new Sortable(document.getElementById('simpleList'), {
+      group: sharedGroupName,
+      animation: 150,
+      fallbackOnBody: true,
+      swapThreshold: 0.65
+    });
+
+    // Linke verschachtelte Liste (Ereignisse)
+    const eventSublists = document.querySelectorAll('#nestedListRoot .event-sublist');
+    eventSublists.forEach(sublist => {
+      new Sortable(sublist, {
+        group: sharedGroupName,
+        animation: 150,
+        fallbackOnBody: true,
+        swapThreshold: 0.65
+      });
+    });
+  }
+
+  // Aktualisiert die gesamte Benutzeroberfläche
+  function updateUI() {
+    initializeMotifSelector();
+    updateSelectedMotifInfo();
+    updateViewVisibility(); // This function now solely handles showing/hiding/creating main views
+    
+    if (showTimeline) {
+      // Timeline-spezifische Updates für die Seitenleiste
+      sidePanelTitle.textContent = "Ereignis-Info";
+      motifStats.style.display = "none";
+      motifDetails.innerHTML = `
+        <p>Diese Zeitleiste zeigt historische Ereignisse und Münzprägungen während der Regierungszeit.</p>
+        <p>Klicken Sie auf ein Ereignis für weitere Details.</p>
+      `;
+    } else { 
+      // Matrix oder Single Chart Updates für die Seitenleiste
+      sidePanelTitle.textContent = "Motiv-Info";
+      motifStats.style.display = "block";
+      updateMotifDetails(showMatrix);
+      
+      // Nur das Einzel-Kreisdiagramm erstellen, wenn !showMatrix und !showTimeline
+      if (!showMatrix && !showTimeline && selectedMotifId) {
+        createSinglePieChart(); 
+      } else {
+        singleChart.innerHTML = ""; // Clear single chart if not in that specific view
+        singleChartTitle.textContent = "";
+      }
+      
+      // Entferne den redundanten Matrix-Erstellungsblock von hier
+      // updateViewVisibility kümmert sich bereits darum.
+      /*
+      if (showMatrix && coinContextData && coinContextData.staetten && Object.keys(coinContextData.staetten).length > 0) {
+        if (!matrixCreated) {
+          createMatrixView();
+          matrixCreated = true;
+        }
+      } else if (showMatrix) {
+        matrixContainer.innerHTML = `<div class="alert alert-info mt-4">Keine ausreichenden Daten für Matrix-Ansicht vorhanden.</div>`;
+      }
+      */
+    }
+  }
+
+  // Initialisiert die Benutzeroberfläche
+  function initializeUI() {
+    updateUI();
+
+    // Fenstergrößenänderung behandeln
+    window.addEventListener("resize", () => {
+      if (showMatrix) {
+        // Just redraw if needed, but don't recreate
+        // Add specific resize handling for matrix if needed
+      } else if (!showTimeline) {
+        createSinglePieChart();
+      }
+    });
+  }
+
+  // Initialisierung beim Laden der Seite
+  document.addEventListener("DOMContentLoaded", () => {
+    if (document.getElementById('contextContent')) {
+      // Ensure duplicate event listeners are commented out
+      /*
+      matrixViewBtn.addEventListener("click", function() {
+        matrixViewBtn.classList.add("active");
+        timelineViewBtn.classList.remove("active");
+        showMatrix = true;
+        showTimeline = false;
+        updateUI(); 
+      });
+      
+      timelineViewBtn.addEventListener("click", function() {
+        timelineViewBtn.classList.add("active");
+        matrixViewBtn.classList.remove("active");
+        showMatrix = false;
+        showTimeline = true;
+        updateUI(); 
+        if (!timelineCreated) {
+          loadTimelineData();
+          timelineCreated = true;
+        }
+      });
+      */
+      
+      // Lade API-Daten
+      fetchCoinContextData();
+    }
+  });
+
+  // Alte Timeline-Funktionen entfernt - ersetzt durch Sortable Listen
+  // Die Funktionen createCoinMotifsFromMatrix und createTimeline 
+  // werden nicht mehr benötigt, da sie durch die neuen Sortable Listen ersetzt wurden.
+
+  // Aktualisiert die Motiv-Details (existierende Funktion)
+  function updateMotifDetails(showAllMotifs = false) {
+    if (!coinContextData) return;
+    
+    const selectedMint = selectedMotifId && coinContextData.staetten ? coinContextData.staetten[selectedMotifId] : null;
+    
+    if (showMatrix || selectedMint) { // Proceed if showing matrix or a valid mint is selected
+      let mintNameForDetails = "Gesamtübersicht";
+      let totalCount = 0;
+      let distinctMotifCount = 0; 
+      const uniqueNominaleInSelection = new Set(); 
+
+      if (showMatrix) {
+        // For matrix view, aggregate details across all mints
+        motifDetails.innerHTML = `<p>Gesamtübersicht aller Münzstätten.</p>`;
+        if(coinContextData.staetten){
+            Object.values(coinContextData.staetten).forEach(mint => {
+                if (mint && mint.rows) { // Check if mint exists and has rows
+                    Object.values(mint.rows).forEach(row => {
+                        if (row && row.cells) {
+                            Object.entries(row.cells).forEach(([nominalId, cell]) => {
+                                if (cell && cell.count) {
+                                    totalCount += cell.count;
+                                    uniqueNominaleInSelection.add(nominalId);
+                                }
+                            });
+                        }
+                    });
+                    // distinctMotifCount will be set by globalMotifSet.size later
+                }
+            });
+            
+            const globalMotifSet = new Set();
+            Object.values(coinContextData.staetten).forEach(mint => {
+                if(mint && mint.rows) { // Check if mint exists and has rows
+                    Object.keys(mint.rows).forEach(mID => globalMotifSet.add(mID));
+                }
+            });
+            distinctMotifCount = globalMotifSet.size;
+
+            motifDetails.innerHTML += `<p>${totalCount} Münze(n) · ${distinctMotifCount} Motiv(e) · ${Object.keys(coinContextData.staetten).length} Münzstätte(n) · ${uniqueNominaleInSelection.size} Nominal(e)</p>`;
+        }
+
+
+      } else if (selectedMint) {
+        // Details for a single selected mint
+        mintNameForDetails = selectedMint.name;
+        
+        const appearingMotifIds = new Set();
+
+        if (selectedMint.rows) {
+            Object.entries(selectedMint.rows).forEach(([motifId, motifData]) => {
+                let currentMotifHasCoins = false; 
+                if (motifData && motifData.cells) {
+                    Object.entries(motifData.cells).forEach(([nominalKey, cellDetails]) => {
+                        if (cellDetails && cellDetails.count > 0) {
+                            totalCount += cellDetails.count;
+                            uniqueNominaleInSelection.add(nominalKey); 
+                            currentMotifHasCoins = true;
+                        }
+                    });
+                }
+                if (currentMotifHasCoins) {
+                    appearingMotifIds.add(motifId);
+                }
+            });
+            distinctMotifCount = appearingMotifIds.size;
+        }
+        // If selectedMint.rows is null/undefined or empty, totalCount remains 0,
+        // uniqueNominaleInSelection is empty, and distinctMotifCount is 0 (due to initialization).
+        
+        motifDetails.innerHTML = `
+          <p>${mintNameForDetails}</p>
+          <p>${totalCount} Münze(n) · ${distinctMotifCount} Motiv(e)${uniqueNominaleInSelection.size > 0 ? ` · ${uniqueNominaleInSelection.size} Nominal(e)` : ''}</p>
+        `;
+      }
+      
+      // Nominale anzeigen (für einzelne Münzstätte oder alle in Matrix)
+      if (uniqueNominaleInSelection.size > 0 && coinContextData.nominale) {
+        const nominalList = document.createElement('div');
+        nominalList.className = 'mt-2';
+        
+        // Header
+        const nominalHeader = document.createElement('p');
+        nominalHeader.className = 'mb-1 fw-bold';
+        nominalHeader.textContent = 'Nominale:';
+        nominalList.appendChild(nominalHeader);
+        
+        // Liste der Nominale
+        const nominaleHtml = Array.from(uniqueNominaleInSelection)
+          .filter(id => coinContextData.nominale[id])
+          .map(id => {
+            return `<span class="badge bg-light text-dark me-1 mb-1">${coinContextData.nominale[id]}</span>`;
+          })
+          .join('');
+        
+        const nominalContainer = document.createElement('div');
+        nominalContainer.innerHTML = nominaleHtml;
+        nominalList.appendChild(nominalContainer);
+        
+        motifDetails.appendChild(nominalList);
+      }
+      
+      // Statistiken zur aktuellen Münze
+      const currentMotif = coinContextData.ruler_motif_stats?.current_motif;
+      if (currentMotif && currentMotif.id) {
+        // Finde das Motif in der all_motifs-Liste, um auf first_used und last_used zuzugreifen
+        const fullMotifData = coinContextData.ruler_motif_stats?.all_motifs?.find(m => m.id === currentMotif.id);
+        
+        const rulerNameForStats = coinContextData.ruler_motif_stats?.ruler_name || 'dem Prägeherrn';
+
+        currentMotifStats.innerHTML = `
+          <div class="card mb-3 current-motif">
+            <div class="card-body p-2">
+              <p class="card-text small mb-1">
+                Rang ${currentMotif.rank || '?'} (${currentMotif.percentage || '?'}% aller Prägungen unter ${rulerNameForStats})
+              </p>
+              <p class="card-text small mb-0">
+                ${rulerNameForStats}: ${currentMotif.first_date || '?'} bis ${currentMotif.last_date || '?'}
+              </p>
+              <p class="card-text small mb-0">
+                Gesamt: ${fullMotifData?.first_used || '?'} bis ${fullMotifData?.last_used || '?'}
+              </p>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Timeline-Visualisierung aller Motive des Prägeherren im Zeitraum
+      motifTimeline.innerHTML = "";
+      
+      // Sammle alle verfügbaren Motive des Prägeherren
+      let allRulerMotifs = [];
+      
+      // Wenn ruler_motif_stats vorhanden ist, benutze diese Liste
+      if (coinContextData.ruler_motif_stats && coinContextData.ruler_motif_stats.all_motifs) {
+        allRulerMotifs = [...coinContextData.ruler_motif_stats.all_motifs]; // Create a copy to avoid modifying original
+      } else {
+        // Alternativ sammle alle Motive aus allen Münzstätten
+        const allMotifs = new Map();
+        if (coinContextData.staetten) { // Check if staetten exists before iterating
+            Object.values(coinContextData.staetten).forEach(mint => {
+              if (mint && mint.rows) { // Check if mint exists and has rows
+                Object.entries(mint.rows).forEach(([motifId, motifInfo]) => {
+                  let totalMotifCount = 0;
+                  
+                  if (motifInfo && motifInfo.cells) {
+                    Object.values(motifInfo.cells).forEach(cell => {
+                      if (cell && cell.count) {
+                        totalMotifCount += cell.count;
+                      }
+                    });
+                  }
+                  
+                  if (totalMotifCount > 0) {
+                    if (!allMotifs.has(parseInt(motifId))) {
+                      allMotifs.set(parseInt(motifId), {
+                        id: parseInt(motifId),
+                        name: motifInfo.name || `Motiv ${motifId}`,
+                        count: totalMotifCount
+                      });
+                    } else {
+                      const existing = allMotifs.get(parseInt(motifId));
+                      existing.count += totalMotifCount;
+                      allMotifs.set(parseInt(motifId), existing);
+                    }
+                  }
+                });
+              }
+            });
+        }
+        allRulerMotifs = Array.from(allMotifs.values());
+      }
+      
+      // In matrix mode, keep the original ruler-level sorting (by global frequency)
+      // In single mint mode, resort by frequency within this specific mint
+      if (!showAllMotifs && selectedMint) {
+        // Calculate mint-specific counts for each motif
+        const mintSpecificCounts = new Map();
+        
+        allRulerMotifs.forEach(motif => {
+          let countInMint = 0;
+          
+          // Check if this motif exists in the selected mint
+          if (selectedMint.rows && selectedMint.rows[motif.id] && selectedMint.rows[motif.id].cells) {
+            Object.values(selectedMint.rows[motif.id].cells).forEach(cell => {
+              if (cell && cell.count) {
+                countInMint += cell.count;
+              }
+            });
+          }
+          
+          mintSpecificCounts.set(motif.id, countInMint);
+        });
+        
+        // Sort by mint-specific frequency first, then by global frequency as a tiebreaker
+        allRulerMotifs.sort((a, b) => {
+          const aCountInMint = mintSpecificCounts.get(a.id) || 0;
+          const bCountInMint = mintSpecificCounts.get(b.id) || 0;
+          
+          // First compare mint-specific counts
+          if (bCountInMint !== aCountInMint) {
+            return bCountInMint - aCountInMint;
+          }
+          
+          // If tied on mint-specific count, sort by global frequency
+          return b.count - a.count;
+        });
+      } else {
+        // In matrix view, sort by global frequency (which is already done in the API)
+        allRulerMotifs.sort((a, b) => b.count - a.count);
+      }
+      
+      // Berechne die Gesamtzahl aller Münzen des Prägeherren
+      const totalRulerCoins = allRulerMotifs.reduce((sum, motif) => sum + motif.count, 0);
+      
+      // Show all motifs or limit to a larger number (e.g., 15)
+      // Option 1: Show all motifs
+      const topRulerMotifs = allRulerMotifs;
+      
+      // Option 2: Show more motifs but still limit to prevent too many in the UI
+      // const topRulerMotifs = allRulerMotifs.slice(0, 15);
+      
+      if (topRulerMotifs.length > 0) {
+        const timelineHeader = document.createElement('h6');
+        timelineHeader.className = 'mt-3 mb-2';
+        // Update header text to reflect that we're showing all motifs
+        timelineHeader.textContent = 'Motive des Prägeherren:';
+        motifTimeline.appendChild(timelineHeader);
+        
+        // Add a scrollable container if there are many motifs
+        const motifContainer = document.createElement('div');
+        motifContainer.style.maxHeight = '250px'; // Limit height
+        motifContainer.style.overflowY = 'auto';  // Add scrollbar when needed
+        
+        topRulerMotifs.forEach(motif => {
+          // Prüfe, ob dieses Motiv in der aktuellen Münzstätte vorhanden ist
+          let motifInCurrentMint = false;
+          let motifCountInMint = 0;
+          
+          // In matrix mode, we don't check against a specific mint
+          // In single mint mode, check if the motif exists in the selected mint
+          if (!showAllMotifs && selectedMint && selectedMint.rows) { // Add check for selectedMint
+            if (selectedMint.rows[motif.id]) {
+              const motifInfo = selectedMint.rows[motif.id];
+              
+              if (motifInfo && motifInfo.cells) {
+                Object.values(motifInfo.cells).forEach(cell => {
+                  if (cell && cell.count) {
+                    motifInCurrentMint = true;
+                    motifCountInMint += cell.count;
+                  }
+                });
+              }
+            }
+          } else if (showAllMotifs) {
+            // Do NOT consider all motifs as "in current mint" by default
+            motifInCurrentMint = false;  // Start with false
+            // Calculate the count across all mints for this motif
+            if (coinContextData.staetten) {
+              Object.values(coinContextData.staetten).forEach(mint => {
+                if (mint && mint.rows && mint.rows[motif.id] && mint.rows[motif.id].cells) {
+                  Object.values(mint.rows[motif.id].cells).forEach(cell => {
+                    if (cell && cell.count) {
+                      motifCountInMint += cell.count;
+                      motifInCurrentMint = true;  // Only set to true if we find at least one
+                    }
+                  });
+                }
+              });
+            }
+          }
+          
+          const isCurrentMotif = currentMotif && motif.id === currentMotif.id;
+          
+          // Berechne Prozentsatz basierend auf Gesamtmünzen des Prägeherren
+          const globalPercentage = ((motif.count / totalRulerCoins) * 100).toFixed(1);
+          
+          // Berechne Prozentsatz in der aktuellen Münzstätte
+          const mintPercentage = totalCount > 0 ? ((motifCountInMint / totalCount) * 100).toFixed(1) : "0.0";
+          
+          const motifRow = document.createElement('div');
+          motifRow.className = `d-flex justify-content-between align-items-center mb-2 ${isCurrentMotif ? 'current-motif' : ''}`;
+          
+          // Anpassen des Stils für nicht vorhandene Motive
+          // Nur ausgrauen, wenn wir nicht in der Matrix-Ansicht sind
+          if (!motifInCurrentMint && !showAllMotifs) { // Simpler: if single view AND motif not in current mint
+            motifRow.style.opacity = "0.5";
+          }
+          
+          // Färbigen Punkt hinzufügen
+          const dot = document.createElement("span");
+          dot.className = "color-dot me-1";
+          dot.style.backgroundColor = motifColors[motif.id] || "#ccc";
+          
+          const motifDisplayContainer = document.createElement('div');
+          
+          // Prepare link parameters
+          const rulerName = coinContextData.ruler_motif_stats?.ruler_name || "";
+          const periodStart = coinContextData.ruler_motif_stats?.period_start || "";
+          const periodEnd = coinContextData.ruler_motif_stats?.period_end || "";
+          // currentCoinMintName is defined globally and captures {{ coin_data.mzstaette }}
+          const mintNameForLink = currentCoinMintName || ""; 
+
+          const link = document.createElement('a');
+          link.href = `/browse/?Praegeherren=${encodeURIComponent(rulerName)}&Muenzstaette=${encodeURIComponent(mintNameForLink)}&rv_bildtyp=${motif.id}&dat_von=${encodeURIComponent(periodStart)}&dat_bis=${encodeURIComponent(periodEnd)}`;
+          link.textContent = `${motif.name.substring(0, 20)}${motif.name.length > 20 ? '...' : ''}`;
+          link.title = `Zeige ähnliche Münzen: Motiv '${motif.name}', Prägeherr '${rulerName || "N/A"}', Münzstätte '${mintNameForLink || "N/A"}'`;
+          
+          motifDisplayContainer.appendChild(dot);
+          motifDisplayContainer.appendChild(link);
+          
+          const motifPercentageTextElement = document.createElement('div');
+          motifPercentageTextElement.className = 'small text-muted';
+
+          if (showAllMotifs) { // Matrix View
+            if (motifInCurrentMint) { // If the motif is present anywhere in the matrix (count > 0 for this motif in matrix cells)
+                 motifPercentageTextElement.textContent = `${mintPercentage}% (gesamt: ${globalPercentage}%)`;
+            } else { // Motif is NOT present in the matrix data (count = 0 for this motif in matrix cells)
+                 // Display global percentage and a note about its absence from the matrix cells
+                 motifPercentageTextElement.textContent = `${globalPercentage}% (nicht in Matrix-Daten)`;
+            }
+          } else { // Single Mint View
+            if (motifInCurrentMint) { // If motif is present in the selected mint's data
+                motifPercentageTextElement.textContent = `${mintPercentage}% (gesamt: ${globalPercentage}%)`;
+            } else { // Motif is not present in the selected mint's data
+                motifPercentageTextElement.textContent = `${globalPercentage}% (nicht in dieser Münzstätte)`;
+            }
+          }
+          
+          motifRow.appendChild(motifDisplayContainer);
+          motifRow.appendChild(motifPercentageTextElement); // Ensure this uses the renamed variable
+          
+          // Instead of adding directly to motifTimeline, add to the scrollable container
+          motifContainer.appendChild(motifRow);
+        });
+        
+        // Add the container to the timeline
+        motifTimeline.appendChild(motifContainer);
+      }
+    } else {
+      motifDetails.innerHTML = "Bitte wählen Sie eine Münzstätte aus oder zeigen Sie die Gesamtübersicht an.";
+      currentMotifStats.innerHTML = "";
+      motifTimeline.innerHTML = "";
+    }
+  }
+
+  // Erstellt die Matrix mit Münzen als Thumbnails
+  function createMatrixView() {
+    if (!coinContextData || !coinContextData.staetten) return;
+    console.log("Creating matrix view with data:", coinContextData);
+    
+    matrixContainer.innerHTML = "";
+
+    // Bestimme Nominale für diese Matrix
+    const nominale = coinContextData.nominale || {};
+    console.log("Available nominale:", nominale);
+    
+    if (Object.keys(nominale).length === 0) {
+      matrixContainer.innerHTML = `
+        <div class="alert alert-info mt-4">
+          Keine Nominale für Matrix-Ansicht gefunden.
+        </div>
+      `;
+      return;
+    }
+    
+    // Sammle alle Münzstätten
+    const mints = {};
+    Object.entries(coinContextData.staetten || {}).forEach(([mintId, mintInfo]) => {
+      if (mintInfo && mintInfo.name) {
+        mints[mintId] = mintInfo.name;
+      }
+    });
+    console.log("Mints for matrix:", mints);
+    
+    if (Object.keys(mints).length === 0) {
+      matrixContainer.innerHTML = `
+        <div class="alert alert-info mt-4">
+          Keine Münzstätten für Matrix-Ansicht gefunden.
+        </div>
+      `;
+      return;
+    }
+    
+    // Sammle alle Motive
+    const motifs = {};
+    Object.values(coinContextData.staetten || {}).forEach(mint => {
+      if (!mint || !mint.rows) return;
+      
+      Object.entries(mint.rows).forEach(([rowId, rowInfo]) => {
+        if (rowInfo && rowInfo.name) {
+          motifs[rowId] = rowInfo.name;
+        }
+      });
+    });
+    console.log("Found motifs:", Object.keys(motifs).length);
+    
+    // Erstelle das Grid-Layout
+    const gridContainer = document.createElement("div");
+    gridContainer.className = "matrix-grid";
+    // +1 für die Zeilenbezeichnung und +1 für die Summenspalte
+    gridContainer.style.gridTemplateColumns = `auto repeat(${Object.keys(mints).length}, 1fr) auto`;
+
+    // Leere Zelle oben links
+    const cornerCell = document.createElement("div");
+    gridContainer.appendChild(cornerCell);
+
+    // Münzstätten als Spaltenüberschriften
+    Object.entries(mints).forEach(([mintId, mintName]) => {
+      const header = document.createElement("div");
+      header.className = "matrix-header";
+      header.textContent = mintName;
+      gridContainer.appendChild(header);
+    });
+    
+    // Überschrift für die Summenspalte
+    const sumHeader = document.createElement("div");
+    sumHeader.className = "matrix-header";
+    sumHeader.textContent = "Summe";
+    gridContainer.appendChild(sumHeader);
+
+    // Zähle die Gesamtanzahl pro Münzstätte für die Summenzeile
+    const mintTotals = {};
+    Object.keys(mints).forEach(mintId => {
+      mintTotals[mintId] = 0;
+    });
+
+    // Track pending charts to render after DOM insertion
+    const pendingCharts = [];
+    
+    // Berechne Nominaltotals für Zeilensummen
+    const nominalTotals = {};
+    Object.keys(nominale).forEach(nominalId => {
+      nominalTotals[nominalId] = 0;
+    });
+
+    // Zeilen mit Nominalen und Diagrammen
+    Object.entries(nominale).forEach(([nominalId, nominalName]) => {
+      // Nominal als Zeilenüberschrift
+      const rowHeader = document.createElement("div");
+      rowHeader.className = "matrix-row-header";
+      rowHeader.textContent = nominalName;
+      gridContainer.appendChild(rowHeader);
+
+      // Kreisdiagramme für jede Münzstätte
+      Object.entries(mints).forEach(([mintId, mintName]) => {
+        const cell = document.createElement("div");
+        cell.className = "matrix-cell border rounded p-2";
+
+        // Sammle Daten für das Kreisdiagramm: Zähle Münzen pro Motiv
+        const motifData = [];
+        let totalCoins = 0;
+        
+        // Durchsuche alle Motive für diese Münzstätte und dieses Nominal
+        const mintInfo = coinContextData.staetten[mintId];
+        if (mintInfo && mintInfo.rows) {
+          Object.entries(mintInfo.rows).forEach(([rowId, rowInfo]) => {
+            if (!rowInfo || !rowInfo.cells) return;
+            
+            const coin = rowInfo.cells[nominalId];
+            if (coin && coin.count) {
+              motifData.push({
+                motifId: parseInt(rowId), // Store as number for comparison
+                name: motifs[rowId] || `Motiv ${rowId}`,
+                value: coin.count,
+                color: motifColors[rowId] || "#ccc"
+              });
+              totalCoins += coin.count;
+              mintTotals[mintId] += coin.count;
+              nominalTotals[nominalId] += coin.count;
+            }
+          });
+        }
+
+        // Container für das Kreisdiagramm
+        const chartContainer = document.createElement("div");
+        chartContainer.className = "chart-container";
+        cell.appendChild(chartContainer);
+
+        // Füge die Zelle zum Grid hinzu
+        gridContainer.appendChild(cell);
+
+        // Erstelle das Kreisdiagramm wenn es Daten gibt
+        if (motifData.length > 0) {
+          pendingCharts.push({ container: chartContainer, data: motifData });
+        } else {
+          chartContainer.innerHTML = `<div class="d-flex align-items-center justify-content-center h-100 text-muted">-</div>`;
+        }
+      });
+      
+      // Füge die Summen-Zelle am Ende jeder Nominalzeile hinzu
+      const nominalSumCell = document.createElement("div");
+      nominalSumCell.className = "matrix-cell border rounded p-2 d-flex align-items-center justify-content-center font-weight-bold";
+      nominalSumCell.textContent = nominalTotals[nominalId] || 0;
+      gridContainer.appendChild(nominalSumCell);
+    });
+
+    // Füge eine Summenzeile hinzu
+    const totalRowHeader = document.createElement("div");
+    totalRowHeader.className = "matrix-row-header font-weight-bold";
+    totalRowHeader.textContent = "Gesamtanzahl";
+    gridContainer.appendChild(totalRowHeader);
+
+    // Füge die Gesamtsummen für jede Münzstätte hinzu
+    Object.entries(mintTotals).forEach(([mintId, total]) => {
+      const totalCell = document.createElement("div");
+      totalCell.className = "matrix-cell border rounded p-2 text-center font-weight-bold";
+      totalCell.textContent = total;
+      gridContainer.appendChild(totalCell);
+    });
+    
+    // Füge die Gesamtsumme aller Münzen hinzu
+    const grandTotal = Object.values(mintTotals).reduce((sum, count) => sum + count, 0);
+    const grandTotalCell = document.createElement("div");
+    grandTotalCell.className = "matrix-cell border rounded p-2 text-center font-weight-bold bg-light";
+    grandTotalCell.textContent = grandTotal;
+    gridContainer.appendChild(grandTotalCell);
+
+    // Now add the grid to the DOM
+    matrixContainer.appendChild(gridContainer);
+    
+    // AFTER grid is in the DOM, create all pie charts
+    pendingCharts.forEach(chart => {
+      createSmallPieChart(chart.container, chart.data);
+    });
+  }
+
+  // Erstellt ein einzelnes großes Kreisdiagramm für die ausgewählte Münzstätte
+  function createSinglePieChart() {
+    if (!selectedMotifId || !coinContextData || !coinContextData.staetten) {
+      singleChart.innerHTML = "<p>Keine Daten verfügbar</p>";
+      return;
+    }
+
+    const selectedMint = coinContextData.staetten[selectedMotifId];
+    if (!selectedMint) {
+      singleChart.innerHTML = "<p>Münzstätte nicht gefunden</p>";
+      return;
+    }
+
+    singleChartTitle.textContent = `Münzverteilung - ${selectedMint.name}`;
+
+    // Sammle Daten: alle Münzen dieser Münzstätte gruppiert nach Motiven
+    const motifData = [];
+    let totalCoins = 0;
+
+    if (selectedMint.rows) {
+      Object.entries(selectedMint.rows).forEach(([motifId, motifInfo]) => {
+        if (!motifInfo || !motifInfo.cells) return;
+        
+        let motifTotal = 0;
+        Object.values(motifInfo.cells).forEach(cell => {
+          if (cell && cell.count) {
+            motifTotal += cell.count;
+          }
+        });
+        
+        if (motifTotal > 0) {
+          motifData.push({
+            motifId: parseInt(motifId),
+            name: motifInfo.name || `Motiv ${motifId}`,
+            value: motifTotal,
+            color: motifColors[motifId] || "#ccc",
+            isCurrentCoin: currentCoinReverseMotifId && parseInt(motifId) === currentCoinReverseMotifId
+          });
+          totalCoins += motifTotal;
+        }
+      });
+    }
+
+    if (motifData.length === 0) {
+      singleChart.innerHTML = "<p>Keine Münzen für diese Münzstätte gefunden</p>";
+      return;
+    }
+
+    // Sortiere nach Anzahl (größte zuerst)
+    motifData.sort((a, b) => b.value - a.value);
+
+    // Container leeren
+    singleChart.innerHTML = "";
+
+    // SVG-Dimensionen
+    const width = 400;
+    const height = 300;
+    const radius = Math.min(width, height) / 2 - 20; // Mehr Platz für Pull-out
+    const pullOutDistance = 10; // Distanz für herausgezogene Segmente
+
+    // SVG erstellen
+    const svg = d3.select(singleChart)
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const g = svg.append("g")
+      .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    // D3 Pie Generator
+    const pie = d3.pie()
+      .value(d => d.value)
+      .sort(null);
+
+    // Arc Generators - normal und herausgezogen
+    const arcNormal = d3.arc()
+      .innerRadius(0)
+      .outerRadius(radius);
+
+    const arcHover = d3.arc()
+      .innerRadius(0)
+      .outerRadius(radius + 5);
+
+    const arcPulled = d3.arc()
+      .innerRadius(0)
+      .outerRadius(radius);
+
+    // Tooltip erstellen - entferne alte Tooltips zuerst
+    d3.selectAll(".pie-tooltip").remove();
+    const tooltip = d3.select("body").append("div")
+      .attr("class", "pie-tooltip")
+      .style("position", "absolute")
+      .style("padding", "8px 12px")
+      .style("background", "rgba(0, 0, 0, 0.8)")
+      .style("color", "white")
+      .style("border-radius", "4px")
+      .style("pointer-events", "none")
+      .style("font-size", "12px")
+      .style("z-index", "1000")
+      .style("opacity", 0);
+
+    // Pie Segmente erstellen
+    const arcs = g.selectAll(".arc")
+      .data(pie(motifData))
+      .enter().append("g")
+      .attr("class", "arc");
+
+    // Berechne Pull-out Transformation für aktuelle Münze
+    function getTransform(d) {
+      if (d.data.isCurrentCoin) {
+        const centroid = arcNormal.centroid(d);
+        const x = centroid[0] * pullOutDistance / radius;
+        const y = centroid[1] * pullOutDistance / radius;
+        return `translate(${x},${y})`;
+      }
+      return "translate(0,0)";
+    }
+
+    // Pfade erstellen
+    arcs.append("path")
+      .attr("d", arcNormal)
+      .attr("fill", d => d.data.color)
+      .attr("stroke", "white")
+      .attr("stroke-width", 2)
+      .attr("transform", getTransform)
+      .style("cursor", "pointer")
+      .style("filter", d => d.data.isCurrentCoin ? "drop-shadow(2px 2px 4px rgba(0,0,0,0.3))" : "none")
+      .on("mouseover", function(event, d) {
+        // Hover-Effekt: Segment vergrößern
+        if (!d.data.isCurrentCoin) {
+          d3.select(this)
+            .transition()
+            .duration(150)
+            .attr("d", arcHover);
+        }
+        
+        const percentage = ((d.data.value / totalCoins) * 100).toFixed(1);
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", 1);
+          
+        tooltip.html(`
+          <div style="font-weight: bold;">${d.data.name}</div>
+          <div>${d.data.value} Münzen (${percentage}%)</div>
+          ${d.data.isCurrentCoin ? '<div style="color: #ffd700;">⭐ Aktuelle Münze</div>' : ''}
+        `)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mousemove", function(event, d) {
+        tooltip
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mouseout", function(d) {
+        // Hover-Effekt zurücksetzen
+        if (!d.data.isCurrentCoin) {
+          d3.select(this)
+            .transition()
+            .duration(150)
+            .attr("d", arcNormal);
+        }
+        
+        tooltip.transition()
+          .duration(300)
+          .style("opacity", 0);
+      })
+      .on("click", function(event, d) {
+        // Klick-Event: Link zu ähnlichen Münzen
+        const rulerName = coinContextData.ruler_motif_stats?.ruler_name || "";
+        const periodStart = coinContextData.ruler_motif_stats?.period_start || "";
+        const periodEnd = coinContextData.ruler_motif_stats?.period_end || "";
+        const mintName = selectedMint.name || "";
+        
+        const url = `/browse/?Praegeherren=${encodeURIComponent(rulerName)}&Muenzstaette=${encodeURIComponent(mintName)}&rv_bildtyp=${d.data.motifId}&dat_von=${encodeURIComponent(periodStart)}&dat_bis=${encodeURIComponent(periodEnd)}`;
+        window.open(url, '_blank');
+      });
+
+    // Labels hinzufügen (nur für größere Segmente)
+    arcs.append("text")
+      .attr("transform", d => {
+        const centroid = arcNormal.centroid(d);
+        const pulloutTransform = getTransform(d);
+        // Parse the pullout translation values
+        const match = pulloutTransform.match(/translate\(([^,]+),([^)]+)\)/);
+        const pullX = match ? parseFloat(match[1]) : 0;
+        const pullY = match ? parseFloat(match[2]) : 0;
+        return `translate(${centroid[0] + pullX},${centroid[1] + pullY})`;
+      })
+      .attr("dy", ".35em")
+      .style("text-anchor", "middle")
+      .style("font-size", "12px")
+      .style("fill", "white")
+      .style("font-weight", "bold")
+      .style("text-shadow", "1px 1px 2px rgba(0,0,0,0.7)")
+      .style("pointer-events", "none")
+      .text(d => {
+        const percentage = (d.data.value / totalCoins) * 100;
+        return percentage > 8 ? `${percentage.toFixed(0)}%` : "";
+      });
+
+    // Cleanup function für alte Tooltips
+    setTimeout(() => {
+      d3.selectAll(".pie-tooltip").filter(function() {
+        return this !== tooltip.node();
+      }).remove();
+    }, 100);
+
+    // SVG mouseleave Event hinzufügen - NEUE ZEILE
+    svg.on("mouseleave", function() {
+      tooltip.transition()
+        .duration(200)
+        .style("opacity", 0);
+    });
+  }
+
+  // Erstellt kleine Kreisdiagramme für die Matrix
+  function createSmallPieChart(container, data) {
+    if (!data || data.length === 0) return;
+
+    // Füge isCurrentCoin Flag zu den Daten hinzu
+    const enhancedData = data.map(d => ({
+      ...d,
+      isCurrentCoin: currentCoinReverseMotifId && d.motifId === currentCoinReverseMotifId
+    }));
+
+    // Dimensionen für kleine Diagramme
+    const width = 120;
+    const height = 120;
+    const radius = Math.min(width, height) / 2 - 8; // Mehr Platz für Pull-out
+    const pullOutDistance = 3; // Kleinere Distanz für kleine Diagramme
+
+    // Container leeren
+    container.innerHTML = "";
+
+    // SVG erstellen
+    const svg = d3.select(container)
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const g = svg.append("g")
+      .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    // D3 Pie Generator
+    const pie = d3.pie()
+      .value(d => d.value)
+      .sort(null);
+
+    // Arc Generators
+    const arcNormal = d3.arc()
+      .innerRadius(0)
+      .outerRadius(radius);
+
+    const arcHover = d3.arc()
+      .innerRadius(0)
+      .outerRadius(radius + 3);
+
+    // Berechne Gesamtanzahl
+    const total = enhancedData.reduce((sum, d) => sum + d.value, 0);
+
+    // Verwende eine eindeutige Tooltip-Klasse für jedes kleine Diagramm
+    const tooltipId = `matrix-tooltip-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Entferne nur bestehende Tooltips dieser spezifischen Instanz
+    d3.selectAll(`.${tooltipId}`).remove();
+    
+    const tooltip = d3.select("body").append("div")
+      .attr("class", `pie-tooltip ${tooltipId}`)
+      .style("position", "absolute")
+      .style("padding", "8px 12px")
+      .style("background", "rgba(0, 0, 0, 0.85)")
+      .style("color", "white")
+      .style("border-radius", "6px")
+      .style("pointer-events", "none")
+      .style("font-size", "12px")
+      .style("z-index", "10000")
+      .style("box-shadow", "0 2px 8px rgba(0,0,0,0.3)")
+      .style("opacity", 0);
+
+    // Berechne Pull-out Transformation für aktuelle Münze
+    function getTransform(d) {
+      if (d.data.isCurrentCoin) {
+        const centroid = arcNormal.centroid(d);
+        const x = centroid[0] * pullOutDistance / radius;
+        const y = centroid[1] * pullOutDistance / radius;
+        return `translate(${x},${y})`;
+      }
+      return "translate(0,0)";
+    }
+
+    // Pie Segmente erstellen
+    const arcs = g.selectAll(".arc")
+      .data(pie(enhancedData))
+      .enter().append("g")
+      .attr("class", "arc");
+
+    arcs.append("path")
+      .attr("d", arcNormal)
+      .attr("fill", d => d.data.color)
+      .attr("stroke", "white")
+      .attr("stroke-width", 1)
+      .attr("transform", getTransform)
+      .style("cursor", "pointer")
+      .style("filter", d => d.data.isCurrentCoin ? "drop-shadow(1px 1px 2px rgba(0,0,0,0.3))" : "none")
+      .on("mouseover", function(event, d) {
+        // Hover-Effekt: Segment vergrößern
+        if (!d.data.isCurrentCoin) {
+          d3.select(this)
+            .transition()
+            .duration(150)
+            .attr("d", arcHover);
+        }
+        
+        const percentage = ((d.data.value / total) * 100).toFixed(1);
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", 1);
+          
+        tooltip.html(`
+          <div style="font-weight: bold; margin-bottom: 4px;">${d.data.name}</div>
+          <div style="margin-bottom: 2px;">${d.data.value} Münzen (${percentage}%)</div>
+          ${d.data.isCurrentCoin ? '<div style="color: #ffd700; font-size: 10px;"><strong>⭐ Aktuelle Münze</strong></div>' : ''}
+        `)
+          .style("left", (event.pageX + 12) + "px")
+          .style("top", (event.pageY - 35) + "px");
+      })
+      .on("mousemove", function(event, d) {
+        tooltip
+          .style("left", (event.pageX + 12) + "px")
+          .style("top", (event.pageY - 35) + "px");
+      })
+      .on("mouseout", function(d) {
+        // Hover-Effekt zurücksetzen
+        if (!d.data.isCurrentCoin) {
+          d3.select(this)
+            .transition()
+            .duration(150)
+            .attr("d", arcNormal);
+        }
+        
+        tooltip.transition()
+          .duration(300)
+          .style("opacity", 0)
+          .on("end", function() {
+            // Tooltip nach Animation entfernen
+            setTimeout(() => tooltip.remove(), 100);
+          });
+      });
+
+    // Gesamtzahl in der Mitte anzeigen - angepasst für Pull-out
+    g.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", ".35em")
+      .style("font-size", "14px")
+      .style("font-weight", "bold")
+      .style("fill", "#333")
+      .style("text-shadow", "1px 1px 1px rgba(255,255,255,0.8)")
+      .style("pointer-events", "none")
+      .text(total);
+
+    // SVG mouseleave Event hinzufügen - NEUE ZEILE
+    svg.on("mouseleave", function() {
+      tooltip.transition()
+        .duration(200)
+        .style("opacity", 0);
+    });
+  }
+</script>
+{% endif %}
+{% endblock content %}
+{% block scripts %}
+    {{block.super}}
+    <script src="{% static 'Djangoprojekt/js/lightgallery-all.min.js'%}"></script>
+    <script src="{% static 'Djangoprojekt/js/jquery.mousewheel.min.js'%}"></script>
+    <script type="text/javascript">
+        $(document).ready(function(e){
+            $('#captions').lightGallery({
+                selector: '.item',
+                showThumbByDefault: false,
+                preload: 2,
+            });
+        });
+        $('#theModal').on('show.bs.modal', function (e) {
+        var button = $(e.relatedTarget);
+        var modal = $(this);
+        modal.find('.modal-title').text(button.data("title"));
+        modal.find('.modal-body').load(button.data("remote"));
+        modal.find(".modal-footer a").attr("href", button.data("footer"));
+        });
+        $("#theModal").on('hidden', function () {
+            $(this).data('bs.modal', null);
+        });
+        function toggle_visibility(id) {
+        var e = document.getElementById(id);
+        e.style.visibility = ((e.style.visibility!='hidden') ? 'hidden' : 'visible');
+        }
+    </script>
+    
+    {% include "slg/scripte.html" with active_block="jsobjektaenderung" %}
+{% endblock scripts %}

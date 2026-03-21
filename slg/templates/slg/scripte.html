@@ -1,0 +1,383 @@
+{% load static %}
+{% if active_block == 'jsnavbar' %}
+{% block jsnavbar %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="{% static 'Djangoprojekt/js/jquery.waypoints.min.js' %}"></script>
+<script src="{% static 'Djangoprojekt/js/infinite.min.js' %}"></script>
+<script src="{% static 'Djangoprojekt/js/jquery.mousewheel.min.js'%}"></script>
+{% comment %}
+<script src="{% static 'Djangoprojekt/js/bootstrap.min.js'%}"></script> {% endcomment %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'Djangoprojekt/js/aos.js'%}"></script>
+<script src="{% static 'Djangoprojekt/js/lazysizes.min.js'%}" async></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{% static 'Djangoprojekt/js/lightgallery-all.min.js'%}"></script>
+
+<script>
+    AOS.init({
+        startEvent: 'load',
+    });
+
+    $(document).ready(function () {
+        // Variablen für Touch-Events für die Münzgalerie
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const minSwipeDistance = 50; // Minimale Distanz für einen Swipe
+
+        // Touch-Event-Handler für die Münzgalerie
+        function handleTouchStart(e) {
+            touchStartX = e.touches[0].clientX;
+        }
+
+        function handleTouchMove(e) {
+            // Optional: Verhindern des vertikalen Scrollens während des horizontalen Swipes
+            // e.preventDefault();
+        }
+
+        function handleTouchEnd(e) {
+            touchEndX = e.changedTouches[0].clientX;
+            handleSwipe();
+        }
+
+        function handleSwipe() {
+            const swipeDistance = touchEndX - touchStartX;
+
+            // Wenn die Swipe-Distanz größer als die Mindestdistanz ist
+            if (Math.abs(swipeDistance) > minSwipeDistance) {
+                if (swipeDistance > 0) {
+                    // Swipe nach rechts - scrolle nach links
+                    scrollCoins('left');
+                } else {
+                    // Swipe nach links - scrolle nach rechts
+                    scrollCoins('right');
+                }
+            }
+        }
+
+        // Funktion zum Scrollen der Münzgalerie
+        window.scrollCoins = function (direction) {
+            const container = document.getElementById('coinsContainer');
+            if (!container) return; // Prüfen, ob das Element existiert
+
+            const scrollAmount = 300; // Scroll-Distanz
+
+            if (direction === 'left') {
+                container.scrollLeft -= scrollAmount;
+            } else {
+                container.scrollLeft += scrollAmount;
+            }
+
+            // Update arrow visibility
+            updateArrows();
+        }
+
+        function updateArrows() {
+            const container = document.getElementById('coinsContainer');
+            if (!container) return; // Prüfen, ob das Element existiert
+
+            const prevArrow = document.querySelector('.nav-arrow.prev');
+            const nextArrow = document.querySelector('.nav-arrow.next');
+
+            if (!prevArrow || !nextArrow) return; // Prüfen, ob die Pfeile existieren
+
+            // Show/hide prev arrow
+            if (container.scrollLeft <= 0) {
+                prevArrow.classList.add('hidden');
+            } else {
+                prevArrow.classList.remove('hidden');
+            }
+
+            // Show/hide next arrow
+            if (container.scrollLeft >= (container.scrollWidth - container.clientWidth)) {
+                nextArrow.classList.add('hidden');
+            } else {
+                nextArrow.classList.remove('hidden');
+            }
+        }
+
+        // Event-Listener für die Münzgalerie hinzufügen
+        const coinsContainer = document.getElementById('coinsContainer');
+        if (coinsContainer) {
+            // Touch-Events hinzufügen
+            coinsContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+            coinsContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
+            coinsContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+            // Aktualisierung beim Scrollen
+            coinsContainer.addEventListener('scroll', updateArrows);
+
+            // Initiale Überprüfung der Pfeilsichtbarkeit
+            updateArrows();
+        }
+
+        // Aktualisierung bei Größenänderung
+        window.addEventListener('resize', updateArrows);
+
+        // JavaScript für die Suchfeld-Auswahl
+        const searchFieldTags = document.querySelectorAll('.search-field-tag');
+        const searchInput = document.querySelector('.search-input');
+        const searchForm = document.querySelector('.search-box form');
+
+        if (searchFieldTags.length > 0 && searchInput) {
+            // Event-Listener für Suchfeld-Tags
+            searchFieldTags.forEach(tag => {
+                tag.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    // Aktiven Tag markieren
+                    searchFieldTags.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Suchfeld-Wert setzen
+                    const field = this.dataset.field;
+
+                    // Name des Eingabefelds ändern
+                    searchInput.name = field;
+
+                    // Verstecktes Feld entfernen, falls vorhanden
+                    const hiddenField = document.getElementById('search_field');
+                    if (hiddenField) {
+                        hiddenField.value = field;
+                    }
+
+                    // Platzhaltertext ändern
+                    searchInput.placeholder = 'Suche nach ' + this.textContent;
+
+                    // Fokus auf das Eingabefeld setzen
+                    searchInput.focus();
+                });
+            });
+        }
+
+        // JavaScript für dynamisches Filtern
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const collectionCards = document.querySelectorAll('.collection-card');
+
+        if (filterButtons.length > 0 && collectionCards.length > 0) {
+            // Filter-Funktion
+            function filterCollections(category) {
+                collectionCards.forEach(card => {
+                    if (category === 'all' || card.dataset.category === category) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+
+            // Event-Listener für Filter-Buttons
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    // Aktiven Button markieren
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Sammlungen filtern
+                    filterCollections(this.dataset.category);
+                });
+            });
+        }
+
+        // Original Suchfunktion wiederherstellen
+        $(document).ready(function () {
+            // Rubrikauswahl
+            $('#rubrikSelect').select2({
+                placeholder: "Suchkategorie wählen",
+                allowClear: true
+            });
+
+            // Event-Handler für Rubrikauswahl
+            $('#rubrikSelect').on('change', function () {
+                var selectedType = $(this).val();
+                var searchInput = $('#searchFields input');
+
+                // Name des Eingabefelds an den ausgewählten Typ anpassen
+                searchInput.attr('name', selectedType);
+
+                // Platzhaltertext anpassen
+                var placeholder = 'Suche nach ' + $(this).find('option:selected').text();
+                searchInput.attr('placeholder', placeholder);
+            });
+
+            // Formularvalidierung
+            $('.search-form').on('submit', function (e) {
+                var searchType = $('#rubrikSelect').val();
+                var searchInputObj = $('#searchFields input[type="text"]');
+                var searchTerm = searchInputObj.val();
+
+                // Nur meckern, wenn tatsächlich ein Suchbegriff eingegeben wurde, aber keine Kategorie
+                if (searchTerm && !searchType) {
+                    e.preventDefault();
+                    alert('Bitte wählen Sie eine Suchkategorie aus.');
+                    return false;
+                }
+
+                // Entferne leere Eingabefelder vor dem Submit
+                $(this).find('input[type="text"]').each(function () {
+                    if (!$(this).val()) {
+                        $(this).removeAttr('name');
+                    }
+                });
+                return true;
+            });
+        });
+    });
+
+</script>
+{% endblock %}
+{% elif active_block == 'jsobjektliste' %}
+{% block jsobjektliste %}
+<!-- Grundlegende Bibliotheken -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+{# ADD: Waypoint libraries for infinite scroll #}
+<script src="{% static 'Djangoprojekt/js/jquery.waypoints.min.js' %}"></script>
+<script src="{% static 'Djangoprojekt/js/infinite.min.js' %}"></script>
+{# END ADD #}
+
+<!-- Eigene JavaScript-Dateien -->
+{# This might contain specific logic, keep it #}
+<script src="{% static 'js/filter-ajax.js' %}"></script>
+{# This might contain the actual infinite scroll setup, or just helpers #}
+<script src="{% static 'js/infinite-scroll.js' %}"></script>
+
+{# ADD: Basic Waypoint Infinite initialization if not already in infinite-scroll.js #}
+<script>
+    $(document).ready(function () {
+        // Ensure this selector matches your container for objects
+        var infinite = new Waypoint.Infinite({
+            element: $('.infinite-container')[0], // Adjust selector if needed
+            // Optional: Specify offset, e.g., 'bottom-in-view' or a pixel value
+            // offset: 'bottom-in-view',
+            onBeforePageLoad: function () {
+                // Show a loading indicator if you have one
+                // Example: $('.loading-indicator').show();
+                console.log('Loading next page...'); // For debugging
+            },
+            onAfterPageLoad: function ($items) {
+                // Hide the loading indicator
+                // Example: $('.loading-indicator').hide();
+                console.log('Page loaded.'); // For debugging
+                // You might need to re-initialize things for the new items here
+                // e.g., lazy loading, lightboxes, etc. if they apply
+            }
+        });
+
+        // If your infinite-scroll.js already initializes Waypoint.Infinite,
+        // you might not need the above block, or you might need to adjust it
+        // based on how infinite-scroll.js is structured.
+    });
+</script>
+{# END ADD #}
+{% endblock %}
+{% elif active_block == 'jstyp_detail' %}
+{% block jstyp_detail %}
+<script src="{% static 'Djangoprojekt/js/lightgallery-all.min.js'%}"></script>
+<script src="{% static 'Djangoprojekt/js/jquery.mousewheel.min.js'%}"></script>
+<script type="text/javascript">
+    $(document).ready(function (e) {
+        $('#captions').lightGallery({
+            selector: '.item',
+            showThumbByDefault: false,
+            preload: 2,
+        });
+    });
+    $('#theModal').on('show.bs.modal', function (e) {
+        var button = $(e.relatedTarget);
+        var modal = $(this);
+
+        modal.find('.modal-title').text(button.data("title"));
+        modal.find('.modal-body').load(button.data("remote"));
+        modal.find(".modal-footer a").attr("href", button.data("footer"));
+    });
+    function toggle_visibility(id) {
+        var e = document.getElementById(id);
+        e.style.visibility = ((e.style.visibility != 'hidden') ? 'hidden' : 'visible');
+    }
+</script>
+<script>
+    var infinite = new Waypoint.Infinite({
+        element: $('.infinite-container')[0],
+        onBeforePageLoad: function () {
+            $('.loading').show();
+        },
+        onAfterPageLoad: function ($items) {
+            $('.loading').hide();
+        }
+    });
+
+    function toggle_visibility(id) {
+        var e = document.getElementById(id);
+        e.style.visibility = ((e.style.visibility != 'hidden') ? 'hidden' : 'visible');
+    }
+</script>
+{% endblock jstyp_detail %}
+{% elif active_block == 'jsobjektaenderung' %}
+{% block jsobjektaenderung %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const editForm = document.getElementById('editForm');
+        const feldSelect = document.getElementById('feld');
+        const alterWertInput = document.getElementById('alter_wert');
+        const manualSubmitBtn = document.getElementById('manualSubmitBtn');
+
+        // Manuelles Absenden des Formulars
+        if (manualSubmitBtn) {
+            manualSubmitBtn.addEventListener('click', function () {
+                // Überprüfen Sie, ob alle erforderlichen Felder ausgefüllt sind
+                if (editForm.checkValidity()) {
+                    // Direkte Übermittlung des Formulars ohne den normalen Button-Submit
+                    editForm.submit();
+                } else {
+                    // Triggere die Browser-Validierung
+                    editForm.reportValidity();
+                }
+            });
+        }
+
+        // Aktuellen Wert basierend auf Feldauswahl setzen
+        if (feldSelect && alterWertInput) {
+            feldSelect.addEventListener('change', function () {
+                const selectedField = this.value;
+                let currentValue = '';
+
+                switch (selectedField) {
+                    case 'titel':
+                        currentValue = '{{ coin_data.titel|default:"" }}';
+                        break;
+                    case 'avleg':
+                        currentValue = '{{ coin_data.avleg|default:"" }}';
+                        break;
+                    case 'rvleg':
+                        currentValue = '{{ coin_data.rvleg|default:"" }}';
+                        break;
+                    case 'avbeschr':
+                        currentValue = '{{ coin_data.avbeschr|default:"" }}';
+                        break;
+                    case 'rvbeschr':
+                        currentValue = '{{ coin_data.rvbeschr|default:"" }}';
+                        break;
+                    case 'material':
+                        currentValue = '{{ coin_data.material|default:"" }}';
+                        break;
+                    case 'gewicht':
+                        currentValue = '{{ coin_data.gewicht|default:"" }}';
+                        break;
+                    case 'durchmesser':
+                        currentValue = '{{ coin_data.durchmesser|default:"" }}';
+                        break;
+                    case 'datierung':
+                        currentValue = '{{ coin_data.dat_verb|default:"" }}';
+                        break;
+                    default:
+                        currentValue = '';
+                }
+
+                alterWertInput.value = currentValue;
+            });
+        }
+    });
+</script>
+{% endblock jsobjektaenderung %}
+{% endif %}
