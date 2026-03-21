@@ -1,17 +1,17 @@
 {% load static %}
 {% if active_block == 'jsnavbar' %}
 {% block jsnavbar %}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="{% static 'Djangoprojekt/js/jquery.waypoints.min.js' %}"></script>
-<script src="{% static 'Djangoprojekt/js/infinite.min.js' %}"></script>
-<script src="{% static 'Djangoprojekt/js/jquery.mousewheel.min.js'%}"></script>
+<script defer src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script defer src="{% static 'Djangoprojekt/js/jquery.waypoints.min.js' %}"></script>
+<script defer src="{% static 'Djangoprojekt/js/infinite.min.js' %}"></script>
+<script defer src="{% static 'Djangoprojekt/js/jquery.mousewheel.min.js'%}"></script>
 {% comment %}
 <script src="{% static 'Djangoprojekt/js/bootstrap.min.js'%}"></script> {% endcomment %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{% static 'Djangoprojekt/js/aos.js'%}"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script defer src="{% static 'Djangoprojekt/js/aos.js'%}"></script>
 <script src="{% static 'Djangoprojekt/js/lazysizes.min.js'%}" async></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="{% static 'Djangoprojekt/js/lightgallery-all.min.js'%}"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script defer src="{% static 'Djangoprojekt/js/lightgallery-all.min.js'%}"></script>
 
 <script>
     AOS.init({
