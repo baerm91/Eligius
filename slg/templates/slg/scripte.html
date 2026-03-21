@@ -5,13 +5,7 @@
 {% endblock %}
 {% elif active_block == 'jsobjektliste' %}
 {% block jsobjektliste %}
-<!-- Grundlegende Bibliotheken -->
-<script defer src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<!-- Eigene JavaScript-Dateien -->
-<script defer src="{% static 'js/filter-ajax.js' %}"></script>
-<script defer src="{% static 'js/infinite-scroll.js' %}"></script>
+{% include 'slg/partials/js/objektliste_scripts.html' %}
 {% endblock %}
 {% elif active_block == 'jstyp_detail' %}
 {% block jstyp_detail %}
