@@ -209,7 +209,8 @@
 <!-- Timeout Management für bfcache -->
 
 <script defer src="{% static 'js/objektliste_mtoa_inline.min.js' %}"></script>
-{% include 'slg/partials/html/objektliste_mtoa_map_inline_script.html' %}
-{% include 'slg/partials/html/objektliste_mtoa_chart_inline_script.html' %}
+{% comment %} Template-bound JS (uses Django variables) {% endcomment %}
+{% include 'slg/partials/html/browse_mtoa_map_script.html' %}
+{% include 'slg/partials/html/browse_mtoa_chart_script.html' %}
 
 {% endblock scripts %}
