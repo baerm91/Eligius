@@ -26,7 +26,7 @@ from rest_framework import routers, serializers, viewsets
 
 from slg.api_views import ExportObjLSNO
 
-from slg.views import about, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, objekt_list_view, MzstaettenRView, jsonresp, rdfliboutput, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa
+from slg.views import about, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa
 
 
 urlpatterns = [
@@ -51,7 +51,6 @@ urlpatterns = [
     path('id/<int:id>.ttl', rdfliboutput, name='ObjTTl'),
     #path('slg/<int:id>.json', jsonresp, name='Objekt'),
     path('browse/', cache_page(60 * 5)(objekt_list_view_mtoa), name='Objektliste'),
-    path('browse_legacy/', cache_page(60 * 5)(objekt_list_view), name='Objektliste_legacy'),
     # path('slg/objekte/', include('django_select2.urls'), objekt_list_view, name='Objektliste'),
     #path('select2/',include('django_select2.urls')),
     #path('api-auth/', include('rest_framework.urls')),

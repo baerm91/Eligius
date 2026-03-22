@@ -14,7 +14,7 @@ django.setup()
 client = Client()
 
 URLS = [
-    '/', '/api/', '/about/', '/browse/', '/browse_legacy/', '/timeline/',
+    '/', '/api/', '/about/', '/browse/', '/timeline/',
     '/admin/login/?next=/admin/',
     '/api/collections/', '/api/stats/', '/api/sammlungen/', '/api/facet/?facet=Nominal',
     '/api/ereignisse/', '/api/adjacent-invnrs/?invnr=1-1-1&slg_id=1',
