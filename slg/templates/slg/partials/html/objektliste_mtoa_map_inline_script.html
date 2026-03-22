@@ -1,0 +1,209 @@
+<script>
+  // Sichere Plugin-Verfügbarkeit prüfen
+  function initializeMapWithClustering() {
+    console.log("Initializing map...");
+
+    // Karte erstellen
+    const map = L.map('mintMap', {
+      scrollWheelZoom: false,
+      zoomControl: true,
+      doubleClickZoom: true,
+      fullscreenControl: true,
+      fullscreenControlOptions: {
+        position: 'topleft',
+        title: 'Vollbildmodus',
+        titleCancel: 'Vollbildmodus beenden',
+        content: '<i class="bi bi-arrows-fullscreen"></i>'
+      }
+    }).setView([48.2082, 16.3719], 5);
+
+    // Tile Layer hinzufügen
+    const HighPrioTileLayer = L.TileLayer.extend({
+      createTile: function (coords, done) {
+        const img = L.TileLayer.prototype.createTile.call(this, coords, done);
+        // Nur die ersten ~10 Kacheln hoch priorisieren
+        if (this._tileNum === undefined) this._tileNum = 0;
+        if (this._tileNum++ < 10) img.fetchPriority = 'high';
+        return img;
+      }
+    });
+
+    const tileLayer = new HighPrioTileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { attribution: '© OpenStreetMap contributors' }
+    ).addTo(map);
+
+    // Scroll-Zoom Einstellungen (bestehender Code)
+    map.scrollWheelZoom.disable();
+    map.on('focus', function () { map.scrollWheelZoom.enable(); });
+    map.on('blur', function () { map.scrollWheelZoom.disable(); });
+
+    L.DomEvent.addListener(map.getContainer(), 'wheel', function (e) {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        map.scrollWheelZoom.enable();
+        setTimeout(function () { map.scrollWheelZoom.disable(); }, 1000);
+      }
+    });
+
+    // Marker-Gruppe erstellen - mit Fallback
+    let markersGroup;
+
+    if (typeof L.markerClusterGroup === 'function') {
+      console.log("✅ MarkerCluster Plugin verfügbar - verwende Clustering");
+      markersGroup = L.markerClusterGroup({
+        chunkedLoading: true,
+        chunkInterval: 200,
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        zoomToBoundsOnClick: true,
+        iconCreateFunction: function (cluster) {
+          const count = cluster.getChildCount();
+          let className = 'marker-cluster-';
+
+          if (count < 10) className += 'small';
+          else if (count < 100) className += 'medium';
+          else className += 'large';
+
+          return new L.DivIcon({
+            html: `<div><span>${count}</span></div>`,
+            className: `marker-cluster ${className}`,
+            iconSize: new L.Point(40, 40)
+          });
+        }
+      });
+    } else {
+      console.warn("⚠️ MarkerCluster Plugin nicht verfügbar - verwende normale FeatureGroup");
+      markersGroup = L.featureGroup();
+    }
+
+    // Münzstätten-Daten laden
+    const mintsData = {{ mints_map|safe }};
+    console.log(`Loading ${Object.keys(mintsData).length} mint markers...`);
+
+  // Marker erstellen
+  const markers = [];
+  Object.values(mintsData).forEach(mint => {
+    if (mint.latitude && mint.longitude) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('Muenzstaette', mint.name);
+
+      // ✅ POPUP mit Objektanzahl
+      const marker = L.marker([mint.latitude, mint.longitude])
+        .bindPopup(`
+              <div class="mint-popup">
+                <strong>
+                  <a href="${url.toString()}" style="text-decoration:underline;">
+                    ${mint.name}
+                  </a>
+                </strong><br>
+                Region: ${mint.region}<br>
+                <div class="mint-info mt-2">
+                  <span class="badge bg-primary me-1">
+                    <i class="bi bi-coin"></i> ${mint.count || 0} Objekte
+                  </span>
+                  <span class="badge bg-success">
+                    <i class="bi bi-geo-alt"></i> ${mint.name}
+                  </span>
+                </div>
+              </div>
+            `);
+
+      markers.push(marker);
+    }
+  });
+
+  // Marker zur Gruppe hinzufügen
+  if (markers.length > 0) {
+    if (markersGroup.addLayers) {
+      // Batch-Add für Clustering
+      markersGroup.addLayers(markers);
+    } else {
+      // Einzeln hinzufügen für normale FeatureGroup
+      markers.forEach(marker => markersGroup.addLayer(marker));
+    }
+
+    markersGroup.addTo(map);
+    map.fitBounds(markersGroup.getBounds(), { padding: [30, 30] });
+    console.log(`✅ ${markers.length} markers loaded successfully`);
+  }
+
+  // Vollbild-Funktionalität implementieren
+  const customFullscreenBtn = document.getElementById('customFullscreenBtn');
+  const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
+  const fullscreenInstructions = document.getElementById('fullscreenInstructions');
+  const mapContainer = document.getElementById('mintMap');
+
+  // Custom Fullscreen Button Click Handler
+  if (customFullscreenBtn) {
+    customFullscreenBtn.addEventListener('click', function () {
+      console.log("Custom fullscreen button clicked");
+
+      // Toggle fullscreen class
+      mapContainer.classList.add('map-fullscreen');
+
+      // Show exit button and instructions
+      if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'block';
+      if (fullscreenInstructions) fullscreenInstructions.style.display = 'block';
+
+      // Hide scroll bars
+      document.body.style.overflow = 'hidden';
+
+      // Invalidate map size to recalculate
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+    });
+  }
+
+  // Exit Fullscreen Button Click Handler
+  if (exitFullscreenBtn) {
+    exitFullscreenBtn.addEventListener('click', function () {
+      console.log("Exit fullscreen button clicked");
+      exitFullscreen();
+    });
+  }
+
+  // ESC Key Handler for fullscreen exit
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && mapContainer.classList.contains('map-fullscreen')) {
+      exitFullscreen();
+    }
+  });
+
+  // Function to exit fullscreen
+  function exitFullscreen() {
+    // Remove fullscreen class
+    mapContainer.classList.remove('map-fullscreen');
+
+    // Hide exit button and instructions
+    if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'none';
+    if (fullscreenInstructions) fullscreenInstructions.style.display = 'none';
+
+    // Restore scroll bars
+    document.body.style.overflow = '';
+
+    // Invalidate map size to recalculate
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+  }
+
+  // Map fullscreen events (for the Leaflet plugin)
+  map.on('enterFullscreen', function () {
+    console.log("Map entered fullscreen (Leaflet plugin)");
+    if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'block';
+    if (fullscreenInstructions) fullscreenInstructions.style.display = 'block';
+  });
+
+  map.on('exitFullscreen', function () {
+    console.log("Map exited fullscreen (Leaflet plugin)");
+    if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'none';
+    if (fullscreenInstructions) fullscreenInstructions.style.display = 'none';
+  });
+
+  return map;
+    }
+
+  // Map-Initialisierung erfolgt über initializePageResources() im BFCache-Script
+</script>
