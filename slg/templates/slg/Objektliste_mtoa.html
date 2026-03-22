@@ -10,7 +10,7 @@
 <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
 <link rel="dns-prefetch" href="//unpkg.com">
 
-{% include 'slg/partials/html/browse_vendor_css.html' %}
+{% include 'slg/partials/html/browse_mtoa_vendor_css.html' %}
 
 <link rel="preload" href="{% static 'css/objektliste_mtoa_inline.min.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="{% static 'css/objektliste_mtoa_inline.min.css' %}"></noscript>
@@ -183,7 +183,7 @@
 
 {% block scripts %}
 {% include 'slg/scripte.html' with active_block='jsobjektliste' %}
-{% include 'slg/partials/html/browse_vendor_js.html' %}
+{% include 'slg/partials/html/browse_mtoa_vendor_js.html' %}
 
 
 
