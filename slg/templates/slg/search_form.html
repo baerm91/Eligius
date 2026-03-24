@@ -1,51 +1,63 @@
-<div class="search-container">
-    <div class="text-center">
-        <h2 class="h5">Freie Textsuche</h2>
-        <hr style="width: 80%;">
-        <form id="freitextForm" method="GET" action="{{ request.path }}" class="search-form">
-            <select id="rubrikSelect" style="width: 100%;">
-                <option value="" selected disabled>Suchkategorie wählen</option>
-                <optgroup label="Allgemein">
-                    <option value="q">Titel</option>
-                    <option value="invnr">Inventarnummer</option>
-                    <option value="Muenzstaette">Münzstätte</option>
-                    <option value="Person">Person</option>
-                    <option value="Nominal">Nominal</option>
-                    <option value="material">Metall</option>
-                </optgroup>
-                <optgroup label="Avers">
-                    <option value="avleg">Avers-Legende</option>
-                    <option value="av_schlagwort">Schlagwort</option>
-                </optgroup>
-                <optgroup label="Revers">
-                    <option value="rvleg">Revers-Legende</option>
-                    <option value="rv_schlagwort">Schlagwort</option>
-                </optgroup>
-            </select>
+<!-- Textsuche als Accordion-Item (wird in filterAccordion eingebettet) -->
+<div class="accordion-item">
+  <h2 class="accordion-header" id="textsucheHeading">
+    <button
+      class="accordion-button collapsed"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#textsucheCollapse"
+      aria-expanded="false"
+      aria-controls="textsucheCollapse"
+    >
+      <i class="bi bi-search me-2 text-primary"></i>
+      Textsuche &amp; Eingrenzung
+    </button>
+  </h2>
+  <div
+    id="textsucheCollapse"
+    class="accordion-collapse collapse"
+    aria-labelledby="textsucheHeading"
+    data-bs-parent="#filterAccordion"
+  >
+    <div class="accordion-body">
+      <form id="freitextForm" method="GET" action="{{ request.path }}" class="search-form">
+        <div class="form-group">
+          <label for="rubrikSelect">Suchkategorie</label>
+          <select id="rubrikSelect" class="form-select">
+            <option value="" selected disabled>Kategorie wählen</option>
+            <optgroup label="Allgemein">
+              <option value="q">Titel</option>
+              <option value="invnr">Inventarnummer</option>
+              <option value="Muenzstaette">Münzstätte</option>
+              <option value="Person">Person</option>
+              <option value="Nominal">Nominal</option>
+              <option value="material">Metall</option>
+            </optgroup>
+            <optgroup label="Avers">
+              <option value="avleg">Avers-Legende</option>
+              <option value="av_schlagwort">Schlagwort</option>
+            </optgroup>
+            <optgroup label="Revers">
+              <option value="rvleg">Revers-Legende</option>
+              <option value="rv_schlagwort">Schlagwort</option>
+            </optgroup>
+          </select>
+        </div>
 
-            <div id="searchFields" class="search-fields mt-3">
-                <input type="text" class="form-control" id="searchInput" name="q" placeholder="Suchbegriff eingeben...">
-            </div>
+        <div id="searchFields" class="form-group mt-3">
+          <label for="searchInput">Suchbegriff</label>
+          <input type="text" class="form-control text-input-filter" id="searchInput" name="q" placeholder="Suchbegriff eingeben...">
+        </div>
 
-            <div class="search-container mt-3">
-                <label for="bestimmungSelect" class="form-label text-start w-100 fw-bold text-muted small mb-1" style="font-size: 0.85em;">Bestimmungsgrad</label>
-                <select id="bestimmungSelect" name="unbestimmt" class="form-select text-input-filter" style="width: 100%;">
-                    <option value="" {% if not request.GET.unbestimmt %}selected{% endif %}>Alle Objekte</option>
-                    <option value="False" {% if request.GET.unbestimmt == 'False' %}selected{% endif %}>Nur bestimmte Objekte</option>
-                    <option value="True" {% if request.GET.unbestimmt == 'True' %}selected{% endif %}>Nur unbestimmte Objekte</option>
-                </select>
-            </div>
-
-            <div style="display: flex; justify-content: center; width: 100%;">
-                {% if 'browse' in request.path %}
-                <button type="submit" class="search-button mt-3" style="width: 80%;"
-                    onclick="executeSearch(); return false;">
-                    {% else %}
-                    <button type="submit" class="search-button mt-3" style="width: 80%;">
-                        {% endif %}
-                        <i class="bi bi-search me-2"></i> Suchen
-                    </button>
-            </div>
-        </form>
+        <div class="form-group mt-3">
+          <label for="bestimmungSelect">Münztyp-Zuweisung</label>
+          <select id="bestimmungSelect" name="unbestimmt" class="form-select text-input-filter">
+            <option value="" {% if not request.GET.unbestimmt %}selected{% endif %}>Alle Objekte</option>
+            <option value="False" {% if request.GET.unbestimmt == 'False' %}selected{% endif %}>Mit Münztyp-Zuweisung</option>
+            <option value="True" {% if request.GET.unbestimmt == 'True' %}selected{% endif %}>Ohne Münztyp-Zuweisung</option>
+          </select>
+        </div>
+      </form>
     </div>
+  </div>
 </div>

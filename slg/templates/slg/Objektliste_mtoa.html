@@ -12,19 +12,18 @@
 
 {% include 'slg/partials/html/browse_mtoa_vendor_css.html' %}
 
-<link rel="preload" href="{% static 'css/objektliste_mtoa_inline.min.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="{% static 'css/objektliste_mtoa_inline.min.css' %}"></noscript>
+<link rel="preload" href="{% static 'css/objektliste_mtoa_inline.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{% static 'css/objektliste_mtoa_inline.css' %}"></noscript>
 
 <!-- Optimierte Font-Display Einstellungen -->
 
 
 <!-- Immediate font usage trigger -->
 <span class="font-preload-trigger" aria-hidden="true"></span>
-<link rel="preconnect" href="https://a.tile.openstreetmap.org" crossorigin>
-<link rel="preconnect" href="https://b.tile.openstreetmap.org" crossorigin>
-<link rel="preconnect" href="https://c.tile.openstreetmap.org" crossorigin>
-
-
+<link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin>
+<link rel="preconnect" href="https://b.basemaps.cartocdn.com" crossorigin>
+<link rel="preconnect" href="https://c.basemaps.cartocdn.com" crossorigin>
+<link rel="preconnect" href="https://d.basemaps.cartocdn.com" crossorigin>
 
 {% endblock stylesheets %}
 
@@ -42,12 +41,11 @@
   Drücken Sie <kbd>ESC</kbd> oder klicken Sie auf die Schaltfläche, um den Vollbildmodus zu beenden.
 </div>
 
-<div class="container-fluid">
+<div class="container-fluid browse-page">
   <div class="row"> <!-- Main Row -->
     <!-- Combined Sticky Header: Filter Button, Object Count, Filter Tags & Reset -->
-    <div class="col-12 mb-3"
-      style="position: sticky; top: 10px; z-index: 1020; background-color: rgba(255, 255, 255, 0.85); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); padding-top: 10px; padding-bottom: 10px;">
-      <div class="d-flex justify-content-between align-items-center">
+    <div class="col-12 mb-3 browse-toolbar">
+      <div class="d-flex justify-content-between align-items-center browse-toolbar__inner">
         <!-- Left: Filter Button -->
         <div>
           <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFilter"
@@ -57,7 +55,7 @@
         </div>
 
         <!-- Middle: Object Count -->
-        <div>
+        <div class="browse-count">
           Anzahl der Objekte: {{ Anzahl }}
         </div>
 
@@ -89,13 +87,15 @@
       <!-- Karte -->
       <div class="row mb-4">
         <div class="col-12">
-          <div class="zoom-container">
-            <div id="mintMap" style="height: 400px;"></div>
-            <div class="zoom-hint map-zoom-hint">
-              <i class="bi bi-mouse me-1"></i> Strg + Mausrad zum Zoomen
-            </div>
-            <div id="customFullscreenBtn" class="custom-fullscreen-btn">
-              <i class="bi bi-arrows-fullscreen"></i>
+          <div class="browse-map-surface">
+            <div class="zoom-container">
+              <div id="mintMap" style="height: 400px;"></div>
+              <div class="zoom-hint map-zoom-hint">
+                <i class="bi bi-mouse me-1"></i> Strg + Mausrad zum Zoomen
+              </div>
+              <div id="customFullscreenBtn" class="custom-fullscreen-btn">
+                <i class="bi bi-arrows-fullscreen"></i>
+              </div>
             </div>
           </div>
         </div>
@@ -104,7 +104,7 @@
       <!-- Bar Chart -->
       <div class="row mb-4">
         <div class="col-12">
-          <div class="card">
+          <div class="card browse-surface">
             <div class="card-header">
               <h5>Zeitliche Verteilung der Objekte</h5>
             </div>
@@ -135,8 +135,8 @@
       <!-- Date Range Slider -->
       <div class="row mb-4">
         <div class="col-12">
-          <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center bg-light">
+          <div class="card shadow-sm browse-surface">
+            <div class="card-header d-flex justify-content-between align-items-center">
               <h5 class="mb-0"><i class="bi bi-calendar-range me-2"></i>Zeitraum einschränken</h5>
               <span id="date-range-display" class="badge bg-primary">Jahr 0 - 2000</span>
             </div>
@@ -158,11 +158,11 @@
       <div class="row">
         <div class="col-12">
 
-          <div class="row infinite-container">
+          <div class="row infinite-container browse-results">
             {% for Obj in Objekte %}
             {% include "slg/partials/coin_preview_card_mtoa.html" with obj=Obj %}
             {% empty %}
-            <p>Keine Objekte gefunden.</p>
+            <p class="browse-empty-state">Keine Objekte gefunden.</p>
             {% endfor %}
           </div>
 

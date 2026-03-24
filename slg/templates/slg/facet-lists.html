@@ -1,91 +1,355 @@
-{% load slg_extras %} {% include 'slg/search_form.html' %}
+{% load slg_extras %}
 
 <style>
-  /* Premium Styling for Filter Facets */
-  .facets-wrapper {
-    background: #fdfdfd;
-    border-radius: 12px;
-    padding: 0;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  /* ── Dark Filter Panel ───────────────────────────── */
+  .offcanvas.offcanvas-start {
+    width: min(420px, 100vw);
+    background: #1a2332;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
   }
 
-  .facets-wrapper .accordion {
-    --bs-accordion-bg: transparent;
-    --bs-accordion-border-width: 0;
+  .offcanvas-header {
+    padding: 1.15rem 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: #151d2a;
+    flex-shrink: 0;
   }
 
-  .facets-wrapper .accordion-item {
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 8px !important;
-    margin-bottom: 8px;
-    background: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-    overflow: hidden;
+  .offcanvas-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: 0.02em;
+  }
+
+  .offcanvas-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.5;
+  }
+  .offcanvas-header .btn-close:hover { opacity: 0.9; }
+
+  .offcanvas-body {
+    padding: 1rem 1rem 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding-bottom: 5.5rem;
+  }
+
+  /* ── Sticky search button at bottom ──────────────── */
+  .facet-sticky-footer {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 1rem 1rem 1.15rem;
+    background: linear-gradient(0deg, #151d2a 70%, rgba(21, 29, 42, 0.95) 85%, rgba(21, 29, 42, 0) 100%);
+    pointer-events: none;
+  }
+
+  .facet-sticky-footer .facet-search-button {
+    pointer-events: auto;
+    width: 100%;
+    min-height: 50px;
+    border: 0;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+  }
+  .facet-sticky-footer .facet-search-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 28px rgba(37, 99, 235, 0.45);
+  }
+  .facet-sticky-footer .facet-search-button:active {
+    transform: translateY(0);
+  }
+
+  /* ── Labels ──────────────────────────────────────── */
+  .facets-wrapper label {
+    display: inline-block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: #94a3b8;
+  }
+
+  /* ── Form controls (dark) ────────────────────────── */
+  .facets-wrapper .form-control,
+  .facets-wrapper .form-select,
+  .facets-wrapper .select2-container--default .select2-selection--single,
+  .facets-wrapper .select2-container--default .select2-selection--multiple {
+    width: 100% !important;
+    min-height: 44px;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background-color: #0f1724 !important;
+    color: #e2e8f0;
+    box-shadow: none;
     transition:
-      transform 0.2s ease,
+      border-color 0.2s ease,
       box-shadow 0.2s ease;
   }
 
+  /* Remove background-image from inputs/textareas that inherit form-control */
+  .facets-wrapper input.form-control,
+  .facets-wrapper textarea.form-control {
+    background-image: none !important;
+  }
+
+  .facets-wrapper .form-control,
+  .facets-wrapper .form-select {
+    padding: 0.6rem 0.9rem;
+    color: #e2e8f0;
+  }
+
+  .facets-wrapper .form-control:focus,
+  .facets-wrapper .form-select:focus,
+  .facets-wrapper .select2-container--default.select2-container--focus .select2-selection--multiple,
+  .facets-wrapper .select2-container--default.select2-container--open .select2-selection--single,
+  .facets-wrapper .select2-container--default.select2-container--open .select2-selection--multiple {
+    border-color: rgba(59, 130, 246, 0.6) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    outline: none;
+    background-color: #0f1724 !important;
+  }
+
+  .facets-wrapper input::placeholder {
+    color: #64748b;
+  }
+
+  .facets-wrapper .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 16px 12px !important;
+  }
+
+  /* Hide the native select chevron when Select2 takes over */
+  .facets-wrapper select.form-select[data-select2-id],
+  .facets-wrapper select.form-control[data-select2-id] {
+    background-image: none !important;
+  }
+
+  /* Select2 arrow icon for dark mode */
+  .facets-wrapper .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #94a3b8 transparent transparent transparent;
+  }
+  .facets-wrapper .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent #94a3b8 transparent;
+  }
+
+  /* Select2 dropdown (renders in body, outside .facets-wrapper) */
+  .select2-container--default .select2-dropdown {
+    background-color: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .select2-container--default .select2-search--dropdown .select2-search__field {
+    background: #0f1724;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #e2e8f0;
+    padding: 0.5rem 0.75rem;
+  }
+  .select2-container--default .select2-results__option {
+    color: #cbd5e1;
+    padding: 0.5rem 0.75rem;
+  }
+  .select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #2563eb;
+    color: #fff;
+  }
+  .select2-container--default .select2-results__option[aria-selected="true"] {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+  }
+  .select2-container--default .select2-results__group {
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 0.75rem 0.25rem;
+  }
+
+  /* ── Facets wrapper grid ─────────────────────────── */
+  .facets-wrapper {
+    display: grid;
+    gap: 0.75rem;
+    background: transparent;
+    padding: 0;
+  }
+
+  /* ── Accordion (dark cards) ──────────────────────── */
+  .facets-wrapper .accordion {
+    --bs-accordion-bg: transparent;
+    --bs-accordion-border-width: 0;
+    --bs-accordion-border-color: transparent;
+  }
+
+  .facets-wrapper .accordion-item {
+    border: 0 !important;
+    border-color: transparent !important;
+    outline: 0 !important;
+    border-radius: 12px !important;
+    margin-bottom: 0.5rem;
+    background: #1e293b;
+    box-shadow: none !important;
+    overflow: hidden;
+    transition:
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
+  }
+
   .facets-wrapper .accordion-item:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+    border-color: transparent !important;
+    box-shadow: none !important;
   }
 
   .facets-wrapper .accordion-button {
+    gap: 0.25rem;
+    font-size: 0.92rem;
     font-weight: 600;
-    color: #495057;
-    padding: 1rem 1.25rem;
-    background-color: #fff;
+    color: #cbd5e1;
+    padding: 0.85rem 1rem;
+    background-color: #1e293b;
+    border: 0 !important;
+    border-color: transparent !important;
+    outline: 0 !important;
     box-shadow: none !important;
   }
 
   .facets-wrapper .accordion-button:not(.collapsed) {
-    background-color: #eef2f7;
-    color: #0d6efd;
+    background: #243044;
+    color: #93c5fd;
+  }
+
+  .facets-wrapper .accordion-button::after {
+    width: 0.9rem;
+    height: 0.9rem;
+    background-size: 0.9rem;
+    filter: invert(0.7);
+  }
+
+  .facets-wrapper .accordion-button .text-primary {
+    color: #60a5fa !important;
   }
 
   .facets-wrapper .accordion-body {
-    padding: 1rem 1.25rem;
-    background-color: #fff;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 0.9rem 1rem 1rem;
+    background-color: #1e293b;
+    border-color: transparent !important;
+    border-top: 0;
   }
 
   .facets-wrapper .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 0.85rem;
   }
 
   .facets-wrapper .form-group:last-child {
     margin-bottom: 0;
   }
 
-  .facets-wrapper label {
-    font-weight: 500;
-    font-size: 0.85rem;
-    color: #6c757d;
-    margin-bottom: 0.4rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
   .facets-wrapper h5 {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-    margin-top: 0.5rem;
+    color: #94a3b8;
+    margin-bottom: 0.4rem;
+    margin-top: 0;
   }
 
+  /* ── Select2 (dark) ─────────────────────────────── */
+  .facets-wrapper .select2-container {
+    width: 100% !important;
+  }
+
+  .facets-wrapper .select2-container .select2-search--inline .select2-search__field {
+    margin-top: 0;
+    font-size: 0.9rem;
+    color: #e2e8f0;
+  }
+
+  .facets-wrapper .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 42px;
+    padding-left: 0.9rem;
+    padding-right: 2rem;
+    color: #e2e8f0;
+  }
+
+  .facets-wrapper .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 42px;
+    right: 0.5rem;
+  }
+
+  .facets-wrapper .select2-container--default .select2-selection--multiple {
+    padding: 0.3rem 0.4rem;
+  }
+
+  .facets-wrapper .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    margin-top: 0.2rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.82rem;
+  }
+
+  .facets-wrapper .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: #93c5fd;
+    margin-right: 0.3rem;
+  }
+
+  /* ── Date filter (dark card) ────────────────────── */
   .date-filter-container {
-    padding: 1rem;
-    background: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 8px;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+    padding: 0.9rem 1rem 1rem;
+    background: #1e293b;
+    border: 0 !important;
+    border-color: transparent !important;
+    outline: 0 !important;
+    border-radius: 12px;
+    margin-top: 0;
+    margin-bottom: 0.25rem;
+    box-shadow: none !important;
+  }
+
+  .date-filter-container .row {
+    --bs-gutter-x: 0.75rem;
+  }
+
+  @media (max-width: 575.98px) {
+    .offcanvas-body {
+      padding: 0.85rem 0.8rem 0;
+      padding-bottom: 5.5rem;
+    }
+
+    .facets-wrapper .accordion-body,
+    .date-filter-container {
+      padding-left: 0.85rem;
+      padding-right: 0.85rem;
+    }
   }
 </style>
 <div class="facets-wrapper">
   <!-- Filter Akkordeon -->
   <div class="accordion" id="filterAccordion">
+    <!-- Textsuche & Eingrenzung -->
+    {% include 'slg/search_form.html' %}
+
     <!-- Sammlungen -->
     <div class="accordion-item">
       <h2 class="accordion-header" id="sammlungenUndTeileHeading">
@@ -144,7 +408,7 @@
           aria-expanded="false"
           aria-controls="vorderseiteCollapse"
         >
-          <i class="bi bi-front me-2 text-primary"></i>
+          <i class="bi bi-circle me-2 text-primary"></i>
           Vorderseite
         </button>
       </h2>
@@ -207,7 +471,7 @@
           aria-expanded="false"
           aria-controls="rueckseiteCollapse"
         >
-          <i class="bi bi-back me-2 text-primary"></i>
+          <i class="bi bi-circle-fill me-2 text-primary"></i>
           Rückseite
         </button>
       </h2>
@@ -541,7 +805,7 @@
           id="dat_von"
           name="dat_von"
           step="1"
-          value="{{ request.GET.jahr_von }}"
+          value="{{ request.GET.dat_von }}"
           placeholder="von"
         />
       </div>
@@ -552,12 +816,23 @@
           id="dat_bis"
           name="dat_bis"
           step="1"
-          value="{{ request.GET.jahr_bis }}"
+          value="{{ request.GET.dat_bis }}"
           placeholder="bis"
         />
       </div>
     </div>
   </div>
+</div>
+
+<!-- Sticky Suchen-Button (immer sichtbar am unteren Rand) -->
+<div class="facet-sticky-footer">
+  {% if 'browse' in request.path %}
+  <button type="button" class="facet-search-button" onclick="executeSearch();">
+  {% else %}
+  <button type="submit" class="facet-search-button" form="freitextForm">
+  {% endif %}
+    <i class="bi bi-search me-2"></i> Suchen
+  </button>
 </div>
 
 <!-- Am Ende der Datei, vor dem schließenden </body> Tag -->

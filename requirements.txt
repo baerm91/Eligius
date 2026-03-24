@@ -21,6 +21,7 @@ django-crispy-forms==2.3
 
 # Database (dev-safe, no system libs needed)
 PyMySQL==1.1.1
+cryptography
 
 # Data / files
 openpyxl==3.1.5

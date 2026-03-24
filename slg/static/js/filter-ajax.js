@@ -40,18 +40,6 @@ function getAllFilterValues() {
 }
 
 function initializeFilterAccordion() {
-    // Speichern des Accordion-Status
-    $('.accordion-button').on('click', function() {
-        const targetId = $(this).attr('data-bs-target');
-        localStorage.setItem('accordion_' + targetId, 
-            $(targetId).hasClass('show') ? 'closed' : 'open');
-    });
-
-    // Wiederherstellen des Accordion-Status
-    $('.accordion-collapse').each(function() {
-        const status = localStorage.getItem('accordion_' + '#' + $(this).attr('id'));
-        if (status === 'open') {
-            $(this).addClass('show');
-        }
-    });
-} 
+    // User request: panel should always open with all facets collapsed.
+    // Therefore, no localStorage restore/persist for accordion open state.
+}

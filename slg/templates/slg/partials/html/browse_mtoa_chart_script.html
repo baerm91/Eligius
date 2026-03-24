@@ -54,16 +54,47 @@
         }
 
         // Basics bereiten
-        const years = data.years || [];
-        const percentages = data.percentages || [];
-        const absoluteValues = data.counts || [];
+        let years = data.years || [];
+        let absoluteValues = data.counts || [];
+
+        const serverMin = years.length ? years[0] : null;
+        const serverMax = years.length ? years[years.length - 1] : null;
+
+        // Wenn Datierungsfilter aktiv, Daten auf den Filterbereich zuschneiden
+        const urlParams = new URLSearchParams(window.location.search);
+        const filterFrom = parseInt(urlParams.get('dat_von'), 10);
+        const filterTo   = parseInt(urlParams.get('dat_bis'), 10);
+
+        console.log("[Chart-Filter] URL dat_von=" + urlParams.get('dat_von') +
+          ", dat_bis=" + urlParams.get('dat_bis') +
+          " → parsed filterFrom=" + filterFrom + ", filterTo=" + filterTo);
+        console.log("[Chart-Filter] Server lieferte " + years.length +
+          " Jahre, Bereich: " + serverMin + " bis " + serverMax);
+
+        if (Number.isFinite(filterFrom) || Number.isFinite(filterTo)) {
+          const lo = Number.isFinite(filterFrom) ? filterFrom : -Infinity;
+          const hi = Number.isFinite(filterTo)   ? filterTo   :  Infinity;
+
+          const filtered = years.reduce((acc, y, i) => {
+            if (y >= lo && y <= hi) { acc.y.push(y); acc.c.push(absoluteValues[i]); }
+            return acc;
+          }, { y: [], c: [] });
+
+          console.log("[Chart-Filter] Nach Zuschnitt auf [" + lo + ", " + hi + "]: " +
+            filtered.y.length + " Jahre übrig (vorher " + years.length + ")");
+
+          years = filtered.y;
+          absoluteValues = filtered.c;
+        } else {
+          console.log("[Chart-Filter] Kein Datierungsfilter aktiv → alle Jahre übernommen");
+        }
+
         const labels = years.map(y => y.toString());
 
-        console.log("Zeitreihe:", {
-          periode: years.length > 0 ? `${years[0]} bis ${years[years.length - 1]}` : "Leer",
+        console.log("[Chart] Finale Zeitreihe:", {
+          von: years[0], bis: years[years.length - 1],
           anzahlJahre: years.length,
-          gesamtProzent: percentages.reduce((sum, p) => sum + p, 0).toFixed(2) + "%",
-          gesamtObjekte: absoluteValues.reduce((sum, v) => sum + v, 0).toFixed(2),
+          gesamtObjekte: absoluteValues.reduce((sum, v) => sum + v, 0),
         });
 
         // Chart-Element
@@ -88,8 +119,8 @@
           data: {
             labels: labels,
             datasets: [{
-              label: 'Anteil der Objekte (%)',
-              data: percentages,
+              label: 'Anzahl der Objekte',
+              data: absoluteValues,
               backgroundColor: 'rgba(32, 178, 170, 0.5)',
               borderColor: 'rgb(0, 139, 139)',
               borderWidth: 2,
@@ -100,31 +131,28 @@
               pointBorderColor: '#fff',
               pointBorderWidth: 1,
               spanGaps: false,
-              absoluteValues: absoluteValues // Speichere absolute Werte im Dataset
+              absoluteValues: absoluteValues
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-              x: { title: { display: true, text: 'Jahr' } },
+              x: {
+                title: { display: true, text: 'Jahr' }
+              },
               y: {
                 beginAtZero: true,
-                title: { display: true, text: 'Prozent (%)' },
-                ticks: { callback: value => value + '%' }
+                title: { display: true, text: 'Stückzahl' }
               }
             },
             plugins: {
               tooltip: {
                 callbacks: {
                   label: function (context) {
-                    const datasetIndex = context.datasetIndex;
-                    const dataIndex = context.dataIndex;
-                    const percentage = context.raw;
-                    const dataset = context.chart.data.datasets[datasetIndex];
-                    const absoluteValue = dataset.absoluteValues[dataIndex];
+                    const count = context.raw;
 
-                    return `Anteil: ${percentage}% (${absoluteValue} Objekte)`;
+                    return `Stückzahl: ${count} Objekte`;
                   }
                 }
               },

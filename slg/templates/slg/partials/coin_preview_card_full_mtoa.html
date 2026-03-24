@@ -238,8 +238,7 @@
   {% if obj.personen_av or obj.av_schlagworte %}
   <div class="d-flex align-items-baseline mb-1">
     <div
-      class="flex-shrink-0 pe-2 text-muted fw-bold"
-      style="font-size: 0.8rem"
+      class="flex-shrink-0 pe-2 fw-bold av-rv-label"
     >
       Av:
     </div>
@@ -313,8 +312,7 @@
   {% if obj.personen_rv or obj.rv_schlagworte %}
   <div class="d-flex align-items-baseline mb-1">
     <div
-      class="flex-shrink-0 pe-2 text-muted fw-bold"
-      style="font-size: 0.8rem"
+      class="flex-shrink-0 pe-2 fw-bold av-rv-label"
     >
       Rv:
     </div>
@@ -386,5 +384,10 @@
     </div>
   </div>
   {% endif %}
+  <div class="coin-preview-hover-actions">
+    <a href="{% url 'Objekt' obj.obj_id %}" class="coin-preview-object-btn">
+      {% trans "Zum Objekt" %}
+    </a>
+  </div>
 </div>
 {% endif %}

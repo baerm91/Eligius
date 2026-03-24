@@ -28,6 +28,7 @@ from slg.api_views import ExportObjLSNO
 
 from slg.views import about, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa
 
+browse_view = objekt_list_view_mtoa if settings.DEBUG else cache_page(60 * 5)(objekt_list_view_mtoa)
 
 urlpatterns = [
     path('about/', about, name='about'),
@@ -50,7 +51,7 @@ urlpatterns = [
     # path('id/<int:id>/update/', MzUpdate.as_view(), name='Objekt'),
     path('id/<int:id>.ttl', rdfliboutput, name='ObjTTl'),
     #path('slg/<int:id>.json', jsonresp, name='Objekt'),
-    path('browse/', cache_page(60 * 5)(objekt_list_view_mtoa), name='Objektliste'),
+    path('browse/', browse_view, name='Objektliste'),
     # path('slg/objekte/', include('django_select2.urls'), objekt_list_view, name='Objektliste'),
     #path('select2/',include('django_select2.urls')),
     #path('api-auth/', include('rest_framework.urls')),
@@ -72,13 +73,15 @@ urlpatterns = [
 
 
 
-
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns = [
         path('__debug__/', include(debug_toolbar.urls)),
     ] + urlpatterns
 
-# Nur Media-URLs hinzufügen, wenn MEDIA_URL gesetzt ist (nicht leer)
-if settings.MEDIA_URL:
-    urlpatterns = urlpatterns + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Nur Media-URLs im DEBUG-Modus hinzufügen und nie als Root-Catch-All ('/') registrieren.
+# Sonst matcht django.views.static.serve z. B. '/browse' und verhindert APPEND_SLASH-Redirects.
+media_url = getattr(settings, 'MEDIA_URL', '')
+media_root = getattr(settings, 'MEDIA_ROOT', '')
+if settings.DEBUG and media_url and media_url != '/' and media_root:
+    urlpatterns = urlpatterns + static(media_url, document_root=media_root)

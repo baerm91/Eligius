@@ -13,7 +13,7 @@ fi
 
 source "$VENV_PATH/bin/activate"
 
-export DJANGO_DB_CNF_PATH="${DJANGO_DB_CNF_PATH:-$PROJECT_DIR/mysql.cnf}"
+export DJANGO_DB_CNF_PATH="${DJANGO_DB_CNF_PATH:-$PROJECT_DIR/dev-local/mysql.local.cnf}"
 export DJANGO_SECRET_KEY="${DJANGO_SECRET_KEY:-dev}"
 export DJANGO_DEBUG="${DJANGO_DEBUG:-1}"
 export DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS:-*}"

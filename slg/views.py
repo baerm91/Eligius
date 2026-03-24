@@ -1359,26 +1359,148 @@ def graph_view(request):
     """View function to display the graph visualization tool."""
     return render(request, 'slg/graphv0.2.html')
 
+def _get_filtered_mtoa_queryset(request):
+    """
+    Zentrale Browse-Filterlogik für MTOA, damit Liste, Chart und andere
+    Auswertungen dieselbe Treffermenge verwenden.
+    """
+    MTOA_FILTERS = {
+        'q': {'fields': ['invnr', 'objekttitel', 'rv_legende', 'av_legende', 'typ'], 'lookup': 'icontains'},
+        'avleg': {'fields': ['av_legende'], 'lookup': 'icontains'},
+        'rvleg': {'fields': ['rv_legende'], 'lookup': 'icontains'},
+        'Muenzstaette': {'fields': ['mzstaette'], 'lookup': 'exact'},
+        'Muenzstand': {'fields': ['muenzstand'], 'lookup': 'exact'},
+        'Reichskreis': {'fields': ['reichskreis'], 'lookup': 'exact'},
+        'region': {'fields': ['region'], 'lookup': 'exact'},
+        'Nominal': {'fields': ['nominal'], 'lookup': 'exact'},
+        'Nominal_id': {'fields': ['nominal_fk_id'], 'lookup': 'in'},
+        'material': {'fields': ['metall'], 'lookup': 'icontains'},
+        'Slg': {'fields': ['slg_fk_id'], 'lookup': 'exact'},
+        'SlgTeil': {'fields': ['slgteil_fk_id'], 'lookup': 'exact'},
+        'av_bildtyp': {'fields': ['av_bildtyp_fk_id'], 'lookup': 'exact'},
+        'av_beizeichen': {'fields': ['av_beizeichen'], 'lookup': 'exact'},
+        'rv_bildtyp': {'fields': ['rv_bildtyp_fk_id'], 'lookup': 'exact'},
+        'rv_beizeichen': {'fields': ['rv_beizeichen'], 'lookup': 'exact'},
+        'rv_schlagwort': {'fields': ['rv_schlagworte'], 'lookup': 'icontains'},
+        'av_schlagwort': {'fields': ['av_schlagworte'], 'lookup': 'icontains'},
+        'obj_type': {'fields': ['objekttyp'], 'lookup': 'exact'},
+        'objekttyp': {'fields': ['objekttyp_fk_id'], 'lookup': 'exact'},
+    }
+
+    unbestimmt_param = request.GET.get('unbestimmt', '')
+    if unbestimmt_param == 'True':
+        is_unbestimmt = True
+        qs = MuenztypObjektAnzeige.objects.filter(typ_fk__isnull=True)
+    elif unbestimmt_param == 'False':
+        is_unbestimmt = False
+        qs = MuenztypObjektAnzeige.objects.filter(typ_fk__isnull=False)
+    else:
+        is_unbestimmt = False
+        qs = MuenztypObjektAnzeige.objects.all()
+
+    general_filters = []
+    needs_distinct = False
+
+    for param, config in MTOA_FILTERS.items():
+        values = [v for v in request.GET.getlist(param) if is_valid_qparam(v)]
+        if not values:
+            continue
+
+        if config['lookup'] == 'in':
+            general_filters.append(Q(**{f"{config['fields'][0]}__in": values}))
+        else:
+            per_value = [
+                Q(**{f"{field}__{config['lookup']}": val})
+                for val in values
+                for field in config['fields']
+            ]
+            general_filters.append(reduce(or_, per_value))
+
+    date_from = request.GET.get('dat_von')
+    date_to = request.GET.get('dat_bis')
+    if is_valid_qparam(date_from) and is_valid_qparam(date_to):
+        general_filters.append(
+            Q(datierung_von__lte=date_to) &
+            Q(datierung_bis__gte=date_from)
+        )
+
+    if general_filters:
+        qs = qs.filter(reduce(and_, general_filters))
+
+    person_params = {
+        'Praegeherren': {'funktion_ids': [1, 6, 7], 'appears_on_rev': None},
+        'Dargestellte_AV': {'funktion_ids': [2], 'appears_on_rev': False},
+        'Dargestellte_RV': {'funktion_ids': [2], 'appears_on_rev': True},
+        'Person': {'exclude_funktion_ids': [1, 2, 6, 7], 'appears_on_rev': None},
+    }
+
+    for param_name, config in person_params.items():
+        if param_name in request.GET:
+            names = [name for name in request.GET.getlist(param_name) if is_valid_qparam(name)]
+            if names:
+                needs_distinct = True
+                name_q = Q(mtoaperson__person__name__in=names)
+
+                if config.get('funktion_ids'):
+                    name_q &= Q(mtoaperson__funktion_id__in=config['funktion_ids'])
+                elif config.get('exclude_funktion_ids'):
+                    name_q &= ~Q(mtoaperson__funktion_id__in=config['exclude_funktion_ids'])
+
+                if config.get('appears_on_rev') is not None:
+                    name_q &= Q(mtoaperson__appears_on_rev=config['appears_on_rev'])
+
+                qs = qs.filter(name_q)
+
+    wappen_names = [name for name in request.GET.getlist('Wappen') if is_valid_qparam(name)]
+    if wappen_names:
+        needs_distinct = True
+        qs = qs.filter(typ_fk__wappen__name__in=wappen_names)
+
+    ref_values = [name for name in request.GET.getlist('Ref') if is_valid_qparam(name)]
+    if ref_values:
+        ref_query = Q()
+        if unbestimmt_param != 'True':
+            ref_query |= Q(Typ__Ref__abk__in=ref_values)
+        if unbestimmt_param != 'False':
+            ref_query |= Q(idfk_Ref__abk__in=ref_values)
+
+        ref_obj_ids = (
+            Obj.objects.filter(ref_query)
+            .values_list('id', flat=True)
+            .distinct()
+        )
+        qs = qs.filter(obj_id__in=ref_obj_ids)
+
+    her_merk_values = [name for name in request.GET.getlist('her_merk') if is_valid_qparam(name)]
+    if her_merk_values:
+        obj_ids = set(
+            Obj.objects.filter(Herstellungsmerkmale__name__in=her_merk_values)
+            .values_list('id', flat=True)
+        )
+        qs = qs.filter(obj_id__in=obj_ids)
+
+    sek_merk_values = [name for name in request.GET.getlist('sek_merk') if is_valid_qparam(name)]
+    if sek_merk_values:
+        obj_ids = set(
+            Obj.objects.filter(sekundaere_Merkmale__name__in=sek_merk_values)
+            .values_list('id', flat=True)
+        )
+        qs = qs.filter(obj_id__in=obj_ids)
+
+    if needs_distinct:
+        qs = qs.distinct()
+
+    return qs.order_by('datierung_von', 'datierung_bis'), is_unbestimmt, needs_distinct
+
 # Neuer Endpoint für Chart-Daten
 def area_chart_data(request):
     try:
         print(f"DEBUG: Request GET params: {request.GET}")
-        
-        # Kontext ("unbestimmt" vs. "default") wie gehabt
-        context_key = 'unbestimmt' if request.GET.get('unbestimmt') else 'default'
-        if context_key == 'unbestimmt':
-            base_qs = Obj.objects.filter(Typ__isnull=True)
-        else:
-            base_qs = Obj.objects.filter(Typ__isnull=False)
 
-        # Das Problem liegt hier - apply_filters erzeugt Exists-Objekte, die nicht iterierbar sind
-        filtered_qs = apply_filters(request, base_qs)
-        
-        # Lösung: IDs materialisieren, um mit konkreter Liste zu arbeiten
-        obj_ids = list(filtered_qs.values_list('id', flat=True))
-        print(f"DEBUG: Gefundene Objekte: {len(obj_ids)}")
-        
-        # Keine Objekte gefunden, leere Antwort zurückgeben
+        filtered_qs, _, _ = _get_filtered_mtoa_queryset(request)
+        obj_ids = list(filtered_qs.values_list('obj_id', flat=True))
+        print(f"DEBUG: Gefundene MTOA-Objekte: {len(obj_ids)}")
+
         if not obj_ids:
             return JsonResponse({
                 'years': [],
@@ -1386,58 +1508,69 @@ def area_chart_data(request):
                 'percentages': [],
                 'debug': {'message': 'Keine Objekte mit passenden Filtern gefunden'}
             })
-        
-        # Neu: Separate Abfrage, die nicht von Exists-Objekten abhängt
-        if context_key == 'unbestimmt':
-            # Für unbestimmte Objekte direkt die Datumswerte abfragen
-            date_objects = Obj.objects.filter(id__in=obj_ids).exclude(
-                Q(dat_von=None) | Q(dat_bis=None)
-            ).values('dat_von', 'dat_bis')
-            
-            # Materialisieren als Liste von Tupeln
-            pairs = [(obj['dat_von'], obj['dat_bis']) for obj in date_objects]
-            print(f"DEBUG: Direkte Datumswerte: {len(pairs)} Paare gefunden")
-        else:
-            # Für Typen, mit korrektem Modellnamen 'Muenztyp'
-            # Hole erst alle relevanten Typen-IDs
-            obj_type_ids = Obj.objects.filter(id__in=obj_ids).exclude(
-                Typ=None
-            ).values_list('Typ_id', flat=True).distinct()
-            
-            print(f"DEBUG: Gefundene Typ-IDs: {len(obj_type_ids)}")
-            
-            # Korrekter Modellname ist 'Muenztyp', nicht 'ObjTyp'
-            type_dates = Muenztyp.objects.filter(id__in=obj_type_ids).exclude(
-                Q(dat_von=None) | Q(dat_bis=None)
-            ).values('dat_von', 'dat_bis')
-            
-            # Materialisieren als Liste von Tupeln
-            pairs = [(t['dat_von'], t['dat_bis']) for t in type_dates]
-            print(f"DEBUG: Typen-Datumswerte: {len(pairs)} Paare gefunden")
-        
-        # Rest der Funktion bleibt gleich - Zählung der Jahre etc.
+
+        pairs = list(
+            filtered_qs.exclude(
+                Q(datierung_von=None) | Q(datierung_bis=None)
+            ).values_list('datierung_von', 'datierung_bis')
+        )
+        print(f"DEBUG: MTOA-Datumswerte: {len(pairs)} Paare gefunden")
+
+        # Wenn Datierungsfilter aktiv sind, die Zeitspannen für den Chart
+        # auf den angeforderten Bereich begrenzen. Sonst bleibt der Ausschnitt
+        # durch lange Objektspannen unnötig weit.
+        requested_from = request.GET.get('dat_von')
+        requested_to = request.GET.get('dat_bis')
+        chart_from = None
+        chart_to = None
+
+        try:
+            if is_valid_qparam(requested_from):
+                chart_from = int(requested_from)
+            if is_valid_qparam(requested_to):
+                chart_to = int(requested_to)
+        except (TypeError, ValueError):
+            chart_from = None
+            chart_to = None
+
+        if chart_from is not None and chart_to is not None and chart_from > chart_to:
+            chart_from, chart_to = chart_to, chart_from
+
+        print(f"DEBUG: chart_from={chart_from}, chart_to={chart_to}")
+
+        max_span = 3000
+        if chart_from is not None and chart_to is not None:
+            max_span = chart_to - chart_from + 2
+
         years_counter = Counter()
         error_count = 0
-        
+
         for start, end in pairs:
             try:
                 start = int(start)
                 end = int(end)
-                span = end - start + 1
-                
-                if span <= 0 or span > 500:
-                    error_count += 1
-                    print(f"DEBUG: Ungültige Zeitspanne {start}-{end}")
+
+                if chart_from is not None:
+                    start = max(start, chart_from)
+                if chart_to is not None:
+                    end = min(end, chart_to)
+
+                if end < start:
                     continue
-                    
+
+                span = end - start + 1
+
+                if span <= 0 or span > max_span:
+                    error_count += 1
+                    continue
+
                 weight = 1.0 / span
                 for y in range(start, end + 1):
                     years_counter[y] += weight
             except (TypeError, ValueError) as e:
                 error_count += 1
-                print(f"DEBUG: Fehler bei Datumsbereich {start}-{end}: {e}")
                 continue
-        
+
         print(f"DEBUG: Fehlerhafte Datumsbereiche: {error_count}")
         print(f"DEBUG: Verarbeitete Jahre im Counter: {len(years_counter)}")
         
@@ -1470,7 +1603,11 @@ def area_chart_data(request):
                 'filtered_objects': len(obj_ids),
                 'date_pairs': len(pairs),
                 'error_count': error_count,
-                'years_counter_items': len(years_counter)
+                'years_counter_items': len(years_counter),
+                'chart_from': chart_from,
+                'chart_to': chart_to,
+                'years_min': years[0] if years else None,
+                'years_max': years[-1] if years else None,
             }
         })
     except Exception as e:
@@ -2767,131 +2904,12 @@ def objekt_list_view_mtoa(request):
     Browse-View auf Basis der MuenztypObjektAnzeige (MTOA).
     Nutzt die flache MTOA-Tabelle und MtoaPerson-Bridge für effiziente Abfragen.
     """
-    from .models import MuenztypObjektAnzeige
-
     invnr = request.GET.get('invnr')
     if invnr:
         obj = Obj.objects.only('id').filter(invnr=invnr).first()
         if obj:
             return redirect('Objekt', id=obj.id)
-
-    MTOA_FILTERS = {
-        'q': {'fields': ['invnr', 'objekttitel', 'rv_legende', 'av_legende', 'typ'], 'lookup': 'icontains'},
-        'avleg': {'fields': ['av_legende'], 'lookup': 'icontains'},
-        'rvleg': {'fields': ['rv_legende'], 'lookup': 'icontains'},
-        'Muenzstaette': {'fields': ['mzstaette'], 'lookup': 'exact'},
-        'Muenzstand': {'fields': ['muenzstand'], 'lookup': 'exact'},
-        'Reichskreis': {'fields': ['reichskreis'], 'lookup': 'exact'},
-        'region': {'fields': ['region'], 'lookup': 'exact'},
-        'Nominal': {'fields': ['nominal'], 'lookup': 'exact'},
-        'Nominal_id': {'fields': ['nominal_fk_id'], 'lookup': 'in'},
-        'material': {'fields': ['metall'], 'lookup': 'icontains'},
-        'Slg': {'fields': ['slg_fk_id'], 'lookup': 'exact'},
-        'SlgTeil': {'fields': ['slgteil_fk_id'], 'lookup': 'exact'},
-        'av_bildtyp': {'fields': ['av_bildtyp_fk_id'], 'lookup': 'exact'},
-        'av_beizeichen': {'fields': ['av_beizeichen'], 'lookup': 'exact'},
-        'rv_bildtyp': {'fields': ['rv_bildtyp_fk_id'], 'lookup': 'exact'},
-        'rv_beizeichen': {'fields': ['rv_beizeichen'], 'lookup': 'exact'},
-        'rv_schlagwort': {'fields': ['rv_schlagworte'], 'lookup': 'icontains'},
-        'av_schlagwort': {'fields': ['av_schlagworte'], 'lookup': 'icontains'},
-        'obj_type': {'fields': ['objekttyp'], 'lookup': 'exact'},
-        'objekttyp': {'fields': ['objekttyp_fk_id'], 'lookup': 'exact'},
-    }
-
-    unbestimmt_param = request.GET.get('unbestimmt', '')
-    
-    if unbestimmt_param == 'True':
-        is_unbestimmt = True
-        qs = MuenztypObjektAnzeige.objects.filter(typ_fk__isnull=True)
-    elif unbestimmt_param == 'False':
-        is_unbestimmt = False
-        qs = MuenztypObjektAnzeige.objects.filter(typ_fk__isnull=False)
-    else:  # 'Alle' or empty (default)
-        is_unbestimmt = False # default facet context key
-        qs = MuenztypObjektAnzeige.objects.all()
-
-    qs = qs.order_by('datierung_von', 'datierung_bis')
-
-    general_filters = []
-    
-    # Track whether JOINs are performed that require DISTINCT to avoid duplicates
-    needs_distinct = False
-    
-    def is_valid_qparam(param):
-        return param != '' and param is not None
-
-    # 1. Standard Filters
-    for param, config in MTOA_FILTERS.items():
-        values = [v for v in request.GET.getlist(param) if is_valid_qparam(v)]
-        if not values:
-            continue
-
-        if config['lookup'] == 'in':
-            general_filters.append(Q(**{f"{config['fields'][0]}__in": values}))
-        else:
-            per_value = [
-                Q(**{f"{field}__{config['lookup']}": val})
-                for val in values
-                for field in config['fields']
-            ]
-            general_filters.append(reduce(or_, per_value))
-
-    # 2. Date Filters
-    date_from = request.GET.get('dat_von')
-    date_to = request.GET.get('dat_bis')
-    if is_valid_qparam(date_from) and is_valid_qparam(date_to):
-        general_filters.append(
-            Q(datierung_von__lte=date_to) &
-            Q(datierung_bis__gte=date_from)
-        )
-
-    if general_filters:
-        qs = qs.filter(reduce(and_, general_filters))
-
-    # 3. Person Filters via MtoaPerson Bridge
-    person_params = {
-        'Praegeherren': {'funktion_ids': [1, 6, 7], 'appears_on_rev': None},
-        'Dargestellte_AV': {'funktion_ids': [2], 'appears_on_rev': False},
-        'Dargestellte_RV': {'funktion_ids': [2], 'appears_on_rev': True},
-        'Person': {'exclude_funktion_ids': [1, 2, 6, 7], 'appears_on_rev': None},
-    }
-
-    for param_name, config in person_params.items():
-        if param_name in request.GET:
-            names = [name for name in request.GET.getlist(param_name) if is_valid_qparam(name)]
-            if names:
-                needs_distinct = True
-                name_q = Q(mtoaperson__person__name__in=names)
-                
-                if config.get('funktion_ids'):
-                    name_q &= Q(mtoaperson__funktion_id__in=config['funktion_ids'])
-                elif config.get('exclude_funktion_ids'):
-                    name_q &= ~Q(mtoaperson__funktion_id__in=config['exclude_funktion_ids'])
-                
-                if config.get('appears_on_rev') is not None:
-                    name_q &= Q(mtoaperson__appears_on_rev=config['appears_on_rev'])
-                    
-                qs = qs.filter(name_q)
-
-    # Wappen might need a text fallback, but let's stick to base fields.
-    wappen_names = [name for name in request.GET.getlist('Wappen') if is_valid_qparam(name)]
-    if wappen_names:
-        needs_distinct = True
-        qs = qs.filter(typ_fk__wappen__name__in=wappen_names)
-
-    # 4. Filter for Herstellungsmerkmale and Sekundäre Merkmale (defined on Obj, missing in flat MTOA)
-    her_merk_values = [name for name in request.GET.getlist('her_merk') if is_valid_qparam(name)]
-    if her_merk_values:
-        obj_ids = set(Obj.objects.filter(Herstellungsmerkmale__name__in=her_merk_values).values_list('id', flat=True))
-        qs = qs.filter(obj_id__in=obj_ids)
-
-    sek_merk_values = [name for name in request.GET.getlist('sek_merk') if is_valid_qparam(name)]
-    if sek_merk_values:
-        obj_ids = set(Obj.objects.filter(sekundaere_Merkmale__name__in=sek_merk_values).values_list('id', flat=True))
-        qs = qs.filter(obj_id__in=obj_ids)
-
-    if needs_distinct:
-        qs = qs.distinct()
+    qs, is_unbestimmt, needs_distinct = _get_filtered_mtoa_queryset(request)
 
     # Database-agnostic grouping for maps
     mints_qs = (

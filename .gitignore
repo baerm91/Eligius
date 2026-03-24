@@ -25,6 +25,11 @@ staticfiles/
 mysql.cnf
 secrets/
 
+# Local dev files (explicit, easy to spot in ZIP handovers)
+dev-local/django.local.env
+dev-local/mysql.local.cnf
+dev-local/*.sql
+
 # IDE / OS
 .vscode/
 .idea/
