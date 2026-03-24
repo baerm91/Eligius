@@ -121,3 +121,66 @@ select {
 textarea::placeholder {
   color: #94a3b8 !important;
 }
+
+/* --- Detail page polish (Objektseite) --- */
+#captions .coin-details {
+  background: linear-gradient(180deg, rgba(17,24,39,.92) 0%, rgba(15,23,42,.92) 100%) !important;
+  border: 1px solid #334155 !important;
+  border-radius: 14px;
+  padding: 1rem 1rem 0.75rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+}
+
+#captions .detail-row {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  padding: 0.28rem 0;
+}
+
+#captions .detail-row:last-child {
+  border-bottom: none;
+}
+
+#captions .detail-label {
+  color: #94a3b8 !important;
+  font-weight: 600;
+}
+
+#captions .detail-value {
+  color: #e2e8f0 !important;
+}
+
+/* Coin image cards: bright neutral stage + rounded frame like browse */
+#captions .item {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.25);
+}
+
+#captions .item img {
+  display: block;
+  width: 100%;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+/* Better object title contrast */
+#captions ~ .row h4,
+h4 {
+  color: #f8fafc;
+}
+
+/* Navbar contrast tuning */
+.site-navbar .nav-link {
+  border: 1px solid transparent;
+}
+
+.site-navbar .nav-link:hover,
+.site-navbar .nav-link:focus {
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.site-navbar .brand-title {
+  font-size: 2rem;
+}
