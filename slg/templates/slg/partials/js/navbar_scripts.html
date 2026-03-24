@@ -7,10 +7,31 @@
 <script src="{% static 'Djangoprojekt/js/lazysizes.min.js'%}" async></script>
 
 <script>
-    if (window.AOS) {
-        AOS.init({
-            startEvent: 'load',
-        });
+    // Initialize AOS if available, otherwise wait for it to load
+    function initAOS() {
+        if (window.AOS) {
+            AOS.init({
+                startEvent: 'load',
+            });
+        }
+    }
+    
+    // Try to initialize immediately
+    initAOS();
+    
+    // Fallback: wait for AOS to load if not available yet
+    if (!window.AOS) {
+        var checkAOS = setInterval(function() {
+            if (window.AOS) {
+                initAOS();
+                clearInterval(checkAOS);
+            }
+        }, 100);
+        
+        // Stop checking after 5 seconds to prevent infinite loop
+        setTimeout(function() {
+            clearInterval(checkAOS);
+        }, 5000);
     }
 
     $(document).ready(function () {

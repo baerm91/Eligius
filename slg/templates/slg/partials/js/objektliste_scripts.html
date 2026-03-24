@@ -2,6 +2,38 @@
 <!-- Grundlegende Bibliotheken -->
 <script src="{% static 'Djangoprojekt/js/jquery-3.3.1.min.js' %}"></script>
 <script src="{% static 'Djangoprojekt/js/select2.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'Djangoprojekt/js/aos.js'%}"></script>
+
+<!-- AOS Initialization -->
+<script>
+    // Initialize AOS if available, otherwise wait for it to load
+    function initAOS() {
+        if (window.AOS) {
+            AOS.init({
+                startEvent: 'load',
+            });
+        }
+    }
+    
+    // Try to initialize immediately
+    initAOS();
+    
+    // Fallback: wait for AOS to load if not available yet
+    if (!window.AOS) {
+        var checkAOS = setInterval(function() {
+            if (window.AOS) {
+                initAOS();
+                clearInterval(checkAOS);
+            }
+        }, 100);
+        
+        // Stop checking after 5 seconds to prevent infinite loop
+        setTimeout(function() {
+            clearInterval(checkAOS);
+        }, 5000);
+    }
+</script>
 
 <!-- Eigene JavaScript-Dateien -->
 <script defer src="{% static 'js/filter-ajax.js' %}?v=20260322"></script>
