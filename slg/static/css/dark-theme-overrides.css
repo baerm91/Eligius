@@ -1,0 +1,123 @@
+/* Global dark theme overrides for active public pages */
+:root {
+  --bg-main: #0f172a;
+  --bg-surface: #111827;
+  --bg-surface-2: #1f2937;
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --accent: #38bdf8;
+  --accent-2: #22d3ee;
+  --border-soft: #334155;
+}
+
+body, .site-wrap {
+  background: linear-gradient(180deg, #0b1220 0%, var(--bg-main) 55%, #0b1020 100%);
+  color: var(--text-main);
+}
+
+/* Navbar readability */
+.site-navbar {
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid var(--border-soft) !important;
+  backdrop-filter: blur(8px);
+}
+
+.site-navbar .brand-title,
+.site-navbar .brand-subtitle {
+  color: #f8fafc !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+.site-navbar .brand-title {
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.site-navbar .brand-subtitle {
+  opacity: 0.9;
+}
+
+.site-navbar .nav-link {
+  color: #cbd5e1 !important;
+  font-weight: 600;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.5rem;
+}
+
+.site-navbar .nav-link:hover,
+.site-navbar .nav-link:focus {
+  color: #fff !important;
+  background: rgba(56, 189, 248, 0.14);
+}
+
+.navbar-toggler {
+  border: 1px solid var(--border-soft) !important;
+  color: #e2e8f0 !important;
+  background: #111827;
+}
+
+/* Index sections */
+.hero-section,
+.latest-coins-section,
+.collections-section,
+.contact-form-container,
+.about-section,
+.about-header,
+.coin-details,
+.detail-row,
+.detail-separator,
+.card,
+.modal-content,
+.table {
+  color: var(--text-main);
+}
+
+.feature-box,
+.collection-card,
+.contact-form-container,
+.about-section,
+.coin-details,
+.card,
+.modal-content {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.about-header .lead,
+.text-muted,
+.detail-label {
+  color: var(--text-muted) !important;
+}
+
+a {
+  color: #7dd3fc;
+}
+
+a:hover {
+  color: #bae6fd;
+}
+
+.btn-outline-primary {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-outline-primary:hover {
+  background: var(--accent);
+  color: #082f49;
+}
+
+.form-control,
+.form-select,
+textarea,
+select {
+  background: var(--bg-surface-2) !important;
+  color: #f8fafc !important;
+  border: 1px solid var(--border-soft) !important;
+}
+
+.form-control::placeholder,
+textarea::placeholder {
+  color: #94a3b8 !important;
+}
