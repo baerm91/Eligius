@@ -32,86 +32,120 @@
 {% block content %}
 
     {% if request.user.is_authenticated %}
-    <div class="container-fluid" >
-        <div class="row text-center">
+    <div class="container-fluid detail-admin-shell">
+        <div class="row">
             <div class="col pt-2">
-                <table width="100%">
-                    <thead>
-                        <tr>
-                            
-                            <td width="*"></td>
-                            <td width="*" align="left">
-                                <a href="{% url 'admin:slg_obj_change' test.pk %}">Münze: {% if not test.workflow.name %}in Bearbeitung {% else %}{{test.workflow.name}}{%endif%} </a> <br>
-                                {% if test.Typ is not null %}
-                                    <a href="{% url 'admin:slg_muenztyp_change' test.Typ.pk %}">Münztyp: {{ coin_data.Typ.workflow.name }}</a>
-                                {% else %}
-                                    Typ: nicht definiert{{Mztyp.workflow.name}}
-                                {% endif %}
-                            </td>
-                            <td width="*">
-                                <nav aria-label="Page navigation example">
-                                    <ul class="pagination" id="invnr-navigation">
-                                        <li class="page-item">
-                                            <a class="page-link" href="#" id="prev10" aria-label="Previous">
-                                                <span aria-hidden="true">&laquo;</span>
-                                                <span class="sr-only">Previous</span>
-                                            </a>
-                                        </li>
-                                        <li class="page-item"><a class="page-link" href="#" id="prev2"></a></li>
-                                        <li class="page-item"><a class="page-link" href="#" id="prev1"></a></li>
-                                        <li class="page-item"><a class="page-link" href="#" id="current"></a></li>
-                                        <li class="page-item"><a class="page-link" href="#" id="next1"></a></li>
-                                        <li class="page-item"><a class="page-link" href="#" id="next2"></a></li>
-                                        <li class="page-item">
-                                            <a class="page-link" href="#" id="next10" aria-label="Next">
-                                                <span aria-hidden="true">&raquo;</span>
-                                                <span class="sr-only">Next</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </nav>
+                <div class="detail-admin-toolbar">
+                    <div class="detail-admin-status-group">
+                        <a class="detail-admin-status-card" href="{% url 'admin:slg_obj_change' test.pk %}">
+                            <span class="detail-admin-status-label">Münze</span>
+                            <span class="detail-admin-status-value">{% if not test.workflow.name %}in Bearbeitung{% else %}{{ test.workflow.name }}{% endif %}</span>
+                        </a>
+                        {% if test.Typ is not null %}
+                            <a class="detail-admin-status-card" href="{% url 'admin:slg_muenztyp_change' test.Typ.pk %}">
+                                <span class="detail-admin-status-label">Münztyp</span>
+                                <span class="detail-admin-status-value">{{ coin_data.Typ.workflow.name }}</span>
+                            </a>
+                        {% else %}
+                            <div class="detail-admin-status-card is-static">
+                                <span class="detail-admin-status-label">Münztyp</span>
+                                <span class="detail-admin-status-value">nicht definiert</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="detail-admin-nav-wrap">
+                        <div class="detail-admin-nav-title">Objektnavigation</div>
+                        <nav aria-label="Objektnavigation">
+                            <ul class="pagination detail-admin-nav" id="invnr-navigation">
+                                <li class="page-item">
+                                    <a class="page-link detail-admin-nav-arrow" href="#" id="prev10" aria-label="Previous">
+                                        <span aria-hidden="true">&larr;</span>
+                                        <span>Zurück</span>
+                                    </a>
+                                </li>
+                                <li class="page-item"><a class="page-link detail-admin-nav-pill" href="#" id="prev2"></a></li>
+                                <li class="page-item"><a class="page-link detail-admin-nav-pill" href="#" id="prev1"></a></li>
+                                <li class="page-item"><a class="page-link detail-admin-nav-pill is-current" href="#" id="current"></a></li>
+                                <li class="page-item"><a class="page-link detail-admin-nav-pill" href="#" id="next1"></a></li>
+                                <li class="page-item"><a class="page-link detail-admin-nav-pill" href="#" id="next2"></a></li>
+                                <li class="page-item">
+                                    <a class="page-link detail-admin-nav-arrow" href="#" id="next10" aria-label="Next">
+                                        <span>Weiter</span>
+                                        <span aria-hidden="true">&rarr;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
 
-                                <script>
-                                function updateNavigation() {
-                                    const currentInvnr = '{{ coin_data.invnr }}';
-                                    const slgId = '{{ coin_data.slg.id }}';
-                                    const slgteilId = '{{ coin_data.slgteil.id }}';
+                <script>
+                function setNavState(elementId, text, targetId) {
+                    const element = document.getElementById(elementId);
+                    if (!element) {
+                        return;
+                    }
 
-                                    fetch(`/api/adjacent-invnrs/?invnr=${currentInvnr}&slg_id=${slgId}&slgteil_id=${slgteilId}`)
-                                        .then(response => response.json())
-                                        .then(data => {
-                                            document.getElementById('prev2').textContent = data.prev2 || '';
-                                            document.getElementById('prev2').href = data.prev2_id ? `/objekt/${data.prev2_id}/` : '#';
-                                            document.getElementById('prev1').textContent = data.prev1 || '';
-                                            document.getElementById('prev1').href = data.prev1_id ? `/objekt/${data.prev1_id}/` : '#';
-                                            document.getElementById('current').textContent = data.current;
-                                            document.getElementById('current').href = `/objekt/${data.current_id}/`;
-                                            document.getElementById('next1').textContent = data.next1 || '';
-                                            document.getElementById('next1').href = data.next1_id ? `/objekt/${data.next1_id}/` : '#';
-                                            document.getElementById('next2').textContent = data.next2 || '';
-                                            document.getElementById('next2').href = data.next2_id ? `/objekt/${data.next2_id}/` : '#';
-                                            
-                                            document.getElementById('prev10').href = data.prev2_id ? `/objekt/${data.prev2_id}/` : '#';
-                                            document.getElementById('next10').href = data.next2_id ? `/objekt/${data.next2_id}/` : '#';
-                                        });
-                                }
-                                
-                                document.addEventListener('DOMContentLoaded', updateNavigation);
-                                </script>
-                                
-                            </td>
-                            
-                        </tr>
-                    </thead>
-                </table>
-                <hr>
+                    element.textContent = text || '';
+                    if (targetId) {
+                        element.href = `/objekt/${targetId}/`;
+                        element.classList.remove('is-disabled');
+                        element.setAttribute('aria-disabled', 'false');
+                        element.tabIndex = 0;
+                    } else {
+                        element.href = '#';
+                        element.classList.add('is-disabled');
+                        element.setAttribute('aria-disabled', 'true');
+                        element.tabIndex = -1;
+                    }
+                }
+
+                function setNavTarget(elementId, targetId) {
+                    const element = document.getElementById(elementId);
+                    if (!element) {
+                        return;
+                    }
+
+                    if (targetId) {
+                        element.href = `/objekt/${targetId}/`;
+                        element.classList.remove('is-disabled');
+                        element.setAttribute('aria-disabled', 'false');
+                        element.tabIndex = 0;
+                    } else {
+                        element.href = '#';
+                        element.classList.add('is-disabled');
+                        element.setAttribute('aria-disabled', 'true');
+                        element.tabIndex = -1;
+                    }
+                }
+
+                function updateNavigation() {
+                    const currentInvnr = '{{ coin_data.invnr }}';
+                    const slgId = '{{ coin_data.slg.id }}';
+                    const slgteilId = '{{ coin_data.slgteil.id }}';
+
+                    fetch(`/api/adjacent-invnrs/?invnr=${currentInvnr}&slg_id=${slgId}&slgteil_id=${slgteilId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            setNavState('prev2', data.prev2, data.prev2_id);
+                            setNavState('prev1', data.prev1, data.prev1_id);
+                            setNavState('current', data.current, data.current_id);
+                            setNavState('next1', data.next1, data.next1_id);
+                            setNavState('next2', data.next2, data.next2_id);
+                            setNavTarget('prev10', data.prev2_id);
+                            setNavTarget('next10', data.next2_id);
+                        });
+                }
+                
+                document.addEventListener('DOMContentLoaded', updateNavigation);
+                </script>
             </div>
         </div>
-        {% else %}
-        <div class="row text-center">
-            <br>
-        </div>
-        {% endif %}
+         {% else %}
+         <div class="row text-center">
+             <br>
+         </div>
+         {% endif %}
         
         {% if coin_data.titel %}
         <div class="row">
@@ -490,15 +524,15 @@
             
             <div class="col-sm-12 col-md-8 col-lg-8 col-xl-8 pt-2 align-top-center" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
             <div class="row"></div>
-            <div class="row coin-image-row" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+            <div class="coin-image-row" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
                 {% with bild_urls=coin_data.bild_urls %}
                     {% if bild_urls %}
-                        <div class="col-md-6 coin-image-col" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                        <div class="coin-image-col">
                             <div class="item coin-image-stage" data-src="{{ bild_urls.av }}">
                                 <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.av }}" alt="Avers" class="lazyload img-fluid"></a>
                             </div>
                         </div>
-                        <div class="col-md-6 coin-image-col" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                        <div class="coin-image-col">
                             <div class="item coin-image-stage" data-src="{{ bild_urls.rv }}">
                                 <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.rv }}" alt="Revers" class="lazyload img-fluid"></a>
                             </div>
@@ -617,9 +651,9 @@
 </div>
 {% include "slg/modal.html" %}
 
-<!-- Fügen Sie diesen Button in der Nähe der Objektdetails ein -->
-<button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#editModal">
-    <i class="bi bi-pencil"></i> Änderung vorschlagen
+<!-- Floating feedback icon -->
+<button type="button" class="detail-feedback-btn" data-toggle="modal" data-target="#editModal" title="Änderung vorschlagen">
+    <i class="bi bi-pencil"></i>
 </button>
 
 <!-- Modal für Änderungsvorschläge -->

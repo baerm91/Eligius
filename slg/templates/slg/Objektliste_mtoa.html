@@ -27,6 +27,12 @@
 
 {% endblock stylesheets %}
 
+{% block page_title %}
+<div class="container-fluid browse-page-title">
+  <h1 class="browse-page-title__heading">Browse</h1>
+</div>
+{% endblock page_title %}
+
 {% block content %}
 {% load slg_extras %}
 {% load custom_tags %} {# Ensure custom_tags are loaded if not already #}
