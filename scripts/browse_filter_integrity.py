@@ -91,6 +91,54 @@ def main():
         'obj_type': get_first_value(qs, 'objekttyp'),
     }
 
+    # complex relation-based filters from MTOA relations
+    praegeherr = qs.filter(
+        mtoaperson__funktion_id__in=[1, 6, 7],
+        mtoaperson__person__name__isnull=False,
+    ).values_list('mtoaperson__person__name', flat=True).first()
+    if praegeherr:
+        samples['Praegeherren'] = praegeherr
+
+    person_other = qs.exclude(
+        mtoaperson__funktion_id__in=[1, 2, 6, 7]
+    ).filter(
+        mtoaperson__person__name__isnull=False,
+    ).values_list('mtoaperson__person__name', flat=True).first()
+    if person_other:
+        samples['Person'] = person_other
+
+    dargestellt_av = qs.filter(
+        mtoaperson__funktion_id=2,
+        mtoaperson__appears_on_rev=False,
+        mtoaperson__person__name__isnull=False,
+    ).values_list('mtoaperson__person__name', flat=True).first()
+    if dargestellt_av:
+        samples['Dargestellte_AV'] = dargestellt_av
+
+    dargestellt_rv = qs.filter(
+        mtoaperson__funktion_id=2,
+        mtoaperson__appears_on_rev=True,
+        mtoaperson__person__name__isnull=False,
+    ).values_list('mtoaperson__person__name', flat=True).first()
+    if dargestellt_rv:
+        samples['Dargestellte_RV'] = dargestellt_rv
+
+    wappen = qs.filter(
+        typ_fk__wappen__name__isnull=False
+    ).values_list('typ_fk__wappen__name', flat=True).first()
+    if wappen:
+        samples['Wappen'] = wappen
+
+    # obj-level relation filters (via Obj model logic)
+    from slg.models import Obj
+    her = Obj.objects.filter(Herstellungsmerkmale__name__isnull=False).values_list('Herstellungsmerkmale__name', flat=True).first()
+    if her:
+        samples['her_merk'] = her
+
+    sek = Obj.objects.filter(sekundaere_Merkmale__name__isnull=False).values_list('sekundaere_Merkmale__name', flat=True).first()
+    if sek:
+        samples['sek_merk'] = sek
+
     # Remove empty samples
     samples = {k: v for k, v in samples.items() if v not in (None, "")}
 
