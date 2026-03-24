@@ -27,7 +27,7 @@ from .resources import ObjLSNOResource
 # from .models import Slg, Obj, Obj_Person, Obj_Ref, PersonFunktion, Person, Mzstaette, Metall, AvBildtyp, RvBildtyp, RvBildtyp_Schlagwort, AvBildtyp_Schlagwort, Schlagwort, Muenztyp, Mztyp_Person, Faelschung
 from rest_framework import viewsets, generics
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated   # nur eingeloggte
 from rest_framework.response import Response
 from bootstrap_modal_forms.generic import BSModalCreateView, BSModalUpdateView
@@ -184,6 +184,9 @@ class SlgTeilListAPIView(generics.ListAPIView):
             Q(idfk_Slg_SlgTeil__id=slg_id)
         ).distinct()
 
+@api_view(['GET'])
+@authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def export_xlsx(request):
     filters = {key: value for key, value in request.GET.items() if key not in IGNORED_PARAMS}
 
@@ -1385,6 +1388,7 @@ def _get_filtered_mtoa_queryset(request):
         'av_schlagwort': {'fields': ['av_schlagworte'], 'lookup': 'icontains'},
         'obj_type': {'fields': ['objekttyp'], 'lookup': 'exact'},
         'objekttyp': {'fields': ['objekttyp_fk_id'], 'lookup': 'exact'},
+        'coin_type': {'fields': ['typ_fk_id'], 'lookup': 'in'},
     }
 
     unbestimmt_param = request.GET.get('unbestimmt', '')
@@ -1746,6 +1750,9 @@ def facet_api(request):
     return Response(result)
 
 
+@api_view(['GET'])
+@authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def get_konkordanzen(request):
     typ_id = request.GET.get('typ', None)
     konkordanzen = []

@@ -162,6 +162,13 @@ FILTER_PARAMETERS = {
             'model': Ref,
             'display_field': 'abk',
         },
+        'coin_type': {
+            'fields': ['Typ_id'],
+            'filter': 'in',
+            'display_name': 'Münztyp',
+            'facet_field': 'Typ__nummer',
+            'id_field': 'Typ_id',
+        },
         'av_bildtyp': {
             'fields': ['Typ__av_bildtyp_id'],
             'filter': 'exact',
@@ -409,6 +416,13 @@ FILTER_PARAMETERS = {
             'display_name': 'Referenz',
             'model': Ref,
             'display_field': 'abk',
+        },
+        'coin_type': {
+            'fields': ['Typ_id'],
+            'filter': 'in',
+            'display_name': 'Münztyp',
+            'facet_field': 'Typ__nummer',
+            'id_field': 'Typ_id',
         },
         # 'av_bildtyp': {
         #     'fields': ['Typ__av_bildtyp_id'],
