@@ -28,12 +28,13 @@ staticfiles/
 *.crt
 *.cnf
 mysql.cnf
+!.cnf.example
 secrets/
 
 # Local dev files (explicit, easy to spot in ZIP handovers)
-dev-local/django.local.env
-dev-local/mysql.local.cnf
-dev-local/*.sql
+dev-local/
+!dev-local/*.example
+!dev-local/README.md
 
 # Development scripts
 scripts/dev_server.ps1
