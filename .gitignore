@@ -7,6 +7,11 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
+# Virtual Environment
+.venv/
+venv/
+env/
+
 # Django
 *.log
 local_settings.py
@@ -29,6 +34,11 @@ secrets/
 dev-local/django.local.env
 dev-local/mysql.local.cnf
 dev-local/*.sql
+
+# Development scripts
+scripts/dev_server.ps1
+start-dev.bat
+start-dev.ps1
 
 # IDE / OS
 .vscode/
