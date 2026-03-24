@@ -150,35 +150,49 @@ textarea::placeholder {
 }
 
 /* Coin image cards: bright neutral stage + rounded frame like browse */
-#captions .item {
+#captions .coin-image-row {
+  --bs-gutter-x: 12px;
+  row-gap: 12px;
+  background: #f8fafc;
+  border: 2px solid #d6dbe3;
+  border-radius: 16px;
+  padding: 10px;
+  margin: 0 0 8px;
+}
+
+#captions .coin-image-col {
+  display: flex;
+  justify-content: center;
+}
+
+#captions .coin-image-stage {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: auto;
+  width: fit-content;
   max-width: 100%;
   background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  border: 2px solid #d6dbe3;
   border-radius: 14px;
   padding: 10px;
   box-shadow: 0 8px 20px rgba(2, 6, 23, 0.25);
 }
 
-#captions .item a {
-  display: inline-block;
+#captions .coin-image-stage a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 0;
 }
 
-#captions .item img {
+#captions .coin-image-stage img {
   display: block;
   width: auto;
-  max-width: min(100%, 440px);
+  max-width: min(100%, 430px);
   height: auto;
+  margin: 0 auto;
   border-radius: 10px;
   background: #ffffff;
-}
-
-#captions .col-md-6 {
-  text-align: center;
 }
 
 /* Better object title contrast */

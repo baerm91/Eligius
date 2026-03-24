@@ -490,17 +490,16 @@
             
             <div class="col-sm-12 col-md-8 col-lg-8 col-xl-8 pt-2 align-top-center" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
             <div class="row"></div>
-            <div class="row" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
-                
+            <div class="row coin-image-row" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
                 {% with bild_urls=coin_data.bild_urls %}
                     {% if bild_urls %}
-                        <div class="col-md-6" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
-                            <div class="item" data-src="{{ bild_urls.av }}">
+                        <div class="col-md-6 coin-image-col" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                            <div class="item coin-image-stage" data-src="{{ bild_urls.av }}">
                                 <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.av }}" alt="Avers" class="lazyload img-fluid"></a>
                             </div>
                         </div>
-                        <div class="col-md-6" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
-                            <div class="item" data-src="{{ bild_urls.rv }}">
+                        <div class="col-md-6 coin-image-col" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
+                            <div class="item coin-image-stage" data-src="{{ bild_urls.rv }}">
                                 <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.rv }}" alt="Revers" class="lazyload img-fluid"></a>
                             </div>
                         </div>
