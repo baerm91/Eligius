@@ -129,7 +129,19 @@ docker cp "d:\Prog-Proj\Eligius\djangoproject (4).sql" mysql:/tmp/djangoproject.
 docker exec mysql sh -lc "mysql -uroot -proot djangoproject < /tmp/djangoproject.sql"
 ```
 
-## 8) Status Upgrade
+## 8) Git-Schutz gegen lokale Dateien
+
+Damit keine lokalen Dateien/venvs versehentlich auf GitHub landen:
+
+```bash
+# einmal pro Clone:
+git config core.hooksPath .githooks
+```
+
+Der Hook `.githooks/pre-push` ruft `scripts/prepush_guard.sh` auf und blockt Pushes,
+wenn verbotene lokale/dev-Dateien bereits getrackt sind (z. B. `.venv/`, `.env*`, `dev-local/`, `*.sql`, `*.sqlite3`).
+
+## 9) Status Upgrade
 
 - Django läuft auf **4.2 LTS**
 - `mysqlclient` wurde für Dev durch **PyMySQL** ersetzt (kein System-Compile nötig)
