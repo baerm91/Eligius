@@ -151,6 +151,11 @@ textarea::placeholder {
 
 /* Coin image cards: bright neutral stage + rounded frame like browse */
 #captions .item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  max-width: 100%;
   background: #f8fafc;
   border: 1px solid #cbd5e1;
   border-radius: 14px;
@@ -158,11 +163,22 @@ textarea::placeholder {
   box-shadow: 0 8px 20px rgba(2, 6, 23, 0.25);
 }
 
+#captions .item a {
+  display: inline-block;
+  line-height: 0;
+}
+
 #captions .item img {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: min(100%, 440px);
+  height: auto;
   border-radius: 10px;
   background: #ffffff;
+}
+
+#captions .col-md-6 {
+  text-align: center;
 }
 
 /* Better object title contrast */
