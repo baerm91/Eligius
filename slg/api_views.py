@@ -1,7 +1,9 @@
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from .authentication import QueryParamTokenAuthentication
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
@@ -9,6 +11,9 @@ from import_export.formats.base_formats import XLSX
 from .resources import ObjLSNOResource
 
 class ExportObjLSNO(APIView):
+    authentication_classes = [QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         dataset = ObjLSNOResource().export()
         export_format = XLSX()
