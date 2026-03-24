@@ -316,9 +316,9 @@
                                     
                                     {% if coin_data.Typ.link %}
                                         {% if coin_data.Typ.Ref.zitat %}
-                                            <a href="{{coin_data.Typ.get_absolute_url}}"><abbr title="{{ coin_data.Typ.Ref.zitat }}">{{ coin_data.Typ.Ref }}</abbr>, {{ coin_data.Typ.nummer }}</a>
+                                            <a href="/browse/?Ref={{ coin_data.Typ.Ref.abk|urlencode }}&coin_type={{ coin_data.Typ.id }}"><abbr title="{{ coin_data.Typ.Ref.zitat }}">{{ coin_data.Typ.Ref }}</abbr>, {{ coin_data.Typ.nummer }}</a>
                                         {% else %} 
-                                            <a href="{{ coin_data.Typ.get_absolute_url }}">{{ coin_data.Typ.Ref }}, {{ coin_data.Typ.nummer }}</a>
+                                            <a href="/browse/?Ref={{ coin_data.Typ.Ref.abk|urlencode }}&coin_type={{ coin_data.Typ.id }}">{{ coin_data.Typ.Ref }}, {{ coin_data.Typ.nummer }}</a>
                                         {% endif %}
                                         {% if coin_data.Typ.variante %}
                                             (Var.: {{ coin_data.Typ.variante.name }})
@@ -330,9 +330,9 @@
                                         
                                     {% else %}
                                         {% if coin_data.Typ.Ref.zitat %}
-                                        <a href="{{ coin_data.Typ.get_absolute_url }}"><abbr title="{{ coin_data.Typ.Ref.zitat }}">{{ coin_data.Typ.Ref }}</abbr>, {{ coin_data.Typ.nummer }}</a>
+                                        <a href="/browse/?Ref={{ coin_data.Typ.Ref.abk|urlencode }}&coin_type={{ coin_data.Typ.id }}"><abbr title="{{ coin_data.Typ.Ref.zitat }}">{{ coin_data.Typ.Ref }}</abbr>, {{ coin_data.Typ.nummer }}</a>
                                         {% else %} 
-                                        <a href="{{ coin_data.Typ.get_absolute_url }}">{{ coin_data.Typ.Ref }}, {{ coin_data.Typ.nummer }}</a>
+                                        <a href="/browse/?Ref={{ coin_data.Typ.Ref.abk|urlencode }}&coin_type={{ coin_data.Typ.id }}">{{ coin_data.Typ.Ref }}, {{ coin_data.Typ.nummer }}</a>
                                         {% endif %}
                                         {% if coin_data.Typ.variante %}
                                             (Var.: {{ coin_data.Typ.variante.name }})

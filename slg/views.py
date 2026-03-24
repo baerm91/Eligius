@@ -1388,6 +1388,7 @@ def _get_filtered_mtoa_queryset(request):
         'av_schlagwort': {'fields': ['av_schlagworte'], 'lookup': 'icontains'},
         'obj_type': {'fields': ['objekttyp'], 'lookup': 'exact'},
         'objekttyp': {'fields': ['objekttyp_fk_id'], 'lookup': 'exact'},
+        'coin_type': {'fields': ['typ_fk_id'], 'lookup': 'in'},
     }
 
     unbestimmt_param = request.GET.get('unbestimmt', '')
