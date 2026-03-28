@@ -33,42 +33,52 @@
   <div class="site-wrap">
 
     
-    <header class="site-navbar py-3 border-bottom" role="banner">
+    <header class="site-navbar" role="banner">
       <div class="container-fluid">
-        <div class="row align-items-center">
+        <div class="nav-row">
           
-          <div class="col-6 col-xl-3" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
-            <h2 class="mb-0"><a href="/" class="brand-title h2 mb-0 text-decoration-none"><em>Eligius.</em></a></h2><h6 class="brand-subtitle">Numotheca Austriaca</h6>
+          <div class="nav-side nav-side--left">
+            <a href="/" class="text-decoration-none">
+              <span class="brand-title">ELIGIUS</span>
+            </a>
           </div>
           
           <!-- Hamburger-Menü-Button für mobile Geräte -->
-          <div class="col-6 d-xl-none text-right">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu">
+          <div class="d-xl-none" style="margin-left:auto;">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu" aria-label="Menu">
               <span class="navbar-toggler-icon">&#9776;</span>
             </button>
           </div>
           
-          <!-- Menü für Desktop und Mobile -->
-          <div class="col-12 col-xl-6 text-center">
-            <nav class="navbar-expand-xl">
-              <div class="collapse navbar-collapse justify-content-center" id="navbarMenu">
-                <ul class="navbar-nav">
-                  <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                  <li class="nav-item"><a class="nav-link" href="/browse">Objekte</a></li>
-                  <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">Über</a></li>
-                  <li class="nav-item"><a class="nav-link" href="/#kontakt">Kontakt</a></li>
-                  <li class="nav-item"><a class="nav-link" href="/admin">Login</a></li>
-                </ul>
-              </div>
-            </nav>
+          <!-- Menü für Desktop -->
+          <div class="nav-center d-none d-xl-flex">
+            <a class="nav-link" href="/">Home</a>
+            <a class="nav-link" href="{% url 'sammlungen_uebersicht' %}">Sammlungen</a>
+            <a class="nav-link" href="/browse">Objekte</a>
+            <a class="nav-link" href="{% url 'about' %}">Projekt</a>
           </div>
 
-          <!-- Leerer Bereich für Ausgleich -->
-          <div class="col-xl-3 d-none d-xl-block"></div>
+          <!-- Login-Icon rechts -->
+          <div class="nav-side nav-side--right d-none d-xl-flex">
+            <a class="nav-login-icon" href="/admin" title="Login">
+              <i class="bi bi-person-circle"></i>
+            </a>
+          </div>
 
         </div>
+        
+        <!-- Mobile Menü (collapse) -->
+        <div class="collapse navbar-collapse d-xl-none" id="navbarMenu">
+          <div class="d-flex flex-column align-items-center py-3 gap-2">
+            <a class="nav-link" href="/">Home</a>
+            <a class="nav-link" href="{% url 'sammlungen_uebersicht' %}">Sammlungen</a>
+            <a class="nav-link" href="/browse">Objekte</a>
+            <a class="nav-link" href="{% url 'about' %}">Projekt</a>
+            <a class="nav-link" href="/admin">Login</a>
+          </div>
+        </div>
       </div>
-      
+      <div class="nav-border"></div>
     </header>
 
     {% block page_title %}{% endblock page_title %}
@@ -78,17 +88,27 @@
         {% endblock %}
     </div>
     
+    <footer class="site-footer">
+      <div class="footer-copyright">MMXXVI &bull; Cultural Heritage of Austria</div>
+      <nav class="footer-links">
+        <a href="{% url 'impressum' %}">Impressum</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="{% url 'datenschutz' %}">Datenschutzerklärung</a>
+      </nav>
+    </footer>
+
     <script defer src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"></script>
     <script>
     window.addEventListener("load", function(){
       window.cookieconsent.initialise({
         "palette": {
           "popup": {
-            "background": "#edeff5",
-            "text": "#838391"
+            "background": "#161616",
+            "text": "#f0f0f0"
           },
           "button": {
-            "background": "#4b81e8"
+            "background": "#f6b15d",
+            "text": "#000"
           }
         },
         "theme": "classic",
@@ -99,7 +119,7 @@
           "dismiss": "Ablehnen",
           "allow": "Akzeptieren",
           "link": "Mehr erfahren",
-          "href": "datenschutzerklaerung.html"
+          "href": "/datenschutz/"
         },
         onInitialise: function(status) {
           if (status === cookieconsent.status.allow) {

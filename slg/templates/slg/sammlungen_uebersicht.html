@@ -1,0 +1,324 @@
+{% extends 'slg/navbar.html' %}
+{% block title %}Eligius – Sammlungen{% endblock title %}
+{% load static %}
+
+{% block stylesheets %}
+{{ block.super }}
+<style>
+  /* ── Collection panel – fullbleed image with text overlay ── */
+  .slg-panel {
+    position: relative;
+    width: 100vw;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    min-height: 75vh;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    align-items: center;
+    overflow: hidden;
+  }
+
+  /* Background image – spans all grid columns */
+  .slg-panel-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .slg-panel-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.15);
+    filter: grayscale(100%) brightness(0.35) contrast(1.15);
+    transition: opacity 0.8s ease, filter 1.2s ease, transform 8s ease;
+    opacity: 0;
+  }
+
+  .slg-panel-bg img.loaded {
+    opacity: 1;
+  }
+
+  /* Shimmer placeholder while image loads */
+  .slg-panel-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--bg-surface);
+    background-image: linear-gradient(
+      110deg,
+      var(--bg-surface) 0%,
+      var(--bg-surface) 40%,
+      rgba(255,255,255,0.04) 50%,
+      var(--bg-surface) 60%,
+      var(--bg-surface) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+    z-index: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .slg-panel-bg.bg-ready::before {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .slg-panel:hover .slg-panel-bg img {
+    filter: grayscale(40%) brightness(0.3) contrast(1.1);
+    transform: scale(1.05);
+  }
+
+  .slg-panel-bg-placeholder {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.05);
+    font-size: 8rem;
+  }
+
+  /* Gradient overlay – adapts to text side */
+  .slg-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .slg-panel--left::after {
+    background: linear-gradient(
+      to right,
+      rgba(10,10,10,0.88) 0%,
+      rgba(10,10,10,0.82) 20%,
+      rgba(10,10,10,0.55) 50%,
+      rgba(10,10,10,0.15) 75%,
+      transparent 100%
+    );
+  }
+
+  .slg-panel--right::after {
+    background: linear-gradient(
+      to left,
+      rgba(10,10,10,0.88) 0%,
+      rgba(10,10,10,0.82) 20%,
+      rgba(10,10,10,0.55) 50%,
+      rgba(10,10,10,0.15) 75%,
+      transparent 100%
+    );
+  }
+
+  /* Text content – outer third, near the edge */
+  .slg-panel-content {
+    position: relative;
+    z-index: 2;
+    max-width: 520px;
+    padding: 60px 40px;
+  }
+
+  .slg-panel--left .slg-panel-content {
+    grid-column: 2 / 5;
+    justify-self: start;
+  }
+
+  .slg-panel--right .slg-panel-content {
+    grid-column: 4 / 7;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .slg-panel-num {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  .slg-panel-name {
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-main);
+    margin: 0 0 24px;
+    line-height: 1.12;
+  }
+
+  .slg-panel-desc {
+    color: rgba(255,255,255,0.65);
+    font-size: 0.95rem;
+    line-height: 1.8;
+    margin-bottom: 32px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .slg-panel-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .slg-panel--right .slg-panel-links {
+    justify-content: flex-end;
+  }
+
+  .slg-panel-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--text-main);
+    border-bottom: 1.5px solid rgba(255,255,255,0.3);
+    padding-bottom: 4px;
+    transition: all 0.25s ease;
+  }
+
+  .slg-panel-link:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .slg-panel-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 28px;
+  }
+
+  .slg-panel-meta span {
+    color: var(--accent);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  /* Divider line between panels */
+  .slg-panel-divider {
+    position: relative;
+    width: 100vw;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(246,177,93,0.15) 30%, rgba(246,177,93,0.15) 70%, transparent 100%);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .slg-panel {
+      grid-template-columns: 1fr;
+      min-height: 60vh;
+      align-items: flex-end;
+    }
+
+    .slg-panel::after {
+      background: linear-gradient(
+        to top,
+        rgba(10,10,10,0.95) 0%,
+        rgba(10,10,10,0.7) 40%,
+        rgba(10,10,10,0.3) 70%,
+        transparent 100%
+      ) !important;
+    }
+
+    .slg-panel--left .slg-panel-content,
+    .slg-panel--right .slg-panel-content {
+      grid-column: 1;
+      justify-self: stretch;
+      padding: 32px 24px 48px;
+      max-width: 100%;
+      text-align: left;
+    }
+
+    .slg-panel--right .slg-panel-links {
+      justify-content: flex-start;
+    }
+
+    .slg-panel-name {
+      font-size: clamp(2rem, 7vw, 3rem);
+    }
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+{% for slg in sammlungen %}
+  {% if not forloop.first %}<div class="slg-panel-divider"></div>{% endif %}
+
+  <div class="slg-panel {% cycle 'slg-panel--left' 'slg-panel--right' %}">
+    <div class="slg-panel-bg">
+      {% if slg.cover %}
+        <img src="{{ slg.cover }}" alt="{{ slg.name }}" loading="lazy">
+      {% else %}
+        <div class="slg-panel-bg-placeholder"><i class="bi bi-collection"></i></div>
+      {% endif %}
+    </div>
+
+    <div class="slg-panel-content">
+      <div class="slg-panel-num">Kollektion {{ forloop.counter|stringformat:"02d" }}</div>
+      <h2 class="slg-panel-name">{{ slg.name }}</h2>
+      {% if slg.beschreibung %}
+        <p class="slg-panel-desc">{{ slg.beschreibung|truncatewords:35 }}</p>
+      {% endif %}
+      {% if slg.obj_count %}
+        <div class="slg-panel-meta"><span>{{ slg.obj_count }}</span> Objekte</div>
+      {% endif %}
+      <div class="slg-panel-links">
+        <a href="{{ slg.get_absolute_url }}" class="slg-panel-link">Timeline ansehen</a>
+        <a href="/browse/?q=&Slg={{ slg.id }}" class="slg-panel-link">Alle Objekte</a>
+      </div>
+    </div>
+  </div>
+{% empty %}
+  <p style="text-align:center; color:var(--text-muted); padding: 80px 20px;">
+    Derzeit sind keine Sammlungen verfügbar.
+  </p>
+{% endfor %}
+{% endblock content %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+document.querySelectorAll('.slg-panel-bg img').forEach(function(img) {
+  function reveal() {
+    img.classList.add('loaded');
+    img.parentElement.classList.add('bg-ready');
+  }
+  if (img.complete && img.naturalWidth > 0) {
+    reveal();
+  } else {
+    img.addEventListener('load', reveal);
+    img.addEventListener('error', function() {
+      img.parentElement.classList.add('bg-ready');
+    });
+  }
+});
+</script>
+{% endblock scripts %}

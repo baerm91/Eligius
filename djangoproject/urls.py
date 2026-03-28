@@ -26,12 +26,15 @@ from rest_framework import routers, serializers, viewsets
 
 from slg.api_views import ExportObjLSNO
 
-from slg.views import about, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa
+from slg.views import about, impressum, datenschutz, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa, sammlungen_uebersicht
 
 browse_view = objekt_list_view_mtoa if settings.DEBUG else cache_page(60 * 5)(objekt_list_view_mtoa)
 
 urlpatterns = [
     path('about/', about, name='about'),
+    path('impressum/', impressum, name='impressum'),
+    path('datenschutz/', datenschutz, name='datenschutz'),
+    path('sammlungen/', sammlungen_uebersicht, name='sammlungen_uebersicht'),
     path('admin/', admin.site.urls),
     #path('posts/', include('posts.urls')),
     #path('slg/', include('slg.urls')),

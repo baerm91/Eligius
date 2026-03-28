@@ -1,16 +1,12 @@
 {% extends 'slg/navbar.html' %}
-{% block title %}Eligius - Sammlung{% endblock title %}
+{% block title %}Eligius – {{Sammlung.name}}{% endblock title %}
 {% load static %}
 {% block stylesheets %}
     {{ block.super }}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <style>
-      
-      
-      
-      html {
-        height: 100%;
-      }
-      
+      html { height: 100%; }
+
       body {
         height: inherit;
         display: flex;
@@ -18,72 +14,167 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
-    
-      div.header h1 {
-        display: block;
+
+      /* ── Hero cover ── */
+      .slg-hero {
+        position: relative;
+        width: 100vw;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+        height: 400px;
+        overflow: hidden;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+      }
+
+      .slg-hero-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.45) contrast(1.1);
+      }
+
+      .slg-hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to top,
+          var(--bg-main) 0%,
+          rgba(10,10,10,0.7) 40%,
+          rgba(10,10,10,0.3) 70%,
+          transparent 100%
+        );
+        pointer-events: none;
+      }
+
+      .slg-hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding: 0 20px 48px;
+        max-width: 800px;
+      }
+
+      .slg-hero-eyebrow {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--accent);
+        margin-bottom: 14px;
+      }
+
+      .slg-hero-title {
+        font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+        font-size: clamp(2.2rem, 5vw, 4rem);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        line-height: 1.15;
+        margin: 0;
+        background: radial-gradient(ellipse 80% 100% at 50% 50%, #fff9e6 0%, #f6b15d 40%, #f6b15d 60%, #fff9e6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      @media (max-width: 768px) {
+        .slg-hero { height: 300px; }
+        .slg-hero-content { padding-bottom: 32px; }
+      }
+
+      /* ── Description section ── */
+      .slg-description {
+        max-width: 800px;
+        margin: 48px auto 0;
+        padding: 0 20px;
+        color: var(--text-muted);
+        font-size: 1.05rem;
+        line-height: 1.85;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         text-align: center;
       }
 
-      div.header h2 {
-        font-size: 1.1em;
-        font-weight: 400;
-        color: #cfd7de;
-        max-width: 30rem;
-        margin: auto;
+      .slg-description p { margin-bottom: 1rem; }
+      .slg-description a { color: var(--accent); }
+      .slg-description a:hover { color: #fcd9a0; }
+
+      /* ── Timeline section ── */
+      .slg-timeline-section {
+        max-width: 900px;
+        margin: 64px auto 0;
+        padding: 0 20px 48px;
+        position: relative;
+        z-index: 1;
       }
-      
-      div.header h3 {
-        display: block;
-        text-align: center;
-        margin-top: 2rem;
+
+      .slg-section-header {
+        margin-bottom: 40px;
       }
-      
-      div.item {
-        display: flex;
-        flex: auto;
-        overflow-y: auto;
-        padding: 0rem 1rem 0rem 1rem;
+
+      .slg-section-eyebrow {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--accent);
+        margin-bottom: 12px;
       }
-      
+
+      .slg-section-title {
+        font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: var(--text-main);
+        margin: 0;
+        line-height: 1.1;
+      }
+
+      /* ── Timeline ── */
       #timeline {
         position: relative;
         display: table;
-        height: 100%;
-        margin-left: auto;
-        margin-right: auto;
-        margin-top: 2rem;
+        width: 100%;
+        margin: 0 auto;
       }
 
-      {% comment %} Vertikale Linie {% endcomment %}
       #timeline div:after {
         content: "";
         width: 1px;
         position: absolute;
         top: 0.5rem;
-        bottom: 0rem;
+        bottom: 0;
         left: 58.5px;
         z-index: 2;
-        background: #C5C5C5;
+        background: linear-gradient(to bottom, var(--accent) 0%, var(--border-soft) 100%);
       }
+
       #timeline h3 {
         position: -webkit-sticky;
         position: sticky;
-        
-        color: #888;
+        color: var(--accent);
         margin: 0;
         font-size: 1em;
-        font-weight: 400;
+        font-weight: 600;
+        font-family: 'Plus Jakarta Sans', sans-serif;
       }
-      
-      #timeline section.year {
-        position: relative;
-      }
-      
+
+      #timeline section.year { position: relative; }
+
       #timeline section.year section {
         position: relative;
         padding-bottom: 1.25em;
         margin-bottom: 1.2em;
       }
+
       #timeline section.year section h4 {
         position: absolute;
         bottom: 0;
@@ -92,116 +183,143 @@
         line-height: 1.2em;
         margin: 0;
         padding: 0 0 0 89px;
-        color: #C5C5C5;
+        color: var(--text-muted);
       }
+
       #timeline section.year section h6 {
         position: absolute;
-        
         font-size: 0.9em;
         font-weight: 400;
-        
-        color: #C5C5C5;
-      } 
-      
+        color: var(--text-muted);
+      }
+
       #timeline section.year section ul {
         list-style-type: none;
         padding: 0 0 0 75px;
         margin: -1.35rem 0 1em;
         max-width: 50rem;
       }
-      
-      #timeline section.year section ul:last-child {
-        margin-bottom: 0;
-      }
+
+      #timeline section.year section ul:last-child { margin-bottom: 0; }
+
       #timeline section.year section ul:first-of-type:after {
         content: "";
         width: 10px;
         height: 10px;
-        background: #C5C5C5;
-        border: 2px solid #FFFFFF;
-        -webkit-border-radius: 50%;
-        -moz-border-radius: 50%;
-        -ms-border-radius: 50%;
+        background: var(--accent);
+        border: 2px solid var(--bg-surface);
         border-radius: 50%;
         position: absolute;
         left: 54px;
         top: 5px;
         z-index: 2;
+        box-shadow: 0 0 8px var(--accent-glow);
       }
+
       #timeline section.year section ul li {
         margin-left: 1rem;
+        color: var(--text-main);
+        line-height: 1.7;
       }
+
       #timeline section.year section ul li:before {
         content: "•";
         margin-left: -0.8rem;
-        {% comment %} padding-right: 0.5rem; {% endcomment %}
+        color: var(--accent);
       }
-      #timeline section.year section ul li:not(:first-child) {
-        margin-top: 0.5rem;
-      }
-      
-      .zeile {
+
+      #timeline section.year section ul li:not(:first-child) { margin-top: 0.5rem; }
+
+      .zeile { display: flex; }
+
+      /* ── Loader ── */
+      .slg-loader {
         display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 0;
       }
-      
-      /* Loader-Animation */
-      .loader {
-        border: 5px solid #f3f3f3;
+
+      .slg-loader-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--border-soft);
+        border-top-color: var(--accent);
         border-radius: 50%;
-        border-top: 5px solid #3498db;
-        width: 50px;
-        height: 50px;
-        -webkit-animation: spin 2s linear infinite;
-        animation: spin 2s linear infinite;
-        margin: 20px auto;
+        animation: slgSpin 0.8s linear infinite;
       }
 
-      @-webkit-keyframes spin {
-        0% { -webkit-transform: rotate(0deg); }
-        100% { -webkit-transform: rotate(360deg); }
+      @keyframes slgSpin {
+        to { transform: rotate(360deg); }
       }
 
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+      /* ── Timeline badges (persons) ── */
+      #timeline .badge-info,
+      #timeline .badge {
+        background: linear-gradient(135deg, rgba(246,177,93,0.18) 0%, rgba(212,148,74,0.10) 100%);
+        border: 1px solid rgba(246,177,93,0.28);
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 0.78rem;
+        padding: 4px 10px;
+        border-radius: 999px;
+        text-decoration: none;
+        transition: all 0.2s ease;
       }
-      </style>
-      
-        
+
+      #timeline .badge-info:hover,
+      #timeline .badge:hover {
+        background: rgba(246,177,93,0.25);
+        border-color: rgba(246,177,93,0.5);
+        color: #fff;
+      }
+
+      /* ── Empty state ── */
+      .slg-empty {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 40px 0;
+        font-size: 0.95rem;
+      }
+    </style>
 {% endblock stylesheets %}
 {% block content %}
-{% comment %} {% load qurl %} {% endcomment %}
 {% load slg_extras %}
 
-<div class="container">
-  <p>
-  <img src="{{Sammlung.cover}}" class="img-fluid rounded" alt="Responsive image">
-  </p>
-</div>
-<br>
-<div class="container">
-  <div class="header">
-    
-    <h1>{{Sammlung.name}}</h1>
-    {{Sammlung.beschreibung}}
+<!-- Hero Cover -->
+<div class="slg-hero">
+  {% if Sammlung.cover %}
+    <img src="{{Sammlung.cover}}" alt="{{Sammlung.name}}" class="slg-hero-img">
+  {% endif %}
+  <div class="slg-hero-overlay"></div>
+  <div class="slg-hero-content">
+    <div class="slg-hero-eyebrow">Sammlung</div>
+    <h1 class="slg-hero-title">{{Sammlung.name}}</h1>
   </div>
 </div>
-<br>
-<div class="container">
-  <div class="header">
-    
-    <h3 id="timeline-title">Geschichte der Münzsammlung</h3>
-    {% comment %} <h2>A timeline that shows bitcoin History from the idea all the way to present day.</h2> {% endcomment %}
+
+<!-- Description -->
+{% if Sammlung.beschreibung %}
+<div class="slg-description">
+  {{Sammlung.beschreibung}}
+</div>
+{% endif %}
+
+<!-- Timeline -->
+<div class="slg-timeline-section">
+  <div class="slg-section-header">
+    <div class="slg-section-eyebrow">Chronik</div>
+    <h2 class="slg-section-title" id="timeline-title">Geschichte der Münzsammlung</h2>
   </div>
-  <div class="item">
-    <div id="timeline">
-      <div id="timeline-content">
-        <!-- Hier werden die Zeitleisten-Informationen dynamisch eingefügt -->
-        <div class="loader"></div>
+  <div id="timeline">
+    <div id="timeline-content">
+      <div class="slg-loader">
+        <div class="slg-loader-spinner"></div>
       </div>
     </div>
   </div>
 </div>
+
 {% include "slg/modal.html" %}
 {% endblock content %}
 {% block scripts %}
@@ -290,10 +408,10 @@
               <span style="float:right;">
                 ${referenzenHtml}<br>
               </span>
-              <span style="text-align:left;color:#afaeae">
+              <span style="text-align:left;color:var(--text-muted)">
                 ${info.dat_verb || ''}
               </span>
-              <p style="text-align:right;color:#afaeae">
+              <p style="text-align:right;color:var(--text-muted)">
                 ${personenHtml}
               </p>
             </li>`;
@@ -304,7 +422,7 @@
             timelineHTML += '</ul></section></section>';
           }
         } else {
-          timelineHTML = '<p>Keine Ereignisse für diese Sammlung gefunden.</p>';
+          timelineHTML = '<p class="slg-empty">Keine Ereignisse für diese Sammlung gefunden.</p>';
         }
         
         // Setze den Timeline-Inhalt
@@ -316,7 +434,7 @@
       } catch (error) {
         console.error('Fehler beim Laden der Zeitleisten-Daten:', error);
         document.getElementById('timeline-content').innerHTML = 
-          '<p>Fehler beim Laden der Daten. Bitte versuchen Sie es später erneut.</p>';
+          '<p class="slg-empty">Fehler beim Laden der Daten. Bitte versuchen Sie es später erneut.</p>';
       }
     }
     

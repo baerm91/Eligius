@@ -1,0 +1,160 @@
+{% extends 'slg/navbar.html' %}
+{% block title %}Eligius – Datenschutzerklärung{% endblock title %}
+{% load static %}
+
+{% block stylesheets %}
+{{ block.super }}
+<style>
+  .legal-sections {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  .legal-page-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-main);
+    margin: 0 0 48px;
+    line-height: 1.15;
+  }
+
+  .legal-block {
+    padding: 40px 0;
+    border-top: 1px solid rgba(246, 177, 93, 0.12);
+  }
+
+  .legal-block:last-child {
+    border-bottom: 1px solid rgba(246, 177, 93, 0.12);
+  }
+
+  .legal-block h3 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin: 0 0 20px;
+  }
+
+  .legal-block p {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.95rem;
+    line-height: 1.85;
+    margin: 0;
+  }
+
+  .legal-block p + p {
+    margin-top: 16px;
+  }
+
+  .legal-block ul {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.95rem;
+    line-height: 1.85;
+    margin: 12px 0 0;
+    padding-left: 20px;
+  }
+
+  .legal-block li + li {
+    margin-top: 4px;
+  }
+
+  .legal-block a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .legal-block a:hover {
+    color: var(--accent-2, #d4944a);
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="legal-sections">
+  <h1 class="legal-page-title">Datenschutzerklärung</h1>
+
+  <div class="legal-block">
+    <h3>Verantwortlicher</h3>
+    <p>
+      Universität für Weiterbildung Krems<br>
+      Zentrum für Museale Sammlungswissenschaften<br>
+      Dr.-Karl-Dorrek-Straße 30, 3500 Krems an der Donau, Österreich<br>
+      E-Mail: <a href="mailto:martin.baer@donau-uni.ac.at">martin.baer@donau-uni.ac.at</a>
+    </p>
+  </div>
+
+  <div class="legal-block">
+    <h3>Erhebung und Verarbeitung von Daten</h3>
+    <p>
+      Beim Besuch dieser Website werden automatisch technische Informationen erfasst,
+      die Ihr Browser an unseren Server übermittelt. Dazu gehören:
+    </p>
+    <ul>
+      <li>IP-Adresse (anonymisiert)</li>
+      <li>Datum und Uhrzeit des Zugriffs</li>
+      <li>Aufgerufene Seite bzw. Datei</li>
+      <li>Browsertyp und -version</li>
+      <li>Betriebssystem</li>
+      <li>Referrer-URL (zuvor besuchte Seite)</li>
+    </ul>
+    <p>
+      Diese Daten werden ausschließlich zur Sicherstellung eines reibungslosen
+      Verbindungsaufbaus und zur Systemsicherheit verarbeitet. Eine Zusammenführung
+      mit anderen Datenquellen findet nicht statt.
+    </p>
+  </div>
+
+  <div class="legal-block">
+    <h3>Cookies</h3>
+    <p>
+      Diese Website verwendet Cookies. Technisch notwendige Cookies gewährleisten die
+      Grundfunktionalität der Website und werden automatisch gesetzt. Analyse-Cookies
+      (Google Analytics) werden nur mit Ihrer ausdrücklichen Einwilligung über den
+      Cookie-Banner aktiviert. Sie können Ihre Einwilligung jederzeit widerrufen, indem
+      Sie die Cookies in Ihrem Browser löschen.
+    </p>
+  </div>
+
+  <div class="legal-block">
+    <h3>Google Analytics</h3>
+    <p>
+      Diese Website nutzt Google Analytics, einen Webanalysedienst der Google Ireland
+      Limited, Gordon House, Barrow Street, Dublin 4, Irland. Google Analytics verwendet
+      Cookies, die eine Analyse Ihrer Nutzung der Website ermöglichen. Die durch das Cookie
+      erzeugten Informationen werden in der Regel an einen Server von Google in den USA
+      übertragen und dort gespeichert. Durch die Aktivierung der IP-Anonymisierung auf
+      dieser Website wird Ihre IP-Adresse von Google innerhalb von Mitgliedstaaten der
+      Europäischen Union zuvor gekürzt.
+    </p>
+    <p>
+      Google Analytics wird nur aktiviert, wenn Sie über den Cookie-Banner Ihre
+      ausdrückliche Einwilligung erteilt haben. Die Rechtsgrundlage ist Art. 6 Abs. 1
+      lit. a DSGVO (Einwilligung).
+    </p>
+  </div>
+
+  <div class="legal-block">
+    <h3>Ihre Rechte</h3>
+    <p>
+      Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der
+      Verarbeitung Ihrer personenbezogenen Daten. Darüber hinaus steht Ihnen ein
+      Beschwerderecht bei der zuständigen Aufsichtsbehörde
+      (Österreichische Datenschutzbehörde, <a href="https://www.dsb.gv.at" target="_blank" rel="noopener">www.dsb.gv.at</a>) zu.
+    </p>
+    <p>
+      Bei Fragen zum Datenschutz wenden Sie sich bitte an:
+      <a href="mailto:martin.baer@donau-uni.ac.at">martin.baer@donau-uni.ac.at</a>
+    </p>
+  </div>
+</div>
+{% endblock content %}

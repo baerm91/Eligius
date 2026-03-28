@@ -1,50 +1,279 @@
 {% extends 'slg/navbar.html' %}
+{% block title %}Eligius – Projekt{% endblock title %}
 {% load static %}
 
-{% block title %}Eligius - Über uns{% endblock title %}
-
 {% block stylesheets %}
-    {{ block.super }}
+{{ block.super }}
+<style>
+  /* ── Content sections ── */
+  .about-sections {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  .about-block {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 40px;
+    padding: 56px 0;
+    border-top: 1px solid rgba(246, 177, 93, 0.12);
+    align-items: start;
+  }
+
+  .about-block:last-child {
+    border-bottom: 1px solid rgba(246, 177, 93, 0.12);
+  }
+
+  .about-block-label {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    padding-top: 6px;
+    line-height: 1.4;
+  }
+
+  .about-block-body h3 {
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--text-main);
+    margin: 0 0 20px;
+    line-height: 1.15;
+  }
+
+  .about-block-body p {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.95rem;
+    line-height: 1.85;
+    margin: 0;
+  }
+
+  .about-block-body p + p {
+    margin-top: 16px;
+  }
+
+  /* ── Partner logos / cards ── */
+  .about-partners {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 8px;
+  }
+
+  .about-partner-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+    letter-spacing: 0.02em;
+    transition: border-color 0.25s ease, background 0.25s ease;
+  }
+
+  .about-partner-tag:hover {
+    border-color: rgba(246, 177, 93, 0.3);
+    background: rgba(246, 177, 93, 0.04);
+  }
+
+  .about-partner-tag i {
+    color: var(--accent);
+    font-size: 1rem;
+  }
+
+  /* ── CTA section (matches index contact style) ── */
+  .about-cta {
+    position: relative;
+    width: 100vw;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    background: linear-gradient(180deg,
+      rgba(10, 10, 10, 0.85) 0%,
+      rgba(10, 10, 10, 0.6) 30%,
+      rgba(10, 10, 10, 0.6) 70%,
+      rgba(10, 10, 10, 0.85) 100%
+    );
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    padding: 80px 24px;
+    text-align: center;
+    z-index: 1;
+  }
+
+  .about-cta-inner {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .about-cta-eyebrow {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .about-cta-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-main);
+    margin: 0 0 20px;
+    line-height: 1.15;
+  }
+
+  .about-cta-text {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.95rem;
+    line-height: 1.8;
+    margin-bottom: 36px;
+  }
+
+  .about-cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 32px;
+    background: var(--accent);
+    color: #000;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 50px;
+    transition: background 0.25s ease, transform 0.15s ease;
+  }
+
+  .about-cta-link:hover {
+    background: var(--accent-2, #d4944a);
+    color: #000;
+    transform: translateY(-2px);
+  }
+
+  /* ── Divider ── */
+  .about-divider {
+    position: relative;
+    width: 100vw;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(246, 177, 93, 0.15) 30%, rgba(246, 177, 93, 0.15) 70%, transparent 100%);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .about-block {
+      grid-template-columns: 1fr;
+      gap: 12px;
+      padding: 40px 0;
+    }
+
+    .about-block-label {
+      padding-top: 0;
+    }
+
+    .about-partners {
+      flex-direction: column;
+    }
+
+    .about-partner-tag {
+      width: 100%;
+    }
+  }
+</style>
 {% endblock stylesheets %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="about-header text-center mb-5">
-                <h1>Über Eligius</h1>
-                <p class="lead">Eine Plattform für numismatische Sammlungen aus Österreich</p>
-            </div>
-            
-            <div class="about-section mb-5">
-                <h2>Das Projekt</h2>
-                <p>Eligius wurde von Martin Baer und Wolfgang Szaivert ins Leben gerufen – aus dem Wunsch heraus, eine digitale Lösung zu schaffen, die sich den besonderen Anforderungen numismatischer Sammlungen anpasst. Münzsammlungen von großer historischer Bedeutung lagern in österreichischen Klöstern, Museen und öffentlichen Einrichtungen – doch oft bleiben sie wenig bekannt und schwer zugänglich. Unsere Mission ist es, das zu ändern, indem wir eine Plattform bieten, die flexibel anpassbar ist. So können auch Sammlungen mit begrenzten Mitteln ihre Münzen umfassend digital erschließen und langfristig sichern. Bereits jetzt umfasst Eligius bedeutende Bestände aus öffentlichen und klösterlichen Sammlungen.</p>
-            </div>
-            
-            <div class="about-section mb-5">
-                <h2>Unsere Vision</h2>
-                <p>Wir wollen Eligius weiterentwickeln zu einer Sammlung, die jede Münze als Teil eines größeren Geflechts aus Geschichte, Wirtschaft und Kultur zeigt. Statt nur Material oder Prägung zu beschreiben, soll die Datenbank künftig Verknüpfungen sichtbar machen – zu den Ereignissen hinter ihrer Entstehung, den Zielen der Münzstätten und dem Alltag der Menschen, die sie in Händen hielten. Ziel ist es, jede Münze zu einem Fenster in ihre Zeit zu machen, das über das Prägeprogramm hinausreicht und sie mit den Strömungen ihrer Epoche verbindet.</p>
-            </div>
-            
-            <div class="about-section mb-5">
-                <h2>Zusammenarbeit</h2>
-                <p>Wir denken an die Zukunft: Gemeinsam mit den Sammlungen entwickeln wir Eligius kontinuierlich weiter und passen es an ihre Bedürfnisse an. Das Projekt lebt vom Austausch mit numismatischen Einrichtungen, Forschenden und Begeisterten. Durch die Zusammenarbeit entstehen Synergien, die Insellösungen vermeiden und einen Mehrwert für die Öffentlichkeit schaffen.</p>
-            </div>
-            
-            <div class="about-section mb-5">
-                <h2>Partner</h2>
-                <p>Eligius wird unterstützt durch die Expertise der Landessammlungen Niederösterreich, des Instituts für Numismatik und Geldgeschichte der Universität Wien und der Universität für Weiterbildung Krems.</p>
-            </div>
-            
-            <div class="about-section">
-                <h2>Mitmachen</h2>
-                <p>Wir laden alle österreichischen Sammlungen – klösterliche wie öffentliche – ein, sich uns anzuschließen, um ihre Objekte gemeinsam mit anderen auf Eligius zu präsentieren und den Zugang zu diesen numismatischen Zeugnissen zu öffnen. Haben Sie Fragen oder möchten Sie teilnehmen? Kontaktieren Sie uns unter <a href="mailto:martin.baer@donau-uni.ac.at">martin.baer@donau-uni.ac.at</a>.</p>
-            </div>
-        </div>
+<div class="about-sections">
+
+  <div class="about-block">
+    <div class="about-block-label">Entstehung</div>
+    <div class="about-block-body">
+      <h3>Das Projekt</h3>
+      <p>Eligius wurde von Martin Baer und Wolfgang Szaivert ins Leben gerufen – aus dem Wunsch heraus, eine digitale Lösung zu schaffen, die sich den besonderen Anforderungen numismatischer Sammlungen anpasst. Münzsammlungen von großer historischer Bedeutung lagern in österreichischen Klöstern, Museen und öffentlichen Einrichtungen – doch oft bleiben sie wenig bekannt und schwer zugänglich.</p>
+      <p>Unsere Mission ist es, das zu ändern, indem wir eine Plattform bieten, die flexibel anpassbar ist. So können auch Sammlungen mit begrenzten Mitteln ihre Münzen umfassend digital erschließen und langfristig sichern. Bereits jetzt umfasst Eligius bedeutende Bestände aus öffentlichen und klösterlichen Sammlungen.</p>
     </div>
+  </div>
+
+  <div class="about-block">
+    <div class="about-block-label">Vision</div>
+    <div class="about-block-body">
+      <h3>Unsere Vision</h3>
+      <p>Wir wollen Eligius weiterentwickeln zu einer Sammlung, die jede Münze als Teil eines größeren Geflechts aus Geschichte, Wirtschaft und Kultur zeigt. Statt nur Material oder Prägung zu beschreiben, soll die Datenbank künftig Verknüpfungen sichtbar machen – zu den Ereignissen hinter ihrer Entstehung, den Zielen der Münzstätten und dem Alltag der Menschen, die sie in Händen hielten.</p>
+      <p>Ziel ist es, jede Münze zu einem Fenster in ihre Zeit zu machen, das über das Prägeprogramm hinausreicht und sie mit den Strömungen ihrer Epoche verbindet.</p>
+    </div>
+  </div>
+
+  <div class="about-block">
+    <div class="about-block-label">Kooperation</div>
+    <div class="about-block-body">
+      <h3>Zusammenarbeit</h3>
+      <p>Wir denken an die Zukunft: Gemeinsam mit den Sammlungen entwickeln wir Eligius kontinuierlich weiter und passen es an ihre Bedürfnisse an. Das Projekt lebt vom Austausch mit numismatischen Einrichtungen, Forschenden und Begeisterten. Durch die Zusammenarbeit entstehen Synergien, die Insellösungen vermeiden und einen Mehrwert für die Öffentlichkeit schaffen.</p>
+    </div>
+  </div>
+
+  <div class="about-block">
+    <div class="about-block-label">Partner</div>
+    <div class="about-block-body">
+      <h3>Institutionelle Partner</h3>
+      <p>Eligius wird unterstützt durch die Expertise ausgewählter Einrichtungen der österreichischen Wissenschafts- und Kulturlandschaft.</p>
+      <div class="about-partners">
+        <div class="about-partner-tag">
+          <i class="bi bi-building"></i>
+          Landessammlungen Niederösterreich
+        </div>
+        <div class="about-partner-tag">
+          <i class="bi bi-mortarboard"></i>
+          Institut für Numismatik und Geldgeschichte, Universität Wien
+        </div>
+        <div class="about-partner-tag">
+          <i class="bi bi-bank"></i>
+          Universität für Weiterbildung Krems
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="about-cta">
+  <div class="about-cta-inner">
+    <div class="about-cta-eyebrow">Mitmachen</div>
+    <h2 class="about-cta-title">Werden Sie Teil von Eligius</h2>
+    <p class="about-cta-text">
+      Wir laden alle österreichischen Sammlungen – klösterliche wie öffentliche – ein, sich uns anzuschließen, um ihre Objekte gemeinsam auf Eligius zu präsentieren und den Zugang zu numismatischen Zeugnissen zu öffnen.
+    </p>
+    <a href="mailto:martin.baer@donau-uni.ac.at" class="about-cta-link">
+      <i class="bi bi-envelope"></i>
+      Kontakt aufnehmen
+    </a>
+  </div>
 </div>
 {% endblock content %}
 
 {% block scripts %}
-    {{ block.super }}
+{{ block.super }}
 {% endblock scripts %}

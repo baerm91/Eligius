@@ -1,21 +1,3 @@
-// Global plugin registration to ensure it's available
-  document.addEventListener('DOMContentLoaded', function () {
-    if (typeof Chart !== 'undefined' && typeof ChartZoom !== 'undefined') {
-      console.log("Registering ChartZoom plugin globally");
-      Chart.register(ChartZoom);
-    } else if (window.Chart && window.ChartZoom) {
-      console.log("Registering ChartZoom plugin via window object");
-      window.Chart.register(window.ChartZoom);
-    } else {
-      console.error("Chart.js or ChartZoom plugin not found - cannot register plugin");
-
-      // Try to detect what's available
-      console.log("Chart available:", typeof Chart !== 'undefined');
-      console.log("ChartZoom available:", typeof ChartZoom !== 'undefined');
-      console.log("window.Chart available:", typeof window.Chart !== 'undefined');
-      console.log("window.ChartZoom available:", typeof window.ChartZoom !== 'undefined');
-    }
-  });
 
 document.addEventListener("DOMContentLoaded", function () {
     // Initialize date range slider
@@ -88,87 +70,9 @@ document.addEventListener("DOMContentLoaded", function () {
         window.location.href = url.toString();
       });
 
-      // Update min/max year values from chart data when available
-      if (window.barChart && barChart.data && barChart.data.labels) {
-        try {
-          const years = barChart.data.labels.map(year => parseInt(year));
-          if (years.length > 0) {
-            minYear = Math.min(...years);
-            maxYear = Math.max(...years);
-
-            // Check if min and max are equal (noUiSlider doesn't allow this)
-            if (minYear === maxYear) {
-              // Add a small range around the single year
-              minYear = minYear - 1;
-              maxYear = maxYear + 1;
-              console.log(`Adjusted initial range to avoid equal min/max: ${minYear} - ${maxYear}`);
-            }
-
-            // Update slider range if needed
-            if (minYear !== dateSlider.noUiSlider.options.range.min ||
-              maxYear !== dateSlider.noUiSlider.options.range.max) {
-
-              dateSlider.noUiSlider.updateOptions({
-                range: {
-                  'min': minYear,
-                  'max': maxYear
-                }
-              }, true);
-            }
-          }
-        } catch (error) {
-          console.error("Error updating date slider range:", error);
-        }
-      }
     }
   });
 
-// Reset-Button-Handler
-  document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('resetZoomBtn').addEventListener('click', function () {
-      if (window.barChart && typeof window.barChart.resetZoom === 'function') {
-        window.barChart.resetZoom();
-        console.log("Zoom zurückgesetzt");
-      } else {
-        console.error("Reset-Funktion nicht verfügbar");
-      }
-    });
-
-    // Chart Zoom Control Buttons
-    document.getElementById('chartZoomIn').addEventListener('click', function () {
-      if (window.barChart && window.barChart.zoom) {
-        window.barChart.zoom(1.1);
-      } else {
-        console.error("Zoom-Funktion nicht verfügbar");
-      }
-    });
-
-    document.getElementById('chartZoomOut').addEventListener('click', function () {
-      if (window.barChart && window.barChart.zoom) {
-        window.barChart.zoom(0.9);
-      } else {
-        console.error("Zoom-Funktion nicht verfügbar");
-      }
-    });
-
-    document.getElementById('chartZoomReset').addEventListener('click', function () {
-      if (window.barChart && typeof window.barChart.resetZoom === 'function') {
-        window.barChart.resetZoom();
-      } else {
-        console.error("Reset-Funktion nicht verfügbar");
-      }
-    });
-
-    // Chart canvas wheel event
-    const chartCanvas = document.getElementById('objectsBarChart');
-    if (chartCanvas) {
-      chartCanvas.addEventListener('wheel', function (e) {
-        if (e.ctrlKey && window.barChart) {
-          console.log("Ctrl+Wheel detected on chart");
-        }
-      });
-    }
-  });
 
 // BFCache-Unterstützung implementieren
   document.addEventListener('DOMContentLoaded', function () {
@@ -219,9 +123,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
-      // Chart initialisieren falls noch nicht geschehen  
-      if (!window.barChart && typeof loadBarChartData === 'function') {
-        loadBarChartData();
+      if (!window.browseChart && typeof loadChartData === 'function') {
+        loadChartData();
       }
     }
 
@@ -241,10 +144,9 @@ document.addEventListener("DOMContentLoaded", function () {
         window.map = null;
       }
 
-      // Chart cleanup
-      if (window.barChart && window.barChart.destroy) {
-        window.barChart.destroy();
-        window.barChart = null;
+      if (window.browseChart && window.browseChart.dispose) {
+        window.browseChart.dispose();
+        window.browseChart = null;
       }
 
       // Event Listeners cleanup

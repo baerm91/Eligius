@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.core import serializers
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import connection
-from django.db.models import Prefetch, Q, Count, Max, Min, Avg, F, Exists, OuterRef, Subquery
+from django.db.models import Prefetch, Q, Count, Max, Min, Avg, F, Exists, OuterRef, Subquery, Case, When, Value, IntegerField
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.forms import inlineformset_factory, modelformset_factory
 from django.shortcuts import render , get_object_or_404, redirect
@@ -319,10 +319,7 @@ def MzUpdate(request, id):
    return render(request, 'slg/obj_form.html', context)
 
 def index(request):
-    # Nur minimale Daten für das initiale Rendering laden
-    kategorien = SlgKategorie.objects.all()  # Diese sind vermutlich wenige Datensätze und wichtig für die Struktur
-
-    # Die 10 zuletzt bearbeiteten Einträge aus MuenztypObjektAnzeige laden
+    kategorien = SlgKategorie.objects.all()
     latest_entries = MuenztypObjektAnzeige.objects.exclude(obj_id__isnull=True).order_by('-last_modified')[:10]
 
     context = {
@@ -331,6 +328,18 @@ def index(request):
     }
     
     return render(request, 'slg/index.html', context)
+
+
+def sammlungen_uebersicht(request):
+    sammlungen = (
+        Slg.objects
+        .only('id', 'name', 'beschreibung', 'cover')
+        .annotate(obj_count=Count('obj'))
+        .order_by('-obj_count', 'name')
+    )
+    return render(request, 'slg/sammlungen_uebersicht.html', {
+        'sammlungen': sammlungen,
+    })
 
 # Neue API-Endpoints für die ausgelagerten Daten
 
@@ -1358,6 +1367,12 @@ def objekt_aenderung(request, objekt_id):
 def about(request):
     return render(request, 'slg/about.html')
 
+def impressum(request):
+    return render(request, 'slg/impressum.html')
+
+def datenschutz(request):
+    return render(request, 'slg/datenschutz.html')
+
 def graph_view(request):
     """View function to display the graph visualization tool."""
     return render(request, 'slg/graphv0.2.html')
@@ -1494,7 +1509,14 @@ def _get_filtered_mtoa_queryset(request):
     if needs_distinct:
         qs = qs.distinct()
 
-    return qs.order_by('datierung_von', 'datierung_bis'), is_unbestimmt, needs_distinct
+    qs = qs.annotate(
+        _unbestimmt_sort=Case(
+            When(typ_fk__isnull=True, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        )
+    )
+    return qs.order_by('_unbestimmt_sort', 'datierung_von', 'datierung_bis', 'pk'), is_unbestimmt, needs_distinct
 
 # Neuer Endpoint für Chart-Daten
 def area_chart_data(request):

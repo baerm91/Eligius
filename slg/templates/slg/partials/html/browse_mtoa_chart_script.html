@@ -1,75 +1,36 @@
 <script>
-  // ========== CHART-CODE (WIEDERHERGESTELLT) ==========
-  // Globale Chart-Variable definieren
-  let barChart;
+  let browseChart = null;
 
   document.addEventListener("DOMContentLoaded", function () {
-    // 1. Überprüfe, ob die Plugins geladen wurden
-    console.log("Chart.js version:", Chart.version);
-    console.log("ChartZoom Plugin loaded:", typeof ChartZoom !== 'undefined');
-
-    // 2. Lade Daten und erstelle Chart
-    loadBarChartData();
+    loadChartData();
   });
 
-  function loadBarChartData() {
+  function loadChartData() {
     const apiEndpoint = "{% url 'area_chart_data' %}";
     const fetchUrl = apiEndpoint + window.location.search;
 
-    console.log("Lade Daten von:", fetchUrl);
-
     fetch(fetchUrl)
       .then(r => {
-        console.log("Server-Antwort Status:", r.status);
-        if (!r.ok) {
-          throw new Error(`Server-Antwort fehlgeschlagen: ${r.status} ${r.statusText}`);
-        }
+        if (!r.ok) throw new Error(`Server-Antwort fehlgeschlagen: ${r.status} ${r.statusText}`);
         return r.json();
       })
       .then(data => {
-        console.log("Rohdaten vom Server:", data);
-
-        // Fehlerverarbeitung
         if (data.error) {
-          console.error("Server-Fehler:", data.error);
-          const errorDetails = data.details || '';
-          showErrorChart(`${data.error}${errorDetails ? '\n' + errorDetails : ''}`);
-
-          if (data.debug) {
-            console.log("Debug-Info trotz Fehler:", data.debug);
-          }
+          showEmptyChart(`${data.error}${data.details ? '\n' + data.details : ''}`);
           return;
         }
 
-        // Debug-Informationen
-        if (data.debug) {
-          console.log("Chart-Daten Debug:", data.debug);
-        }
-
-        // Prüfen auf leere Daten
         if (!data.years || data.years.length === 0) {
-          console.warn("Keine Jahres-Daten vorhanden:", data);
           showEmptyChart("Keine Daten für diesen Zeitraum verfügbar");
           return;
         }
 
-        // Basics bereiten
         let years = data.years || [];
         let absoluteValues = data.counts || [];
 
-        const serverMin = years.length ? years[0] : null;
-        const serverMax = years.length ? years[years.length - 1] : null;
-
-        // Wenn Datierungsfilter aktiv, Daten auf den Filterbereich zuschneiden
         const urlParams = new URLSearchParams(window.location.search);
         const filterFrom = parseInt(urlParams.get('dat_von'), 10);
         const filterTo   = parseInt(urlParams.get('dat_bis'), 10);
-
-        console.log("[Chart-Filter] URL dat_von=" + urlParams.get('dat_von') +
-          ", dat_bis=" + urlParams.get('dat_bis') +
-          " → parsed filterFrom=" + filterFrom + ", filterTo=" + filterTo);
-        console.log("[Chart-Filter] Server lieferte " + years.length +
-          " Jahre, Bereich: " + serverMin + " bis " + serverMax);
 
         if (Number.isFinite(filterFrom) || Number.isFinite(filterTo)) {
           const lo = Number.isFinite(filterFrom) ? filterFrom : -Infinity;
@@ -80,160 +41,168 @@
             return acc;
           }, { y: [], c: [] });
 
-          console.log("[Chart-Filter] Nach Zuschnitt auf [" + lo + ", " + hi + "]: " +
-            filtered.y.length + " Jahre übrig (vorher " + years.length + ")");
-
           years = filtered.y;
           absoluteValues = filtered.c;
-        } else {
-          console.log("[Chart-Filter] Kein Datierungsfilter aktiv → alle Jahre übernommen");
         }
 
-        const labels = years.map(y => y.toString());
+        renderEChart(years, absoluteValues);
 
-        console.log("[Chart] Finale Zeitreihe:", {
-          von: years[0], bis: years[years.length - 1],
-          anzahlJahre: years.length,
-          gesamtObjekte: absoluteValues.reduce((sum, v) => sum + v, 0),
-        });
-
-        // Chart-Element
-        const canvas = document.getElementById('objectsBarChart');
-        const ctx = canvas.getContext('2d');
-
-        // Alte Instanz zerstören
-        if (barChart) {
-          console.log("Zerstöre alten Chart");
-          barChart.destroy();
-        }
-
-        // Check if the zoom plugin is available
-        if (!Chart.helpers || !Chart.helpers.merge) {
-          console.error("Chart.helpers.merge not available");
-        }
-
-        // Neuen Chart erstellen
-        console.log("Erstelle neuen Chart");
-        barChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Anzahl der Objekte',
-              data: absoluteValues,
-              backgroundColor: 'rgba(32, 178, 170, 0.5)',
-              borderColor: 'rgb(0, 139, 139)',
-              borderWidth: 2,
-              fill: true,
-              tension: 0.3,
-              pointRadius: 4,
-              pointBackgroundColor: 'rgb(0, 139, 139)',
-              pointBorderColor: '#fff',
-              pointBorderWidth: 1,
-              spanGaps: false,
-              absoluteValues: absoluteValues
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: {
-                title: { display: true, text: 'Jahr' }
-              },
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: 'Stückzahl' }
-              }
-            },
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    const count = context.raw;
-
-                    return `Stückzahl: ${count} Objekte`;
-                  }
-                }
-              },
-              zoom: {
-                limits: {
-                  y: { min: 0 }
-                },
-                pan: {
-                  enabled: true,
-                  mode: 'x',
-                  threshold: 10
-                },
-                zoom: {
-                  wheel: {
-                    enabled: true,
-                    modifierKey: 'ctrl'
-                  },
-                  pinch: {
-                    enabled: true
-                  },
-                  mode: 'x'
-                }
-              }
-            },
-            onHover: (event, elements) => {
-              event.native.target.style.cursor = elements.length ? 'pointer' : 'grab';
-            }
-          }
-        });
-
-        // Add direct wheel event handler to the chart canvas
-        const chartCanvas = document.getElementById('objectsBarChart');
-        chartCanvas.addEventListener('wheel', function (e) {
-          if (e.ctrlKey) {
-            console.log("Direct Ctrl+wheel event on chart detected");
-            e.preventDefault();
-          }
-        }, { passive: false });
-
-        console.log("Chart erstellt:", barChart);
-
-        // Chart in globalen Scope setzen für andere Funktionen
-        window.barChart = barChart;
-
-        // Update date slider range based on chart data
         if (years.length > 0) {
           updateDateSliderRange(years[0], years[years.length - 1]);
         }
       })
       .catch(err => {
-        console.error("Chart-Daten Fehler:", err);
-        showErrorChart(err.message);
+        showEmptyChart(err.message);
       });
   }
 
-  // Function to update date slider range
+  function formatYear(value) {
+    const n = parseInt(value, 10);
+    if (isNaN(n)) return value;
+    if (n < 0) return Math.abs(n) + ' v.Chr.';
+    if (n === 0) return '0';
+    return n.toString();
+  }
+
+  function renderEChart(years, absoluteValues) {
+    const container = document.getElementById('objectsBarChart');
+    if (!container) return;
+
+    if (browseChart) {
+      browseChart.dispose();
+    }
+
+    browseChart = echarts.init(container, null, { renderer: 'canvas' });
+
+    const labels = years.map(y => y.toString());
+
+    const accentColor = '#f6b15d';
+    const accentRgba  = 'rgba(246, 177, 93, 0.12)';
+    const textColor   = '#d4c5a0';
+    const axisColor   = '#8a7d65';
+    const gridColor   = 'rgba(255, 255, 255, 0.06)';
+    const gridDashed  = 'rgba(255, 255, 255, 0.04)';
+    const bgColor     = '#161616';
+    const tooltipBg   = 'rgba(16, 16, 16, 0.95)';
+    const sliderBorder = 'rgba(246, 177, 93, 0.25)';
+    const sliderText   = '#a89a7e';
+
+    const option = {
+      backgroundColor: bgColor,
+      grid: {
+        left: '5%', right: '5%', top: '10%', bottom: '18%',
+        containLabel: true
+      },
+      dataZoom: [
+        { type: 'inside', start: 0, end: 100 },
+        {
+          type: 'slider', start: 0, end: 100, bottom: '3%',
+          borderColor: sliderBorder,
+          textStyle: { color: sliderText },
+          dataBackground: {
+            lineStyle: { color: axisColor },
+            areaStyle: { color: 'rgba(246, 177, 93, 0.08)' }
+          },
+          selectedDataBackground: {
+            lineStyle: { color: accentColor },
+            areaStyle: { color: 'rgba(246, 177, 93, 0.2)' }
+          },
+          backgroundColor: 'transparent',
+          fillerColor: 'rgba(246, 177, 93, 0.12)',
+          handleStyle: {
+            color: accentColor,
+            borderColor: sliderBorder
+          }
+        }
+      ],
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: labels,
+        name: 'Chronologie',
+        nameLocation: 'middle',
+        nameGap: 40,
+        nameTextStyle: { color: textColor, fontSize: 13, fontWeight: 600 },
+        axisLine: { lineStyle: { color: axisColor, width: 1.5 } },
+        axisTick: { show: true, alignWithLabel: true, lineStyle: { color: axisColor } },
+        axisLabel: { formatter: formatYear, color: axisColor, fontWeight: 500 },
+        splitLine: { show: true, lineStyle: { color: gridDashed, type: 'dashed' } }
+      },
+      yAxis: {
+        type: 'value',
+        name: 'Stückzahl',
+        nameTextStyle: { color: textColor, fontSize: 13, fontWeight: 600, padding: [0, 0, 8, 0] },
+        axisLine: { show: true, lineStyle: { color: axisColor, width: 1.5 } },
+        axisLabel: { color: axisColor, fontWeight: 500 },
+        splitLine: { lineStyle: { color: gridColor, type: 'solid' } }
+      },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: tooltipBg,
+        borderColor: 'rgba(246, 177, 93, 0.4)',
+        textStyle: { color: '#e8dcc8' },
+        axisPointer: {
+          type: 'cross',
+          lineStyle: { color: axisColor, width: 1, type: 'dashed' }
+        },
+        formatter: function(params) {
+          const p = params[0];
+          return '<div style="font-weight:600;margin-bottom:4px;border-bottom:1px solid rgba(246,177,93,0.3);padding-bottom:4px;">Jahr: '
+            + formatYear(p.axisValue) + '</div>'
+            + '<span style="display:inline-block;width:10px;height:10px;background-color:'
+            + p.color + ';margin-right:5px;border-radius:50%;"></span>'
+            + 'Stückzahl: <b>' + p.data + ' Objekte</b>';
+        }
+      },
+      series: [{
+        name: 'Anzahl der Objekte',
+        type: 'line',
+        smooth: 0.3,
+        symbol: 'circle',
+        symbolSize: 3,
+        showSymbol: false,
+        lineStyle: { width: 2.5, color: accentColor },
+        itemStyle: { color: accentColor },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(246, 177, 93, 0.25)' },
+            { offset: 1, color: 'rgba(246, 177, 93, 0.02)' }
+          ])
+        },
+        emphasis: {
+          focus: 'series',
+          lineStyle: { width: 3.5 }
+        },
+        data: absoluteValues
+      }]
+    };
+
+    browseChart.setOption(option);
+
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(() => browseChart.resize());
+      ro.observe(container);
+      browseChart.__ro = ro;
+    }
+
+    window.browseChart = browseChart;
+  }
+
   function updateDateSliderRange(minYear, maxYear) {
     const dateSlider = document.getElementById('date-range-slider');
     if (dateSlider && dateSlider.noUiSlider) {
-      console.log(`Updating date slider range: ${minYear} - ${maxYear}`);
-
-      // Check if min and max are equal
       if (minYear === maxYear) {
         minYear = minYear - 1;
         maxYear = maxYear + 1;
-        console.log(`Adjusted range to avoid equal min/max: ${minYear} - ${maxYear}`);
       }
 
-      // Update slider range
       dateSlider.noUiSlider.updateOptions({
-        range: {
-          'min': minYear,
-          'max': maxYear
-        }
+        range: { 'min': minYear, 'max': maxYear }
       }, false);
 
-      // Update display values
       document.getElementById('date-min-value').textContent = minYear;
       document.getElementById('date-max-value').textContent = maxYear;
 
-      // Update slider values based on URL parameters
       const urlParams = new URLSearchParams(window.location.search);
       const paramMin = urlParams.get('dat_von') ? parseInt(urlParams.get('dat_von')) : minYear;
       const paramMax = urlParams.get('dat_bis') ? parseInt(urlParams.get('dat_bis')) : maxYear;
@@ -245,51 +214,30 @@
     }
   }
 
-  // Hilfsfunktion für leere Charts
   function showEmptyChart(message) {
-    const canvas = document.getElementById('objectsBarChart');
-    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('objectsBarChart');
+    if (!container) return;
 
-    if (barChart) {
-      barChart.destroy();
+    if (browseChart) {
+      browseChart.dispose();
     }
 
-    barChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['Keine Daten'],
-        datasets: [{
-          data: [0],
-          backgroundColor: 'rgba(200, 200, 200, 0.2)',
-          borderColor: 'rgb(200, 200, 200)',
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: false },
-          title: {
-            display: true,
-            text: message,
-            font: { size: 16 },
-            padding: 20
-          }
-        },
-        scales: {
-          x: { display: false },
-          y: { display: false }
+    browseChart = echarts.init(container, null, { renderer: 'canvas' });
+
+    browseChart.setOption({
+      backgroundColor: '#161616',
+      title: {
+        text: message,
+        left: 'center',
+        top: 'center',
+        textStyle: {
+          color: '#8a7d65',
+          fontSize: 15,
+          fontWeight: 400
         }
       }
     });
 
-    // Chart in globalen Scope setzen
-    window.barChart = barChart;
-  }
-
-  // Hilfsfunktion für Fehler-Charts
-  function showErrorChart(errorMessage) {
-    showEmptyChart(`Fehler bei der Datenverarbeitung: ${errorMessage}`);
+    window.browseChart = browseChart;
   }
 </script>

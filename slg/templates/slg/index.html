@@ -1,337 +1,745 @@
 {% extends 'slg/navbar.html' %}
 {% load static %}
 
+{% block stylesheets %}
+{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<link rel="stylesheet" href="{% static 'css/objektliste_mtoa_inline.css' %}">
+<style>
+  :root {
+    --prem-primary: #f6b15d; /* AETCAR Gold */
+    --prem-primary-hover: #d4944a;
+    --prem-bg: #0a0a0a;
+    --prem-surface: #161616;
+    --prem-text: #f0f0f0;
+    --prem-text-muted: #a0a0a0;
+    --prem-border: #333;
+    --prem-glass-bg: rgba(20, 20, 20, 0.8);
+    --prem-glass-border: rgba(246, 177, 93, 0.15);
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+    color: var(--prem-text);
+    background-color: var(--prem-bg);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+  }
+  
+  .full-bleed {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    z-index: 1;
+  }
+
+  .prem-hero {
+    position: relative;
+    padding: 100px 20px 80px;
+    background: transparent;
+    z-index: 1;
+  }
+
+  .hero-grid {
+    display: block;
+    max-width: 1200px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--prem-border);
+    padding-bottom: 80px;
+    padding-top: 40px;
+    position: relative;
+  }
+
+  .hero-text-col {
+    position: relative;
+    z-index: 10;
+    max-width: 600px;
+  }
+
+  .hero-image-col {
+    position: fixed;
+    right: -5%;
+    top: calc(50% + 150px);
+    transform: translateY(-60%);
+    width: 55%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  @media (max-width: 900px) {
+    .hero-text-col {
+      max-width: 100%;
+      text-align: center;
+    }
+    .hero-image-col {
+      position: relative;
+      width: 100%;
+      right: 0;
+      top: auto;
+      transform: none;
+      margin-top: 140px;
+    }
+    .numismatica-header {
+      padding: 0 20px;
+    }
+  }
+
+  .hero-coin-image {
+    width: 100%;
+    height: auto;
+    transform: scale(2.2) translate(-5%, 10%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 70% at 55% 50%, black 15%, transparent 60%);
+    mask-image: radial-gradient(ellipse 70% 70% at 55% 50%, black 15%, transparent 60%);
+    filter: brightness(0.55) contrast(1.1) drop-shadow(0 0 60px rgba(0,0,0,0.9));
+    pointer-events: none;
+    animation: heroGlow 7s ease-in-out infinite;
+  }
+
+  @keyframes heroGlow {
+    0%, 100% {
+      filter: brightness(0.55) contrast(1.1) drop-shadow(0 0 60px rgba(0,0,0,0.9));
+    }
+    50% {
+      filter: brightness(0.85) contrast(1.15) drop-shadow(0 0 90px rgba(246,177,93,0.25));
+    }
+  }
+
+  .prem-pre-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--prem-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 25px;
+    display: block;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .prem-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    line-height: 1.15;
+    background: radial-gradient(ellipse 80% 100% at 50% 50%, #fff9e6 0%, #f6b15d 40%, #f6b15d 60%, #fff9e6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .prem-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.3s;
+    border: none;
+  }
+
+  .prem-btn-primary { background: var(--prem-primary); color: #000; }
+  .prem-btn-primary:hover { transform: translateY(-3px); background: var(--prem-primary-hover); color: #000;}
+  .prem-btn-outline { background: transparent; color: var(--prem-text); border: 1px solid var(--prem-border); }
+  .prem-btn-outline:hover { border-color: var(--prem-primary); color: var(--prem-primary); }
+
+  .prem-intro-text {
+    color: var(--prem-text-muted);
+    font-size: 1.05rem;
+    line-height: 1.8;
+    font-weight: 400;
+    max-width: 540px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  
+  .prem-section { padding: 80px 20px; position: relative; z-index: 1; }
+  .prem-section-white { background: var(--prem-surface); }
+  .prem-section-transparent {
+    background: linear-gradient(180deg,
+      rgba(10, 10, 10, 0.85) 0%,
+      rgba(10, 10, 10, 0.6) 30%,
+      rgba(10, 10, 10, 0.6) 70%,
+      rgba(10, 10, 10, 0.85) 100%
+    );
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .prem-section-title { font-size: 2.5rem; text-align: center; margin-bottom: 40px; color: var(--prem-text); }
+
+  /* Reusable left-aligned section headers (AETCAR style) */
+  .section-header-left,
+  .numismatica-header {
+    max-width: 1200px;
+    margin: 0 auto 40px;
+    padding: 0 20px;
+    text-align: left;
+  }
+  .section-eyebrow,
+  .numismatica-pre-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #f6b15d;
+    margin-bottom: 12px;
+  }
+  .section-title-left,
+  .numismatica-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 4vw, 3.5rem);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--prem-text);
+    margin: 0;
+    line-height: 1.1;
+  }
+  .numismatica-subtitle {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--prem-text-muted);
+    margin-top: 10px;
+    letter-spacing: 0.02em;
+  }
+
+  /* Modified for mtoa slider */
+  .coins-carousel-wrapper { position: relative; max-width: 1400px; margin: 0 auto; padding: 0 50px; }
+  .coins-track { display: flex; gap: 20px; overflow-x: auto; padding: 10px; scrollbar-width: none; }
+  .coins-track::-webkit-scrollbar { display: none; }
+  .coin-nav-btn {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 45px; height: 45px; border-radius: 50%;
+    background: var(--prem-surface); color: var(--prem-text);
+    border: 1px solid var(--prem-border); cursor: pointer; z-index: 10;
+  }
+  .coin-nav-btn.prev { left: 0; }
+  .coin-nav-btn.next { right: 0; }
+
+  .prem-filter-btn {
+    background: var(--prem-surface); color: var(--prem-text); border: 1px solid var(--prem-border);
+    padding: 8px 16px; border-radius: 50px; cursor: pointer; transition: 0.3s;
+  }
+  .prem-filter-btn.active, .prem-filter-btn:hover { background: var(--prem-primary); color: #000; }
+
+  .prem-collections-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+  .prem-collection-card {
+    background: var(--prem-surface);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--prem-border);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+  }
+  .prem-collection-card:hover {
+    z-index: 10;
+  }
+
+  /* Shine sweep on hover */
+  .prem-col-img-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), rgba(255,255,255,0.15), rgba(255,255,255,0.08), transparent);
+    transform: skewX(-20deg);
+    z-index: 2;
+    pointer-events: none;
+    transition: left 0s 0.6s;
+  }
+  .prem-collection-card:hover .prem-col-img-wrapper::before {
+    left: 150%;
+    transition: left 0.8s ease-in-out;
+  }
+
+  /* Vignette frame on image */
+  .prem-col-img-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    z-index: 1;
+    transition: box-shadow 0.5s ease;
+  }
+  .prem-collection-card:hover .prem-col-img-wrapper::after {
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.2),
+                0 0 40px rgba(224, 120, 80, 0.15);
+  }
+
+  /* Image: grayscale by default, color + zoom on hover */
+  .prem-col-img-wrapper img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: grayscale(100%) brightness(0.9);
+    transition: filter 0.6s ease,
+                transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .prem-collection-card:hover .prem-col-img-wrapper img {
+    filter: grayscale(0%) brightness(1.05);
+    transform: scale(1.06);
+  }
+
+  /* Placeholder specific styles */
+  .prem-col-img-wrapper { height: 200px; overflow: hidden; position: relative; background: #1e1e1e; display: flex; align-items: center; justify-content: center;}
+  .collection-placeholder { font-size: 3rem; color: #555; }
+  
+  .prem-col-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+  .prem-col-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 10px;
+    line-height: 1.25;
+  }
+  .prem-col-desc {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 14px;
+    line-height: 1.65;
+    flex-grow: 1;
+  }
+  .prem-col-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .prem-col-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  .prem-col-link:hover { color: #f6b15d; }
+  
+  .prem-stats {
+    padding: 80px 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .prem-stats-card {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    padding: 32px 0;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 18px;
+  }
+  .prem-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    padding: 12px 8px;
+  }
+  .prem-stat:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 60%;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .prem-stat-value {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 42px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #f6b15d;
+    line-height: 1;
+  }
+  .prem-stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+  }
+  @media (max-width: 768px) {
+    .prem-stats-card {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 480px) {
+    .prem-stats-card {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* ── Contact Section ── */
+  .contact-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    align-items: start;
+  }
+
+  .contact-info {
+    padding: 20px 0;
+  }
+
+  .contact-eyebrow {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #f6b15d;
+    margin-bottom: 12px;
+  }
+
+  .contact-headline {
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 4vw, 3.5rem);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--prem-text);
+    line-height: 1.1;
+    margin: 0 0 28px;
+  }
+
+  .contact-desc {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--prem-text-muted);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    max-width: 420px;
+    margin-bottom: 40px;
+  }
+
+  .contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .contact-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--prem-text-muted);
+    font-size: 0.9rem;
+  }
+
+  .contact-detail-item i {
+    color: #f6b15d;
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .contact-form-wrap {
+    padding: 10px 0;
+  }
+
+  .contact-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .contact-form-group {
+    margin-bottom: 20px;
+  }
+
+  .prem-form-label {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--prem-text-muted);
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .prem-form-control {
+    background: var(--prem-bg);
+    border: 1px solid var(--prem-border);
+    border-radius: 0;
+    color: #fff;
+    padding: 14px 16px;
+    width: 100%;
+    font-size: 0.9rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: border-color 0.2s ease;
+  }
+
+  .prem-form-control:focus {
+    outline: none;
+    border-color: rgba(246, 177, 93, 0.5);
+  }
+
+  .prem-form-control::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+  }
+
+  textarea.prem-form-control {
+    resize: none;
+    overflow: hidden;
+    height: auto;
+  }
+
+  .contact-submit-btn {
+    display: block;
+    width: 100%;
+    padding: 16px 28px;
+    background: #f6b15d;
+    color: #000;
+    border: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .contact-submit-btn:hover {
+    background: #d4944a;
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 768px) {
+    .contact-split {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+    .contact-form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Ensure card displays correctly within track */
+  .infinite-item { min-width: 280px; }
+</style>
+{% endblock stylesheets %}
+
 {% block content %}
-
-
-<!-- New intro section from the image -->
-<div class="container text-center mt-5 mb-5 hero-section">
-    <div class="welcome-banner mb-3">
-        <h5>Willkommen bei ELIGIUS</h5>
-    </div>
-    
-    <h1 class="mb-4">Die digitale Plattform für historische Münzsammlungen in Österreich</h1>
-    
-    <div class="intro-text mx-auto mb-5" style="max-width: 800px;">
-        <p>ELIGIUS Numotheca Austriaca ist ein umfassendes digitales Archiv, das klösterliche und öffentliche Münzsammlungen in Österreich dokumentiert, präsentiert und für Forschungszwecke zugänglich macht. Die Plattform verbindet jahrhundertealtes numismatisches Erbe mit moderner Digitaltechnologie.</p>
-    </div>
-
-    <!-- Feature boxes -->
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="feature-box">
-                    <div class="feature-icon">
-                        <i class="bi bi-database"></i>
-                    </div>
-                    <h4>Umfangreiche Datenbank</h4>
-                    <p>Über 69.000 katalogisierte Münzobjekte und mehr als 12.600 Münztypen aus verschiedenen Epochen.</p>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="feature-box">
-                    <div class="feature-icon">
-                        <i class="bi bi-search"></i>
-                    </div>
-                    <h4>Erweiterte Suchfunktionen</h4>
-                    <p>Detaillierte Such- und Filtermöglichkeiten für Wissenschaftler und Numismatik-Enthusiasten.</p>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="feature-box">
-                    <div class="feature-icon">
-                        <i class="bi bi-arrow-repeat"></i>
-                    </div>
-                    <h4>Kontinuierlich aktualisiert</h4>
-                    <p>Regelmäßige Ergänzungen und Verbesserungen durch ein Team von Experten und Wissenschaftlern.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="mt-5">
-        <a href="#sammlungen" class="btn btn-primary rounded-pill px-4 py-2 mr-3 shadow-sm">
-            <i class="bi bi-coin mr-2"></i> Sammlungen entdecken
-        </a>
-        <a href="#kontakt" class="btn btn-outline-primary rounded-pill px-4 py-2 shadow-sm">
-            <i class="bi bi-envelope mr-2"></i> Kontakt aufnehmen
-        </a>
-    </div>
+<div class="hero-image-col" aria-hidden="true">
+  <img src="{% static 'img/hero_coin.png' %}" alt="" class="hero-coin-image">
 </div>
 
-
-<div class="latest-coins-section">
-    <div class="section-header">
-        <h2>Numismatica</h2>
-        <p>Die neuesten Ergänzungen und Aktualisierungen</p>
+<div class="full-bleed">
+  <div class="prem-hero">
+    <div class="hero-grid">
+      <div class="hero-text-col">
+        <span class="prem-pre-title">Numotheca Austriaca</span>
+        <h1 class="prem-title">Eligius</h1>
+        <p class="prem-intro-text">
+          Im Folgenden sehen Sie digitalisierte numismatische Zeugnisse aus bedeutenden klösterlichen und öffentlichen Sammlungen Österreichs. Sie wurden systematisch erschlossen, dokumentiert und hier für Sie zugänglich gemacht. Erhalten haben sich in ihnen faszinierende Zeugnisse römischen und historischen Kulturerbes, von Handlung, Ritual und Zeit.
+        </p>
+      </div>
     </div>
+  </div>
+</div>
 
-    <button class="nav-arrow prev" onclick="scrollCoins('left')">
-        <i class="bi bi-chevron-left"></i>
-    </button>
-
-    <div class="latest-coins-container" id="coinsContainer">
-        {% for entry in latest_entries %}
-            {% include "slg/partials/coin_preview_card.html" with obj=entry %}
+<!-- Latest Coins (Numismatica) using MTOA card -->
+<div class="prem-section">
+  <div class="numismatica-header">
+    <div class="numismatica-pre-title">Neuerschließungen</div>
+    <h2 class="numismatica-title">Numismatica</h2>
+    <p class="numismatica-subtitle">Historische Zeugnisse sichtbar machen</p>
+  </div>
+  <div class="coins-carousel-wrapper">
+    <button class="coin-nav-btn prev" onclick="document.getElementById('coinsContainer').scrollBy({left: -350, behavior: 'smooth'})"><i class="bi bi-chevron-left"></i></button>
+    <div class="coins-track" id="coinsContainer">
+        {% for Obj in latest_entries %}
+            <!-- Using mtoa card -->
+            <div class="infinite-item browse-page" style="flex: 0 0 auto; background: transparent; padding: 0; min-width: 280px;">
+              {% include "slg/partials/coin_preview_card_mtoa.html" with obj=Obj light=False %}
+            </div>
         {% empty %}
-        <div class="no-coins-message">
-            <i class="bi bi-exclamation-circle"></i>
-            <p>Derzeit sind keine aktuellen Münzobjekte verfügbar.</p>
-        </div>
+        <p style="text-align: center; width: 100%; color: var(--prem-text-muted);">Derzeit keine neuen Objekte</p>
         {% endfor %}
     </div>
-
-    <button class="nav-arrow next" onclick="scrollCoins('right')">
-        <i class="bi bi-chevron-right"></i>
-    </button>
+    <button class="coin-nav-btn next" onclick="document.getElementById('coinsContainer').scrollBy({left: 350, behavior: 'smooth'})"><i class="bi bi-chevron-right"></i></button>
+  </div>
 </div>
 
-
-
-<div id="sammlungen" class="collections-section">
-    <h4 class="text-center">Klösterliche und öffentliche Münzsammlungen in Österreich</h4>
-    
-    <!-- Kategorie-Filter mit data-Attributen statt Links -->
-    <div class="collection-filters">
-        <div class="filter-buttons">
-            <button class="filter-btn active" data-category="all">
-                Alle Sammlungen
-            </button>
-            {% for kategorie in kategorien %}
-            <button class="filter-btn" data-category="{{ kategorie.id }}">
-                {{ kategorie.name }}
-            </button>
-            {% endfor %}
-        </div>
+<div id="sammlungen" class="prem-section">
+  <div class="section-header-left">
+    <div class="section-eyebrow">Bestände</div>
+    <h2 class="section-title-left">Sammlungen</h2>
+  </div>
+  <div class="section-header-left" style="margin-bottom: 30px; margin-top: -20px;">
+    <div class="d-flex flex-wrap gap-2">
+      <button class="prem-filter-btn active" data-category="all">Alle</button>
+      {% for kategorie in kategorien %}
+        <button class="prem-filter-btn" data-category="{{ kategorie.id }}">{{ kategorie.name }}</button>
+      {% endfor %}
     </div>
-
-    <div class="collections-grid" id="collectionsGrid"></div>
-</div>
-<br>
-<div id="stats" class="card-group container-fluid justify-content-center">
-  <!-- Hier werden die Kennzahlen eingefügt -->
+  </div>
+  <div class="prem-collections-grid" id="collectionsGrid"></div>
 </div>
 
-<br>
-
-<!-- Contact form section at the end of the page -->
-<div id="kontakt" class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="contact-form-container">
-                <h2 class="text-center mb-2">Kontakt</h2>
-                <p class="text-center text-muted mb-4">Haben Sie Fragen oder Anregungen? Kontaktieren Sie uns.</p>
-                
-                <form method="POST" action="{% url 'kontakt' %}" class="contact-form">
-                    {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="name">Name</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="email">E-Mail</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="betreff">Betreff</label>
-                        <select class="form-control" id="betreff" name="betreff" required>
-                            <option selected disabled>Bitte wählen Sie</option>
-                            <option>Allgemeine Anfrage</option>
-                            <option>Technische Unterstützung</option>
-                            <option>Forschungsanfrage</option>
-                            <option>Kooperationsanfrage</option>
-                            <option>Sonstiges</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="nachricht">Nachricht</label>
-                        <textarea class="form-control" id="nachricht" name="nachricht" rows="5" required></textarea>
-                    </div>
-                    
-                    <div class="text-right">
-                        <button type="submit" class="btn btn-primary rounded-pill px-4">Nachricht senden</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+<div class="full-bleed">
+  <div class="prem-stats">
+    <div class="section-header-left">
+      <div class="section-eyebrow">Statistiken</div>
+      <h2 class="section-title-left">Zahlen & Fakten</h2>
     </div>
+    <div class="prem-stats-card" id="statsCard">
+      <div class="prem-stat">
+        <div class="prem-stat-value" id="statObjekte">&ndash;</div>
+        <div class="prem-stat-label">Objekte</div>
+      </div>
+      <div class="prem-stat">
+        <div class="prem-stat-value" id="statMuenztypen">&ndash;</div>
+        <div class="prem-stat-label">Münztypen</div>
+      </div>
+      <div class="prem-stat">
+        <div class="prem-stat-value" id="statPersonen">&ndash;</div>
+        <div class="prem-stat-label">Personen</div>
+      </div>
+      <div class="prem-stat">
+        <div class="prem-stat-value" id="statMstaetten">&ndash;</div>
+        <div class="prem-stat-label">Münzstätten</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="kontakt" class="prem-section prem-section-transparent">
+  <div class="contact-split">
+    <div class="contact-info">
+      <div class="contact-eyebrow">Dialog &amp; Partnerschaft</div>
+      <h2 class="contact-headline">Kontaktieren<br>Sie uns</h2>
+      <p class="contact-desc">
+        Haben Sie Fragen zu einer Sammlung oder einem bestimmten Objekt? Wir vermitteln gerne den Kontakt zu den jeweiligen Kuratoren. Auch bei Interesse an einer Partnerschaft oder allgemeinen Anliegen sind wir für Sie da &ndash; wir melden uns zeitnah bei Ihnen.
+      </p>
+      <div class="contact-details">
+        <div class="contact-detail-item">
+          <i class="bi bi-envelope-fill"></i>
+          <span>archiv@eligius-numismatik.org</span>
+        </div>
+      </div>
+    </div>
+    <div class="contact-form-wrap">
+      <form method="POST" action="{% url 'kontakt' %}">
+        {% csrf_token %}
+        <div class="contact-form-row">
+          <div class="contact-form-group">
+            <label class="prem-form-label">Name</label>
+            <input type="text" class="prem-form-control" name="name" required>
+          </div>
+          <div class="contact-form-group">
+            <label class="prem-form-label">E-Mail Adresse</label>
+            <input type="email" class="prem-form-control" name="email" required>
+          </div>
+        </div>
+        <div class="contact-form-group">
+          <label class="prem-form-label">Ihre Nachricht</label>
+          <textarea class="prem-form-control" name="nachricht" rows="1" required></textarea>
+        </div>
+        <button type="submit" class="contact-submit-btn">Anfrage senden</button>
+      </form>
+    </div>
+  </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("DOM fully loaded and parsed"); // Debug 1: Bestätigung, dass DOM bereit ist
-
-  const collectionsGridElement = document.getElementById('collectionsGrid');
-  const coinsContainerElement = document.getElementById('coinsContainer');
-
-  console.log("Element #collectionsGrid:", collectionsGridElement); // Debug 2: Existiert das Element?
-  console.log("Element #coinsContainer:", coinsContainerElement); // Debug 3: Existiert das Element?
-
-  if (collectionsGridElement) {
-    fetch('/api/collections/')
-      .then(r => {
-        if (!r.ok) throw new Error(`Collections API Fehler: ${r.status}`);
-        return r.json();
-      })
-      .then(colls => {
-        console.log("Sammlungen Daten:", colls); // Debug 4
-        collectionsGridElement.innerHTML =
-          colls.map(col => `
-            <div class="collection-card" data-category="${col.kategorie?.id || 'none'}">
-              <div class="collection-image">
-                <img class="lazyload" data-src="${col.cover || ''}" alt="${col.name}">
-              </div>
-              <div class="collection-content">
-                <h5 class="collection-title">${col.name}</h5>
-                <p class="collection-description">${col.beschreibung ? col.beschreibung.split(' ').slice(0, 20).join(' ') + (col.beschreibung.split(' ').length > 20 ? '…' : '') : ''}</p>
-              </div>
-              <div class="collection-links">
-                <a href="${col.absolute_url}" class="collection-link">
-                  <i class="bi bi-info-circle"></i>
-                  Mehr Informationen
-                </a>
-                <a href="/browse/?q=&Slg=${col.id}&dat_von=&dat_bis=" class="collection-link">
-                  <i class="bi bi-collection"></i>
-                  Objekte
-                </a>
-              </div>
-            </div>
-          `).join('');
-        setupCollectionFilters();
-      })
-      .catch(error => {
-        console.error("Fehler beim Laden der Sammlungen:", error);
-        collectionsGridElement.innerHTML = '<p class="text-danger">Fehler beim Laden der Sammlungen.</p>';
-      });
-  } else {
-    console.error("FEHLER: Element mit ID 'collectionsGrid' nicht im DOM gefunden!");
-  }
-
-  // Stats nachladen
-  const statsElement = document.getElementById('stats');
-  if (statsElement) {
-    fetch('/api/stats/')
-      .then(r => r.json())
-      .then(stats => {
-        statsElement.innerHTML = `
-          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
-            <div class="card text-center border-light">
-              <div class="card-body">
-                <h4 class="card-title">${stats.anzahl_qs}</h4>
-                <p class="card-text">Objekte</p>
-              </div>
+  const grid = document.getElementById('collectionsGrid');
+  if (grid) {
+    fetch('/api/collections/').then(r => r.json()).then(colls => {
+      grid.innerHTML = colls.map(col => `
+        <div class="prem-collection-card" data-category="${col.kategorie?.id || 'none'}">
+          <div class="prem-col-img-wrapper">
+            ${col.cover ? `<img src="${col.cover}" alt="${col.name}">` : `<i class="bi bi-collection collection-placeholder"></i>`}
+          </div>
+          <div class="prem-col-content">
+            <h4 class="prem-col-title">${col.name}</h4>
+            <p class="prem-col-desc">${col.beschreibung ? col.beschreibung.substring(0, 100) + '...' : ''}</p>
+            <div class="prem-col-footer">
+              <a href="${col.absolute_url}" class="prem-col-link"><i class="bi bi-clock-history"></i> Zeitleiste</a>
+              <a href="/browse/?q=&Slg=${col.id}" class="prem-col-link"><i class="bi bi-search"></i> Objekte</a>
             </div>
           </div>
-          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
-            <div class="card text-center border-light">
-              <div class="card-body">
-                <h4 class="card-title">${stats.anzahl_mt}</h4>
-                <p class="card-text">Typen</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
-            <div class="card text-center border-light">
-              <div class="card-body">
-                <h4 class="card-title">${stats.anzahl_person}</h4>
-                <p class="card-text">Personen</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
-            <div class="card text-center border-light">
-              <div class="card-body">
-                <h4 class="card-title">${stats.anzahl_mstaetten}</h4>
-                <p class="card-text">Münzstätten</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
-            <div class="card text-center border-light">
-              <div class="card-body">
-                <h4 class="card-title">${stats.max_min_datierung.dat_von__min}</h4>
-                <p class="card-text">Ältestes Objekt</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
-            <div class="card text-center border-light">
-              <div class="card-body">
-                <h4 class="card-title">${stats.max_min_datierung.dat_von__max}</h4>
-                <p class="card-text">Jüngstes Objekt</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
-            <div class="card text-center border-light">
-              <div class="card-body">
-                <h4 class="card-title">${stats.max_min_gewicht.gewicht__min} g</h4>
-                <p class="card-text">leichtestes Objekt</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4 col-lg-3 align-items-stretch mb-5 mb-lg-0">
-            <div class="card text-center border-light">
-              <div class="card-body">
-                <h4 class="card-title">${stats.max_min_gewicht.gewicht__max} g</h4>
-                <p class="card-text">schwerstes Objekt</p>
-              </div>
-            </div>
-          </div>
-        `;
-      })
-      .catch(error => {
-        statsElement.innerHTML = '<p class="text-danger">Fehler beim Laden der Kennzahlen.</p>';
-        console.error("Fehler beim Laden der Kennzahlen:", error);
-      });
-  }
-});
-
-function setupCollectionFilters() {
-  const filterButtons = document.querySelectorAll('.filter-btn');
-  const collectionCards = document.querySelectorAll('.collection-card');
-
-  if (filterButtons.length > 0 && collectionCards.length > 0) {
-    function filterCollections(category) {
-      collectionCards.forEach(card => {
-        if (category === 'all' || card.dataset.category === category) {
-          card.style.display = '';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    }
-
-    filterButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        filterButtons.forEach(btn => btn.classList.remove('active'));
-        this.classList.add('active');
-        filterCollections(this.dataset.category);
-      });
+        </div>
+      `).join('');
+      
+      const btns = document.querySelectorAll('.prem-filter-btn');
+      btns.forEach(btn => btn.addEventListener('click', () => {
+        btns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.dataset.category;
+        document.querySelectorAll('.prem-collection-card').forEach(card => {
+          card.style.display = (cat === 'all' || card.dataset.category === cat) ? 'flex' : 'none';
+        });
+      }));
     });
   }
-}
 
-// Funktion zum Scrollen der Münzen (für die Pfeile)
-function scrollCoins(direction) {
-  const container = document.getElementById('coinsContainer');
-  console.log("Scroll-Funktion aufgerufen:", direction); // Debug: Scroll-Funktion
-  
-  if (container) {
-    const scrollAmount = 300; // Anpassen nach Bedarf
-    if (direction === 'left') {
-      container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-    } else {
-      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  } else {
-    console.error("FEHLER: Container für Scroll nicht gefunden!"); // Debug: Scroll-Container fehlt
+  function animateValue(el, start, end, duration) {
+    if (!el) return;
+    let t0 = null;
+    const step = (ts) => {
+      if (!t0) t0 = ts;
+      const p = Math.min((ts - t0) / duration, 1);
+      el.textContent = Math.floor(p * (end - start) + start);
+      if (p < 1) requestAnimationFrame(step);
+      else el.textContent = end;
+    };
+    requestAnimationFrame(step);
   }
-}
-</script>
 
+  const statsCard = document.getElementById('statsCard');
+  if (statsCard) {
+    fetch('/api/stats/').then(r => r.json()).then(data => {
+      const map = {
+        statObjekte: data.anzahl_qs,
+        statMuenztypen: data.anzahl_mt,
+        statPersonen: data.anzahl_person,
+        statMstaetten: data.anzahl_mstaetten
+      };
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
+            entry.target.classList.add('animated');
+            Object.entries(map).forEach(([id, val]) => {
+              animateValue(document.getElementById(id), 0, val, 1500);
+            });
+          }
+        });
+      }, { threshold: 0.3 });
+      observer.observe(statsCard);
+    });
+  }
+});
+</script>
 {% endblock content %}

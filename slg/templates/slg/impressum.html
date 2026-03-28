@@ -1,0 +1,130 @@
+{% extends 'slg/navbar.html' %}
+{% block title %}Eligius – Impressum{% endblock title %}
+{% load static %}
+
+{% block stylesheets %}
+{{ block.super }}
+<style>
+  .legal-sections {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  .legal-page-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-main);
+    margin: 0 0 48px;
+    line-height: 1.15;
+  }
+
+  .legal-block {
+    padding: 40px 0;
+    border-top: 1px solid rgba(246, 177, 93, 0.12);
+  }
+
+  .legal-block:last-child {
+    border-bottom: 1px solid rgba(246, 177, 93, 0.12);
+  }
+
+  .legal-block h3 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin: 0 0 20px;
+  }
+
+  .legal-block p,
+  .legal-block address {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.95rem;
+    line-height: 1.85;
+    margin: 0;
+    font-style: normal;
+  }
+
+  .legal-block p + p,
+  .legal-block address + p,
+  .legal-block p + address {
+    margin-top: 16px;
+  }
+
+  .legal-block a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .legal-block a:hover {
+    color: var(--accent-2, #d4944a);
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="legal-sections">
+  <h1 class="legal-page-title">Impressum</h1>
+
+  <div class="legal-block">
+    <h3>Medieninhaber &amp; Herausgeber</h3>
+    <address>
+      Universität für Weiterbildung Krems<br>
+      Zentrum für Museale Sammlungswissenschaften<br>
+      Dr.-Karl-Dorrek-Straße 30<br>
+      3500 Krems an der Donau<br>
+      Österreich
+    </address>
+    <p>
+      E-Mail: <a href="mailto:martin.baer@donau-uni.ac.at">martin.baer@donau-uni.ac.at</a><br>
+      Web: <a href="https://www.donau-uni.ac.at" target="_blank" rel="noopener">www.donau-uni.ac.at</a>
+    </p>
+  </div>
+
+  <div class="legal-block">
+    <h3>Projektleitung</h3>
+    <p>
+      Martin Baer &amp; Wolfgang Szaivert
+    </p>
+  </div>
+
+  <div class="legal-block">
+    <h3>Zweck der Website</h3>
+    <p>
+      Eligius ist eine digitale Plattform zur Erschließung und Präsentation numismatischer
+      Sammlungen in Österreich. Die Datenbank dient der wissenschaftlichen Dokumentation,
+      Forschung und öffentlichen Zugänglichmachung von Münzbeständen aus klösterlichen,
+      öffentlichen und institutionellen Sammlungen.
+    </p>
+  </div>
+
+  <div class="legal-block">
+    <h3>Haftungsausschluss</h3>
+    <p>
+      Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte
+      externer Links. Für den Inhalt der verlinkten Seiten sind ausschließlich deren Betreiber
+      verantwortlich. Die auf dieser Website veröffentlichten Inhalte und Daten wurden mit
+      größtmöglicher Sorgfalt erstellt. Dennoch kann keine Gewähr für deren Vollständigkeit,
+      Richtigkeit und Aktualität übernommen werden.
+    </p>
+  </div>
+
+  <div class="legal-block">
+    <h3>Urheberrecht</h3>
+    <p>
+      Sämtliche auf dieser Website veröffentlichten Texte, Bilder und sonstigen Inhalte
+      unterliegen – sofern nicht anders angegeben – dem Urheberrecht. Jegliche Nutzung
+      außerhalb der engen Grenzen des Urheberrechtsgesetzes bedarf der vorherigen
+      schriftlichen Zustimmung des jeweiligen Rechteinhabers.
+    </p>
+  </div>
+</div>
+{% endblock content %}
