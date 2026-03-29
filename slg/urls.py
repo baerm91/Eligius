@@ -9,6 +9,7 @@ router = routers.DefaultRouter()
 router.register('mints/', views.MzstaettenRView)
 urlpatterns = [
     path('', cache_page(60 * 5)(views.index), name="index_slg"),
+    path('neuerschliessungen/', cache_page(60 * 5)(views.neuerschliessungen), name='neuerschliessungen'),
     path('about/', cache_page(60 * 30)(views.about), name="about"),
     #path('', include(router.urls)) 
     #path('<id>/', views.details, name="details_slg")

@@ -23,6 +23,7 @@
     font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
     color: var(--prem-text);
     background-color: var(--prem-bg);
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -74,17 +75,24 @@
   }
 
   @media (max-width: 900px) {
+    .prem-hero {
+      padding: 84px 20px 64px;
+    }
+    .hero-grid {
+      padding-top: 24px;
+      padding-bottom: 56px;
+    }
     .hero-text-col {
       max-width: 100%;
       text-align: center;
     }
     .hero-image-col {
-      position: relative;
-      width: 100%;
-      right: 0;
-      top: auto;
-      transform: none;
-      margin-top: 140px;
+      left: 50%;
+      right: auto;
+      top: 150px;
+      width: min(120vw, 680px);
+      transform: translateX(-50%);
+      opacity: 0.42;
     }
     .numismatica-header {
       padding: 0 20px;
@@ -100,6 +108,26 @@
     filter: brightness(0.55) contrast(1.1) drop-shadow(0 0 60px rgba(0,0,0,0.9));
     pointer-events: none;
     animation: heroGlow 7s ease-in-out infinite;
+  }
+
+  @media (max-width: 900px) {
+    .hero-coin-image {
+      transform: scale(1.45) translate(0, 0);
+      transform-origin: center top;
+      filter: brightness(0.4) contrast(1.05) drop-shadow(0 0 40px rgba(0,0,0,0.8));
+    }
+  }
+
+  @media (max-width: 600px) {
+    .hero-image-col {
+      top: 132px;
+      width: 135vw;
+      opacity: 0.34;
+    }
+
+    .hero-coin-image {
+      transform: scale(1.55) translate(0, 2%);
+    }
   }
 
   @keyframes heroGlow {
@@ -384,9 +412,92 @@
     color: rgba(255, 255, 255, 0.5);
     text-align: center;
   }
+  .wordcloud-section-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  .wordcloud-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .wordcloud-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 24px;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .wordcloud-card-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-size: 1.9rem;
+    color: var(--prem-text);
+    margin: 0;
+  }
+  .wordcloud-card-subtitle {
+    color: var(--prem-text-muted);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+  .wordcloud-meta {
+    color: rgba(255, 255, 255, 0.52);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .wordcloud-canvas {
+    position: relative;
+    flex: 1;
+    min-height: 300px;
+    width: 100%;
+  }
+  .wordcloud-canvas svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .wordcloud-word {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  .wordcloud-word:hover {
+    opacity: 0.76;
+  }
+  .wordcloud-fallback {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-content: flex-start;
+  }
+  .wordcloud-fallback-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--prem-text);
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .wordcloud-fallback-tag span {
+    color: var(--prem-primary);
+    font-size: 0.85em;
+  }
   @media (max-width: 768px) {
     .prem-stats-card {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .wordcloud-grid {
+      grid-template-columns: 1fr;
+    }
+    .wordcloud-card {
+      min-height: 360px;
     }
   }
   @media (max-width: 480px) {
@@ -546,9 +657,213 @@
 
   /* Ensure card displays correctly within track */
   .infinite-item { min-width: 280px; }
+
+  /* ── Mobile: Numismatica carousel ── */
+  @media (max-width: 600px) {
+    .prem-section {
+      padding: 48px 10px;
+    }
+    .prem-hero {
+      padding: 84px 10px 64px;
+    }
+    .hero-grid {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+    .hero-text-col {
+      text-align: left;
+    }
+    .numismatica-header {
+      padding: 0 20px;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .numismatica-cta-desktop {
+      display: none;
+    }
+    .numismatica-cta-mobile {
+      display: flex;
+      justify-content: flex-start;
+    }
+    .coins-mobile-indicators {
+      display: flex;
+    }
+    .coins-carousel-wrapper {
+      padding: 0 10px;
+    }
+    .coin-nav-btn {
+      display: none;
+    }
+    .coins-track {
+      --coin-card-mobile-width: 250px;
+      gap: 14px;
+      padding: 8px 2px 12px;
+      scroll-snap-type: x proximity;
+      scroll-padding-left: 2px;
+      scroll-padding-right: 18px;
+      overscroll-behavior-x: contain;
+      overscroll-behavior-y: none;
+      touch-action: pan-x;
+      -webkit-overflow-scrolling: touch;
+    }
+    .coins-track::after {
+      content: '';
+      flex: 0 0 calc(100% - var(--coin-card-mobile-width));
+    }
+    .coins-track > .infinite-item {
+      min-width: var(--coin-card-mobile-width);
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+  }
+  @media (max-width: 400px) {
+    .coins-track > .infinite-item {
+      --coin-card-mobile-width: 220px;
+      min-width: var(--coin-card-mobile-width);
+    }
+  }
+  .numismatica-cta-mobile {
+    display: none;
+    max-width: 1200px;
+    margin: 20px auto 0;
+    padding: 0 20px;
+  }
+  .coins-mobile-indicators {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 16px auto 0;
+    padding: 0 20px;
+  }
+  .coins-mobile-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    transition: width 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+    opacity: 0.8;
+  }
+  .coins-mobile-indicator.is-active {
+    width: 24px;
+    background: var(--prem-primary);
+    opacity: 1;
+  }
+  @media (max-width: 600px) {
+    .numismatica-cta-mobile {
+      display: flex;
+      justify-content: flex-start;
+    }
+    .coins-mobile-indicators {
+      display: flex;
+    }
+  }
+  /* Modified for mtoa slider */
+  .coins-carousel-wrapper { position: relative; max-width: 1400px; margin: 0 auto; padding: 0 50px; }
+  .coins-track { display: flex; gap: 20px; overflow-x: auto; padding: 10px; scrollbar-width: none; }
+  .coins-track::-webkit-scrollbar { display: none; }
+  .numismatica-cta-desktop,
+  .numismatica-cta-mobile,
+  .coins-mobile-indicators {
+    display: none !important;
+  }
+  .numismatica-footer {
+    max-width: 1400px;
+    margin: 20px auto 0;
+    padding: 0 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .coins-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .coins-progress-indicators {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .coins-progress-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    transition: width 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+    opacity: 0.8;
+  }
+  .coins-progress-indicator.is-active {
+    width: 24px;
+    background: var(--prem-primary);
+    opacity: 1;
+  }
+  .coins-progress-text {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.92rem;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+  .numismatica-footer-cta {
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+  .coins-track > .browse-page,
+  .coins-track > .browse-page > .infinite-item,
+  .coins-track > .browse-page > .infinite-item .coin-preview-card {
+    box-sizing: border-box;
+  }
+  .coins-track > .browse-page > .infinite-item,
+  .coins-track > .browse-page > .infinite-item .coin-preview-card {
+    width: 100%;
+    min-width: 0;
+  }
+  @media (max-width: 600px) {
+    .coins-track {
+      --coin-card-mobile-width: calc(100vw - 32px);
+      gap: 12px;
+      padding: 8px 0 12px;
+      scroll-padding-left: 0;
+      scroll-padding-right: 12px;
+    }
+    .coins-track > .browse-page {
+      width: var(--coin-card-mobile-width);
+      min-width: var(--coin-card-mobile-width);
+      flex: 0 0 var(--coin-card-mobile-width);
+    }
+    .numismatica-footer {
+      padding: 0 20px;
+      margin-top: 18px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .coins-progress {
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+      row-gap: 8px;
+    }
+    .coins-progress-text {
+      width: 100%;
+      text-align: center;
+      font-size: 0.82rem;
+    }
+    .numismatica-footer-cta {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
+  @media (max-width: 400px) {
+    .coins-track {
+      --coin-card-mobile-width: calc(100vw - 24px);
+    }
+  }
 </style>
 {% endblock stylesheets %}
-
 {% block content %}
 <div class="hero-image-col" aria-hidden="true">
   <img src="{% static 'img/hero_coin.png' %}" alt="" class="hero-coin-image">
@@ -574,13 +889,16 @@
     <div class="numismatica-pre-title">Neuerschließungen</div>
     <h2 class="numismatica-title">Numismatica</h2>
     <p class="numismatica-subtitle">Historische Zeugnisse sichtbar machen</p>
+    <div class="numismatica-cta-desktop" style="margin-top: 24px;">
+      <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">Alle ansehen</a>
+    </div>
   </div>
   <div class="coins-carousel-wrapper">
     <button class="coin-nav-btn prev" onclick="document.getElementById('coinsContainer').scrollBy({left: -350, behavior: 'smooth'})"><i class="bi bi-chevron-left"></i></button>
     <div class="coins-track" id="coinsContainer">
         {% for Obj in latest_entries %}
             <!-- Using mtoa card -->
-            <div class="infinite-item browse-page" style="flex: 0 0 auto; background: transparent; padding: 0; min-width: 280px;">
+            <div class="infinite-item browse-page" style="flex: 0 0 auto; background: transparent; padding: 0;">
               {% include "slg/partials/coin_preview_card_mtoa.html" with obj=Obj light=False %}
             </div>
         {% empty %}
@@ -589,20 +907,24 @@
     </div>
     <button class="coin-nav-btn next" onclick="document.getElementById('coinsContainer').scrollBy({left: 350, behavior: 'smooth'})"><i class="bi bi-chevron-right"></i></button>
   </div>
+  <div class="coins-mobile-indicators" id="coinsIndicators" aria-hidden="true"></div>
+  <div class="numismatica-cta-mobile">
+    <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">Alle ansehen</a>
+  </div>
+  <div class="numismatica-footer">
+    <div class="coins-progress">
+      <div class="coins-progress-indicators" id="coinsProgressIndicators" aria-hidden="true"></div>
+      <div class="coins-progress-text" id="coinsProgressText" aria-live="polite"></div>
+    </div>
+    <div class="numismatica-footer-cta">
+      <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">Alle ansehen</a>
+    </div>
+  </div>
 </div>
 
 <div id="sammlungen" class="prem-section">
   <div class="section-header-left">
-    <div class="section-eyebrow">Bestände</div>
     <h2 class="section-title-left">Sammlungen</h2>
-  </div>
-  <div class="section-header-left" style="margin-bottom: 30px; margin-top: -20px;">
-    <div class="d-flex flex-wrap gap-2">
-      <button class="prem-filter-btn active" data-category="all">Alle</button>
-      {% for kategorie in kategorien %}
-        <button class="prem-filter-btn" data-category="{{ kategorie.id }}">{{ kategorie.name }}</button>
-      {% endfor %}
-    </div>
   </div>
   <div class="prem-collections-grid" id="collectionsGrid"></div>
 </div>
@@ -629,6 +951,34 @@
       <div class="prem-stat">
         <div class="prem-stat-value" id="statMstaetten">&ndash;</div>
         <div class="prem-stat-label">Münzstätten</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="prem-section prem-section-transparent">
+  <div class="wordcloud-section-inner">
+    <div class="section-header-left" style="padding: 0; margin-bottom: 32px;">
+      <div class="section-eyebrow">Ikonografie</div>
+      <h2 class="section-title-left">Schlagwort-Wordcloud</h2>
+      <p class="numismatica-subtitle">Je häufiger ein Schlagwort vorkommt, desto größer wird es dargestellt. Ein Klick öffnet direkt die gefilterte Objektliste.</p>
+    </div>
+    <div class="wordcloud-grid">
+      <div class="wordcloud-card">
+        <div>
+          <h3 class="wordcloud-card-title">Avers</h3>
+          <p class="wordcloud-card-subtitle">Schlagworte der Vorderseiten in der Sammlung.</p>
+        </div>
+        <div class="wordcloud-meta" id="avWordcloudMeta">{{ av_wordcloud_data|length }} Schlagworte</div>
+        <div class="wordcloud-canvas" id="avWordcloud"></div>
+      </div>
+      <div class="wordcloud-card">
+        <div>
+          <h3 class="wordcloud-card-title">Revers</h3>
+          <p class="wordcloud-card-subtitle">Schlagworte der Rückseiten in der Sammlung.</p>
+        </div>
+        <div class="wordcloud-meta" id="rvWordcloudMeta">{{ rv_wordcloud_data|length }} Schlagworte</div>
+        <div class="wordcloud-canvas" id="rvWordcloud"></div>
       </div>
     </div>
   </div>
@@ -672,13 +1022,63 @@
   </div>
 </div>
 
+{{ av_wordcloud_data|json_script:"av-wordcloud-data" }}
+{{ rv_wordcloud_data|json_script:"rv-wordcloud-data" }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.1.0/d3.layout.cloud.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  const coinsContainer = document.getElementById('coinsContainer');
+  const coinsIndicators = document.getElementById('coinsProgressIndicators');
+  const coinsProgressText = document.getElementById('coinsProgressText');
+  if (coinsContainer && coinsIndicators && coinsProgressText) {
+    const coinItems = Array.from(coinsContainer.children).filter((item) => item.classList.contains('infinite-item'));
+    if (coinItems.length > 0) {
+      if (coinItems.length > 1) {
+        coinsIndicators.innerHTML = coinItems.map((_, index) => `<span class="coins-progress-indicator${index === 0 ? ' is-active' : ''}"></span>`).join('');
+      }
+      const indicatorDots = Array.from(coinsIndicators.children);
+      let indicatorFrame = null;
+
+      const updateCoinIndicator = () => {
+        const containerLeft = coinsContainer.getBoundingClientRect().left;
+        let activeIndex = 0;
+        let closestDistance = Number.POSITIVE_INFINITY;
+
+        coinItems.forEach((item, index) => {
+          const distance = Math.abs(item.getBoundingClientRect().left - containerLeft);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            activeIndex = index;
+          }
+        });
+
+        indicatorDots.forEach((dot, index) => {
+          dot.classList.toggle('is-active', index === activeIndex);
+        });
+
+        coinsProgressText.textContent = `${activeIndex + 1} von ${coinItems.length}`;
+      };
+
+      if (coinItems.length > 1) {
+        coinsContainer.addEventListener('scroll', () => {
+          if (indicatorFrame) {
+            cancelAnimationFrame(indicatorFrame);
+          }
+          indicatorFrame = requestAnimationFrame(updateCoinIndicator);
+        }, { passive: true });
+      }
+
+      window.addEventListener('resize', updateCoinIndicator);
+      updateCoinIndicator();
+    }
+  }
+
   const grid = document.getElementById('collectionsGrid');
   if (grid) {
     fetch('/api/collections/').then(r => r.json()).then(colls => {
       grid.innerHTML = colls.map(col => `
-        <div class="prem-collection-card" data-category="${col.kategorie?.id || 'none'}">
+        <div class="prem-collection-card">
           <div class="prem-col-img-wrapper">
             ${col.cover ? `<img src="${col.cover}" alt="${col.name}">` : `<i class="bi bi-collection collection-placeholder"></i>`}
           </div>
@@ -692,16 +1092,6 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
       `).join('');
-      
-      const btns = document.querySelectorAll('.prem-filter-btn');
-      btns.forEach(btn => btn.addEventListener('click', () => {
-        btns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const cat = btn.dataset.category;
-        document.querySelectorAll('.prem-collection-card').forEach(card => {
-          card.style.display = (cat === 'all' || card.dataset.category === cat) ? 'flex' : 'none';
-        });
-      }));
     });
   }
 
@@ -740,6 +1130,135 @@ document.addEventListener('DOMContentLoaded', function() {
       observer.observe(statsCard);
     });
   }
+
+  const avWordcloudDataElement = document.getElementById('av-wordcloud-data');
+  const rvWordcloudDataElement = document.getElementById('rv-wordcloud-data');
+  const avWordcloudData = avWordcloudDataElement ? JSON.parse(avWordcloudDataElement.textContent) : [];
+  const rvWordcloudData = rvWordcloudDataElement ? JSON.parse(rvWordcloudDataElement.textContent) : [];
+
+  function renderWordcloud(containerId, metaId, words, accentColor) {
+    const container = document.getElementById(containerId);
+    const meta = document.getElementById(metaId);
+    if (!container) {
+      return;
+    }
+
+    container.innerHTML = '';
+
+    if (meta) {
+      const totalOccurrences = words.reduce((sum, word) => sum + Number(word.value || 0), 0);
+      meta.textContent = words.length ? `${words.length} Schlagworte · ${totalOccurrences} Zuordnungen` : 'Keine Schlagworte verfügbar';
+    }
+
+    if (!words.length) {
+      container.innerHTML = '<div class="wordcloud-fallback"><span class="wordcloud-card-subtitle">Keine Schlagworte verfügbar.</span></div>';
+      return;
+    }
+
+    if (!window.d3) {
+      container.innerHTML = `<div class="wordcloud-fallback">${words.slice(0, 24).map(word => `<a class="wordcloud-fallback-tag" href="${word.url}">${word.text}<span>${word.value}</span></a>`).join('')}</div>`;
+      return;
+    }
+
+    const width = Math.max(container.clientWidth, 280);
+    const height = Math.max(container.clientHeight, 300);
+    const values = words.map(word => Number(word.value || 0));
+    const minValue = d3.min(values) || 1;
+    const maxValue = d3.max(values) || 1;
+    const fontScale = d3.scaleSqrt().domain([minValue, maxValue]).range(minValue === maxValue ? [34, 34] : [16, 60]);
+    const colorScale = d3.scaleLinear().domain([minValue, maxValue]).range(['#9f9f9f', accentColor]);
+    const layoutWords = words.map(word => ({
+      ...word,
+      size: fontScale(Number(word.value || 0)),
+      weight: Number(word.value || 0) > ((minValue + maxValue) / 2) ? 700 : 500,
+    })).sort((a, b) => b.size - a.size);
+
+    const measureCanvas = document.createElement('canvas');
+    const measureContext = measureCanvas.getContext('2d');
+    const placedBounds = [];
+    const padding = 8;
+
+    const positionedWords = layoutWords.map(word => {
+      measureContext.font = `${word.weight} ${word.size}px Plus Jakarta Sans, Segoe UI, sans-serif`;
+      const wordWidth = measureContext.measureText(word.text).width;
+      const wordHeight = word.size * 0.9;
+      const maxRadius = Math.max(width, height);
+      let radius = 0;
+      let angle = 0;
+
+      while (radius <= maxRadius) {
+        const x = (width / 2) + (Math.cos(angle) * radius);
+        const y = (height / 2) + (Math.sin(angle) * radius);
+        const bounds = {
+          left: x - (wordWidth / 2) - padding,
+          right: x + (wordWidth / 2) + padding,
+          top: y - (wordHeight / 2) - padding,
+          bottom: y + (wordHeight / 2) + padding,
+        };
+        const fitsWithinCanvas = bounds.left >= 0 && bounds.right <= width && bounds.top >= 0 && bounds.bottom <= height;
+        const collides = placedBounds.some(box => !(bounds.right < box.left || bounds.left > box.right || bounds.bottom < box.top || bounds.top > box.bottom));
+
+        if (fitsWithinCanvas && !collides) {
+          placedBounds.push(bounds);
+          return {
+            ...word,
+            x,
+            y,
+          };
+        }
+
+        angle += 0.35;
+        radius += 0.9;
+      }
+
+      return null;
+    }).filter(Boolean);
+
+    if (!positionedWords.length) {
+      container.innerHTML = `<div class="wordcloud-fallback">${words.slice(0, 24).map(word => `<a class="wordcloud-fallback-tag" href="${word.url}">${word.text}<span>${word.value}</span></a>`).join('')}</div>`;
+      return;
+    }
+
+    const svg = d3.select(container)
+      .append('svg')
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
+
+    const links = svg.selectAll('a')
+      .data(positionedWords)
+      .enter()
+      .append('a')
+      .attr('href', word => word.url);
+
+    links.append('text')
+      .attr('class', 'wordcloud-word')
+      .style('font-family', 'Plus Jakarta Sans, Segoe UI, sans-serif')
+      .style('font-size', word => `${word.size}px`)
+      .style('font-weight', word => word.weight)
+      .style('fill', word => colorScale(Number(word.value || 0)))
+      .attr('text-anchor', 'middle')
+      .attr('x', word => word.x)
+      .attr('y', word => word.y)
+      .attr('dominant-baseline', 'middle')
+      .text(word => word.text);
+
+    links.append('title')
+      .text(word => `${word.text}: ${word.value}`);
+  }
+
+  let wordcloudResizeFrame = null;
+  const renderAllWordclouds = () => {
+    renderWordcloud('avWordcloud', 'avWordcloudMeta', avWordcloudData, '#f6b15d');
+    renderWordcloud('rvWordcloud', 'rvWordcloudMeta', rvWordcloudData, '#d9b27a');
+  };
+
+  renderAllWordclouds();
+  window.addEventListener('resize', () => {
+    if (wordcloudResizeFrame) {
+      cancelAnimationFrame(wordcloudResizeFrame);
+    }
+    wordcloudResizeFrame = requestAnimationFrame(renderAllWordclouds);
+  });
 });
 </script>
 {% endblock content %}

@@ -32,7 +32,7 @@ from rest_framework.permissions import IsAuthenticated   # nur eingeloggte
 from rest_framework.response import Response
 from bootstrap_modal_forms.generic import BSModalCreateView, BSModalUpdateView
 
-from urllib.parse import unquote, unquote_plus
+from urllib.parse import quote_plus, unquote, unquote_plus
 from rdflib import Graph, Namespace, Literal
 from rdflib.namespace import RDF, FOAF, DCTERMS, URIRef
 
@@ -319,16 +319,72 @@ def MzUpdate(request, id):
    return render(request, 'slg/obj_form.html', context)
 
 def index(request):
-    kategorien = SlgKategorie.objects.all()
     latest_entries = MuenztypObjektAnzeige.objects.exclude(obj_id__isnull=True).order_by('-last_modified')[:10]
 
+    browse_url = reverse('Objektliste')
+
+    def build_wordcloud_data(default_field, undetermined_field, filter_name, limit=80):
+        counts = Counter()
+
+        for keyword in chain(
+            Obj.objects.filter(Typ__isnull=False).values_list(default_field, flat=True).iterator(),
+            Obj.objects.filter(Typ__isnull=True).values_list(undetermined_field, flat=True).iterator(),
+        ):
+            if not keyword:
+                continue
+            normalized_keyword = str(keyword).strip()
+            if not normalized_keyword:
+                continue
+            counts[normalized_keyword] += 1
+
+        return [
+            {
+                'text': keyword,
+                'value': count,
+                'url': f"{browse_url}?{filter_name}={quote_plus(keyword)}",
+            }
+            for keyword, count in sorted(counts.items(), key=lambda item: (-item[1], item[0].lower()))[:limit]
+        ]
+
+    av_wordcloud_data = build_wordcloud_data(
+        'Typ__av_bildtyp__avbildtyp_schlagwort__schlagwort__name',
+        'av_bildtyp__avbildtyp_schlagwort__schlagwort__name',
+        'av_schlagwort',
+    )
+    rv_wordcloud_data = build_wordcloud_data(
+        'Typ__rv_bildtyp__rvbildtyp_schlagwort__schlagwort__name',
+        'rv_bildtyp__rvbildtyp_schlagwort__schlagwort__name',
+        'rv_schlagwort',
+    )
+
     context = {
-        'kategorien': kategorien,
         'latest_entries': latest_entries,
+        'av_wordcloud_data': av_wordcloud_data,
+        'rv_wordcloud_data': rv_wordcloud_data,
     }
     
     return render(request, 'slg/index.html', context)
 
+def neuerschliessungen(request):
+    latest_entries_qs = (
+        MuenztypObjektAnzeige.objects
+        .exclude(obj_id__isnull=True)
+        .order_by('-last_modified')
+    )
+
+    page = request.GET.get('page', 1)
+    paginator = Paginator(latest_entries_qs, 24)
+
+    try:
+        latest_entries = paginator.page(page)
+    except PageNotAnInteger:
+        latest_entries = paginator.page(1)
+    except EmptyPage:
+        latest_entries = paginator.page(paginator.num_pages)
+
+    return render(request, 'slg/neuerschliessungen.html', {
+        'latest_entries': latest_entries,
+    })
 
 def sammlungen_uebersicht(request):
     sammlungen = (
@@ -559,45 +615,32 @@ def TypView(request, id):
     und alle zugehörigen Objekte (inklusive deren wichtigsten FK‑Felder)
     in möglichst wenigen Datenbank‑Queries.
     """
-
+ 
     # ---------------------------------------------------------------
     # 1. Münztyp mit allen FK/M2M in wenigen Queries laden
-    # ---------------------------------------------------------------
-    obj = (
-        Muenztyp.objects
-            .select_related(
-                "Muenzstand", "Herstellung", "Nominal", "Mzstaette", "Metall",
-                "region", "av_bildtyp", "rv_bildtyp",
-                "av_beizeichen", "rv_beizeichen", "Objekttyp",
-                "workflow", "Ref", "Reichskreis",
-            )
-            .prefetch_related(
-                Prefetch(
-                    "mztyp_person_set",
-                    queryset=Mztyp_Person.objects.select_related(
-                        "idfk_Person", "idfk_PersonFunktion"
-                    )
-                ),
-                Prefetch(
-                    "typ_ref_set",
-                    queryset=Typ_Ref.objects.select_related("Ref")
-                ),
-                Prefetch(
-                    "Konkordanz",
-                    queryset=Muenztyp.objects.select_related("Ref", "variante")
-                ),
-                Prefetch(
-                    "av_bildtyp__avbildtyp_schlagwort_set",
-                    queryset=AvBildtyp_Schlagwort.objects.select_related("schlagwort"),
-                ),
-                Prefetch(
-                    "rv_bildtyp__rvbildtyp_schlagwort_set",
-                    queryset=RvBildtyp_Schlagwort.objects.select_related("schlagwort"),
-                ),
-            )
-            .get(id=id)
+    obj = get_object_or_404(
+        Muenztyp.objects.select_related(
+            'Nominal',
+            'Mzstaette',
+            'Muenzstand',
+            'Reichskreis',
+            'region',
+            'Metall',
+            'Objekttyp',
+            'workflow',
+            'av_bildtyp',
+            'rv_bildtyp',
+        ).prefetch_related(
+            'mztyp_person_set__idfk_Person',
+            'mztyp_person_set__idfk_PersonFunktion',
+            'typ_ref_set__Ref',
+            'Konkordanz__Ref',
+            'av_bildtyp__avbildtyp_schlagwort_set__schlagwort',
+            'rv_bildtyp__rvbildtyp_schlagwort_set__schlagwort',
+        ),
+        id=id,
     )
-
+ 
     # ---------------------------------------------------------------
     # 2. Bereits geprefetchte Daten abgreifen
     # ---------------------------------------------------------------
