@@ -56,6 +56,14 @@ from bs4 import BeautifulSoup
 from import_export.results import Result, RowResult
 
 
+def _is_admin_autocomplete_request(request):
+    """Erkennt Requests vom Django-Admin-Autocomplete-Endpoint."""
+    if request.path.endswith('/autocomplete/'):
+        return True
+    resolver_match = getattr(request, 'resolver_match', None)
+    return bool(resolver_match and getattr(resolver_match, 'url_name', None) == 'autocomplete')
+
+
 
 
 class ReichskreisView(ImportExportModelAdmin):
@@ -335,6 +343,8 @@ class SlgView(nested_admin.NestedModelAdmin):
         from django.db.models import Count
         
         queryset = super().get_queryset(request)
+        if _is_admin_autocomplete_request(request):
+            return queryset.only('id', 'name')
         return queryset.select_related('kategorie').annotate(
             _ereignis_count=Count('slginformation', distinct=True)
         )
@@ -652,11 +662,14 @@ class AvBildtypAdmin(ImportExportActionModelAdmin, admin.ModelAdmin):
         #return super(AvBildtypAdmin,self).get_queryset(request).prefetch_related('obj_set', 'muenztyp_set')
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        queryset = queryset.prefetch_related('schlagworte').annotate(
+        # Admin-Autocomplete wird bei jedem Tastendruck aufgerufen; hier bewusst
+        # keine teuren Aggregationen/Prefetches aus der Listenansicht ausfuehren.
+        if _is_admin_autocomplete_request(request):
+            return queryset.only('id', 'name', 'abk')
+        return queryset.prefetch_related('schlagworte').annotate(
             _object_count=Count("obj", distinct=True),
             _mztyp_count=Count("avmztypen", distinct=True),
         )
-        return queryset
 
     def object_count(self, obj):
         return obj._object_count
@@ -694,6 +707,10 @@ class RvBildtypAdmin(ImportExportActionModelAdmin, admin.ModelAdmin):
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
+        # Admin-Autocomplete wird bei jedem Tastendruck aufgerufen; hier bewusst
+        # keine teuren Aggregationen/Prefetches aus der Listenansicht ausfuehren.
+        if _is_admin_autocomplete_request(request):
+            return queryset.only('id', 'name', 'abk')
         #return super(RvBildtypAdmin,self).get_queryset(request).prefetch_related('obj_set', 'muenztyp_set')
         queryset = queryset.prefetch_related('schlagworte').annotate(
             _object_count=Count("obj", distinct=True),
@@ -731,6 +748,8 @@ class RvBeizeichenAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
+        if _is_admin_autocomplete_request(request):
+            return queryset.only('id', 'name')
         queryset = queryset.annotate(
             _object_count=Count("obj", distinct=True),
             _mztyp_count=Count("rvbeizeichen", distinct=True),
@@ -1439,6 +1458,8 @@ class MuenztypAdmin(ImportExportModelAdmin, CloneModelAdmin,):
 
     def get_queryset(self, request):
         qs = super(MuenztypAdmin, self).get_queryset(request)
+        if _is_admin_autocomplete_request(request):
+            return qs.only('id', 'muenztyptitel', 'titel', 'Mzstaette_id')
         
         # PERFORMANCE: Unterschiedliche Querysets für Liste vs. Detail
         if request.resolver_match and request.resolver_match.url_name and request.resolver_match.url_name.endswith('_changelist'):
@@ -1924,8 +1945,13 @@ class ObjAdmin(ImportExportModelAdmin):
 
 
     def get_queryset(self, request):
+        if _is_admin_autocomplete_request(request):
+            return super().get_queryset(request).only('id', 'invnr', 'titel', 'Typ_id')
+
+        resolver_match = getattr(request, 'resolver_match', None)
+        url_name = getattr(resolver_match, 'url_name', '') or ''
         # OPTIMIERT: Unterschiedliche Querysets für Liste vs. Detail
-        if request.resolver_match.url_name.endswith('_changelist'):
+        if url_name.endswith('_changelist'):
             # Für die Listenansicht: Nur die Felder laden, die wirklich benötigt werden
             queryset = super().get_queryset(request).select_related(
                 'Slg',
@@ -2577,6 +2603,8 @@ class OffizinSymbolAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
+        if _is_admin_autocomplete_request(request):
+            return queryset.only('id', 'name', 'beschreibung')
         queryset = queryset.annotate(
             _object_count=Count("av_objekte", distinct=True) + Count("rv_objekte", distinct=True),
         )
