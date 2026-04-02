@@ -119,7 +119,7 @@ class ObjInventorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Obj
-        fields = ['id', 'invnr', 'Typ', 'durchmesser', 'gewicht', 'stempelstellung', 'workflow']
+        fields = ['id', 'invnr', 'Typ', 'TempTyp', 'durchmesser', 'gewicht', 'stempelstellung', 'workflow']
 
 class ObjInventoryUpdateSerializer(serializers.ModelSerializer):
     Typ = serializers.PrimaryKeyRelatedField(
@@ -164,7 +164,9 @@ class ObjDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'invnr', 'titel', 'idfk_Muenzstand', 'idfk_Nominal', 'idfk_Mzstaette',
             'dat_von', 'dat_bis', 'dat_verb', 'avleg', 'av_bildtyp', 'av_beizeichen', 'av_offizin',
-            'rvleg', 'rv_bildtyp', 'rv_beizeichen', 'rv_offizin', 'anmerkung', 'Herstellungsmerkmale', 'sekundaere_Merkmale', 'Typ', 'workflow', 'typ_personen_mit_funktion'
+            'rvleg', 'rv_bildtyp', 'rv_beizeichen', 'rv_offizin',
+            'TempTyp', 'gewicht', 'durchmesser', 'stempelstellung',
+            'anmerkung', 'Herstellungsmerkmale', 'sekundaere_Merkmale', 'Typ', 'workflow', 'typ_personen_mit_funktion'
         ]
 
     def get_typ_personen_mit_funktion(self, obj):
