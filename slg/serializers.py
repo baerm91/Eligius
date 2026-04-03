@@ -108,10 +108,11 @@ class WorkflowSerializer(serializers.ModelSerializer):
 class TypSerializer(serializers.ModelSerializer):
     Metall = MetallSerializer(read_only=True)
     Nominal = NominalSerializer(read_only=True)
+    workflow = WorkflowSerializer(read_only=True)
     
     class Meta:
         model = Muenztyp
-        fields = ['id', 'muenztyptitel', 'titel', 'dat_verb', 'dat_von', 'dat_bis', 'Metall', 'Nominal']
+        fields = ['id', 'muenztyptitel', 'titel', 'dat_verb', 'dat_von', 'dat_bis', 'Metall', 'Nominal', 'workflow']
 
 class ObjInventorySerializer(serializers.ModelSerializer):
     Typ = TypSerializer(read_only=True)

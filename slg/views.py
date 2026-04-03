@@ -1945,7 +1945,7 @@ class ObjektList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Obj.objects.select_related('Typ')
+        queryset = Obj.objects.select_related('Typ', 'Typ__workflow', 'workflow')
         invnr = self.request.query_params.get('invnr')
         if invnr:
             queryset = queryset.filter(invnr__iexact=invnr)
@@ -1963,7 +1963,8 @@ class ObjektDetail(generics.RetrieveUpdateAPIView):
 
     def get_queryset(self):
         return Obj.objects.select_related(
-            'Typ', 'idfk_Muenzstand', 'idfk_Nominal', 'idfk_Mzstaette',
+            'Typ', 'Typ__workflow', 'workflow',
+            'idfk_Muenzstand', 'idfk_Nominal', 'idfk_Mzstaette',
             'av_bildtyp', 'av_beizeichen', 'av_offizin', 
             'rv_bildtyp', 'rv_beizeichen', 'rv_offizin'
         )
