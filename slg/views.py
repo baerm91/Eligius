@@ -2364,22 +2364,6 @@ class RvOffizinDetail(generics.RetrieveUpdateAPIView):
     lookup_field = 'pk'
     queryset = RvOffizin.objects.all()
 
-class WorkflowList(generics.ListCreateAPIView):
-    serializer_class = WorkflowSerializer
-    authentication_classes = [
-        QueryParamTokenAuthentication,
-        SessionAuthentication,
-        TokenAuthentication,
-    ]
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        queryset = Workflow.objects.all()
-        query = self.request.query_params.get('query', None)
-        if query is not None:
-            queryset = queryset.filter(name__icontains=query)
-        return queryset.order_by('reihenfolge', 'name')
-
 @api_view(['GET'])
 @permission_classes([AllowAny])  # Diese Zeile hinzufügen
 def collections_api(request):
