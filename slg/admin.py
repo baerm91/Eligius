@@ -26,6 +26,7 @@ import urllib.request, json
 import requests
 from requests.exceptions import RequestException, ConnectionError, Timeout, HTTPError
 from django import forms
+from django.forms import Textarea
 import time
 import urllib3
 from django.conf import settings
