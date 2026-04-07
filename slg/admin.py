@@ -31,7 +31,6 @@ import urllib3
 from django.conf import settings
 # Disable SSL warnings when using verify=False
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-from django.forms import Textarea
 from django_admin_listfilter_dropdown.filters import DropdownFilter, RelatedDropdownFilter, ChoiceDropdownFilter
 from model_clone import CloneModelAdmin
 import nested_admin
@@ -43,6 +42,7 @@ from rdflib import Graph, Namespace, URIRef, XSD, Literal
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from datetime import date
 import textwrap
 
@@ -64,6 +64,62 @@ def _is_admin_autocomplete_request(request):
     return bool(resolver_match and getattr(resolver_match, 'url_name', None) == 'autocomplete')
 
 
+def _get_admin_autocomplete_cache_version(model):
+    version_key = f"admin-autocomplete-version:{model._meta.label_lower}"
+    version = cache.get(version_key)
+    if version is None:
+        version = 1
+        cache.set(version_key, version, None)
+    return version
+
+
+def _bump_admin_autocomplete_cache_version(model):
+    version_key = f"admin-autocomplete-version:{model._meta.label_lower}"
+    version = cache.get(version_key)
+    if version is None:
+        cache.set(version_key, 2, None)
+        return
+    cache.set(version_key, version + 1, None)
+
+
+class CachedAutocompleteAdminMixin:
+    autocomplete_cache_timeout = 3600
+    autocomplete_only_fields = ('id',)
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        if _is_admin_autocomplete_request(request):
+            return queryset.only(*self.autocomplete_only_fields)
+        return queryset
+
+    def get_search_results(self, request, queryset, search_term):
+        if not _is_admin_autocomplete_request(request):
+            return super().get_search_results(request, queryset, search_term)
+
+        normalized_term = ' '.join((search_term or '').split()).casefold()
+        cache_key = (
+            f"admin-autocomplete:{self.model._meta.label_lower}:"
+            f"{_get_admin_autocomplete_cache_version(self.model)}:{normalized_term}"
+        )
+        cached_ids = cache.get(cache_key)
+        if cached_ids is not None:
+            return queryset.filter(pk__in=cached_ids), False
+
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        cache.set(cache_key, list(queryset.values_list('pk', flat=True)), self.autocomplete_cache_timeout)
+        return queryset, use_distinct
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        _bump_admin_autocomplete_cache_version(self.model)
+
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
+        _bump_admin_autocomplete_cache_version(self.model)
+
+    def delete_queryset(self, request, queryset):
+        super().delete_queryset(request, queryset)
+        _bump_admin_autocomplete_cache_version(self.model)
 
 
 class ReichskreisView(ImportExportModelAdmin):
@@ -774,11 +830,12 @@ class AvOffizinAdmin(admin.ModelAdmin):
     search_fields = ['name']
     actions = [actions.merge, actions.export_as_xls]
 
-class RvOffizinAdmin(admin.ModelAdmin):
+class RvOffizinAdmin(CachedAutocompleteAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name')
     ordering = ['name']
     search_fields = ['name']
     actions = [actions.merge, actions.export_as_xls]
+    autocomplete_only_fields = ('id', 'name')
 
 class AvBildrandAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
@@ -1045,7 +1102,7 @@ def process_download_infos(obj):
             
             # If no results with HTTP, try HTTPS URI
             if not data_main.get('results', {}).get('bindings', []):
-                https_link = "https://" + http_link[7:] if http_link.startswith("http://") else http_link
+                https_link = "https://" + http_link[7:] if http_link.startswith("http://") else obj.link
                 query_main_https = f"""
                 SELECT * WHERE {{
                   <{https_link}> ?p ?o
@@ -1457,7 +1514,7 @@ class MuenztypAdmin(ImportExportModelAdmin, CloneModelAdmin,):
         return formfield
 
     def get_queryset(self, request):
-        qs = super(MuenztypAdmin, self).get_queryset(request)
+        qs = super().get_queryset(request)
         if _is_admin_autocomplete_request(request):
             return qs.only('id', 'muenztyptitel', 'titel', 'Mzstaette_id')
         
@@ -2305,7 +2362,7 @@ class KatalogFirmenInline(admin.TabularInline,):
 
         
 
-class FirmaAdmin(admin.ModelAdmin,):
+class FirmaAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     list_display = ('id','name',)
     inlines = [OnlineressourceInline]
@@ -2314,7 +2371,7 @@ class FirmaAdmin(admin.ModelAdmin,):
     # def get_queryset(self, request):
     #         return super(FirmaAdmin,self).get_queryset(request).select_related('katalogfirmen_set',)
     # def get_queryset(self, request):
-    #     queryset = super(FirmaAdmin, self).get_queryset(request)
+    #     queryset = super().get_queryset(request)
     #     queryset = queryset.prefetch_related('katalog')
     #     return queryset
     def formfield_for_dbfield(self, db_field, **kwargs):
@@ -2330,11 +2387,11 @@ class FirmaAdmin(admin.ModelAdmin,):
                     setattr(request, cache_attr_name, formfield.choices)
         return formfield
 
-class MonatAdmin(admin.ModelAdmin,):
+class MonatAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
         #('sammler__idfk_Person', RelatedDropdownFilter),
-class MuenztypObjektAnzeigeAdmin(admin.ModelAdmin,):
+class MuenztypObjektAnzeigeAdmin(admin.ModelAdmin):
     search_fields = ('titel',)
     
 
@@ -2349,7 +2406,7 @@ class OnlineressourceView(ImportExportModelAdmin,):
     def get_queryset(self, request):
         return super(OnlineressourceView,self).get_queryset(request).select_related('katalog__katalogart','katalog__monat', 'firma',)
 
-class KatalogAdmin(admin.ModelAdmin,):
+class KatalogAdmin(admin.ModelAdmin):
     search_fields = ('titel',)
         #('sammler__idfk_Person', RelatedDropdownFilter),
     autocomplete_fields = ['firmen','katalogart']
@@ -2530,12 +2587,12 @@ class MetallAdmin(admin.ModelAdmin):
     search_fields = ['name']
     list_display = ['name']
 
-class WorkflowAdmin(admin.ModelAdmin):
+class WorkflowAdmin(CachedAutocompleteAdminMixin, admin.ModelAdmin):
     search_fields = ['name']
     list_display = ['reihenfolge', 'name']
     list_editable = ['name']
     ordering = ['reihenfolge']
-
+    autocomplete_only_fields = ('id', 'name', 'reihenfolge')
 
 @admin.register(SlgKategorie)
 class SlgKategorieAdmin(admin.ModelAdmin):
