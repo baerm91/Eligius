@@ -1945,7 +1945,7 @@ class ObjektList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Obj.objects.select_related('Typ', 'Typ__workflow', 'workflow')
+        queryset = Obj.objects.select_related('Typ', 'Typ__workflow', 'workflow', 'rv_offizin')
         invnr = self.request.query_params.get('invnr')
         if invnr:
             queryset = queryset.filter(invnr__iexact=invnr)
@@ -2363,6 +2363,33 @@ class RvOffizinDetail(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
     lookup_field = 'pk'
     queryset = RvOffizin.objects.all()
+
+class WorkflowList(generics.ListAPIView):
+    serializer_class = WorkflowSerializer
+    authentication_classes = [
+        QueryParamTokenAuthentication,
+        SessionAuthentication,
+        TokenAuthentication,
+    ]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Workflow.objects.all()
+        query = self.request.query_params.get('query', None)
+        if query is not None:
+            queryset = queryset.filter(name__icontains=query)
+        return queryset.order_by('reihenfolge')
+
+class WorkflowDetail(generics.RetrieveAPIView):
+    serializer_class = WorkflowSerializer
+    authentication_classes = [
+        QueryParamTokenAuthentication,
+        SessionAuthentication,
+        TokenAuthentication,
+    ]
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'pk'
+    queryset = Workflow.objects.all()
 
 @api_view(['GET'])
 @permission_classes([AllowAny])  # Diese Zeile hinzufügen

@@ -117,10 +117,11 @@ class TypSerializer(serializers.ModelSerializer):
 class ObjInventorySerializer(serializers.ModelSerializer):
     Typ = TypSerializer(read_only=True)
     workflow = WorkflowSerializer(read_only=True)
+    rv_offizin = RvOffizinSerializer(read_only=True)
 
     class Meta:
         model = Obj
-        fields = ['id', 'invnr', 'Typ', 'TempTyp', 'durchmesser', 'gewicht', 'stempelstellung', 'workflow']
+        fields = ['id', 'invnr', 'Typ', 'TempTyp', 'durchmesser', 'gewicht', 'stempelstellung', 'workflow', 'rv_offizin']
 
 class ObjInventoryUpdateSerializer(serializers.ModelSerializer):
     Typ = serializers.PrimaryKeyRelatedField(

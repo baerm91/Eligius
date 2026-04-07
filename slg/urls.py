@@ -39,6 +39,8 @@ urlpatterns = [
     path('rvbeizeichen/<int:pk>/', views.RvBeizeichenDetail.as_view()),
     path('rvoffizin/', views.RvOffizinList.as_view()),
     path('rvoffizin/<int:pk>/', views.RvOffizinDetail.as_view()),
+    path('workflow/', views.WorkflowList.as_view()),
+    path('workflow/<int:pk>/', views.WorkflowDetail.as_view()),
     path('ref/', views.RefList.as_view()),
     path('person_coin_images/', views.PersonCoinImagesView.as_view(), name='person-coin-images'),
     path('avschlagwort/', views.AvSchlagwortList.as_view(), name='avschlagwort-list'),
