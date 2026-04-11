@@ -121,7 +121,7 @@ class ObjInventorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Obj
-        fields = ['id', 'invnr', 'Typ', 'TempTyp', 'durchmesser', 'gewicht', 'stempelstellung', 'workflow', 'rv_offizin']
+        fields = ['id', 'invnr', 'Typ', 'TempTyp', 'Typ_unsicher', 'durchmesser', 'gewicht', 'stempelstellung', 'workflow', 'rv_offizin']
 
 class ObjInventoryUpdateSerializer(serializers.ModelSerializer):
     Typ = serializers.PrimaryKeyRelatedField(
