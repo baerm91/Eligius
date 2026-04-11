@@ -1946,7 +1946,8 @@ class MuenztypFilterView(APIView):
 
     def get(self, request):
         qs = Muenztyp.objects.select_related(
-            'Nominal', 'Mzstaette', 'av_beizeichen', 'av_offizin_symbol',
+            'Nominal', 'Mzstaette', 'av_bildtyp', 'rv_bildtyp',
+            'av_beizeichen', 'av_offizin_symbol',
         )
 
         # --- text search on muenztyptitel (prefLabel) ---
@@ -2041,7 +2042,8 @@ class MuenztypFilterView(APIView):
 
         type_ids = list(qs.order_by('muenztyptitel').values_list('id', flat=True)[:limit])
         types_qs = Muenztyp.objects.filter(id__in=type_ids).select_related(
-            'Nominal', 'Mzstaette', 'av_beizeichen', 'av_offizin_symbol',
+            'Nominal', 'Mzstaette', 'av_bildtyp', 'rv_bildtyp',
+            'av_beizeichen', 'av_offizin_symbol',
         ).order_by('muenztyptitel')
 
         # Prefetch person names for dargestellt_av_eligius

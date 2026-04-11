@@ -284,6 +284,8 @@ class MuenztypFilterSerializer(serializers.ModelSerializer):
     rev_legend = serializers.CharField(source='rvleg', default='')
     desc_obv = serializers.CharField(source='avbeschr', default='')
     desc_rev = serializers.CharField(source='rvbeschr', default='')
+    av_bildtyp = AvBildtypSerializer(read_only=True)
+    rv_bildtyp = RvBildtypSerializer(read_only=True)
     hasDenomination = serializers.SerializerMethodField()
     hasMint = serializers.SerializerMethodField()
     mintMark = serializers.SerializerMethodField()
@@ -297,6 +299,7 @@ class MuenztypFilterSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'prefLabel', 'subject_base',
             'obv_legend', 'rev_legend', 'desc_obv', 'desc_rev',
+            'av_bildtyp', 'rv_bildtyp',
             'hasDenomination', 'hasMint', 'mintMark', 'officinaMark',
             'dargestellt_av_eligius', 'hasStartDate', 'hasEndDate',
         ]
