@@ -275,6 +275,53 @@ class MuenztypSerializer(serializers.ModelSerializer):
         fields = ['id', 'muenztyptitel', 'titel', 'link', 'av_bildtyp', 'rv_bildtyp', 'Ref', 'nummer']
         read_only_fields = ['id']
 
+
+class MuenztypFilterSerializer(serializers.ModelSerializer):
+    """Serializer that maps Eligius Muenztyp fields to Concordia type_filter format."""
+    prefLabel = serializers.CharField(source='muenztyptitel', default='')
+    subject_base = serializers.URLField(source='link', default='')
+    obv_legend = serializers.CharField(source='avleg', default='')
+    rev_legend = serializers.CharField(source='rvleg', default='')
+    desc_obv = serializers.CharField(source='avbeschr', default='')
+    desc_rev = serializers.CharField(source='rvbeschr', default='')
+    hasDenomination = serializers.SerializerMethodField()
+    hasMint = serializers.SerializerMethodField()
+    mintMark = serializers.SerializerMethodField()
+    officinaMark = serializers.SerializerMethodField()
+    dargestellt_av_eligius = serializers.SerializerMethodField()
+    hasStartDate = serializers.IntegerField(source='dat_von', default=None)
+    hasEndDate = serializers.IntegerField(source='dat_bis', default=None)
+
+    class Meta:
+        model = Muenztyp
+        fields = [
+            'id', 'prefLabel', 'subject_base',
+            'obv_legend', 'rev_legend', 'desc_obv', 'desc_rev',
+            'hasDenomination', 'hasMint', 'mintMark', 'officinaMark',
+            'dargestellt_av_eligius', 'hasStartDate', 'hasEndDate',
+        ]
+
+    def get_hasDenomination(self, obj):
+        return obj.Nominal.name if obj.Nominal_id else ''
+
+    def get_hasMint(self, obj):
+        return obj.Mzstaette.name if obj.Mzstaette_id else ''
+
+    def get_mintMark(self, obj):
+        if obj.av_beizeichen_id:
+            return obj.av_beizeichen.name
+        return ''
+
+    def get_officinaMark(self, obj):
+        if obj.av_offizin_symbol_id:
+            return obj.av_offizin_symbol.name
+        return ''
+
+    def get_dargestellt_av_eligius(self, obj):
+        if hasattr(obj, '_dargestellt_names'):
+            return obj._dargestellt_names or ''
+        return ''
+
 class CoinImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Obj

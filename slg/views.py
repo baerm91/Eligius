@@ -1935,6 +1935,160 @@ class MuenztypListCreate(generics.ListCreateAPIView):
         instance = serializer.save()  # Speichert das Objekt
         process_download_infos(instance)      # Führt Ihre benutzerdefinierte Funktion aus
 
+class MuenztypFilterView(APIView):
+    """Return Muenztypen in Concordia type_filter format with rich filtering."""
+    authentication_classes = [
+        QueryParamTokenAuthentication,
+        SessionAuthentication,
+        TokenAuthentication,
+    ]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = Muenztyp.objects.select_related(
+            'Nominal', 'Mzstaette', 'av_beizeichen', 'av_offizin_symbol',
+        )
+
+        # --- text search on muenztyptitel (prefLabel) ---
+        q = (request.query_params.get('q') or '').strip()
+        if q:
+            for word in q.split():
+                word = word.strip()
+                if word:
+                    qs = qs.filter(muenztyptitel__icontains=word)
+
+        # --- legend filters ---
+        for param, field in [('legend_obv', 'avleg'), ('legend_rev', 'rvleg')]:
+            raw = (request.query_params.get(param) or '').strip()
+            if raw:
+                for term in [t.strip() for t in raw.split(',') if t.strip()]:
+                    pattern = self._wildcard_to_lookup(term)
+                    qs = qs.filter(**{f'{field}__{pattern[0]}': pattern[1]})
+
+        # --- description filters ---
+        for param, field in [('desc_obv', 'avbeschr'), ('desc_rev', 'rvbeschr')]:
+            raw = (request.query_params.get(param) or '').strip()
+            if raw:
+                for term in [t.strip() for t in raw.split(',') if t.strip()]:
+                    qs = qs.filter(**{f'{field}__icontains': term})
+
+        # --- dargestellt_search (person name via Mztyp_Person) ---
+        dargestellt_search = (request.query_params.get('dargestellt_search') or '').strip()
+        if dargestellt_search:
+            qs = qs.filter(
+                mztyp_person__idfk_Person__name__icontains=dargestellt_search,
+            ).distinct()
+
+        # --- denomination (Nominal.name) ---
+        denominations = request.query_params.getlist('denomination')
+        denominations = [d.strip() for d in denominations if d.strip()]
+        if denominations:
+            qs = qs.filter(Nominal__name__in=denominations)
+
+        # --- mintMark (av_beizeichen.name) ---
+        mint_marks = request.query_params.getlist('mintMark')
+        mint_marks = [m.strip() for m in mint_marks if m.strip()]
+        if mint_marks:
+            qs = qs.filter(av_beizeichen__name__in=mint_marks)
+
+        # --- mintMark_search (text search) ---
+        mintmark_search = (request.query_params.get('mintMark_search') or '').strip()
+        if mintmark_search:
+            pattern = self._wildcard_to_lookup(mintmark_search)
+            qs = qs.filter(**{f'av_beizeichen__name__{pattern[0]}': pattern[1]})
+
+        # --- officinaMark (av_offizin_symbol.name) ---
+        officina_marks = request.query_params.getlist('officinaMark')
+        officina_marks = [o.strip() for o in officina_marks if o.strip()]
+        if officina_marks:
+            qs = qs.filter(av_offizin_symbol__name__in=officina_marks)
+
+        # --- dargestellt pills (exact person name) ---
+        dargestellt_values = request.query_params.getlist('dargestellt')
+        dargestellt_values = [d.strip() for d in dargestellt_values if d.strip()]
+        if dargestellt_values:
+            qs = qs.filter(
+                mztyp_person__idfk_Person__name__in=dargestellt_values,
+            ).distinct()
+
+        # --- description delta filters ---
+        for param, field in [('obv_desc_delta', 'avbeschr'), ('rev_desc_delta', 'rvbeschr')]:
+            for delta in request.query_params.getlist(param):
+                delta = (delta or '').strip().lower()
+                if len(delta) < 2:
+                    continue
+                sign, word = delta[0], delta[1:]
+                if not word:
+                    continue
+                if sign == '+':
+                    qs = qs.filter(**{f'{field}__icontains': word})
+                elif sign == '-':
+                    qs = qs.exclude(**{f'{field}__icontains': word})
+
+        # --- stats ---
+        stats = qs.aggregate(
+            total=Count('id'),
+            range_start=Min('dat_von'),
+            range_end=Max('dat_bis'),
+        )
+        total = stats['total'] or 0
+
+        # --- limit ---
+        try:
+            limit = max(1, int(request.query_params.get('limit', '5000')))
+        except (TypeError, ValueError):
+            limit = 5000
+
+        type_ids = list(qs.order_by('muenztyptitel').values_list('id', flat=True)[:limit])
+        types_qs = Muenztyp.objects.filter(id__in=type_ids).select_related(
+            'Nominal', 'Mzstaette', 'av_beizeichen', 'av_offizin_symbol',
+        ).order_by('muenztyptitel')
+
+        # Prefetch person names for dargestellt_av_eligius
+        person_map = {}
+        mztp_rows = Mztyp_Person.objects.filter(
+            Mztyp_id__in=type_ids,
+        ).select_related('idfk_Person').values_list('Mztyp_id', 'idfk_Person__name')
+        for mztyp_id, pname in mztp_rows:
+            person_map.setdefault(mztyp_id, []).append(pname)
+
+        results = []
+        for obj in types_qs:
+            obj._dargestellt_names = ', '.join(person_map.get(obj.id, []))
+            results.append(obj)
+
+        serializer = MuenztypFilterSerializer(results, many=True)
+        return Response({
+            'ok': True,
+            'total': total,
+            'returned': len(serializer.data),
+            'limit': limit,
+            'range_start': stats.get('range_start'),
+            'range_end': stats.get('range_end'),
+            'types': serializer.data,
+        })
+
+    @staticmethod
+    def _wildcard_to_lookup(raw_term):
+        """Convert Concordia wildcard syntax (^, €, ?) to Django ORM lookup."""
+        starts_with = raw_term.startswith('^')
+        ends_with = raw_term.endswith('€') and len(raw_term) > 1
+        core = raw_term
+        if starts_with:
+            core = core[1:]
+        if ends_with:
+            core = core[:-1]
+        core = core.replace('?', '_')
+
+        if starts_with and ends_with:
+            return ('iexact', core)
+        if starts_with:
+            return ('istartswith', core)
+        if ends_with:
+            return ('iendswith', core)
+        return ('icontains', core)
+
+
 class ObjektList(generics.ListAPIView):
     serializer_class = ObjInventorySerializer
     authentication_classes = [

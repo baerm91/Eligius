@@ -15,6 +15,7 @@ urlpatterns = [
     #path('<id>/', views.details, name="details_slg")
     path('api-token-auth/', api_views.obtain_auth_token, name='api_token_auth'),
     path('muenztyp/', views.MuenztypListCreate.as_view()),
+    path('muenztyp_filter/', views.MuenztypFilterView.as_view()),
     path('objekt/', views.ObjektList.as_view()),
     # API-Route 'objekt/<str:invnr>/' entfernt, da sie mit der Detailseiten-Route 'objekt/<int:id>/' kollidiert
     # Die API-Route ist weiterhin unter /api/objekt/<str:invnr>/ verfügbar
