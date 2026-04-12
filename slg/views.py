@@ -28,7 +28,7 @@ from .resources import ObjLSNOResource
 from rest_framework import viewsets, generics
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.permissions import IsAuthenticated   # nur eingeloggte
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly   # nur eingeloggte
 from rest_framework.response import Response
 from bootstrap_modal_forms.generic import BSModalCreateView, BSModalUpdateView
 
@@ -2255,7 +2255,7 @@ class MzstaetteList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         queryset = Mzstaette.objects.all()
@@ -2294,9 +2294,7 @@ class NominalList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
-
-
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         queryset = Nominal.objects.all()
