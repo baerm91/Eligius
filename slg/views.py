@@ -792,6 +792,71 @@ def PraegeherrTimelineView(request, id):
    
    return render(request, 'slg/timeline_praegeherr.html', context)
 
+@api_view(['POST'])
+@authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def export_coins_api(request):
+    """Accept a JSON payload {"invnrs": [...]} and return the coin list CSV export.
+
+    Mirrors the behavior of the admin action "Münzliste exportieren" for remote callers
+    (e.g. Concordia), but selects the Obj rows by inventory number instead of by admin
+    queryset. Optionally accepts a `filename` field for the Content-Disposition.
+    """
+    payload = request.data or {}
+    invnrs = payload.get('invnrs') or []
+    if not isinstance(invnrs, list):
+        return Response({'error': "'invnrs' must be a list"}, status=400)
+
+    cleaned_invnrs = []
+    seen = set()
+    for value in invnrs:
+        text = str(value or '').strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        cleaned_invnrs.append(text)
+
+    if not cleaned_invnrs:
+        return Response({'error': "'invnrs' list is empty"}, status=400)
+
+    base_qs = Obj.objects.filter(invnr__in=cleaned_invnrs)
+    distinct_pks = base_qs.values('pk').distinct().values_list('pk', flat=True)
+    queryset = Obj.objects.filter(pk__in=distinct_pks).select_related(
+        'Slg',
+        'SlgTeil',
+        'Typ',
+        'idfk_Nominal',
+        'Metall',
+        'idfk_Mzstaette',
+        'region',
+        'av_bildtyp',
+        'rv_bildtyp',
+        'av_beizeichen',
+        'rv_beizeichen',
+        'av_offizin',
+        'rv_offizin',
+    ).prefetch_related(
+        'Herstellungsmerkmale',
+        'sekundaere_Merkmale',
+        'Ppl',
+        'idfk_Ref',
+    )
+
+    response = prepare_coin_data_export(queryset)
+
+    filename = str(payload.get('filename') or '').strip() or 'exported_coins.csv'
+    if '/' in filename or '\\' in filename or '\r' in filename or '\n' in filename:
+        filename = 'exported_coins.csv'
+    if not filename.lower().endswith('.csv'):
+        filename = f"{filename}.csv"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    # Informative header for proxies that need to know how many rows matched.
+    response['X-Export-Matched-Invnrs'] = str(len(distinct_pks))
+    response['X-Export-Requested-Invnrs'] = str(len(cleaned_invnrs))
+    return response
+
+
 def prepare_coin_data_export(queryset):
     # Stelle sicher, dass das queryset eindeutig ist
     queryset = queryset.distinct()
