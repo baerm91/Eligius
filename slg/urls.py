@@ -16,6 +16,7 @@ urlpatterns = [
     path('api-token-auth/', api_views.obtain_auth_token, name='api_token_auth'),
     path('muenztyp/', views.MuenztypListCreate.as_view()),
     path('muenztyp_filter/', views.MuenztypFilterView.as_view()),
+    path('konkordanzen_bulk/', views.konkordanzen_bulk),
     path('export_coins/', views.export_coins_api, name='export_coins_api'),
     path('objekt/', views.ObjektList.as_view()),
     # API-Route 'objekt/<str:invnr>/' entfernt, da sie mit der Detailseiten-Route 'objekt/<int:id>/' kollidiert

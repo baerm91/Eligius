@@ -1904,6 +1904,39 @@ def get_konkordanzen(request):
 
     return JsonResponse({"konkordanzen": konkordanzen})
 
+@api_view(['POST'])
+@authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def konkordanzen_bulk(request):
+    raw_type_ids = request.data.get('type_ids') or request.data.get('ids') or []
+    if not isinstance(raw_type_ids, list):
+        return Response({'ok': False, 'error': 'type_ids must be a list'}, status=400)
+
+    type_ids = []
+    seen = set()
+    for raw in raw_type_ids:
+        try:
+            type_id = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if type_id <= 0 or type_id in seen:
+            continue
+        seen.add(type_id)
+        type_ids.append(type_id)
+
+    if not type_ids:
+        return Response({'ok': True, 'konkordanzen_by_type': {}, 'errors': {}})
+
+    konkordanzen_by_type = {str(type_id): [] for type_id in type_ids}
+    qs = Muenztyp.objects.filter(id__in=type_ids).prefetch_related('Konkordanz')
+    for typ in qs:
+        konkordanzen_by_type[str(typ.id)] = [
+            {'id': konkordanz.id, 'titel': str(konkordanz)}
+            for konkordanz in typ.Konkordanz.all()
+        ]
+
+    return Response({'ok': True, 'konkordanzen_by_type': konkordanzen_by_type, 'errors': {}})
+
 class MzstaettenRView(viewsets.ModelViewSet):
 # class MzstaettenRView(generics.RetrieveUpdateDestroyAPIView):
     
@@ -2011,17 +2044,24 @@ class MuenztypFilterView(APIView):
 
     def get(self, request):
         qs = Muenztyp.objects.select_related(
-            'Nominal', 'Mzstaette', 'av_bildtyp', 'rv_bildtyp',
+            'Nominal', 'Mzstaette', 'av_bildtyp', 'rv_bildtyp', 'Ref',
             'av_beizeichen', 'av_offizin_symbol',
         )
 
-        # --- text search on muenztyptitel (prefLabel) ---
+        # --- text search across title, citation and represented person ---
         q = (request.query_params.get('q') or '').strip()
         if q:
             for word in q.split():
                 word = word.strip()
                 if word:
-                    qs = qs.filter(muenztyptitel__icontains=word)
+                    qs = qs.filter(
+                        Q(muenztyptitel__icontains=word)
+                        | Q(titel__icontains=word)
+                        | Q(Ref__abk__icontains=word)
+                        | Q(Ref__zitat__icontains=word)
+                        | Q(nummer__icontains=word)
+                        | Q(mztyp_person__idfk_Person__name__icontains=word)
+                    ).distinct()
 
         # --- legend filters ---
         for param, field in [('legend_obv', 'avleg'), ('legend_rev', 'rvleg')]:
@@ -2107,7 +2147,7 @@ class MuenztypFilterView(APIView):
 
         type_ids = list(qs.order_by('muenztyptitel').values_list('id', flat=True)[:limit])
         types_qs = Muenztyp.objects.filter(id__in=type_ids).select_related(
-            'Nominal', 'Mzstaette', 'av_bildtyp', 'rv_bildtyp',
+            'Nominal', 'Mzstaette', 'av_bildtyp', 'rv_bildtyp', 'Ref',
             'av_beizeichen', 'av_offizin_symbol',
         ).order_by('muenztyptitel')
 
