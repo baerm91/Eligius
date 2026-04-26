@@ -2066,6 +2066,23 @@ def _lookup_by_name_or_nomisma(model, value):
             return obj
     return model.objects.filter(name__icontains=clean).first()
 
+def _lookup_ref(value, ref_id=None):
+    clean_id = _clean_concordia_value(ref_id)
+    if clean_id:
+        try:
+            obj = Ref.objects.filter(pk=int(clean_id)).first()
+            if obj:
+                return obj
+        except (TypeError, ValueError):
+            pass
+    clean = _clean_concordia_value(value)
+    if not clean:
+        return None
+    obj = Ref.objects.filter(abk__iexact=clean).first()
+    if obj:
+        return obj
+    return Ref.objects.filter(abk__icontains=clean).first()
+
 def _safe_int(value):
     clean = _clean_concordia_value(value)
     if clean is None:
@@ -2122,21 +2139,24 @@ class ConcordiaMuenztypCreateView(APIView):
                 rvleg=_clean_concordia_value(payload.get("rvleg") or payload.get("legend_rev")),
                 avbeschr=_clean_concordia_value(payload.get("avbeschr") or payload.get("desc_obv")),
                 rvbeschr=_clean_concordia_value(payload.get("rvbeschr") or payload.get("desc_rev")),
+                nummer=_clean_concordia_value(payload.get("nummer")),
             )
 
             obj.Nominal = _lookup_by_name_or_nomisma(Nominal, payload.get("Nominal") or payload.get("hasDenomination"))
             obj.Mzstaette = _lookup_by_name_or_nomisma(Mzstaette, payload.get("Mzstaette") or payload.get("hasMint"))
-            obj.Muenzstand = _lookup_by_name_or_nomisma(Muenzstand, payload.get("Muenzstand") or payload.get("hasMuenzstand"))
-            obj.av_beizeichen = _lookup_by_name_or_nomisma(AvBeizeichen, payload.get("av_beizeichen") or payload.get("mintMark"))
+            obj.Muenzstand = _lookup_by_name_or_nomisma(Muenzstand, payload.get("Muenzstand") or payload.get("hasMuenzstand") or "Antike Herrscherprägung")
+            obj.Ref = _lookup_ref(payload.get("Ref"), payload.get("RefId"))
+            obj.rv_beizeichen = _lookup_by_name_or_nomisma(RvBeizeichen, payload.get("rv_beizeichen") or payload.get("rv_beizeichen_suggestion") or payload.get("mintMark"))
             if "OffizinSymbol" in globals():
-                obj.av_offizin_symbol = _lookup_by_name_or_nomisma(OffizinSymbol, payload.get("av_offizin_symbol") or payload.get("officinaMark"))
+                obj.rv_offizin_symbol = _lookup_by_name_or_nomisma(OffizinSymbol, payload.get("rv_offizin_symbol") or payload.get("rv_offizin_symbol_suggestion") or payload.get("officinaMark"))
 
             for field_name, raw_value, resolved in [
                 ("hasDenomination", payload.get("hasDenomination"), obj.Nominal),
                 ("hasMint", payload.get("hasMint"), obj.Mzstaette),
                 ("hasMuenzstand", payload.get("hasMuenzstand"), obj.Muenzstand),
-                ("mintMark", payload.get("mintMark"), obj.av_beizeichen),
-                ("officinaMark", payload.get("officinaMark"), getattr(obj, "av_offizin_symbol", None)),
+                ("Ref", payload.get("Ref"), obj.Ref),
+                ("rv_beizeichen", payload.get("rv_beizeichen_suggestion") or payload.get("mintMark"), obj.rv_beizeichen),
+                ("rv_offizin_symbol", payload.get("rv_offizin_symbol_suggestion") or payload.get("officinaMark"), getattr(obj, "rv_offizin_symbol", None)),
             ]:
                 if _clean_concordia_value(raw_value) and not resolved:
                     unresolved.append({"field": field_name, "value": raw_value})

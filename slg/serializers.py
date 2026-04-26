@@ -311,13 +311,13 @@ class MuenztypFilterSerializer(serializers.ModelSerializer):
         return obj.Mzstaette.name if obj.Mzstaette_id else ''
 
     def get_mintMark(self, obj):
-        if obj.av_beizeichen_id:
-            return obj.av_beizeichen.name
+        if obj.rv_beizeichen_id:
+            return obj.rv_beizeichen.name
         return ''
 
     def get_officinaMark(self, obj):
-        if obj.av_offizin_symbol_id:
-            return obj.av_offizin_symbol.name
+        if obj.rv_offizin_symbol_id:
+            return obj.rv_offizin_symbol.name
         return ''
 
     def get_dargestellt_av_eligius(self, obj):
