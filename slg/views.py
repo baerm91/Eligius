@@ -12,7 +12,7 @@ from django.contrib.admin.filters import AllValuesFieldListFilter
 from django.contrib.auth.decorators import login_required
 from django.core import serializers
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db import connection
+from django.db import connection, transaction, IntegrityError
 from django.db.models import Prefetch, Q, Count, Max, Min, Avg, F, Exists, OuterRef, Subquery, Case, When, Value, IntegerField
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.forms import inlineformset_factory, modelformset_factory
@@ -2032,6 +2032,130 @@ class MuenztypListCreate(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         instance = serializer.save()  # Speichert das Objekt
         process_download_infos(instance)      # Führt Ihre benutzerdefinierte Funktion aus
+
+def _clean_concordia_value(value):
+    value = "" if value is None else str(value).strip()
+    return value or None
+
+def _nomisma_candidates(value):
+    clean = _clean_concordia_value(value)
+    if not clean:
+        return []
+    values = [clean]
+    if not clean.startswith("http://") and not clean.startswith("https://"):
+        values.append(f"http://nomisma.org/id/{clean}")
+        values.append(f"https://nomisma.org/id/{clean}")
+    return values
+
+def _lookup_by_name_or_nomisma(model, value):
+    clean = _clean_concordia_value(value)
+    if not clean:
+        return None
+    candidates = _nomisma_candidates(clean)
+    if hasattr(model, "name_nom_id"):
+        obj = model.objects.filter(name_nom_id__in=candidates).first()
+        if obj:
+            return obj
+    obj = model.objects.filter(name__iexact=clean).first()
+    if obj:
+        return obj
+    if hasattr(model, "name_nom_id"):
+        suffix = clean.rstrip("/").split("/")[-1]
+        obj = model.objects.filter(name_nom_id__iendswith=f"/{suffix}").first()
+        if obj:
+            return obj
+    return model.objects.filter(name__icontains=clean).first()
+
+def _safe_int(value):
+    clean = _clean_concordia_value(value)
+    if clean is None:
+        return None
+    try:
+        return int(clean)
+    except (TypeError, ValueError):
+        return None
+
+def _add_concordia_person(muenztyp, raw_value, funktion_id, appears_on_rev, unresolved):
+    clean = _clean_concordia_value(raw_value)
+    if not clean:
+        return
+    values = [part.strip() for part in re.split(r"[,;]", clean) if part.strip()]
+    for value in values:
+        person = _lookup_by_name_or_nomisma(Person, value)
+        if not person:
+            unresolved.append({"field": "person", "value": value})
+            continue
+        funktion = PersonFunktion.objects.filter(pk=funktion_id).first()
+        if not funktion:
+            unresolved.append({"field": "person_function", "value": funktion_id})
+            continue
+        Mztyp_Person.objects.get_or_create(
+            Mztyp=muenztyp,
+            idfk_Person=person,
+            idfk_PersonFunktion=funktion,
+            appears_on_rev=appears_on_rev,
+        )
+
+class ConcordiaMuenztypCreateView(APIView):
+    authentication_classes = [
+        QueryParamTokenAuthentication,
+        SessionAuthentication,
+        TokenAuthentication,
+    ]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        payload = request.data or {}
+        unresolved = []
+        muenztyptitel = _clean_concordia_value(payload.get("muenztyptitel") or payload.get("prefLabel"))
+        if not muenztyptitel:
+            return Response({"ok": False, "error": "muenztyptitel or prefLabel is required"}, status=400)
+
+        with transaction.atomic():
+            obj = Muenztyp(
+                muenztyptitel=muenztyptitel,
+                titel=_clean_concordia_value(payload.get("titel") or payload.get("generated_title")),
+                link=_clean_concordia_value(payload.get("link") or payload.get("subject_base")),
+                dat_von=_safe_int(payload.get("dat_von") or payload.get("hasStartDate")),
+                dat_bis=_safe_int(payload.get("dat_bis") or payload.get("hasEndDate")),
+                avleg=_clean_concordia_value(payload.get("avleg") or payload.get("legend_obv")),
+                rvleg=_clean_concordia_value(payload.get("rvleg") or payload.get("legend_rev")),
+                avbeschr=_clean_concordia_value(payload.get("avbeschr") or payload.get("desc_obv")),
+                rvbeschr=_clean_concordia_value(payload.get("rvbeschr") or payload.get("desc_rev")),
+            )
+
+            obj.Nominal = _lookup_by_name_or_nomisma(Nominal, payload.get("Nominal") or payload.get("hasDenomination"))
+            obj.Mzstaette = _lookup_by_name_or_nomisma(Mzstaette, payload.get("Mzstaette") or payload.get("hasMint"))
+            obj.Muenzstand = _lookup_by_name_or_nomisma(Muenzstand, payload.get("Muenzstand") or payload.get("hasMuenzstand"))
+            obj.av_beizeichen = _lookup_by_name_or_nomisma(AvBeizeichen, payload.get("av_beizeichen") or payload.get("mintMark"))
+            if "OffizinSymbol" in globals():
+                obj.av_offizin_symbol = _lookup_by_name_or_nomisma(OffizinSymbol, payload.get("av_offizin_symbol") or payload.get("officinaMark"))
+
+            for field_name, raw_value, resolved in [
+                ("hasDenomination", payload.get("hasDenomination"), obj.Nominal),
+                ("hasMint", payload.get("hasMint"), obj.Mzstaette),
+                ("hasMuenzstand", payload.get("hasMuenzstand"), obj.Muenzstand),
+                ("mintMark", payload.get("mintMark"), obj.av_beizeichen),
+                ("officinaMark", payload.get("officinaMark"), getattr(obj, "av_offizin_symbol", None)),
+            ]:
+                if _clean_concordia_value(raw_value) and not resolved:
+                    unresolved.append({"field": field_name, "value": raw_value})
+
+            try:
+                obj.save()
+            except IntegrityError:
+                return Response({"ok": False, "error": "Münztyp mit diesem Titel existiert bereits"}, status=409)
+            _add_concordia_person(obj, payload.get("hasAuthority"), 1, False, unresolved)
+            _add_concordia_person(obj, payload.get("hasIssuer"), 1, False, unresolved)
+            _add_concordia_person(obj, payload.get("dargestellt_av_eligius") or payload.get("dargestellt_av"), 2, False, unresolved)
+            _add_concordia_person(obj, payload.get("dargestellt_rv"), 2, True, unresolved)
+
+        return Response({
+            "ok": True,
+            "created_type_id": obj.id,
+            "type": MuenztypFilterSerializer([obj], many=True).data[0],
+            "unresolved": unresolved,
+        }, status=201)
 
 class MuenztypFilterView(APIView):
     """Return Muenztypen in Concordia type_filter format with rich filtering."""
