@@ -2066,6 +2066,25 @@ def _lookup_by_name_or_nomisma(model, value):
             return obj
     return model.objects.filter(name__icontains=clean).first()
 
+def _lookup_by_id_or_name(model, value, label=None):
+    raw_id = None
+    raw_label = label
+    if isinstance(value, dict):
+        raw_id = value.get("id") or value.get("target_id") or value.get("pk")
+        raw_label = raw_label or value.get("name") or value.get("label") or value.get("target_label")
+    else:
+        raw_id = value
+
+    try:
+        if raw_id not in (None, ""):
+            obj = model.objects.filter(pk=int(raw_id)).first()
+            if obj:
+                return obj
+    except (TypeError, ValueError):
+        pass
+
+    return _lookup_by_name_or_nomisma(model, raw_label if raw_label not in (None, "") else value)
+
 def _lookup_ref(value, ref_id=None):
     clean_id = _clean_concordia_value(ref_id)
     if clean_id:
@@ -2146,6 +2165,8 @@ class ConcordiaMuenztypCreateView(APIView):
             obj.Mzstaette = _lookup_by_name_or_nomisma(Mzstaette, payload.get("Mzstaette") or payload.get("hasMint"))
             obj.Muenzstand = _lookup_by_name_or_nomisma(Muenzstand, payload.get("Muenzstand") or payload.get("hasMuenzstand") or "Antike Herrscherprägung")
             obj.Ref = _lookup_ref(payload.get("Ref"), payload.get("RefId"))
+            obj.av_bildtyp = _lookup_by_id_or_name(AvBildtyp, payload.get("av_bildtyp"), payload.get("av_bildtyp_label"))
+            obj.rv_bildtyp = _lookup_by_id_or_name(RvBildtyp, payload.get("rv_bildtyp"), payload.get("rv_bildtyp_label"))
             obj.rv_beizeichen = _lookup_by_name_or_nomisma(RvBeizeichen, payload.get("rv_beizeichen") or payload.get("rv_beizeichen_suggestion") or payload.get("mintMark"))
             if "OffizinSymbol" in globals():
                 obj.rv_offizin_symbol = _lookup_by_name_or_nomisma(OffizinSymbol, payload.get("rv_offizin_symbol") or payload.get("rv_offizin_symbol_suggestion") or payload.get("officinaMark"))
@@ -2155,6 +2176,8 @@ class ConcordiaMuenztypCreateView(APIView):
                 ("hasMint", payload.get("hasMint"), obj.Mzstaette),
                 ("hasMuenzstand", payload.get("hasMuenzstand"), obj.Muenzstand),
                 ("Ref", payload.get("Ref"), obj.Ref),
+                ("av_bildtyp", payload.get("av_bildtyp") or payload.get("av_bildtyp_label") or payload.get("desc_obv"), obj.av_bildtyp),
+                ("rv_bildtyp", payload.get("rv_bildtyp") or payload.get("rv_bildtyp_label") or payload.get("desc_rev"), obj.rv_bildtyp),
                 ("rv_beizeichen", payload.get("rv_beizeichen_suggestion") or payload.get("mintMark"), obj.rv_beizeichen),
                 ("rv_offizin_symbol", payload.get("rv_offizin_symbol_suggestion") or payload.get("officinaMark"), getattr(obj, "rv_offizin_symbol", None)),
             ]:
