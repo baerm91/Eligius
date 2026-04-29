@@ -2267,8 +2267,7 @@ class MuenztypFilterView(APIView):
         # --- mintMark_search (text search) ---
         mintmark_search = (request.query_params.get('mintMark_search') or '').strip()
         if mintmark_search:
-            pattern = self._wildcard_to_lookup(mintmark_search)
-            qs = qs.filter(**{f'av_beizeichen__name__{pattern[0]}': pattern[1]})
+            qs = qs.filter(av_beizeichen__name__iregex=self._wildcard_mintmark_regex(mintmark_search))
 
         # --- officinaMark (av_offizin_symbol.name) ---
         officina_marks = request.query_params.getlist('officinaMark')
@@ -2361,6 +2360,31 @@ class MuenztypFilterView(APIView):
         if ends_with:
             return ('iendswith', core)
         return ('icontains', core)
+
+    @staticmethod
+    def _wildcard_mintmark_regex(raw_term):
+        """Convert mintMark wildcard syntax so ? matches one char or a [symbol]."""
+        starts_with = raw_term.startswith('^')
+        ends_with = raw_term.endswith('€') and len(raw_term) > 1
+        core = raw_term
+        if starts_with:
+            core = core[1:]
+        if ends_with:
+            core = core[:-1]
+
+        parts = []
+        for char in core:
+            if char == '?':
+                parts.append(r'(\[[^]]+\]|.)')
+            else:
+                parts.append(re.escape(char))
+
+        pattern = ''.join(parts)
+        if starts_with:
+            pattern = f'^{pattern}'
+        if ends_with:
+            pattern = f'{pattern}$'
+        return pattern
 
 
 class ObjektList(generics.ListAPIView):
