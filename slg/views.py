@@ -878,7 +878,7 @@ def prepare_coin_data_export(queryset):
         'Objekttyp', 'Münzstand', 'Reichskreis', 'Nominal', 'Metall', 'herstellung', 
         'personen_av', 'avleg', 'av_bildtyp', 'av_schlagworte', 'av_beizeichen', 'av_offizin', 
         'personen_rv', 'rvleg', 'rv_bildtyp', 'rv_schlagworte', 'rv_beizeichen', 'rv_offizin', 
-        'Wappen', 'Fälschung', 'Typ', 'Konkordanz', 'Zitate', 'Typ_unsicher', 'obj_ref_set', 
+        'Wappen', 'Fälschung', 'Typ', 'Konkordanz', 'Zitate', 'Typ_unsicher', 'TempTyp', 'obj_ref_set', 
         'anmerkung', 'Herstellungsmerkmale', 'sekundaere_Merkmale', 'Avers', 'Revers',
         # Fundinformationen
         'fund_maßnahmennr', 'fund_fundnummer', 'fund_fundnummerzusatz', 'fund_kistennr',
@@ -1064,6 +1064,7 @@ def prepare_coin_data_export(queryset):
                     'Konkordanz': ', '.join([str(konkordanz) for konkordanz in mztyp.Konkordanz.all()]) if mztyp else '',
                     'Zitate': ('Referenz unsicher: ' if obj.Typ_unsicher else '') + (' = '.join([str(mztyp)] + [str(konkordanz) for konkordanz in mztyp.Konkordanz.all()]) if mztyp else (obj.anmerkung or '')),
                     'Typ_unsicher': obj.Typ_unsicher,
+                    'TempTyp': obj.TempTyp or '',
                     'obj_ref_set': ', '.join([str(ref) for ref in obj.obj_ref_set.all()]),
                     'anmerkung': obj.anmerkung or '',
                     'Herstellungsmerkmale': ', '.join([str(merkmal) for merkmal in obj.Herstellungsmerkmale.all()]),
