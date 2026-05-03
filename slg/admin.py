@@ -1538,12 +1538,48 @@ class MuenztypAdmin(ImportExportModelAdmin, CloneModelAdmin,):
         form = super(MuenztypAdmin, self).get_form(request, obj, **kwargs)
         form.base_fields['muenztyptitel'].widget.attrs['style'] = 'width: 60em;'
         form.base_fields['Konkordanz'].widget.attrs['style'] = 'width: 80em;'
+        konkordanz_initial = self._get_konkordanz_initial_from_request(request, obj)
+        if konkordanz_initial:
+            form.base_fields['Konkordanz'].initial = konkordanz_initial
         form.base_fields['titel'].widget.attrs['style'] = 'width: 60em;'
         form.base_fields['av_bildtyp'].widget.attrs['style'] = 'width: 80em;'
         form.base_fields['rv_bildtyp'].widget.attrs['style'] = 'width: 80em;'
         
         
         return form
+
+    def _get_konkordanz_initial_from_request(self, request, obj=None):
+        raw_values = []
+        for param_name in ('Konkordanz', 'konkordanz', 'konkordanz_id'):
+            raw_values.extend(request.GET.getlist(param_name))
+
+        konkordanz_ids = []
+        seen_ids = set()
+        current_id = getattr(obj, 'pk', None)
+
+        for raw_value in raw_values:
+            parts = [part.strip() for part in str(raw_value or '').replace(';', ',').split(',')]
+            for value in parts:
+                if not value:
+                    continue
+                match = None
+                if value.isdigit():
+                    match = Muenztyp.objects.filter(pk=int(value)).only('id').first()
+                if match is None:
+                    match = Muenztyp.objects.filter(
+                        Q(muenztyptitel__iexact=value) | Q(titel__iexact=value)
+                    ).only('id').first()
+                if match is None:
+                    match = Muenztyp.objects.filter(
+                        Q(muenztyptitel__icontains=value) | Q(titel__icontains=value)
+                    ).only('id').first()
+
+                match_id = getattr(match, 'pk', None)
+                if match_id and match_id != current_id and match_id not in seen_ids:
+                    seen_ids.add(match_id)
+                    konkordanz_ids.append(match_id)
+
+        return konkordanz_ids
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
