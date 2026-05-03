@@ -897,7 +897,7 @@ class Muenztyp(CloneMixin, models.Model):
 	modified_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
 	# für den Button "Duplicate"
-	_clone_many_to_many_fields = ['Literatur', 'Ppl', 'schlagworte']
+	_clone_m2m_fields = ['Literatur', 'Ppl', 'schlagworte']
 
 	auflage = models.ForeignKey('Auflage', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Auflage')
 	ausgabedatum = models.DateField(blank=True, null=True, verbose_name='Ausgabedatum')
