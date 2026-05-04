@@ -20,6 +20,7 @@ urlpatterns = [
     path('konkordanzen_bulk/', views.konkordanzen_bulk),
     path('export_coins/', views.export_coins_api, name='export_coins_api'),
     path('objekt/', views.ObjektList.as_view()),
+    path('objekt/<str:invnr>/personen/', views.ObjektPersonenView.as_view(), name='api-objekt-personen'),
     # API-Route 'objekt/<str:invnr>/' entfernt, da sie mit der Detailseiten-Route 'objekt/<int:id>/' kollidiert
     # Die API-Route ist weiterhin unter /api/objekt/<str:invnr>/ verfügbar
     path('avbildtyp/', views.AvBildtypList.as_view()),

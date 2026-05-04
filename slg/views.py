@@ -2438,6 +2438,120 @@ class ObjektDetail(generics.RetrieveUpdateAPIView):
         read_serializer = ObjDetailSerializer(instance, context=self.get_serializer_context())
         return Response(read_serializer.data)
 
+class ObjektPersonenView(generics.GenericAPIView):
+    authentication_classes = [
+        QueryParamTokenAuthentication,
+        SessionAuthentication,
+        TokenAuthentication,
+    ]
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'invnr'
+    lookup_url_kwarg = 'invnr'
+
+    role_function_ids = {
+        'issuer': 1,
+        'depicted_av': 2,
+        'depicted_rv': 2,
+    }
+
+    def get_object(self):
+        return get_object_or_404(Obj, invnr__iexact=self.kwargs.get(self.lookup_url_kwarg))
+
+    def _serialize_relations(self, obj):
+        relations = Obj_Person.objects.filter(idfk_Obj=obj).select_related(
+            'idfk_Person',
+            'idfk_PersonFunktion',
+        ).order_by('idfk_Person__name', 'idfk_PersonFunktion_id', 'appears_on_rev')
+
+        result = []
+        for rel in relations:
+            result.append({
+                'id': rel.id,
+                'person': {
+                    'id': rel.idfk_Person_id,
+                    'name': rel.idfk_Person.name,
+                    'name_nom_id': rel.idfk_Person.name_nom_id,
+                },
+                'funktion': {
+                    'id': rel.idfk_PersonFunktion_id,
+                    'name': rel.idfk_PersonFunktion.name,
+                },
+                'appears_on_rev': rel.appears_on_rev,
+            })
+        return result
+
+    def get(self, request, *args, **kwargs):
+        obj = self.get_object()
+        return Response({'object': {'id': obj.id, 'invnr': obj.invnr}, 'personen': self._serialize_relations(obj)})
+
+    def put(self, request, *args, **kwargs):
+        obj = self.get_object()
+        raw_entries = request.data.get('personen') if isinstance(request.data, dict) else request.data
+        if not isinstance(raw_entries, list):
+            return Response({'detail': 'Expected "personen" as list.'}, status=400)
+
+        person_ids = []
+        entries = []
+        for raw in raw_entries:
+            if not isinstance(raw, dict):
+                return Response({'detail': 'Each person entry must be an object.'}, status=400)
+            person_id = raw.get('person_id') or raw.get('id')
+            if isinstance(raw.get('person'), dict):
+                person_id = person_id or raw['person'].get('id')
+            try:
+                person_id = int(person_id)
+            except (TypeError, ValueError):
+                return Response({'detail': 'Each person entry needs a valid person_id.'}, status=400)
+            roles = raw.get('roles') or {}
+            if not isinstance(roles, dict):
+                return Response({'detail': 'roles must be an object.'}, status=400)
+            entries.append((person_id, roles))
+            person_ids.append(person_id)
+
+        existing_person_ids = set(Person.objects.filter(id__in=person_ids).values_list('id', flat=True))
+        missing_person_ids = sorted(set(person_ids) - existing_person_ids)
+        if missing_person_ids:
+            return Response({'detail': 'Unknown person ids.', 'person_ids': missing_person_ids}, status=400)
+
+        function_ids = set(self.role_function_ids.values())
+        existing_function_ids = set(PersonFunktion.objects.filter(id__in=function_ids).values_list('id', flat=True))
+        if function_ids != existing_function_ids:
+            return Response({'detail': 'Required person functions are missing.', 'function_ids': sorted(function_ids - existing_function_ids)}, status=500)
+        managed_function_ids = set(PersonFunktion.objects.filter(id__in=[1, 2, 6, 7]).values_list('id', flat=True))
+
+        with transaction.atomic():
+            if person_ids:
+                Obj_Person.objects.filter(
+                    idfk_Obj=obj,
+                    idfk_Person_id__in=person_ids,
+                    idfk_PersonFunktion_id__in=managed_function_ids,
+                ).delete()
+
+            for person_id, roles in entries:
+                if roles.get('issuer'):
+                    Obj_Person.objects.get_or_create(
+                        idfk_Obj=obj,
+                        idfk_Person_id=person_id,
+                        idfk_PersonFunktion_id=self.role_function_ids['issuer'],
+                        appears_on_rev=False,
+                    )
+                if roles.get('depicted_av'):
+                    Obj_Person.objects.get_or_create(
+                        idfk_Obj=obj,
+                        idfk_Person_id=person_id,
+                        idfk_PersonFunktion_id=self.role_function_ids['depicted_av'],
+                        appears_on_rev=False,
+                    )
+                if roles.get('depicted_rv'):
+                    Obj_Person.objects.get_or_create(
+                        idfk_Obj=obj,
+                        idfk_Person_id=person_id,
+                        idfk_PersonFunktion_id=self.role_function_ids['depicted_rv'],
+                        appears_on_rev=True,
+                    )
+
+        return Response({'object': {'id': obj.id, 'invnr': obj.invnr}, 'personen': self._serialize_relations(obj)})
+
 class RefList(generics.ListCreateAPIView):
     serializer_class = RefSerializer
 
