@@ -1938,6 +1938,48 @@ def konkordanzen_bulk(request):
 
     return Response({'ok': True, 'konkordanzen_by_type': konkordanzen_by_type, 'errors': {}})
 
+
+@api_view(['POST'])
+@authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def muenztyp_konkordanz_create(request, type_id=None):
+    source_type_id = type_id or request.data.get('source_type_id') or request.data.get('typ')
+    target_type_id = request.data.get('target_type_id') or request.data.get('konkordanz') or request.data.get('Konkordanz')
+
+    try:
+        source_type_id = int(source_type_id)
+        target_type_id = int(target_type_id)
+    except (TypeError, ValueError):
+        return Response({'ok': False, 'error': 'source_type_id and target_type_id must be numeric'}, status=400)
+
+    if source_type_id <= 0 or target_type_id <= 0:
+        return Response({'ok': False, 'error': 'source_type_id and target_type_id must be positive'}, status=400)
+    if source_type_id == target_type_id:
+        return Response({'ok': False, 'error': 'Ein Münztyp kann nicht mit sich selbst konkordiert werden'}, status=400)
+
+    source = Muenztyp.objects.filter(pk=source_type_id).first()
+    target = Muenztyp.objects.filter(pk=target_type_id).first()
+    if not source:
+        return Response({'ok': False, 'error': 'Quell-Münztyp nicht gefunden'}, status=404)
+    if not target:
+        return Response({'ok': False, 'error': 'Ziel-Münztyp nicht gefunden'}, status=404)
+
+    already_linked = source.Konkordanz.filter(pk=target.pk).exists()
+    with transaction.atomic():
+        source.Konkordanz.add(target)
+
+    konkordanzen = [
+        {'id': konkordanz.id, 'titel': str(konkordanz)}
+        for konkordanz in source.Konkordanz.all()
+    ]
+    return Response({
+        'ok': True,
+        'source_type_id': source.pk,
+        'target_type_id': target.pk,
+        'created': not already_linked,
+        'konkordanzen': konkordanzen,
+    }, status=200)
+
 class MzstaettenRView(viewsets.ModelViewSet):
 # class MzstaettenRView(generics.RetrieveUpdateDestroyAPIView):
     
