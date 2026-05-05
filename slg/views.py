@@ -2103,6 +2103,136 @@ def _lookup_ref(value, ref_id=None):
         return obj
     return Ref.objects.filter(abk__icontains=clean).first()
 
+
+def _unique_muenztyp_title(base_title):
+    base = _clean_concordia_value(base_title) or "Kopie"
+    candidate = base
+    suffix = 2
+    while Muenztyp.objects.filter(muenztyptitel=candidate).exists():
+        candidate = f"{base} ({suffix})"
+        suffix += 1
+    return candidate
+
+
+def _payload_clean_value(payload, *keys, allow_blank=False):
+    for key in keys:
+        if key in payload:
+            value = "" if payload.get(key) is None else str(payload.get(key)).strip()
+            if value or allow_blank:
+                return value
+    return None
+
+
+def _copy_muenztyp_clone_relations(source, target):
+    for relation in Mztyp_Person.objects.filter(Mztyp=source):
+        Mztyp_Person.objects.get_or_create(
+            Mztyp=target,
+            idfk_Person=relation.idfk_Person,
+            idfk_PersonFunktion=relation.idfk_PersonFunktion,
+            appears_on_rev=relation.appears_on_rev,
+        )
+    for relation in Mztyp_Schlagwort.objects.filter(mztyp=source):
+        Mztyp_Schlagwort.objects.get_or_create(
+            mztyp=target,
+            schlagwort=relation.schlagwort,
+        )
+    for relation in Typ_Ref.objects.filter(Typ=source):
+        Typ_Ref.objects.get_or_create(
+            Typ=target,
+            Ref=relation.Ref,
+            nummer=relation.nummer,
+        )
+
+
+def _duplicate_konkordanz_targets(payload, default_type_id):
+    raw_value = (
+        payload.get("Konkordanz")
+        or payload.get("konkordanz")
+        or payload.get("konkordanz_id")
+        or default_type_id
+    )
+    raw_values = raw_value if isinstance(raw_value, list) else [raw_value]
+    target_ids = []
+    seen_ids = set()
+
+    for raw in raw_values:
+        parts = [part.strip() for part in str(raw or "").replace(";", ",").split(",")]
+        for part in parts:
+            if not part:
+                continue
+            target = None
+            try:
+                target = Muenztyp.objects.filter(pk=int(part)).only("id").first()
+            except (TypeError, ValueError):
+                target = None
+            if target is None:
+                target = Muenztyp.objects.filter(
+                    Q(muenztyptitel__iexact=part) | Q(titel__iexact=part)
+                ).only("id").first()
+            target_id = getattr(target, "pk", None)
+            if target_id and target_id != default_type_id and target_id not in seen_ids:
+                seen_ids.add(target_id)
+                target_ids.append(target_id)
+
+    if default_type_id not in seen_ids:
+        target_ids.insert(0, default_type_id)
+    return target_ids
+
+
+class MuenztypDuplicateView(APIView):
+    authentication_classes = [
+        QueryParamTokenAuthentication,
+        SessionAuthentication,
+        TokenAuthentication,
+    ]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, type_id):
+        source = Muenztyp.objects.filter(pk=type_id).first()
+        if not source:
+            return Response({"ok": False, "error": "Muenztyp nicht gefunden"}, status=404)
+
+        payload = request.data or {}
+        ref_requested = any(key in payload for key in ("Ref", "RefId"))
+        ref_obj = _lookup_ref(payload.get("Ref"), payload.get("RefId")) if ref_requested else source.Ref
+        if ref_requested and not ref_obj:
+            return Response({"ok": False, "error": "Referenz konnte nicht gefunden werden"}, status=400)
+
+        title = _payload_clean_value(payload, "muenztyptitel", "prefLabel", "title")
+        nummer = _payload_clean_value(payload, "nummer")
+        link = _payload_clean_value(payload, "link", "subject_base", allow_blank=True)
+
+        data = {}
+        for field in Muenztyp._meta.concrete_fields:
+            if field.primary_key or getattr(field, "auto_now", False) or getattr(field, "auto_now_add", False):
+                continue
+            data[field.attname] = getattr(source, field.attname)
+
+        data["muenztyptitel"] = _unique_muenztyp_title(title or f"{source.muenztyptitel} Kopie")
+        data["Ref_id"] = ref_obj.pk if ref_obj else None
+        if nummer is not None:
+            data["nummer"] = nummer
+        if link is not None:
+            data["link"] = link
+
+        try:
+            with transaction.atomic():
+                duplicate = Muenztyp.objects.create(**data)
+                _copy_muenztyp_clone_relations(source, duplicate)
+                target_ids = _duplicate_konkordanz_targets(payload, source.pk)
+                konkordanzen = Muenztyp.objects.filter(pk__in=target_ids).exclude(pk=duplicate.pk)
+                duplicate.Konkordanz.add(*konkordanzen)
+        except IntegrityError:
+            return Response({"ok": False, "error": "Münztyp mit diesem Titel existiert bereits"}, status=409)
+
+        return Response({
+            "ok": True,
+            "source_type_id": source.pk,
+            "created_type_id": duplicate.pk,
+            "type": MuenztypFilterSerializer([duplicate], many=True).data[0],
+        }, status=201)
+
+
 def _safe_int(value):
     clean = _clean_concordia_value(value)
     if clean is None:

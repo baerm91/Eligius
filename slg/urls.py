@@ -15,6 +15,7 @@ urlpatterns = [
     #path('<id>/', views.details, name="details_slg")
     path('api-token-auth/', api_views.obtain_auth_token, name='api_token_auth'),
     path('muenztyp/', views.MuenztypListCreate.as_view()),
+    path('muenztyp/<int:type_id>/duplicate/', views.MuenztypDuplicateView.as_view()),
     path('muenztyp_from_concordia/', views.ConcordiaMuenztypCreateView.as_view()),
     path('muenztyp_filter/', views.MuenztypFilterView.as_view()),
     path('konkordanzen_bulk/', views.konkordanzen_bulk),
