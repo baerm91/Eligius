@@ -857,6 +857,74 @@ def export_coins_api(request):
     return response
 
 
+def _clean_export_invnrs(values):
+    cleaned_invnrs = []
+    seen = set()
+    for value in values or []:
+        text = str(value or '').strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        cleaned_invnrs.append(text)
+    return cleaned_invnrs
+
+
+def _export_datetime(value):
+    if not value:
+        return ''
+    return value.isoformat()
+
+
+@api_view(['POST'])
+@authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def export_coin_states_api(request):
+    """Return current object/type modification timestamps for inventory numbers."""
+    payload = request.data or {}
+    invnrs = payload.get('invnrs') or []
+    if not isinstance(invnrs, list):
+        return Response({'error': "'invnrs' must be a list"}, status=400)
+
+    cleaned_invnrs = _clean_export_invnrs(invnrs)
+    if not cleaned_invnrs:
+        return Response({'error': "'invnrs' list is empty"}, status=400)
+
+    queryset = Obj.objects.filter(invnr__in=cleaned_invnrs).select_related(
+        'Slg',
+        'SlgTeil',
+        'Typ',
+    )
+    order_map = {invnr: index for index, invnr in enumerate(cleaned_invnrs)}
+    rows = sorted(
+        queryset,
+        key=lambda obj: (order_map.get(str(obj.invnr), len(order_map)), obj.pk),
+    )
+
+    results = []
+    matched_invnrs = set()
+    for obj in rows:
+        mztyp = obj.Typ
+        invnr = str(obj.invnr or '').strip()
+        matched_invnrs.add(invnr)
+        results.append({
+            'invnr': invnr,
+            'obj_pk': obj.pk,
+            'typ_pk': mztyp.pk if mztyp else None,
+            'obj_modified_at': _export_datetime(obj.modified_at),
+            'type_modified_at': _export_datetime(mztyp.modified_at) if mztyp else '',
+            'sammlung': str(obj.Slg) if obj.Slg else '',
+            'sammlungsteil': str(obj.SlgTeil) if obj.SlgTeil else '',
+        })
+
+    return Response({
+        'ok': True,
+        'requested': len(cleaned_invnrs),
+        'matched': len(results),
+        'unmatched_invnrs': [invnr for invnr in cleaned_invnrs if invnr not in matched_invnrs],
+        'results': results,
+    })
+
+
 def prepare_coin_data_export(queryset):
     # Stelle sicher, dass das queryset eindeutig ist
     queryset = queryset.distinct()
@@ -872,7 +940,8 @@ def prepare_coin_data_export(queryset):
     
     # CSV Header definieren
     fieldnames = [
-        'pk', 'workflow_objekt', 'workflow_mztyp', 'Inv.-Nr.', 'Durchmesser', 'Gewicht', 
+        'pk', 'workflow_objekt', 'workflow_mztyp', 'Inv.-Nr.', 'Objekt zuletzt bearbeitet',
+        'Münztyp-ID', 'Münztyp zuletzt bearbeitet', 'Durchmesser', 'Gewicht', 
         'Stempelstellung', 'Abnutzung', 'Sammlung', 'Sammlungsteil', 'Münzstätte', 'Region', 
         'praegeherren', 'Titel', 'Datierung verbale', 'Datierung von', 'Datierung bis', 
         'Objekttyp', 'Münzstand', 'Reichskreis', 'Nominal', 'Metall', 'herstellung', 
@@ -1027,6 +1096,9 @@ def prepare_coin_data_export(queryset):
                     'workflow_objekt': safe_str(obj.workflow),
                     'workflow_mztyp': safe_str(mztyp.workflow) if mztyp else '',
                     'Inv.-Nr.': safe_str(obj.invnr),
+                    'Objekt zuletzt bearbeitet': _export_datetime(obj.modified_at),
+                    'Münztyp-ID': mztyp.pk if mztyp else '',
+                    'Münztyp zuletzt bearbeitet': _export_datetime(mztyp.modified_at) if mztyp else '',
                     'Durchmesser': obj.durchmesser,
                     'Gewicht': obj.gewicht,
                     'Stempelstellung': obj.stempelstellung,
