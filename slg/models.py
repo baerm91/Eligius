@@ -1279,6 +1279,14 @@ class Obj(models.Model):
 		if self.dat_verb is None and self.dat_bis is not None and self.dat_von is not None:
 			self.dat_verb = self.get_dat_verb()
 
+		if self.Typ_id is None and self.Metall_id is None and self.idfk_Nominal_id and self.idfk_Nominal.material_id is not None:
+			self.Metall = self.idfk_Nominal.material
+			update_fields = kwargs.get('update_fields')
+			if update_fields is not None:
+				update_fields = set(update_fields)
+				if update_fields:
+					kwargs['update_fields'] = update_fields | {'Metall'}
+
 		super(Obj, self).save(*args, **kwargs)
 
 		# MTOA-Sync wird automatisch via post_save Signal ausgeführt (siehe slg/signals.py)
