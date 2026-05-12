@@ -539,6 +539,11 @@
                         </div>
                     {% endif %}
                 {% endwith %}
+                {% if coin_data.slg.bildrechte_lizenz %}
+                    <div class="coin-image-license">
+                        Bildrechte: {{ coin_data.slg.name }} - {{ coin_data.slg.bildrechte_lizenz|linebreaksbr }}
+                    </div>
+                {% endif %}
             </div>
             
                         

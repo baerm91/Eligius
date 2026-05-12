@@ -50,6 +50,7 @@ class Slg(models.Model):
 	name = models.CharField(max_length=200, verbose_name='Sammlung')
 	#art = models.ForeignKey("Slgsart", verbose_name="Art", on_delete=models.CASCADE)
 	beschreibung = models.TextField(verbose_name='Beschreibung', blank=True)
+	bildrechte_lizenz = models.TextField(verbose_name='Copyrightlizenz der Bilder', blank=True)
 	created_at = models.DateTimeField(default=datetime.now, blank=True, null=True)
 	bildurl = models.CharField(max_length=250, blank=True, null=True, verbose_name='Url zum Bilderverzeichnis')
 	cover = models.CharField(max_length=250, verbose_name='Coverbild-Url', blank=True)

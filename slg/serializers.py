@@ -33,7 +33,7 @@ class SlgSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Slg
-        fields = ['id', 'name', 'beschreibung', 'cover', 'kategorie', 'absolute_url']
+        fields = ['id', 'name', 'beschreibung', 'bildrechte_lizenz', 'cover', 'kategorie', 'absolute_url']
 
     def get_absolute_url(self, obj):
         return obj.get_absolute_url()

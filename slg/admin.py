@@ -383,7 +383,7 @@ class SlgView(nested_admin.NestedModelAdmin):
     
     fieldsets = (
         (None, {
-            'fields': ('name', 'kategorie', 'beschreibung', 'cover')
+            'fields': ('name', 'kategorie', 'beschreibung', 'bildrechte_lizenz', 'cover')
         }),
         ('Bildeinstellungen', {
             'classes': ('collapse',),

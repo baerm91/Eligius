@@ -523,6 +523,16 @@ textarea::placeholder {
   background: transparent;
 }
 
+#captions .coin-image-license {
+  flex: 1 0 100%;
+  margin: -0.2rem auto 0;
+  padding: 0 0.85rem 0.15rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
 /* Center HR dividers above Av/Rv descriptions */
 #captions .col-md-6 hr {
   margin-left: auto;
