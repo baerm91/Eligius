@@ -160,7 +160,7 @@ FILTER_PARAMETERS = {
             'filter': 'exact',
             'display_name': 'Paket',
             'model': Paket,
-            'display_field': 'name',
+            'display_field': 'oeffentlicher_titel',
         },
         'Ref': {
             'fields': ['Typ__Ref__abk'],
@@ -416,6 +416,13 @@ FILTER_PARAMETERS = {
 
             'facet_field': 'SlgTeil__name',
             'id_field':    'SlgTeil_id',
+        },
+        'Paket': {
+            'fields': ['pakete__id'],
+            'filter': 'exact',
+            'display_name': 'Paket',
+            'model': Paket,
+            'display_field': 'oeffentlicher_titel',
         },
         'Ref': {
             'fields': ['idfk_Ref__abk'],

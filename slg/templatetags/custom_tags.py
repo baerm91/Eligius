@@ -40,6 +40,11 @@ def get_display_name(key, value):
 
     try:
         model = config['model']
+        if key == 'Paket':
+            related_obj = model.objects.filter(pk=value, online_freigegeben=True).first()
+            if not related_obj:
+                return value
+            return getattr(related_obj, config['display_field'], value)
         # Annahme: 'value' ist die ID des Objekts
         related_obj = get_object_or_404(model, pk=value)
         return getattr(related_obj, config['display_field'], value)

@@ -547,7 +547,7 @@ def paket_detail(request, slug):
         'paket': paket,
         'objektanzahl_db': len(objekt_ids),
         'package_entries': package_entries,
-        'teaser_entries': package_entries[:1],
+        'teaser_entries': package_entries[:6],
         'catalog_entries': package_entries[:12],
         'denomination_distribution': _build_package_distribution(package_entries, 'nominal'),
         'material_distribution': material_distribution,
@@ -1899,11 +1899,15 @@ def _get_filtered_mtoa_queryset(request):
 
         paket_query = Q()
         if paket_ids:
-            paket_query |= Q(pakete__id__in=paket_ids)
+            paket_query |= Q(id__in=paket_ids)
         if paket_names:
-            paket_query |= Q(pakete__name__in=paket_names) | Q(pakete__slug__in=paket_names)
+            paket_query |= Q(name__in=paket_names) | Q(slug__in=paket_names) | Q(titel_oeffentlich__in=paket_names)
 
-        obj_ids = Obj.objects.filter(paket_query).values_list('id', flat=True).distinct()
+        public_paket_ids = Paket.objects.filter(
+            paket_query,
+            online_freigegeben=True,
+        ).values_list('id', flat=True)
+        obj_ids = Obj.objects.filter(pakete__id__in=public_paket_ids).values_list('id', flat=True).distinct()
         qs = qs.filter(obj_id__in=obj_ids)
 
     if needs_distinct:

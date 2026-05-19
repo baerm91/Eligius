@@ -872,6 +872,10 @@ class Paket(models.Model):
 	def __str__(self):
 		return self.name
 
+	@property
+	def oeffentlicher_titel(self):
+		return self.titel_oeffentlich or self.name
+
 	def save(self, *args, **kwargs):
 		if not self.slug:
 			base_slug = slugify(self.titel_oeffentlich or self.name) or 'paket'
