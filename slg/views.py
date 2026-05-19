@@ -502,13 +502,25 @@ def _build_package_chart_data(entries):
 
     return {'years': years, 'counts': counts}
 
-def _build_package_chart_series(paket, entries, comparison_entries_by_package):
+def _get_package_comparison_packages(paket):
+    comparison_packages = []
+    seen_package_ids = {paket.id}
+
+    for comparison_package in chain(paket.vergleichspakete.all(), paket.vergleichende_pakete.all()):
+        if comparison_package.id in seen_package_ids:
+            continue
+        seen_package_ids.add(comparison_package.id)
+        comparison_packages.append(comparison_package)
+
+    return comparison_packages
+
+def _build_package_chart_series(paket, entries, comparison_packages, comparison_entries_by_package):
     series = [{
         'name': paket.titel_oeffentlich or paket.name,
         **_build_package_chart_data(entries),
     }]
 
-    for comparison_package in paket.vergleichspakete.all():
+    for comparison_package in comparison_packages:
         comparison_entries = comparison_entries_by_package.get(comparison_package.id, [])
         chart_data = _build_package_chart_data(comparison_entries)
         if chart_data.get('years'):
@@ -561,7 +573,7 @@ def paket_detail(request, slug):
     paket = get_object_or_404(
         Paket.objects
         .filter(online_freigegeben=True)
-        .prefetch_related('vergleichspakete', 'literatur'),
+        .prefetch_related('vergleichspakete', 'vergleichende_pakete', 'literatur'),
         slug=slug
     )
     objekt_ids = list(Obj.objects.filter(pakete=paket).values_list('id', flat=True))
@@ -635,9 +647,9 @@ def paket_detail(request, slug):
     ])
 
     package_chart_data = _build_package_chart_data(package_entries)
-    chart_years = package_chart_data.get('years') or []
     comparison_entries_by_package = {}
-    comparison_package_ids = list(paket.vergleichspakete.values_list('id', flat=True))
+    comparison_packages = _get_package_comparison_packages(paket)
+    comparison_package_ids = [comparison_package.id for comparison_package in comparison_packages]
     if comparison_package_ids:
         comparison_obj_pairs = list(
             Obj.pakete.through.objects
@@ -657,8 +669,14 @@ def paket_detail(request, slug):
     package_chart_series = _build_package_chart_series(
         paket,
         package_entries,
+        comparison_packages,
         comparison_entries_by_package,
     )
+    chart_years = sorted({
+        year
+        for series in package_chart_series
+        for year in (series.get('years') or [])
+    })
 
     context = {
         'paket': paket,
