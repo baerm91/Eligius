@@ -464,6 +464,33 @@ def _build_package_chart_data(entries):
 
     return {'years': years, 'counts': counts}
 
+def _refresh_mtoa_image_urls_from_objects(entries):
+    obj_ids = [entry.obj_id for entry in entries if entry.obj_id]
+    if not obj_ids:
+        return entries
+
+    objects_by_id = {
+        obj.id: obj
+        for obj in (
+            Obj.objects
+            .filter(id__in=obj_ids)
+            .select_related('Slg', 'SlgTeil', 'SlgTeil__idfk_Slg_SlgTeil')
+        )
+    }
+
+    for entry in entries:
+        obj = objects_by_id.get(entry.obj_id)
+        if not obj:
+            continue
+
+        bild_urls = obj.get_bild_urls() or {}
+        entry.av_url = bild_urls.get('av')
+        entry.rv_url = bild_urls.get('rv')
+        entry.thumbnail_av_url = bild_urls.get('thumbnail_av')
+        entry.thumbnail_rv_url = bild_urls.get('thumbnail_rv')
+
+    return entries
+
 def paket_detail(request, slug):
     paket = get_object_or_404(
         Paket.objects
@@ -480,6 +507,7 @@ def paket_detail(request, slug):
     package_entries = list(
         package_entries_qs
     )
+    _refresh_mtoa_image_urls_from_objects(package_entries)
     entries_with_images = [
         entry for entry in package_entries
         if entry.thumbnail_av_url or entry.thumbnail_rv_url
