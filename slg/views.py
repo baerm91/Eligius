@@ -320,6 +320,44 @@ def MzUpdate(request, id):
 
 def index(request):
     latest_entries = MuenztypObjektAnzeige.objects.exclude(obj_id__isnull=True).order_by('-last_modified')[:10]
+    context_packages = list(
+        Paket.objects
+        .filter(online_freigegeben=True)
+        .annotate(objektanzahl_db=Count('obj', distinct=True))
+        .prefetch_related(
+            'vergleichspakete',
+            'literatur',
+            Prefetch(
+                'obj_set',
+                queryset=Obj.objects.only('id').order_by('id'),
+                to_attr='homepage_objekte'
+            )
+        )
+        .order_by('name')
+    )
+
+    package_object_ids = []
+    for paket in context_packages:
+        paket.homepage_objekt_ids = [obj.id for obj in getattr(paket, 'homepage_objekte', [])[:3]]
+        package_object_ids.extend(paket.homepage_objekt_ids)
+
+    package_preview_map = defaultdict(list)
+    if package_object_ids:
+        preview_entries = (
+            MuenztypObjektAnzeige.objects
+            .filter(obj_id__in=package_object_ids)
+            .order_by('-last_modified')
+        )
+        previews_by_obj_id = {entry.obj_id: entry for entry in preview_entries}
+        for paket in context_packages:
+            package_preview_map[paket.id] = [
+                previews_by_obj_id[obj_id]
+                for obj_id in paket.homepage_objekt_ids
+                if obj_id in previews_by_obj_id
+            ]
+
+    for paket in context_packages:
+        paket.homepage_preview_objects = package_preview_map.get(paket.id, [])
 
     browse_url = reverse('Objektliste')
 
@@ -359,6 +397,7 @@ def index(request):
 
     context = {
         'latest_entries': latest_entries,
+        'context_packages': context_packages,
         'av_wordcloud_data': av_wordcloud_data,
         'rv_wordcloud_data': rv_wordcloud_data,
     }

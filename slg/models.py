@@ -797,10 +797,71 @@ class Auflage(models.Model):
 		ordering = ['name']
 
 class Paket(models.Model):
+	DARSTELLUNGSART_FRONTCOVER = 'frontcover'
+	DARSTELLUNGSART_KARTE = 'karte'
+	DARSTELLUNGSART_OBJEKT = 'objekt'
+	DARSTELLUNGSART_DIAGRAMM = 'diagramm'
+	DARSTELLUNGSART_CHOICES = [
+		(DARSTELLUNGSART_FRONTCOVER, 'Frontcover'),
+		(DARSTELLUNGSART_KARTE, 'Karte'),
+		(DARSTELLUNGSART_OBJEKT, 'Objekt'),
+		(DARSTELLUNGSART_DIAGRAMM, 'Diagramm'),
+	]
+
+	KONTEXTTYP_HORTFUND = 'hortfund'
+	KONTEXTTYP_FUNDKONTEXT = 'fundkontext'
+	KONTEXTTYP_GRABUNG = 'grabung'
+	KONTEXTTYP_THEMA = 'thema'
+	KONTEXTTYP_CHOICES = [
+		(KONTEXTTYP_HORTFUND, 'Hortfund'),
+		(KONTEXTTYP_FUNDKONTEXT, 'Fundkontext'),
+		(KONTEXTTYP_GRABUNG, 'Grabung'),
+		(KONTEXTTYP_THEMA, 'Thema'),
+	]
+
+	FUNDPLATZ_CANABAE = 'canabae'
+	FUNDPLATZ_AMPHITHEATER = 'amphitheater'
+	FUNDPLATZ_KONTEXT_CHOICES = [
+		(FUNDPLATZ_CANABAE, 'Canabae'),
+		(FUNDPLATZ_AMPHITHEATER, 'Amphitheater'),
+	]
+
 	name = models.CharField(max_length=200, verbose_name='Paketname', unique=True)
+	titel_oeffentlich = models.CharField(max_length=200, blank=True, verbose_name='Titel öffentlich')
 	beschreibung = models.TextField(blank=True, null=True, verbose_name='Beschreibung')
 	ist_arbeitspaket = models.BooleanField(default=True, verbose_name='Ist Arbeitspaket')
 	online_freigegeben = models.BooleanField(default=False, verbose_name='Online freigegeben')
+	darstellungsart = models.CharField(
+		max_length=20,
+		choices=DARSTELLUNGSART_CHOICES,
+		default=DARSTELLUNGSART_OBJEKT,
+		verbose_name='Darstellungsart'
+	)
+	frontcover = models.FileField(
+		upload_to='pakete/frontcover/',
+		blank=True,
+		null=True,
+		verbose_name='Frontcover'
+	)
+	bekannte_objektanzahl = models.PositiveIntegerField(blank=True, null=True, verbose_name='Bekannte Anzahl der Objekte')
+	kontexttyp = models.CharField(max_length=20, choices=KONTEXTTYP_CHOICES, blank=True, verbose_name='Kontexttyp')
+	fund_lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, verbose_name='Fundkoordinate Breite')
+	fund_lng = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, verbose_name='Fundkoordinate Länge')
+	fundzeitpunkt_verbal = models.CharField(max_length=200, blank=True, verbose_name='Fundzeitpunkt (verbal)')
+	fundplatz_kontext = models.CharField(
+		max_length=20,
+		choices=FUNDPLATZ_KONTEXT_CHOICES,
+		blank=True,
+		verbose_name='Fundplatz Kontext'
+	)
+	vergleichspakete = models.ManyToManyField(
+		'self',
+		blank=True,
+		symmetrical=False,
+		verbose_name='Vergleichsdiagramme mit Paketen',
+		related_name='vergleichende_pakete'
+	)
+	literatur = models.ManyToManyField('Ref', blank=True, verbose_name='Literatur')
 	erstellt_am = models.DateTimeField(auto_now_add=True, verbose_name='Erstellt am')
 	bearbeitet_am = models.DateTimeField(auto_now=True, verbose_name='Bearbeitet am')
 	

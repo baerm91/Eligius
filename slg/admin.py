@@ -2744,16 +2744,49 @@ admin.site.site_header = 'Verwaltung'
 
 # Add before OffizinSymbol if it exists, or at appropriate location
 class PaketAdmin(ImportExportModelAdmin):
-    search_fields = ('name', 'beschreibung')
-    list_display = ('name', 'ist_arbeitspaket', 'online_freigegeben', 'anzahl_objekte', 'erstellt_am', 'bearbeitet_am')
+    search_fields = ('name', 'titel_oeffentlich', 'beschreibung')
+    list_display = (
+        'name',
+        'titel_oeffentlich',
+        'kontexttyp',
+        'darstellungsart',
+        'fundplatz_kontext',
+        'ist_arbeitspaket',
+        'online_freigegeben',
+        'anzahl_objekte',
+        'erstellt_am',
+        'bearbeitet_am',
+    )
     list_display_links = ('name',)
-    list_filter = ('ist_arbeitspaket', 'online_freigegeben', 'erstellt_am')
-    list_editable = ('ist_arbeitspaket', 'online_freigegeben')
+    list_filter = ('ist_arbeitspaket', 'online_freigegeben', 'kontexttyp', 'darstellungsart', 'fundplatz_kontext', 'erstellt_am')
+    list_editable = ('ist_arbeitspaket', 'online_freigegeben', 'darstellungsart')
+    autocomplete_fields = ('vergleichspakete', 'literatur')
     ordering = ['name']
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'beschreibung', 'ist_arbeitspaket', 'online_freigegeben')
+        }),
+        ('Öffentliche Präsentation', {
+            'fields': ('titel_oeffentlich', 'kontexttyp', 'darstellungsart', 'frontcover', 'bekannte_objektanzahl')
+        }),
+        ('Fundkontext', {
+            'fields': ('fund_lat', 'fund_lng', 'fundzeitpunkt_verbal', 'fundplatz_kontext')
+        }),
+        ('Vergleich & Literatur', {
+            'fields': ('vergleichspakete', 'literatur')
+        }),
+    )
     
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(_anzahl_objekte=Count('obj'))
+
     def anzahl_objekte(self, obj):
+        anzahl = getattr(obj, '_anzahl_objekte', None)
+        if anzahl is not None:
+            return anzahl
         return obj.obj_set.count()
     anzahl_objekte.short_description = 'Anzahl Objekte'
+    anzahl_objekte.admin_order_field = '_anzahl_objekte'
 
 # Import/Export Resource für Paket-Zuweisungen (KOMPLETT ÜBERSCHRIEBEN)
 class ObjPaketZuweisungResource(resources.ModelResource):
