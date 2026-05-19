@@ -594,6 +594,12 @@ def paket_detail(request, slug):
         package_entries_qs
     )
     _refresh_mtoa_image_urls_from_objects(package_entries)
+    package_entries_by_obj_id = {entry.obj_id: entry for entry in package_entries}
+    package_object_entries = [
+        package_entries_by_obj_id[obj_id]
+        for obj_id in objekt_ids
+        if obj_id in package_entries_by_obj_id
+    ]
     entries_with_images = [
         entry for entry in package_entries
         if entry.thumbnail_av_url or entry.thumbnail_rv_url
@@ -606,11 +612,11 @@ def paket_detail(request, slug):
         if entry.obj_id not in teaser_obj_ids
     ][:12]
 
-    denomination_distribution = _build_package_distribution(package_entries, 'nominal')
-    denomination_distribution_full = _build_package_distribution(package_entries, 'nominal', limit=None)
-    material_distribution = _build_package_distribution(package_entries, 'metall', limit=None)
-    mint_distribution = _build_package_distribution(package_entries, 'mzstaette')
-    mint_distribution_full = _build_package_distribution(package_entries, 'mzstaette', limit=None)
+    denomination_distribution = _build_package_distribution(package_object_entries, 'nominal')
+    denomination_distribution_full = _build_package_distribution(package_object_entries, 'nominal', limit=None)
+    material_distribution = _build_package_distribution(package_object_entries, 'metall', limit=None)
+    mint_distribution = _build_package_distribution(package_object_entries, 'mzstaette')
+    mint_distribution_full = _build_package_distribution(package_object_entries, 'mzstaette', limit=None)
     mint_markers_qs = (
         package_entries_qs
         .exclude(mzstaette_fk__isnull=True)
@@ -657,7 +663,7 @@ def paket_detail(request, slug):
         if marker['mint_lat'] is not None and marker['mint_lon'] is not None
     ])
 
-    package_chart_data = _build_package_chart_data(package_entries)
+    package_chart_data = _build_package_chart_data(package_object_entries)
     comparison_entries_by_package = {}
     comparison_packages = _get_package_comparison_packages(paket)
     comparison_package_ids = [comparison_package.id for comparison_package in comparison_packages]
@@ -679,7 +685,7 @@ def paket_detail(request, slug):
 
     package_chart_series = _build_package_chart_series(
         paket,
-        package_entries,
+        package_object_entries,
         comparison_packages,
         comparison_entries_by_package,
     )
