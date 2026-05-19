@@ -491,6 +491,13 @@ def _refresh_mtoa_image_urls_from_objects(entries):
 
     return entries
 
+def _format_package_year(year):
+    if year is None:
+        return ''
+    if year < 0:
+        return f"{abs(year)} v.Chr."
+    return str(year)
+
 def paket_detail(request, slug):
     paket = get_object_or_404(
         Paket.objects
@@ -560,6 +567,9 @@ def paket_detail(request, slug):
         if marker['mint_lat'] is not None and marker['mint_lon'] is not None
     ])
 
+    package_chart_data = _build_package_chart_data(package_entries)
+    chart_years = package_chart_data.get('years') or []
+
     context = {
         'paket': paket,
         'objektanzahl_db': len(objekt_ids),
@@ -570,7 +580,13 @@ def paket_detail(request, slug):
         'material_distribution': material_distribution,
         'primary_material': material_distribution[0] if material_distribution else None,
         'mint_distribution': _build_package_distribution(package_entries, 'mzstaette'),
-        'package_chart_data': _build_package_chart_data(package_entries),
+        'package_chart_data': package_chart_data,
+        'package_time_extent': {
+            'start': chart_years[0] if chart_years else None,
+            'end': chart_years[-1] if chart_years else None,
+            'start_label': _format_package_year(chart_years[0] if chart_years else None),
+            'end_label': _format_package_year(chart_years[-1] if chart_years else None),
+        },
         'package_map_markers': map_markers,
         'package_browse_url': f"{reverse('Objektliste')}?Paket={paket.id}",
     }

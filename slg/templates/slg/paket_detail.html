@@ -79,7 +79,7 @@
 
   .package-intro-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 42vw);
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
     gap: 24px;
     align-items: start;
     margin-bottom: 38px;
@@ -89,6 +89,8 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;
+    justify-self: end;
+    width: min(100%, 320px);
   }
 
   .package-teaser-rail .infinite-item {
@@ -114,19 +116,11 @@
 
   .package-hero-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
     align-items: end;
     padding-bottom: 48px;
     border-bottom: 1px solid var(--context-border);
-  }
-
-  .package-hero-grid--map-only {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .package-hero-grid--map-only .package-map-card {
-    align-self: stretch;
   }
 
   .package-visual-card,
@@ -155,36 +149,6 @@
     font-size: 0.82rem;
   }
 
-  .package-chart {
-    position: relative;
-    min-height: 260px;
-    background:
-      linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-      rgba(10, 18, 24, 0.74);
-    background-size: 58px 58px;
-    overflow: hidden;
-  }
-
-  .package-chart svg {
-    position: absolute;
-    inset: 22px;
-    width: calc(100% - 44px);
-    height: calc(100% - 44px);
-  }
-
-  .package-chart-line {
-    fill: none;
-    stroke-width: 5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    filter: drop-shadow(0 0 10px currentColor);
-  }
-
-  .package-chart-line--cyan { color: #35e6ff; stroke: currentColor; }
-  .package-chart-line--gold { color: var(--context-primary); stroke: currentColor; }
-  .package-chart-line--magenta { color: #ee39e7; stroke: currentColor; }
-
   .package-cover-image {
     width: 100%;
     min-height: 300px;
@@ -205,7 +169,7 @@
   .package-map-card {
     min-height: 210px;
     padding: 18px;
-    align-self: end;
+    align-self: stretch;
   }
 
   .package-map-preview {
@@ -295,11 +259,58 @@
 
   .package-chart-panel {
     margin-bottom: 70px;
+    min-height: 0;
     padding: 30px;
   }
 
-  #packageTimelineChart {
-    min-height: 380px;
+  .package-time-axis {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    min-height: 90px;
+    padding: 20px 0 4px;
+  }
+
+  .package-time-axis__line {
+    position: relative;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(246, 177, 93, 0.18), var(--context-primary), rgba(246, 177, 93, 0.18));
+  }
+
+  .package-time-axis__line::before,
+  .package-time-axis__line::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--context-primary);
+    transform: translateY(-50%);
+    box-shadow: 0 0 16px rgba(246, 177, 93, 0.45);
+  }
+
+  .package-time-axis__line::before {
+    left: 0;
+  }
+
+  .package-time-axis__line::after {
+    right: 0;
+  }
+
+  .package-time-axis__year {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .package-time-axis__empty {
+    color: var(--context-muted);
+    min-height: 90px;
+    display: grid;
+    place-items: center;
   }
 
   .package-analysis-card {
@@ -478,35 +489,7 @@
     </aside>
   </section>
 
-  <section class="package-hero-grid{% if paket.darstellungsart == 'objekt' %} package-hero-grid--map-only{% endif %}" aria-label="Paketübersicht">
-    {% if paket.darstellungsart != 'objekt' %}
-    <div class="package-visual-card">
-      {% if paket.darstellungsart == 'frontcover' and paket.frontcover %}
-        <img src="{{ paket.frontcover.url }}" alt="{% firstof paket.titel_oeffentlich paket.name %}" class="package-cover-image">
-      {% elif paket.darstellungsart == 'karte' %}
-        <h2 class="package-card-title">Fundkontext</h2>
-        <p class="package-card-subtitle">Die interaktive Karte ist rechts eingebunden.</p>
-        <div class="package-map-empty">
-          {% if paket.fund_lat and paket.fund_lng %}
-            Fundpunkt: {{ paket.fund_lat }}, {{ paket.fund_lng }}
-          {% else %}
-            Fundkoordinate folgt
-          {% endif %}
-        </div>
-      {% else %}
-        <h2 class="package-card-title">Chronologische Verteilung</h2>
-        <p class="package-card-subtitle">Monetäre Zirkulation innerhalb des Kontextpakets.</p>
-        <div class="package-chart">
-          <svg viewBox="0 0 640 300" preserveAspectRatio="none" aria-hidden="true">
-            <path class="package-chart-line package-chart-line--cyan" d="M0,270 C60,252 70,218 124,210 C176,202 178,236 224,206 C270,176 264,110 318,122 C370,136 360,214 414,180 C470,144 464,64 520,74 C570,84 570,142 640,104"></path>
-            <path class="package-chart-line package-chart-line--gold" d="M0,282 C58,260 82,236 130,238 C178,240 182,252 226,224 C272,194 274,148 320,154 C368,160 374,230 420,202 C468,174 476,108 522,118 C574,130 584,176 640,150"></path>
-            <path class="package-chart-line package-chart-line--magenta" d="M0,292 C58,276 88,254 132,258 C182,262 190,276 236,246 C278,218 288,176 326,188 C370,202 382,258 426,226 C470,196 486,142 526,156 C574,172 596,206 640,184"></path>
-          </svg>
-        </div>
-      {% endif %}
-    </div>
-    {% endif %}
-
+  <section class="package-hero-grid" aria-label="Paketübersicht">
     <aside class="package-map-card">
       {% if package_map_markers %}
         <div id="packageMap" aria-label="Karte zum Paket"></div>
@@ -522,8 +505,16 @@
 
   <section class="package-visual-card package-chart-panel" aria-label="Zeitliche Verteilung">
     <h2 class="package-card-title">Zeitliche Verteilung der Objekte</h2>
-    <p class="package-card-subtitle">Chronologische Verteilung der in diesem Kontext erfassten Münzen.</p>
-    <div id="packageTimelineChart"></div>
+    <p class="package-card-subtitle">Zeitspanne der im Paket erfassten Münzen.</p>
+    {% if package_time_extent.start != None and package_time_extent.end != None %}
+      <div class="package-time-axis" aria-label="Zeitraum von {{ package_time_extent.start_label }} bis {{ package_time_extent.end_label }}">
+        <span class="package-time-axis__year">{{ package_time_extent.start_label }}</span>
+        <span class="package-time-axis__line" aria-hidden="true"></span>
+        <span class="package-time-axis__year">{{ package_time_extent.end_label }}</span>
+      </div>
+    {% else %}
+      <div class="package-time-axis__empty">Keine Datierungsdaten vorhanden.</div>
+    {% endif %}
   </section>
 
   <section class="package-facts" aria-label="Kennzahlen">
@@ -602,7 +593,6 @@
     </div>
   </section>
 </main>
-{{ package_chart_data|json_script:"package-chart-data" }}
 {{ package_map_markers|json_script:"package-map-markers" }}
 {% endblock content %}
 
@@ -611,105 +601,8 @@
 {% include 'slg/partials/html/browse_mtoa_vendor_js.html' %}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const chartDataElement = document.getElementById('package-chart-data');
     const mapMarkersElement = document.getElementById('package-map-markers');
-    const chartData = chartDataElement ? JSON.parse(chartDataElement.textContent) : { years: [], counts: [] };
     const mapMarkers = mapMarkersElement ? JSON.parse(mapMarkersElement.textContent) : [];
-
-    function formatYear(value) {
-      const year = parseInt(value, 10);
-      if (Number.isNaN(year)) return value;
-      if (year < 0) return Math.abs(year) + ' v.Chr.';
-      if (year === 0) return '0';
-      return year.toString();
-    }
-
-    const chartContainer = document.getElementById('packageTimelineChart');
-    if (chartContainer && window.echarts) {
-      const chart = echarts.init(chartContainer, null, { renderer: 'canvas' });
-      const years = chartData.years || [];
-      const counts = chartData.counts || [];
-
-      if (years.length) {
-        chart.setOption({
-          backgroundColor: '#161616',
-          grid: { left: '5%', right: '5%', top: '10%', bottom: '14%', containLabel: true },
-          dataZoom: [
-            { type: 'inside', start: 0, end: 100 },
-            {
-              type: 'slider',
-              start: 0,
-              end: 100,
-              bottom: '2%',
-              borderColor: 'rgba(246, 177, 93, 0.25)',
-              textStyle: { color: '#a89a7e' },
-              backgroundColor: 'transparent',
-              fillerColor: 'rgba(246, 177, 93, 0.12)',
-              handleStyle: { color: '#f6b15d', borderColor: 'rgba(246, 177, 93, 0.25)' }
-            }
-          ],
-          xAxis: {
-            type: 'category',
-            boundaryGap: false,
-            data: years.map(String),
-            name: 'Chronologie',
-            nameLocation: 'middle',
-            nameGap: 38,
-            nameTextStyle: { color: '#d4c5a0', fontSize: 13, fontWeight: 600 },
-            axisLine: { lineStyle: { color: '#8a7d65', width: 1.5 } },
-            axisLabel: { formatter: formatYear, color: '#8a7d65', fontWeight: 500 },
-            splitLine: { show: true, lineStyle: { color: 'rgba(255, 255, 255, 0.04)', type: 'dashed' } }
-          },
-          yAxis: {
-            type: 'value',
-            name: 'Stückzahl',
-            nameTextStyle: { color: '#d4c5a0', fontSize: 13, fontWeight: 600 },
-            axisLine: { show: true, lineStyle: { color: '#8a7d65', width: 1.5 } },
-            axisLabel: { color: '#8a7d65', fontWeight: 500 },
-            splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.06)' } }
-          },
-          tooltip: {
-            trigger: 'axis',
-            backgroundColor: 'rgba(16, 16, 16, 0.95)',
-            borderColor: 'rgba(246, 177, 93, 0.4)',
-            textStyle: { color: '#e8dcc8' },
-            formatter: function (params) {
-              const point = params[0];
-              return '<strong>Jahr: ' + formatYear(point.axisValue) + '</strong><br>Stückzahl: <b>' + point.data + '</b>';
-            }
-          },
-          series: [{
-            name: 'Anzahl der Objekte',
-            type: 'line',
-            smooth: 0.3,
-            showSymbol: false,
-            lineStyle: { width: 2.5, color: '#f6b15d' },
-            itemStyle: { color: '#f6b15d' },
-            areaStyle: {
-              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: 'rgba(246, 177, 93, 0.25)' },
-                { offset: 1, color: 'rgba(246, 177, 93, 0.02)' }
-              ])
-            },
-            data: counts
-          }]
-        });
-      } else {
-        chart.setOption({
-          backgroundColor: '#161616',
-          title: {
-            text: 'Keine Datierungsdaten für dieses Paket vorhanden',
-            left: 'center',
-            top: 'center',
-            textStyle: { color: '#8a7d65', fontSize: 15, fontWeight: 400 }
-          }
-        });
-      }
-
-      window.addEventListener('resize', function () {
-        chart.resize();
-      });
-    }
 
     const mapContainer = document.getElementById('packageMap');
     if (mapContainer && window.L && mapMarkers.length) {
