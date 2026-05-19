@@ -321,7 +321,13 @@ def MzUpdate(request, id):
    return render(request, 'slg/obj_form.html', context)
 
 def index(request):
-    latest_entries = MuenztypObjektAnzeige.objects.exclude(obj_id__isnull=True).order_by('-last_modified')[:10]
+    latest_entries = list(
+        MuenztypObjektAnzeige.objects
+        .exclude(obj_id__isnull=True)
+        .select_related('slg_fk', 'slgteil_fk')
+        .order_by('-last_modified')[:10]
+    )
+    _refresh_mtoa_image_urls_from_objects(latest_entries)
     context_packages = list(
         Paket.objects
         .filter(online_freigegeben=True)
@@ -349,6 +355,7 @@ def index(request):
         preview_entries = list(
             MuenztypObjektAnzeige.objects
             .filter(obj_id__in=package_object_ids)
+            .select_related('slg_fk', 'slgteil_fk')
             .order_by('-last_modified')
         )
         _refresh_mtoa_image_urls_from_objects(preview_entries)
@@ -532,10 +539,10 @@ def _refresh_mtoa_image_urls_from_objects(entries):
             continue
 
         bild_urls = obj.get_bild_urls() or {}
-        entry.av_url = entry.av_url or bild_urls.get('av')
-        entry.rv_url = entry.rv_url or bild_urls.get('rv')
-        entry.thumbnail_av_url = entry.thumbnail_av_url or bild_urls.get('thumbnail_av')
-        entry.thumbnail_rv_url = entry.thumbnail_rv_url or bild_urls.get('thumbnail_rv')
+        entry.av_url = bild_urls.get('av') or entry.av_url
+        entry.rv_url = bild_urls.get('rv') or entry.rv_url
+        entry.thumbnail_av_url = bild_urls.get('thumbnail_av') or entry.thumbnail_av_url
+        entry.thumbnail_rv_url = bild_urls.get('thumbnail_rv') or entry.thumbnail_rv_url
         entry.av_alt_url = bild_urls.get('av_alt') or ''
         entry.rv_alt_url = bild_urls.get('rv_alt') or ''
         entry.thumbnail_av_alt_url = bild_urls.get('thumbnail_av_alt') or ''
@@ -561,6 +568,7 @@ def paket_detail(request, slug):
     package_entries_qs = (
         MuenztypObjektAnzeige.objects
         .filter(obj_id__in=objekt_ids)
+        .select_related('slg_fk', 'slgteil_fk')
         .order_by('-last_modified')
     )
     package_entries = list(
@@ -673,6 +681,7 @@ def neuerschliessungen(request):
     latest_entries_qs = (
         MuenztypObjektAnzeige.objects
         .exclude(obj_id__isnull=True)
+        .select_related('slg_fk', 'slgteil_fk')
         .order_by('-last_modified')
     )
 

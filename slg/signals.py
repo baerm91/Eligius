@@ -54,6 +54,26 @@ def sync_muenztyp_on_save(sender, instance, **kwargs):
         _schedule_sync(obj_ids)
 
 
+@receiver(post_save, sender='slg.Slg')
+def sync_slg_on_save(sender, instance, **kwargs):
+    """Bei Änderungen an Sammlungs-Bildpfaden die betroffenen Objekte neu synchronisieren."""
+    from .models import Obj
+    obj_ids = list(Obj.objects.filter(Slg_id=instance.pk).values_list('pk', flat=True)[:2000])
+    if obj_ids:
+        logger.info("Slg %s gespeichert → Sync von %d Objekten", instance.pk, len(obj_ids))
+        _schedule_sync(obj_ids)
+
+
+@receiver(post_save, sender='slg.SlgTeil')
+def sync_slgteil_on_save(sender, instance, **kwargs):
+    """Bei Änderungen am Sammlungsteil ebenfalls Thumbnail-/Bildpfade neu synchronisieren."""
+    from .models import Obj
+    obj_ids = list(Obj.objects.filter(SlgTeil_id=instance.pk).values_list('pk', flat=True)[:2000])
+    if obj_ids:
+        logger.info("SlgTeil %s gespeichert → Sync von %d Objekten", instance.pk, len(obj_ids))
+        _schedule_sync(obj_ids)
+
+
 @receiver(post_save, sender='slg.Obj_Person')
 @receiver(post_delete, sender='slg.Obj_Person')
 def sync_obj_person_change(sender, instance, **kwargs):

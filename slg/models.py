@@ -13,6 +13,70 @@ from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 
 
+def build_bild_urls_for_invnr(invnr, slg=None, slgteil=None):
+	basis_url = None
+	endung_av = None
+	endung_rv = None
+	entferne_zeichen = None
+
+	def build_local_base(slg_obj, slgteil_obj=None):
+		static_subdir = getattr(settings, 'SLG_BILDER_STATIC_SUBDIR', 'slg_bilder')
+		parts = [
+			settings.STATIC_URL.rstrip('/'),
+			static_subdir,
+			slugify((slg_obj.lokaler_ordnername or slg_obj.name) if slg_obj else 'unbekannt')
+		]
+		if slgteil_obj:
+			parts.append(slugify(slgteil_obj.lokaler_unterordner or slgteil_obj.name))
+		return '/'.join(parts) + '/'
+
+	if slgteil and slgteil.bildurl:
+		basis_url = slgteil.bildurl
+		endung_av = slgteil.bild_endung_av or ''
+		endung_rv = slgteil.bild_endung_rv or ''
+		entferne_zeichen = slgteil.entferne_zeichen or ''
+	if slgteil and getattr(slgteil, 'bilder_lokal', False):
+		basis_url = build_local_base(getattr(slgteil, 'idfk_Slg_SlgTeil', None), slgteil)
+		endung_av = slgteil.bild_endung_av or endung_av or ''
+		endung_rv = slgteil.bild_endung_rv or endung_rv or ''
+		entferne_zeichen = slgteil.entferne_zeichen or entferne_zeichen or ''
+
+	if not basis_url and slg and slg.bildurl:
+		basis_url = slg.bildurl
+		endung_av = endung_av or (slg.bild_endung_av or '')
+		endung_rv = endung_rv or (slg.bild_endung_rv or '')
+		entferne_zeichen = entferne_zeichen or (slg.entferne_zeichen or '')
+	if not basis_url and slg and getattr(slg, 'bilder_lokal', False):
+		basis_url = build_local_base(slg)
+		endung_av = slg.bild_endung_av or endung_av or ''
+		endung_rv = slg.bild_endung_rv or endung_rv or ''
+		entferne_zeichen = slg.entferne_zeichen or entferne_zeichen or ''
+
+	resolved_invnr = invnr or ''
+	if entferne_zeichen:
+		resolved_invnr = resolved_invnr.replace(entferne_zeichen, '')
+
+	resolved_invnr_alt = resolved_invnr.replace('S', '').replace('/', '-')
+	if slgteil and str(slgteil) == "Slg. Neukloster":
+		resolved_invnr_alt = resolved_invnr.replace('/', '-')
+
+	if not basis_url or not resolved_invnr:
+		return None
+
+	urls = {
+		'av': f"{basis_url}{resolved_invnr}{endung_av}.jpg",
+		'rv': f"{basis_url}{resolved_invnr}{endung_rv}.jpg",
+		'thumbnail_av': f"{basis_url}thumbnails/{resolved_invnr}{endung_av}.webp",
+		'thumbnail_rv': f"{basis_url}thumbnails/{resolved_invnr}{endung_rv}.webp"
+	}
+	if resolved_invnr_alt and resolved_invnr_alt != resolved_invnr:
+		urls.update({
+			'av_alt': f"{basis_url}{resolved_invnr_alt}{endung_av}.jpg",
+			'rv_alt': f"{basis_url}{resolved_invnr_alt}{endung_rv}.jpg",
+			'thumbnail_av_alt': f"{basis_url}thumbnails/{resolved_invnr_alt}{endung_av}.webp",
+			'thumbnail_rv_alt': f"{basis_url}thumbnails/{resolved_invnr_alt}{endung_rv}.webp",
+		})
+	return urls
 
 
 # Create your models here.
@@ -1482,66 +1546,7 @@ class Obj(models.Model):
 	img = property(_get_img)
 
 	def get_bild_urls(self):
-		basis_url = None
-		endung_av = None
-		endung_rv = None
-		entferne_zeichen = None
-
-		def build_local_base(slg, slgteil=None):
-			# Verwende STATIC_URL statt MEDIA_URL für lokale Bilder
-			static_subdir = getattr(settings, 'SLG_BILDER_STATIC_SUBDIR', 'slg_bilder')
-			parts = [settings.STATIC_URL.rstrip('/'), static_subdir, slugify((slg.lokaler_ordnername or slg.name) if slg else 'unbekannt')]
-			if slgteil:
-				parts.append(slugify(slgteil.lokaler_unterordner or slgteil.name))
-			return '/'.join(parts) + '/'
-
-		if self.SlgTeil and self.SlgTeil.bildurl:
-			basis_url = self.SlgTeil.bildurl
-			endung_av = self.SlgTeil.bild_endung_av or ''
-			endung_rv = self.SlgTeil.bild_endung_rv or ''
-			entferne_zeichen = self.SlgTeil.entferne_zeichen or ''
-		if self.SlgTeil and getattr(self.SlgTeil, 'bilder_lokal', False):
-			basis_url = build_local_base(self.SlgTeil.idfk_Slg_SlgTeil, self.SlgTeil)
-			endung_av = self.SlgTeil.bild_endung_av or endung_av or ''
-			endung_rv = self.SlgTeil.bild_endung_rv or endung_rv or ''
-			entferne_zeichen = self.SlgTeil.entferne_zeichen or entferne_zeichen or ''
-
-		if not basis_url and self.Slg and self.Slg.bildurl:
-			basis_url = self.Slg.bildurl
-			endung_av = endung_av or (self.Slg.bild_endung_av or '')
-			endung_rv = endung_rv or (self.Slg.bild_endung_rv or '')
-			entferne_zeichen = entferne_zeichen or (self.Slg.entferne_zeichen or '')
-		if not basis_url and self.Slg and getattr(self.Slg, 'bilder_lokal', False):
-			basis_url = build_local_base(self.Slg)
-			endung_av = self.Slg.bild_endung_av or endung_av or ''
-			endung_rv = self.Slg.bild_endung_rv or endung_rv or ''
-			entferne_zeichen = self.Slg.entferne_zeichen or entferne_zeichen or ''
-
-		invnr = self.invnr or ''
-		if entferne_zeichen:
-			invnr = invnr.replace(entferne_zeichen, '')
-
-		invnr_alt = invnr.replace('S', '').replace('/', '-')
-		if self.SlgTeil and str(self.SlgTeil) == "Slg. Neukloster":
-			invnr_alt = invnr.replace('/', '-')
-
-		if basis_url:
-			urls = {
-				'av': f"{basis_url}{invnr}{endung_av}.jpg",
-				'rv': f"{basis_url}{invnr}{endung_rv}.jpg",
-				'thumbnail_av': f"{basis_url}thumbnails/{invnr}{endung_av}.webp",
-				'thumbnail_rv': f"{basis_url}thumbnails/{invnr}{endung_rv}.webp"
-			}
-			if invnr_alt and invnr_alt != invnr:
-				urls.update({
-					'av_alt': f"{basis_url}{invnr_alt}{endung_av}.jpg",
-					'rv_alt': f"{basis_url}{invnr_alt}{endung_rv}.jpg",
-					'thumbnail_av_alt': f"{basis_url}thumbnails/{invnr_alt}{endung_av}.webp",
-					'thumbnail_rv_alt': f"{basis_url}thumbnails/{invnr_alt}{endung_rv}.webp",
-				})
-			return urls
-		else:
-			return None
+		return build_bild_urls_for_invnr(self.invnr, self.Slg, self.SlgTeil)
 	
 	# def get_absolute_url(self):
 	#     return reverse("Objekt", kwargs={"pk": self.pk})
@@ -1864,13 +1869,21 @@ class MuenztypObjektAnzeige(models.Model):
 
 	@property
 	def get_bild_urls(self):
-		"""Gibt die bereits zwischengespeicherten Pfade zurück – keine Berechnung mehr nötig."""
+		"""Bevorzugt live aus Slg/SlgTeil berechnete URLs, fällt sonst auf Cachewerte zurück."""
+		resolved_urls = build_bild_urls_for_invnr(self.invnr, self.slg_fk, self.slgteil_fk)
+		if resolved_urls:
+			return resolved_urls
 		return {
-			'av'          : self.av_url,
-			'rv'          : self.rv_url,
+			'av': self.av_url,
+			'rv': self.rv_url,
 			'thumbnail_av': self.thumbnail_av_url,
 			'thumbnail_rv': self.thumbnail_rv_url,
 		}
+
+	@property
+	def preview_thumbnail_url(self):
+		bild_urls = self.get_bild_urls or {}
+		return bild_urls.get('thumbnail_av') or bild_urls.get('thumbnail_rv') or ''
 
 	@property
 	def typ_personen_mit_funktion(self):
