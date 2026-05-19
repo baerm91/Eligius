@@ -482,7 +482,7 @@ def _build_package_chart_data(entries):
             continue
 
         if end < start:
-            start, end = end, start
+            continue
 
         span = end - start + 1
         if span <= 0 or span > 3000:
@@ -501,6 +501,35 @@ def _build_package_chart_data(entries):
     counts = [round(years_counter.get(year, 0), 3) for year in years]
 
     return {'years': years, 'counts': counts}
+
+def _build_package_time_extent(entries):
+    starts = [
+        entry.datierung_von
+        for entry in entries
+        if entry.datierung_von is not None
+    ]
+    ends = [
+        entry.datierung_bis
+        for entry in entries
+        if entry.datierung_bis is not None
+    ]
+
+    if not starts or not ends:
+        return {
+            'start': None,
+            'end': None,
+            'start_label': '',
+            'end_label': '',
+        }
+
+    start = min(starts)
+    end = max(ends)
+    return {
+        'start': start,
+        'end': end,
+        'start_label': _format_package_year(start),
+        'end_label': _format_package_year(end),
+    }
 
 def _get_package_comparison_packages(paket):
     comparison_packages = []
@@ -689,7 +718,7 @@ def paket_detail(request, slug):
         comparison_packages,
         comparison_entries_by_package,
     )
-    package_years = package_chart_data.get('years') or []
+    package_time_extent = _build_package_time_extent(package_object_entries)
 
     context = {
         'paket': paket,
@@ -711,12 +740,7 @@ def paket_detail(request, slug):
         'mint_distribution_full': mint_distribution_full,
         'package_chart_data': package_chart_data,
         'package_chart_series': package_chart_series,
-        'package_time_extent': {
-            'start': package_years[0] if package_years else None,
-            'end': package_years[-1] if package_years else None,
-            'start_label': _format_package_year(package_years[0] if package_years else None),
-            'end_label': _format_package_year(package_years[-1] if package_years else None),
-        },
+        'package_time_extent': package_time_extent,
         'package_map_markers': map_markers,
         'package_browse_url': f"{reverse('Objektliste')}?Paket={paket.id}",
     }
