@@ -683,11 +683,7 @@ def paket_detail(request, slug):
         comparison_packages,
         comparison_entries_by_package,
     )
-    chart_years = sorted({
-        year
-        for series in package_chart_series
-        for year in (series.get('years') or [])
-    })
+    package_years = package_chart_data.get('years') or []
 
     context = {
         'paket': paket,
@@ -710,10 +706,10 @@ def paket_detail(request, slug):
         'package_chart_data': package_chart_data,
         'package_chart_series': package_chart_series,
         'package_time_extent': {
-            'start': chart_years[0] if chart_years else None,
-            'end': chart_years[-1] if chart_years else None,
-            'start_label': _format_package_year(chart_years[0] if chart_years else None),
-            'end_label': _format_package_year(chart_years[-1] if chart_years else None),
+            'start': package_years[0] if package_years else None,
+            'end': package_years[-1] if package_years else None,
+            'start_label': _format_package_year(package_years[0] if package_years else None),
+            'end_label': _format_package_year(package_years[-1] if package_years else None),
         },
         'package_map_markers': map_markers,
         'package_browse_url': f"{reverse('Objektliste')}?Paket={paket.id}",
