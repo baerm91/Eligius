@@ -262,14 +262,14 @@
   .context-showcase-list {
     display: grid;
     gap: 28px;
-    max-width: 1200px;
+    max-width: 980px;
     margin: 0 auto;
     padding: 0 20px;
   }
   .context-showcase-card {
     display: grid;
-    grid-template-columns: minmax(0, 1.04fr) minmax(320px, 0.96fr);
-    min-height: 460px;
+    grid-template-columns: minmax(0, 0.92fr) minmax(300px, 1.08fr);
+    min-height: 330px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.09);
     border-radius: 6px;
@@ -278,7 +278,7 @@
   }
   .context-showcase-visual {
     position: relative;
-    min-height: 460px;
+    min-height: 330px;
     display: flex;
     align-items: stretch;
     justify-content: center;
@@ -300,7 +300,7 @@
   .context-placeholder {
     align-self: center;
     width: calc(100% - 56px);
-    min-height: 250px;
+    min-height: 190px;
     border: 1px dashed rgba(246, 177, 93, 0.24);
     display: flex;
     flex-direction: column;
@@ -317,7 +317,7 @@
   .context-chart-preview {
     position: relative;
     width: 100%;
-    min-height: 460px;
+    min-height: 330px;
     padding: 56px 28px 36px;
     background:
       linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
@@ -366,7 +366,7 @@
   }
   .context-map-preview {
     width: 100%;
-    min-height: 460px;
+    min-height: 330px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -396,27 +396,27 @@
   .context-object-stack {
     position: relative;
     align-self: center;
-    width: min(82%, 360px);
-    height: 280px;
+    width: min(82%, 300px);
+    height: 220px;
   }
   .context-object-photo {
     position: absolute;
-    width: 190px;
-    height: 190px;
+    width: 150px;
+    height: 150px;
     border-radius: 999px;
     object-fit: cover;
     border: 2px solid rgba(246, 177, 93, 0.42);
     background: #111;
     box-shadow: 0 24px 70px rgba(0, 0, 0, 0.62);
   }
-  .context-object-photo:nth-child(1) { left: 0; top: 16px; z-index: 3; }
-  .context-object-photo:nth-child(2) { left: 84px; top: 50px; z-index: 2; }
-  .context-object-photo:nth-child(3) { left: 168px; top: 84px; z-index: 1; }
+  .context-object-photo:nth-child(1) { left: 0; top: 12px; z-index: 3; }
+  .context-object-photo:nth-child(2) { left: 66px; top: 38px; z-index: 2; }
+  .context-object-photo:nth-child(3) { left: 132px; top: 64px; z-index: 1; }
   .context-showcase-content {
-    padding: 44px;
+    padding: 30px;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 16px;
   }
   .context-badge {
     align-self: flex-start;
@@ -432,15 +432,15 @@
   }
   .context-showcase-title {
     font-family: 'Cormorant Garamond', 'Playfair Display', serif;
-    font-size: clamp(2rem, 3vw, 3rem);
+    font-size: clamp(1.6rem, 2.5vw, 2.25rem);
     line-height: 1.05;
     color: var(--prem-text);
     margin: 0;
   }
   .context-showcase-desc {
     color: var(--prem-text-muted);
-    font-size: 0.94rem;
-    line-height: 1.7;
+    font-size: 0.86rem;
+    line-height: 1.55;
     margin: 0;
     max-width: 520px;
   }
@@ -452,7 +452,7 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
   .context-fact {
-    padding: 18px 16px 18px 0;
+    padding: 12px 14px 12px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   }
   .context-fact:nth-child(2n) {
@@ -521,7 +521,8 @@
   }
   .context-related-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(230px, 280px));
+    justify-content: start;
     gap: 16px;
   }
   .context-related-card {
@@ -1340,7 +1341,13 @@
     {% with paket=highlighted_context_package %}
     <article class="context-showcase-card">
       <div class="context-showcase-visual">
-        {% if paket.darstellungsart == 'frontcover' %}
+        {% if paket.homepage_preview_objects %}
+          <a href="{% url 'Objekt' paket.homepage_preview_objects.0.obj_id %}" class="context-object-stack" aria-label="Zum Beispielobjekt">
+            {% for obj in paket.homepage_preview_objects %}
+              <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-object-photo" loading="lazy" decoding="async">
+            {% endfor %}
+          </a>
+        {% elif paket.darstellungsart == 'frontcover' %}
           {% if paket.frontcover %}
             <img src="{{ paket.frontcover.url }}" alt="{% firstof paket.titel_oeffentlich paket.name %}" class="context-cover-image" loading="lazy" decoding="async">
           {% else %}
@@ -1375,18 +1382,10 @@
             </div>
           </div>
         {% else %}
-          {% if paket.homepage_preview_objects %}
-            <a href="{% url 'Objekt' paket.homepage_preview_objects.0.obj_id %}" class="context-object-stack" aria-label="Zum Beispielobjekt">
-              {% for obj in paket.homepage_preview_objects %}
-                <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-object-photo" loading="lazy" decoding="async">
-              {% endfor %}
-            </a>
-          {% else %}
-            <div class="context-placeholder">
-              <i class="bi bi-collection"></i>
-              <span>Objekte folgen</span>
-            </div>
-          {% endif %}
+          <div class="context-placeholder">
+            <i class="bi bi-collection"></i>
+            <span>Objekte folgen</span>
+          </div>
         {% endif %}
       </div>
       <div class="context-showcase-content">
@@ -1416,13 +1415,13 @@
           </div>
           <div class="context-fact">
             <span class="context-fact-label">Datierung</span>
-            <span class="context-fact-value">{% firstof paket.fundzeitpunkt_verbal "Nicht angegeben" %}</span>
+            <span class="context-fact-value">{% firstof paket.homepage_date_range_label paket.fundzeitpunkt_verbal "Nicht angegeben" %}</span>
           </div>
         </div>
         {% if paket.homepage_preview_objects %}
         <div class="context-thumb-strip" aria-label="Objektbeispiele">
           {% for obj in paket.homepage_preview_objects %}
-            <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-thumb" loading="lazy" decoding="async">
+            <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-thumb" loading="lazy" decoding="async">
           {% endfor %}
         </div>
         {% endif %}
@@ -1448,18 +1447,18 @@
         </div>
         <div class="context-related-meta">
           <div class="context-related-row">
-            <span>Umfang:</span>
-            <strong>{% if paket.bekannte_objektanzahl %}{{ paket.bekannte_objektanzahl }} Stk.{% else %}{{ paket.objektanzahl_db|default:"0" }} Stk.{% endif %}</strong>
+            <span>Datenbank:</span>
+            <strong>{{ paket.objektanzahl_db|default:"0" }} Stk.</strong>
           </div>
           <div class="context-related-row">
             <span>Datierung:</span>
-            <strong>{% firstof paket.fundzeitpunkt_verbal "Nicht angegeben" %}</strong>
+            <strong>{% firstof paket.homepage_date_range_label paket.fundzeitpunkt_verbal "Nicht angegeben" %}</strong>
           </div>
           <div class="context-related-progress" aria-hidden="true"><span></span></div>
         </div>
         <div class="context-related-thumbs" aria-label="Objektbeispiele">
           {% for obj in paket.homepage_preview_objects %}
-            <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-related-thumb" loading="lazy" decoding="async">
+            <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-related-thumb" loading="lazy" decoding="async">
           {% empty %}
             <div class="context-related-empty-thumb"><i class="bi bi-collection"></i></div>
             <div class="context-related-empty-thumb"><i class="bi bi-collection"></i></div>

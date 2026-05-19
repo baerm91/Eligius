@@ -340,10 +340,11 @@ def index(request):
 
     package_object_ids = []
     for paket in context_packages:
-        paket.homepage_objekt_ids = [obj.id for obj in getattr(paket, 'homepage_objekte', [])[:3]]
+        paket.homepage_objekt_ids = [obj.id for obj in getattr(paket, 'homepage_objekte', [])]
         package_object_ids.extend(paket.homepage_objekt_ids)
 
     package_preview_map = defaultdict(list)
+    package_entries_map = defaultdict(list)
     if package_object_ids:
         preview_entries = list(
             MuenztypObjektAnzeige.objects
@@ -353,14 +354,35 @@ def index(request):
         _refresh_mtoa_image_urls_from_objects(preview_entries)
         previews_by_obj_id = {entry.obj_id: entry for entry in preview_entries}
         for paket in context_packages:
-            package_preview_map[paket.id] = [
+            package_entries = [
                 previews_by_obj_id[obj_id]
                 for obj_id in paket.homepage_objekt_ids
                 if obj_id in previews_by_obj_id
             ]
+            package_entries_map[paket.id] = package_entries
+            entries_with_images = [
+                entry for entry in package_entries
+                if entry.thumbnail_av_url or entry.thumbnail_rv_url or entry.av_url or entry.rv_url
+            ]
+            package_preview_map[paket.id] = (entries_with_images or package_entries)[:3]
 
     for paket in context_packages:
         paket.homepage_preview_objects = package_preview_map.get(paket.id, [])
+        package_entries = package_entries_map.get(paket.id, [])
+        starts = [
+            entry.datierung_von
+            for entry in package_entries
+            if entry.datierung_von is not None
+        ]
+        ends = [
+            entry.datierung_bis
+            for entry in package_entries
+            if entry.datierung_bis is not None
+        ]
+        if starts and ends:
+            paket.homepage_date_range_label = f"{_format_package_year(min(starts))} bis {_format_package_year(max(ends))}"
+        else:
+            paket.homepage_date_range_label = ''
 
     browse_url = reverse('Objektliste')
     highlighted_context_package = random.choice(context_packages) if context_packages else None
