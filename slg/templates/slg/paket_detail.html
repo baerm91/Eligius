@@ -140,8 +140,8 @@
 
   .package-hero-grid {
     display: grid;
-    grid-template-columns: minmax(260px, 420px);
-    justify-content: end;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
     gap: 24px;
     align-items: end;
     padding-bottom: 48px;
@@ -306,8 +306,12 @@
   }
 
   .package-fact {
-    padding: 0 24px 24px 0;
+    display: grid;
+    justify-items: center;
+    align-content: start;
+    padding: 0 24px 24px;
     border-right: 1px solid var(--context-border);
+    text-align: center;
   }
 
   .package-fact:last-child {
@@ -328,6 +332,39 @@
     display: block;
     color: #fff;
     font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .package-fact-note {
+    display: block;
+    margin-top: 6px;
+    color: var(--context-muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  .package-progress {
+    width: min(100%, 220px);
+    margin-top: 14px;
+  }
+
+  .package-progress__track {
+    height: 5px;
+    background: rgba(255,255,255,0.1);
+  }
+
+  .package-progress__bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--context-primary), rgba(246,177,93,0.35));
+  }
+
+  .package-progress__labels {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+    color: var(--context-muted);
+    font-size: 0.7rem;
     font-weight: 800;
   }
 
@@ -478,6 +515,45 @@
     font-weight: 800;
   }
 
+  .material-summary {
+    position: relative;
+    outline: none;
+  }
+
+  .material-summary-hint {
+    margin: -10px 0 0;
+    color: var(--context-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .material-popover {
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    bottom: calc(100% - 28px);
+    width: min(280px, 100%);
+    padding: 16px;
+    background: rgba(8, 17, 22, 0.96);
+    border: 1px solid rgba(246, 177, 93, 0.28);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 10px);
+    transition: opacity 0.16s ease, transform 0.16s ease;
+  }
+
+  .material-summary:hover .material-popover,
+  .material-summary:focus-within .material-popover {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  .material-popover .distribution-list {
+    margin-top: 0;
+  }
+
   .mint-preview {
     margin-top: 26px;
     padding: 18px;
@@ -613,11 +689,21 @@
       <span class="package-fact-value">{% if paket.bekannte_objektanzahl %}{{ paket.bekannte_objektanzahl }} bekannt{% else %}{{ objektanzahl_db }} Objekte{% endif %}</span>
     </div>
     <div class="package-fact">
-      <span class="package-fact-label">Datenbank</span>
-      <span class="package-fact-value">{{ objektanzahl_db }} erfasst</span>
+      <span class="package-fact-label">Bearbeitungsstand</span>
+      <span class="package-fact-value">{{ package_workflow_progress.controlled }} von {{ package_workflow_progress.added }} kontrolliert</span>
+      <span class="package-fact-note">{{ package_workflow_progress.open }} noch offen</span>
+      <div class="package-progress" aria-label="{{ package_workflow_progress.percent }} Prozent kontrolliert">
+        <div class="package-progress__track">
+          <div class="package-progress__bar" style="width: {{ package_workflow_progress.percent }}%;"></div>
+        </div>
+        <div class="package-progress__labels">
+          <span>hinzugefügt</span>
+          <span>{{ package_workflow_progress.percent }}%</span>
+        </div>
+      </div>
     </div>
     <div class="package-fact">
-      <span class="package-fact-label">Datierung</span>
+      <span class="package-fact-label">Zeitbereich der Münzen</span>
       <span class="package-fact-value">{% if package_time_extent.start != None and package_time_extent.end != None %}{{ package_time_extent.start_label }} bis {{ package_time_extent.end_label }}{% else %}Nicht angegeben{% endif %}</span>
     </div>
   </section>
@@ -640,12 +726,25 @@
 
     <article class="package-analysis-card">
       <h2 class="package-card-title">Materialität</h2>
-      <p class="package-card-subtitle">Dominantes Material im Paket.</p>
+      <p class="package-card-subtitle">Dominantes Material im Paket; Details beim Überfahren.</p>
       {% if primary_material %}
-        <div class="material-donut" style="--material-percent: {{ primary_material.percent }}%;">
-          <div class="material-donut-inner">{{ primary_material.percent }}%</div>
+        <div class="material-summary" tabindex="0">
+          <div class="material-donut" style="--material-percent: {{ primary_material.percent }}%;">
+            <div class="material-donut-inner">{{ primary_material.percent }}%</div>
+          </div>
+          <p class="package-card-subtitle" style="text-align: center;">{{ primary_material.label }}</p>
+          <p class="material-summary-hint">Materialmix anzeigen</p>
+          <div class="material-popover" aria-label="Materialverteilung">
+            <div class="distribution-list">
+              {% for item in material_distribution %}
+                <div class="distribution-item">
+                  <div class="distribution-row"><span>{{ item.label }}</span><span>{{ item.count }} / {{ item.percent }}%</span></div>
+                  <div class="distribution-track"><div class="distribution-bar" style="width: {{ item.percent }}%;"></div></div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
         </div>
-        <p class="package-card-subtitle" style="text-align: center;">{{ primary_material.label }}</p>
       {% else %}
         <div class="package-empty-visual">Keine Materialdaten vorhanden</div>
       {% endif %}

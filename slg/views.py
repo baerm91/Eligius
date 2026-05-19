@@ -577,6 +577,13 @@ def paket_detail(request, slug):
         slug=slug
     )
     objekt_ids = list(Obj.objects.filter(pakete=paket).values_list('id', flat=True))
+    kontrollierte_objektanzahl = Obj.objects.filter(
+        id__in=objekt_ids,
+        workflow__name__iexact='kontrolliert',
+    ).count()
+    objektanzahl_db = len(objekt_ids)
+    offene_objektanzahl = max(objektanzahl_db - kontrollierte_objektanzahl, 0)
+    kontrolliert_prozent = round((kontrollierte_objektanzahl / objektanzahl_db) * 100) if objektanzahl_db else 0
     package_entries_qs = (
         MuenztypObjektAnzeige.objects
         .filter(obj_id__in=objekt_ids)
@@ -599,7 +606,7 @@ def paket_detail(request, slug):
         if entry.obj_id not in teaser_obj_ids
     ][:12]
 
-    material_distribution = _build_package_distribution(package_entries, 'metall')
+    material_distribution = _build_package_distribution(package_entries, 'metall', limit=None)
     mint_markers_qs = (
         package_entries_qs
         .exclude(mzstaette_fk__isnull=True)
@@ -627,7 +634,7 @@ def paket_detail(request, slug):
             'region': paket.get_fundplatz_kontext_display() if paket.fundplatz_kontext else '',
             'latitude': float(paket.fund_lat),
             'longitude': float(paket.fund_lng),
-            'count': len(objekt_ids),
+            'count': objektanzahl_db,
         }
         for _ in [paket]
         if paket.fund_lat is not None and paket.fund_lng is not None
@@ -680,7 +687,13 @@ def paket_detail(request, slug):
 
     context = {
         'paket': paket,
-        'objektanzahl_db': len(objekt_ids),
+        'objektanzahl_db': objektanzahl_db,
+        'package_workflow_progress': {
+            'added': objektanzahl_db,
+            'controlled': kontrollierte_objektanzahl,
+            'open': offene_objektanzahl,
+            'percent': kontrolliert_prozent,
+        },
         'package_entries': package_entries,
         'teaser_entries': teaser_entries,
         'catalog_entries': catalog_entries,
