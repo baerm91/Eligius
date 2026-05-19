@@ -19,6 +19,9 @@ def build_bild_urls_for_invnr(invnr, slg=None, slgteil=None):
 	endung_rv = None
 	entferne_zeichen = None
 
+	def is_absolute_url(value):
+		return bool(value and str(value).startswith(('http://', 'https://')))
+
 	def build_local_base(slg_obj, slgteil_obj=None):
 		static_subdir = getattr(settings, 'SLG_BILDER_STATIC_SUBDIR', 'slg_bilder')
 		parts = [
@@ -30,7 +33,7 @@ def build_bild_urls_for_invnr(invnr, slg=None, slgteil=None):
 			parts.append(slugify(slgteil_obj.lokaler_unterordner or slgteil_obj.name))
 		return '/'.join(parts) + '/'
 
-	if slgteil and slgteil.bildurl:
+	if slgteil and slgteil.bildurl and (is_absolute_url(slgteil.bildurl) or not (slg and slg.bildurl)):
 		basis_url = slgteil.bildurl
 		endung_av = slgteil.bild_endung_av or ''
 		endung_rv = slgteil.bild_endung_rv or ''
