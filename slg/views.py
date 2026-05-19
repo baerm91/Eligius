@@ -404,6 +404,58 @@ def index(request):
     
     return render(request, 'slg/index.html', context)
 
+def _build_package_distribution(entries, field_name, limit=4):
+    counts = Counter()
+    for entry in entries:
+        value = getattr(entry, field_name, None)
+        if not value:
+            continue
+        normalized_value = str(value).strip()
+        if normalized_value:
+            counts[normalized_value] += 1
+
+    total = sum(counts.values())
+    if not total:
+        return []
+
+    return [
+        {
+            'label': label,
+            'count': count,
+            'percent': round((count / total) * 100),
+        }
+        for label, count in counts.most_common(limit)
+    ]
+
+def paket_detail(request, slug):
+    paket = get_object_or_404(
+        Paket.objects
+        .filter(online_freigegeben=True)
+        .prefetch_related('vergleichspakete', 'literatur'),
+        slug=slug
+    )
+    objekt_ids = list(Obj.objects.filter(pakete=paket).values_list('id', flat=True))
+    package_entries = list(
+        MuenztypObjektAnzeige.objects
+        .filter(obj_id__in=objekt_ids)
+        .order_by('-last_modified')
+    )
+
+    material_distribution = _build_package_distribution(package_entries, 'metall')
+
+    context = {
+        'paket': paket,
+        'objektanzahl_db': len(objekt_ids),
+        'package_entries': package_entries,
+        'catalog_entries': package_entries[:12],
+        'denomination_distribution': _build_package_distribution(package_entries, 'nominal'),
+        'material_distribution': material_distribution,
+        'primary_material': material_distribution[0] if material_distribution else None,
+        'mint_distribution': _build_package_distribution(package_entries, 'mzstaette'),
+    }
+
+    return render(request, 'slg/paket_detail.html', context)
+
 def neuerschliessungen(request):
     latest_entries_qs = (
         MuenztypObjektAnzeige.objects

@@ -1298,7 +1298,11 @@
           {% endfor %}
         </div>
         {% endif %}
-        <a href="{% url 'Objektliste' %}" class="context-showcase-button">Alle Münzen anzeigen <i class="bi bi-arrow-right"></i></a>
+        {% if paket.slug %}
+          <a href="{% url 'paket_detail' paket.slug %}" class="context-showcase-button">Paket ansehen <i class="bi bi-arrow-right"></i></a>
+        {% else %}
+          <a href="{% url 'Objektliste' %}" class="context-showcase-button">Alle Münzen anzeigen <i class="bi bi-arrow-right"></i></a>
+        {% endif %}
       </div>
     </article>
     {% endfor %}

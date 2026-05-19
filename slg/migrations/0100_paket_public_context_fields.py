@@ -1,4 +1,21 @@
 from django.db import migrations, models
+from django.utils.text import slugify
+
+
+def populate_paket_slugs(apps, schema_editor):
+    Paket = apps.get_model('slg', 'Paket')
+    used_slugs = set(Paket.objects.exclude(slug__isnull=True).exclude(slug='').values_list('slug', flat=True))
+
+    for paket in Paket.objects.all().order_by('id'):
+        base_slug = slugify(paket.titel_oeffentlich or paket.name) or 'paket'
+        slug = base_slug[:220]
+        counter = 2
+        while slug in used_slugs:
+            suffix = f'-{counter}'
+            slug = f'{base_slug[:220 - len(suffix)]}{suffix}'
+            counter += 1
+        paket.slug = slug
+        paket.save(update_fields=['slug'])
 
 
 class Migration(migrations.Migration):
@@ -58,6 +75,12 @@ class Migration(migrations.Migration):
             name='titel_oeffentlich',
             field=models.CharField(blank=True, max_length=200, verbose_name='Titel öffentlich'),
         ),
+        migrations.AddField(
+            model_name='paket',
+            name='slug',
+            field=models.SlugField(blank=True, max_length=220, null=True, unique=True, verbose_name='Slug'),
+        ),
+        migrations.RunPython(populate_paket_slugs, migrations.RunPython.noop),
         migrations.AddField(
             model_name='paket',
             name='vergleichspakete',

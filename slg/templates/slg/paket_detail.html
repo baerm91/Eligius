@@ -1,0 +1,484 @@
+{% extends 'slg/navbar.html' %}
+{% load static %}
+
+{% block title %}{% firstof paket.titel_oeffentlich paket.name %} | Eligius{% endblock title %}
+
+{% block stylesheets %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<link rel="stylesheet" href="{% static 'css/objektliste_mtoa_inline.css' %}">
+<style>
+  :root {
+    --context-primary: #f6b15d;
+    --context-bg: #081116;
+    --context-panel: #172029;
+    --context-panel-soft: rgba(23, 32, 41, 0.76);
+    --context-text: #f5f0e8;
+    --context-muted: rgba(245, 240, 232, 0.62);
+    --context-border: rgba(255, 255, 255, 0.09);
+  }
+
+  body {
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      var(--context-bg);
+    background-size: 250px 250px, 250px 250px, auto;
+    color: var(--context-text);
+  }
+
+  .package-detail {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 76px 20px 90px;
+  }
+
+  .package-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--context-primary);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  .package-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    font-size: clamp(2.6rem, 5vw, 5.4rem);
+    line-height: 0.96;
+    max-width: 820px;
+    margin: 0 0 24px;
+    color: #fff;
+    text-shadow: 0 0 24px rgba(246, 177, 93, 0.18);
+  }
+
+  .package-title span {
+    color: var(--context-primary);
+  }
+
+  .package-description {
+    max-width: 620px;
+    color: var(--context-muted);
+    line-height: 1.75;
+    font-size: 1rem;
+    margin: 0 0 38px;
+  }
+
+  .package-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    gap: 24px;
+    align-items: end;
+    padding-bottom: 48px;
+    border-bottom: 1px solid var(--context-border);
+  }
+
+  .package-visual-card,
+  .package-map-card,
+  .package-analysis-card {
+    background: var(--context-panel-soft);
+    border: 1px solid var(--context-border);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+  }
+
+  .package-visual-card {
+    min-height: 360px;
+    padding: 30px;
+  }
+
+  .package-card-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    font-size: 1.45rem;
+    margin: 0 0 4px;
+    color: #fff;
+  }
+
+  .package-card-subtitle {
+    margin: 0 0 22px;
+    color: var(--context-muted);
+    font-size: 0.82rem;
+  }
+
+  .package-chart {
+    position: relative;
+    min-height: 260px;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+      rgba(10, 18, 24, 0.74);
+    background-size: 58px 58px;
+    overflow: hidden;
+  }
+
+  .package-chart svg {
+    position: absolute;
+    inset: 22px;
+    width: calc(100% - 44px);
+    height: calc(100% - 44px);
+  }
+
+  .package-chart-line {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 10px currentColor);
+  }
+
+  .package-chart-line--cyan { color: #35e6ff; stroke: currentColor; }
+  .package-chart-line--gold { color: var(--context-primary); stroke: currentColor; }
+  .package-chart-line--magenta { color: #ee39e7; stroke: currentColor; }
+
+  .package-cover-image {
+    width: 100%;
+    min-height: 300px;
+    max-height: 430px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .package-object-stack {
+    position: relative;
+    min-height: 300px;
+  }
+
+  .package-object-stack img {
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 2px solid rgba(246, 177, 93, 0.45);
+    box-shadow: 0 22px 60px rgba(0,0,0,0.5);
+  }
+
+  .package-object-stack img:nth-child(1) { left: 8%; top: 12%; z-index: 3; }
+  .package-object-stack img:nth-child(2) { left: 32%; top: 22%; z-index: 2; }
+  .package-object-stack img:nth-child(3) { left: 56%; top: 32%; z-index: 1; }
+
+  .package-empty-visual {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--context-muted);
+    border: 1px dashed rgba(246, 177, 93, 0.25);
+  }
+
+  .package-map-card {
+    min-height: 210px;
+    padding: 18px;
+    align-self: end;
+  }
+
+  .package-map-preview {
+    min-height: 170px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 18px;
+    color: #fff;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      radial-gradient(circle at 45% 40%, rgba(246, 177, 93, 0.18), transparent 28%),
+      #111923;
+    background-size: 34px 34px, 34px 34px, auto, auto;
+  }
+
+  .package-map-caption {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(255,255,255,0.86);
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  .package-facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    margin: 28px 0 62px;
+    border-bottom: 1px solid var(--context-border);
+  }
+
+  .package-fact {
+    padding: 0 24px 24px 0;
+    border-right: 1px solid var(--context-border);
+  }
+
+  .package-fact:last-child {
+    border-right: 0;
+  }
+
+  .package-fact-label {
+    display: block;
+    color: var(--context-primary);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .package-fact-value {
+    display: block;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .package-analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+    margin-bottom: 70px;
+  }
+
+  .package-analysis-card {
+    min-height: 330px;
+    padding: 30px;
+  }
+
+  .distribution-list {
+    display: grid;
+    gap: 14px;
+    margin-top: 28px;
+  }
+
+  .distribution-item {
+    display: grid;
+    gap: 6px;
+  }
+
+  .distribution-row {
+    display: flex;
+    justify-content: space-between;
+    color: rgba(255,255,255,0.78);
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .distribution-track {
+    height: 5px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  .distribution-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--context-primary), rgba(246,177,93,0.35));
+  }
+
+  .material-donut {
+    width: 150px;
+    height: 150px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    margin: 46px auto 20px;
+    background: conic-gradient(var(--context-primary) var(--material-percent, 0%), rgba(255,255,255,0.2) 0);
+  }
+
+  .material-donut-inner {
+    width: 108px;
+    height: 108px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: var(--context-panel);
+    color: #fff;
+    font-weight: 800;
+  }
+
+  .mint-preview {
+    margin-top: 26px;
+    padding: 18px;
+    background: rgba(0,0,0,0.2);
+  }
+
+  .catalog-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    color: #fff;
+    font-size: 2rem;
+    margin: 0 0 22px;
+    padding-top: 34px;
+    border-top: 1px solid var(--context-border);
+  }
+
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+  }
+
+  .catalog-grid .infinite-item {
+    min-width: 0;
+  }
+
+  @media (max-width: 900px) {
+    .package-hero-grid,
+    .package-analysis-grid {
+      grid-template-columns: 1fr;
+    }
+    .package-facts {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .package-fact:nth-child(2) {
+      border-right: 0;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .package-detail {
+      padding: 52px 12px 70px;
+    }
+    .package-visual-card,
+    .package-analysis-card {
+      padding: 22px;
+    }
+    .package-facts {
+      grid-template-columns: 1fr;
+    }
+    .package-fact {
+      border-right: 0;
+      border-bottom: 1px solid var(--context-border);
+      padding-top: 18px;
+    }
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<main class="package-detail">
+  <div class="package-eyebrow">
+    <i class="bi bi-geo-alt-fill"></i>
+    {% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}Öffentliches Paket{% endif %}
+    {% if paket.kontexttyp %}&bull; {{ paket.get_kontexttyp_display }}{% endif %}
+  </div>
+
+  <h1 class="package-title">{% firstof paket.titel_oeffentlich paket.name %}</h1>
+  {% if paket.beschreibung %}
+    <p class="package-description">{{ paket.beschreibung|striptags }}</p>
+  {% endif %}
+
+  <section class="package-hero-grid" aria-label="Paketübersicht">
+    <div class="package-visual-card">
+      {% if paket.darstellungsart == 'frontcover' and paket.frontcover %}
+        <img src="{{ paket.frontcover.url }}" alt="{% firstof paket.titel_oeffentlich paket.name %}" class="package-cover-image">
+      {% elif paket.darstellungsart == 'objekt' and package_entries %}
+        <div class="package-object-stack">
+          {% for obj in package_entries|slice:":3" %}
+            <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}">
+          {% endfor %}
+        </div>
+      {% elif paket.darstellungsart == 'karte' %}
+        <div class="package-map-preview">
+          <strong>{% if paket.fund_lat and paket.fund_lng %}{{ paket.fund_lat }}, {{ paket.fund_lng }}{% else %}Fundkoordinate folgt{% endif %}</strong>
+          <span>Karte über Fundkoordinate</span>
+        </div>
+      {% else %}
+        <h2 class="package-card-title">Chronologische Verteilung</h2>
+        <p class="package-card-subtitle">Monetäre Zirkulation innerhalb des Kontextpakets.</p>
+        <div class="package-chart">
+          <svg viewBox="0 0 640 300" preserveAspectRatio="none" aria-hidden="true">
+            <path class="package-chart-line package-chart-line--cyan" d="M0,270 C60,252 70,218 124,210 C176,202 178,236 224,206 C270,176 264,110 318,122 C370,136 360,214 414,180 C470,144 464,64 520,74 C570,84 570,142 640,104"></path>
+            <path class="package-chart-line package-chart-line--gold" d="M0,282 C58,260 82,236 130,238 C178,240 182,252 226,224 C272,194 274,148 320,154 C368,160 374,230 420,202 C468,174 476,108 522,118 C574,130 584,176 640,150"></path>
+            <path class="package-chart-line package-chart-line--magenta" d="M0,292 C58,276 88,254 132,258 C182,262 190,276 236,246 C278,218 288,176 326,188 C370,202 382,258 426,226 C470,196 486,142 526,156 C574,172 596,206 640,184"></path>
+          </svg>
+        </div>
+      {% endif %}
+    </div>
+
+    <aside class="package-map-card">
+      <div class="package-map-preview">
+        <div class="package-map-caption">
+          <span>{% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}Fundplatz{% endif %}</span>
+          <span>{% if paket.fund_lat and paket.fund_lng %}{{ paket.fund_lat }}, {{ paket.fund_lng }}{% else %}Koordinate offen{% endif %}</span>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="package-facts" aria-label="Kennzahlen">
+    <div class="package-fact">
+      <span class="package-fact-label">Katalogumfang</span>
+      <span class="package-fact-value">{% if paket.bekannte_objektanzahl %}{{ paket.bekannte_objektanzahl }} bekannt{% else %}{{ objektanzahl_db }} Objekte{% endif %}</span>
+    </div>
+    <div class="package-fact">
+      <span class="package-fact-label">Datenbank</span>
+      <span class="package-fact-value">{{ objektanzahl_db }} erfasst</span>
+    </div>
+    <div class="package-fact">
+      <span class="package-fact-label">Zeitraum</span>
+      <span class="package-fact-value">{% firstof paket.fundzeitpunkt_verbal "Nicht angegeben" %}</span>
+    </div>
+    <div class="package-fact">
+      <span class="package-fact-label">Literatur</span>
+      <span class="package-fact-value">{{ paket.literatur.all|length }} Einträge</span>
+    </div>
+  </section>
+
+  <section class="package-analysis-grid" aria-label="Analysen">
+    <article class="package-analysis-card">
+      <h2 class="package-card-title">Nominale</h2>
+      <p class="package-card-subtitle">Verteilung der im Paket erfassten Nominale.</p>
+      <div class="distribution-list">
+        {% for item in denomination_distribution %}
+          <div class="distribution-item">
+            <div class="distribution-row"><span>{{ item.label }}</span><span>{{ item.percent }}%</span></div>
+            <div class="distribution-track"><div class="distribution-bar" style="width: {{ item.percent }}%;"></div></div>
+          </div>
+        {% empty %}
+          <p class="package-card-subtitle">Noch keine Nominaldaten vorhanden.</p>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="package-analysis-card">
+      <h2 class="package-card-title">Materialität</h2>
+      <p class="package-card-subtitle">Dominantes Material im Paket.</p>
+      {% if primary_material %}
+        <div class="material-donut" style="--material-percent: {{ primary_material.percent }}%;">
+          <div class="material-donut-inner">{{ primary_material.percent }}%</div>
+        </div>
+        <p class="package-card-subtitle" style="text-align: center;">{{ primary_material.label }}</p>
+      {% else %}
+        <div class="package-empty-visual">Keine Materialdaten vorhanden</div>
+      {% endif %}
+    </article>
+
+    <article class="package-analysis-card">
+      <h2 class="package-card-title">Münzstätten</h2>
+      <p class="package-card-subtitle">Geografische Herkunft der erfassten Prägungen.</p>
+      <div class="mint-preview">
+        <div class="distribution-list">
+          {% for item in mint_distribution %}
+            <div class="distribution-item">
+              <div class="distribution-row"><span>{{ item.label }}</span><span>{{ item.count }}</span></div>
+              <div class="distribution-track"><div class="distribution-bar" style="width: {{ item.percent }}%;"></div></div>
+            </div>
+          {% empty %}
+            <p class="package-card-subtitle">Noch keine Münzstättendaten vorhanden.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section aria-label="Katalog der Funde">
+    <h2 class="catalog-title">Katalog der Funde</h2>
+    <div class="catalog-grid">
+      {% for obj in catalog_entries %}
+        {% include "slg/partials/coin_preview_card_mtoa.html" with obj=obj light=True %}
+      {% empty %}
+        <p class="package-card-subtitle">Für dieses Paket sind noch keine Objekte verknüpft.</p>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock content %}

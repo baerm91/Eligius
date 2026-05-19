@@ -2748,6 +2748,7 @@ class PaketAdmin(ImportExportModelAdmin):
     list_display = (
         'name',
         'titel_oeffentlich',
+        'slug',
         'kontexttyp',
         'darstellungsart',
         'fundplatz_kontext',
@@ -2758,6 +2759,7 @@ class PaketAdmin(ImportExportModelAdmin):
         'bearbeitet_am',
     )
     list_display_links = ('name',)
+    readonly_fields = ('slug',)
     list_filter = ('ist_arbeitspaket', 'online_freigegeben', 'kontexttyp', 'darstellungsart', 'fundplatz_kontext', 'erstellt_am')
     list_editable = ('ist_arbeitspaket', 'online_freigegeben', 'darstellungsart')
     autocomplete_fields = ('vergleichspakete', 'literatur')
@@ -2772,7 +2774,7 @@ class PaketAdmin(ImportExportModelAdmin):
             'fields': ('name', 'beschreibung', 'ist_arbeitspaket', 'online_freigegeben')
         }),
         ('Öffentliche Präsentation', {
-            'fields': ('titel_oeffentlich', 'kontexttyp', 'darstellungsart', 'frontcover', 'bekannte_objektanzahl')
+            'fields': ('titel_oeffentlich', 'slug', 'kontexttyp', 'darstellungsart', 'frontcover', 'bekannte_objektanzahl')
         }),
         ('Fundkontext', {
             'fields': ('fund_lat', 'fund_lng', 'fundzeitpunkt_verbal', 'fundplatz_kontext')

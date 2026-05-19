@@ -828,6 +828,7 @@ class Paket(models.Model):
 
 	name = models.CharField(max_length=200, verbose_name='Paketname', unique=True)
 	titel_oeffentlich = models.CharField(max_length=200, blank=True, verbose_name='Titel öffentlich')
+	slug = models.SlugField(max_length=220, unique=True, blank=True, null=True, verbose_name='Slug')
 	beschreibung = models.TextField(blank=True, null=True, verbose_name='Beschreibung')
 	ist_arbeitspaket = models.BooleanField(default=True, verbose_name='Ist Arbeitspaket')
 	online_freigegeben = models.BooleanField(default=False, verbose_name='Online freigegeben')
@@ -868,6 +869,18 @@ class Paket(models.Model):
 	
 	def __str__(self):
 		return self.name
+
+	def save(self, *args, **kwargs):
+		if not self.slug:
+			base_slug = slugify(self.titel_oeffentlich or self.name) or 'paket'
+			slug = base_slug[:220]
+			counter = 2
+			while Paket.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+				suffix = f'-{counter}'
+				slug = f'{base_slug[:220 - len(suffix)]}{suffix}'
+				counter += 1
+			self.slug = slug
+		super().save(*args, **kwargs)
 	
 	class Meta:
 		verbose_name = "Paket"
