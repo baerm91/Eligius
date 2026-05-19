@@ -99,6 +99,12 @@
     min-height: 100%;
   }
 
+  .package-coin-scope.browse-page {
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+  }
+
   .package-teaser-empty {
     padding: 18px;
     color: var(--context-muted);
@@ -113,6 +119,14 @@
     align-items: end;
     padding-bottom: 48px;
     border-bottom: 1px solid var(--context-border);
+  }
+
+  .package-hero-grid--map-only {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .package-hero-grid--map-only .package-map-card {
+    align-self: stretch;
   }
 
   .package-visual-card,
@@ -179,25 +193,6 @@
     display: block;
   }
 
-  .package-object-stack {
-    position: relative;
-    min-height: 300px;
-  }
-
-  .package-object-stack img {
-    position: absolute;
-    width: 190px;
-    height: 190px;
-    border-radius: 999px;
-    object-fit: cover;
-    border: 2px solid rgba(246, 177, 93, 0.45);
-    box-shadow: 0 22px 60px rgba(0,0,0,0.5);
-  }
-
-  .package-object-stack img:nth-child(1) { left: 8%; top: 12%; z-index: 3; }
-  .package-object-stack img:nth-child(2) { left: 32%; top: 22%; z-index: 2; }
-  .package-object-stack img:nth-child(3) { left: 56%; top: 32%; z-index: 1; }
-
   .package-empty-visual {
     min-height: 300px;
     display: flex;
@@ -259,7 +254,7 @@
 
   .package-facts {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0;
     margin: 28px 0 62px;
     border-bottom: 1px solid var(--context-border);
@@ -341,6 +336,30 @@
     background: linear-gradient(90deg, var(--context-primary), rgba(246,177,93,0.35));
   }
 
+  .context-showcase-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: fit-content;
+    padding: 12px 22px;
+    color: #101010;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    background: var(--context-primary);
+    border: 1px solid rgba(246, 177, 93, 0.75);
+    transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+  }
+
+  .context-showcase-button:hover {
+    color: #000;
+    background: #fcd9a0;
+    transform: translateY(-2px);
+  }
+
   .material-donut {
     width: 150px;
     height: 150px;
@@ -372,6 +391,14 @@
     font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
     color: #fff;
     font-size: 2rem;
+    margin: 0;
+  }
+
+  .catalog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
     margin: 0 0 22px;
     padding-top: 34px;
     border-top: 1px solid var(--context-border);
@@ -413,6 +440,10 @@
     .package-teaser-rail {
       grid-template-columns: 1fr;
     }
+    .catalog-header {
+      align-items: stretch;
+      flex-direction: column;
+    }
     .package-facts {
       grid-template-columns: 1fr;
     }
@@ -438,7 +469,7 @@
     {% if paket.beschreibung %}
       <div class="package-description">{{ paket.beschreibung|striptags|linebreaks }}</div>
     {% endif %}
-    <aside class="package-teaser-rail" aria-label="Beispielobjekte aus dem Paket">
+    <aside class="package-teaser-rail package-coin-scope browse-page" aria-label="Beispielobjekte aus dem Paket">
       {% for obj in teaser_entries %}
         {% include "slg/partials/coin_preview_card_mtoa.html" with obj=obj light=True %}
       {% empty %}
@@ -447,16 +478,11 @@
     </aside>
   </section>
 
-  <section class="package-hero-grid" aria-label="Paketübersicht">
+  <section class="package-hero-grid{% if paket.darstellungsart == 'objekt' %} package-hero-grid--map-only{% endif %}" aria-label="Paketübersicht">
+    {% if paket.darstellungsart != 'objekt' %}
     <div class="package-visual-card">
       {% if paket.darstellungsart == 'frontcover' and paket.frontcover %}
         <img src="{{ paket.frontcover.url }}" alt="{% firstof paket.titel_oeffentlich paket.name %}" class="package-cover-image">
-      {% elif paket.darstellungsart == 'objekt' and package_entries %}
-        <div class="package-object-stack">
-          {% for obj in package_entries|slice:":3" %}
-            <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}">
-          {% endfor %}
-        </div>
       {% elif paket.darstellungsart == 'karte' %}
         <h2 class="package-card-title">Fundkontext</h2>
         <p class="package-card-subtitle">Die interaktive Karte ist rechts eingebunden.</p>
@@ -479,6 +505,7 @@
         </div>
       {% endif %}
     </div>
+    {% endif %}
 
     <aside class="package-map-card">
       {% if package_map_markers %}
@@ -511,10 +538,6 @@
     <div class="package-fact">
       <span class="package-fact-label">Zeitraum</span>
       <span class="package-fact-value">{% firstof paket.fundzeitpunkt_verbal "Nicht angegeben" %}</span>
-    </div>
-    <div class="package-fact">
-      <span class="package-fact-label">Literatur</span>
-      <span class="package-fact-value">{{ paket.literatur.all|length }} Einträge</span>
     </div>
   </section>
 
@@ -566,8 +589,11 @@
   </section>
 
   <section aria-label="Katalog der Funde">
-    <h2 class="catalog-title">Katalog der Funde</h2>
-    <div class="catalog-grid">
+    <div class="catalog-header">
+      <h2 class="catalog-title">Katalog der Funde</h2>
+      <a href="{{ package_browse_url }}" class="context-showcase-button">Alle Münzen anzeigen <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="catalog-grid package-coin-scope browse-page">
       {% for obj in catalog_entries %}
         {% include "slg/partials/coin_preview_card_mtoa.html" with obj=obj light=True %}
       {% empty %}

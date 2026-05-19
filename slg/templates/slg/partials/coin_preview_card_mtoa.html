@@ -20,9 +20,9 @@
       <div class="image-container">
         <img loading="lazy" decoding="async"
              src="{{ obj.thumbnail_av_url|default:'' }}"
+             data-fallback-src="{{ obj.av_url|default:'' }}"
              alt="{% trans 'Avers' %}"  class="preview-image"
-             onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-                      this.parentNode.querySelector('.placeholder-text').style.display='flex';">
+             onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.fallbackSrc=''; } else { this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; this.parentNode.querySelector('.placeholder-text').style.display='flex'; }">
         <div class="placeholder-text">
           <span>{% trans 'Avers' %}</span><span>{% trans 'Kein Bild' %}</span>
         </div>
@@ -30,9 +30,9 @@
       <div class="image-container">
         <img loading="lazy" decoding="async"
              src="{{ obj.thumbnail_rv_url|default:'' }}"
+             data-fallback-src="{{ obj.rv_url|default:'' }}"
              alt="{% trans 'Revers' %}" class="preview-image"
-             onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-                      this.parentNode.querySelector('.placeholder-text').style.display='flex';">
+             onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.fallbackSrc=''; } else { this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; this.parentNode.querySelector('.placeholder-text').style.display='flex'; }">
         <div class="placeholder-text">
           <span>{% trans 'Revers' %}</span><span>{% trans 'Kein Bild' %}</span>
         </div>

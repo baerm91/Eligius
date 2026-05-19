@@ -155,6 +155,13 @@ FILTER_PARAMETERS = {
             'facet_field': 'SlgTeil__name',
             'id_field':    'SlgTeil_id',
         },
+        'Paket': {
+            'fields': ['pakete__id'],
+            'filter': 'exact',
+            'display_name': 'Paket',
+            'model': Paket,
+            'display_field': 'name',
+        },
         'Ref': {
             'fields': ['Typ__Ref__abk'],
             'filter': 'exact',

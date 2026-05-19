@@ -472,6 +472,12 @@ def paket_detail(request, slug):
         slug=slug
     )
     objekt_ids = list(Obj.objects.filter(pakete=paket).values_list('id', flat=True))
+    objects_by_id = {
+        obj.id: obj
+        for obj in Obj.objects
+        .filter(id__in=objekt_ids)
+        .select_related('Slg', 'SlgTeil', 'SlgTeil__idfk_Slg_SlgTeil')
+    }
     package_entries_qs = (
         MuenztypObjektAnzeige.objects
         .filter(obj_id__in=objekt_ids)
@@ -480,6 +486,15 @@ def paket_detail(request, slug):
     package_entries = list(
         package_entries_qs
     )
+    for entry in package_entries:
+        source_obj = objects_by_id.get(entry.obj_id)
+        if not source_obj:
+            continue
+        bild_urls = source_obj.get_bild_urls() or {}
+        entry.av_url = bild_urls.get('av') or entry.av_url
+        entry.rv_url = bild_urls.get('rv') or entry.rv_url
+        entry.thumbnail_av_url = bild_urls.get('thumbnail_av') or entry.thumbnail_av_url
+        entry.thumbnail_rv_url = bild_urls.get('thumbnail_rv') or entry.thumbnail_rv_url
 
     material_distribution = _build_package_distribution(package_entries, 'metall')
     mint_markers_qs = (
@@ -540,6 +555,7 @@ def paket_detail(request, slug):
         'mint_distribution': _build_package_distribution(package_entries, 'mzstaette'),
         'package_chart_data': _build_package_chart_data(package_entries),
         'package_map_markers': map_markers,
+        'package_browse_url': f"{reverse('Objektliste')}?Paket={paket.id}",
     }
 
     return render(request, 'slg/paket_detail.html', context)
@@ -1864,6 +1880,30 @@ def _get_filtered_mtoa_queryset(request):
             Obj.objects.filter(sekundaere_Merkmale__name__in=sek_merk_values)
             .values_list('id', flat=True)
         )
+        qs = qs.filter(obj_id__in=obj_ids)
+
+    paket_values = [
+        value
+        for key in ('Paket', 'pakete')
+        for value in request.GET.getlist(key)
+        if is_valid_qparam(value)
+    ]
+    if paket_values:
+        paket_ids = []
+        paket_names = []
+        for value in paket_values:
+            try:
+                paket_ids.append(int(value))
+            except (TypeError, ValueError):
+                paket_names.append(value)
+
+        paket_query = Q()
+        if paket_ids:
+            paket_query |= Q(pakete__id__in=paket_ids)
+        if paket_names:
+            paket_query |= Q(pakete__name__in=paket_names) | Q(pakete__slug__in=paket_names)
+
+        obj_ids = Obj.objects.filter(paket_query).values_list('id', flat=True).distinct()
         qs = qs.filter(obj_id__in=obj_ids)
 
     if needs_distinct:
