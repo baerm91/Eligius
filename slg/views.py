@@ -579,6 +579,13 @@ def paket_detail(request, slug):
         entry for entry in package_entries
         if entry.thumbnail_av_url or entry.thumbnail_rv_url
     ]
+    teaser_entries = (entries_with_images or package_entries)[:3]
+    teaser_obj_ids = {entry.obj_id for entry in teaser_entries}
+    catalog_entries = [
+        entry
+        for entry in package_entries
+        if entry.obj_id not in teaser_obj_ids
+    ][:12]
 
     material_distribution = _build_package_distribution(package_entries, 'metall')
     mint_markers_qs = (
@@ -657,8 +664,8 @@ def paket_detail(request, slug):
         'paket': paket,
         'objektanzahl_db': len(objekt_ids),
         'package_entries': package_entries,
-        'teaser_entries': (entries_with_images or package_entries)[:3],
-        'catalog_entries': package_entries[:12],
+        'teaser_entries': teaser_entries,
+        'catalog_entries': catalog_entries,
         'denomination_distribution': _build_package_distribution(package_entries, 'nominal'),
         'material_distribution': material_distribution,
         'primary_material': material_distribution[0] if material_distribution else None,

@@ -101,6 +101,30 @@
     min-height: 100%;
   }
 
+  .package-coin-scope .coin-preview-card {
+    width: 100%;
+    margin-right: 0;
+    flex-basis: auto;
+  }
+
+  .package-coin-scope .coin-preview-images {
+    min-width: 0;
+  }
+
+  .package-coin-scope .image-container {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .package-coin-scope .preview-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
   .package-coin-scope.browse-page {
     padding: 0;
     background: transparent;
@@ -215,6 +239,62 @@
     color: rgba(255,255,255,0.86);
     font-size: 0.76rem;
     font-weight: 700;
+  }
+
+  .package-map-explanation {
+    margin: 12px 0 0;
+    color: var(--context-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .package-map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    margin-top: 12px;
+    color: rgba(255,255,255,0.86);
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  .package-map-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .package-map-legend__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.12);
+  }
+
+  .package-map-legend__dot--fund {
+    background: #ff4f64;
+  }
+
+  .package-map-legend__dot--mint {
+    background: var(--context-primary);
+  }
+
+  .package-map-marker {
+    display: block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 4px rgba(246,177,93,0.16), 0 8px 18px rgba(0,0,0,0.4);
+  }
+
+  .package-map-marker--fund {
+    background: #ff4f64;
+    box-shadow: 0 0 0 5px rgba(255,79,100,0.22), 0 8px 18px rgba(0,0,0,0.4);
+  }
+
+  .package-map-marker--mint {
+    background: var(--context-primary);
   }
 
   .package-facts {
@@ -509,6 +589,11 @@
         <span>{% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}Fundplatz{% endif %}</span>
         <span>{% if paket.fund_lat and paket.fund_lng %}{{ paket.fund_lat }}, {{ paket.fund_lng }}{% else %}Münzstätten{% endif %}</span>
       </div>
+      <p class="package-map-explanation">Die Karte zeigt den Fundplatz des Pakets und die Münzstätten, aus denen die verknüpften Objekte stammen.</p>
+      <div class="package-map-legend" aria-label="Kartenlegende">
+        <span class="package-map-legend__item"><span class="package-map-legend__dot package-map-legend__dot--fund"></span>Fundplatz</span>
+        <span class="package-map-legend__item"><span class="package-map-legend__dot package-map-legend__dot--mint"></span>Münzstätten</span>
+      </div>
     </aside>
   </section>
 
@@ -593,7 +678,13 @@
       {% for obj in catalog_entries %}
         {% include "slg/partials/coin_preview_card_mtoa.html" with obj=obj light=True %}
       {% empty %}
-        <p class="package-card-subtitle">Für dieses Paket sind noch keine Objekte verknüpft.</p>
+        <p class="package-card-subtitle">
+          {% if package_entries %}
+            Weitere Katalogobjekte sind über die vollständige Münzliste erreichbar.
+          {% else %}
+            Für dieses Paket sind noch keine Objekte verknüpft.
+          {% endif %}
+        </p>
       {% endfor %}
     </div>
   </section>
@@ -641,7 +732,14 @@
       mapMarkers.forEach(function (marker) {
         if (marker.latitude === null || marker.longitude === null) return;
         const popupTitle = marker.type === 'fund' ? 'Fundpunkt' : 'Münzstätte';
-        L.marker([marker.latitude, marker.longitude])
+        const markerIcon = L.divIcon({
+          className: '',
+          html: '<span class="package-map-marker package-map-marker--' + (marker.type === 'fund' ? 'fund' : 'mint') + '"></span>',
+          iconSize: [18, 18],
+          iconAnchor: [9, 9],
+          popupAnchor: [0, -9]
+        });
+        L.marker([marker.latitude, marker.longitude], { icon: markerIcon })
           .bindPopup(
             '<strong>' + popupTitle + ': ' + escapeHtml(marker.name) + '</strong><br>' +
             (marker.region ? 'Region: ' + escapeHtml(marker.region) + '<br>' : '') +
