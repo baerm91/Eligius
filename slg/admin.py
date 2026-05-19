@@ -375,8 +375,8 @@ class SlgView(nested_admin.NestedModelAdmin):
     # PERFORMANCE-OPTIMIERUNG: Nested-Inlines deaktiviert für deutlich bessere Performance
     inlines = []  # SlgInformation wird separat über den eigenen Admin verwaltet
     exclude = ['created_at']
-    list_display = ('name', 'kategorie', 'beschreibung', 'ereignis_count', 'ereignisse_link')
-    list_filter = ('kategorie',)
+    list_display = ('name', 'kategorie', 'nomisma_export_erlaubt', 'beschreibung', 'ereignis_count', 'ereignisse_link')
+    list_filter = ('kategorie', 'nomisma_export_erlaubt')
     search_fields = ('name',)
     show_full_result_count = False  # Reduziert COUNT-Queries für bessere Performance
     readonly_fields = ('ereignisse_link',)
@@ -384,6 +384,10 @@ class SlgView(nested_admin.NestedModelAdmin):
     fieldsets = (
         (None, {
             'fields': ('name', 'kategorie', 'beschreibung', 'bildrechte_lizenz', 'cover')
+        }),
+        ('Datenweitergabe / Nomisma', {
+            'fields': ('nomisma_export_erlaubt', 'nomisma_collection_uri'),
+            'description': 'Steuert, ob kuratierte Sammlungsdaten öffentlich als Nomisma-RDF bereitgestellt werden.'
         }),
         ('Bildeinstellungen', {
             'classes': ('collapse',),

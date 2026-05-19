@@ -51,6 +51,8 @@ class Slg(models.Model):
 	#art = models.ForeignKey("Slgsart", verbose_name="Art", on_delete=models.CASCADE)
 	beschreibung = models.TextField(verbose_name='Beschreibung', blank=True)
 	bildrechte_lizenz = models.TextField(verbose_name='Copyrightlizenz der Bilder', blank=True)
+	nomisma_export_erlaubt = models.BooleanField(default=False, verbose_name='Nomisma-Export erlauben')
+	nomisma_collection_uri = models.URLField(max_length=250, blank=True, verbose_name='Nomisma Collection URI')
 	created_at = models.DateTimeField(default=datetime.now, blank=True, null=True)
 	bildurl = models.CharField(max_length=250, blank=True, null=True, verbose_name='Url zum Bilderverzeichnis')
 	cover = models.CharField(max_length=250, verbose_name='Coverbild-Url', blank=True)

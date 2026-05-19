@@ -6,6 +6,7 @@
 {% block stylesheets %}
 {{ block.super }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+{% include 'slg/partials/html/browse_mtoa_vendor_css.html' %}
 <link rel="stylesheet" href="{% static 'css/objektliste_mtoa_inline.css' %}">
 <style>
   :root {
@@ -60,11 +61,49 @@
   }
 
   .package-description {
-    max-width: 620px;
     color: var(--context-muted);
     line-height: 1.75;
     font-size: 1rem;
-    margin: 0 0 38px;
+    margin: 0;
+    text-align: justify;
+    text-wrap: pretty;
+  }
+
+  .package-description p {
+    margin: 0 0 1.05rem;
+  }
+
+  .package-description p:last-child {
+    margin-bottom: 0;
+  }
+
+  .package-intro-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 38px;
+  }
+
+  .package-teaser-rail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .package-teaser-rail .infinite-item {
+    min-width: 0;
+  }
+
+  .package-teaser-rail .coin-preview-card {
+    min-height: 100%;
+  }
+
+  .package-teaser-empty {
+    padding: 18px;
+    color: var(--context-muted);
+    border: 1px dashed rgba(246, 177, 93, 0.25);
+    background: rgba(0,0,0,0.14);
   }
 
   .package-hero-grid {
@@ -190,6 +229,25 @@
     background-size: 34px 34px, 34px 34px, auto, auto;
   }
 
+  #packageMap {
+    min-height: 260px;
+    height: 100%;
+    background: #111923;
+  }
+
+  .package-map-empty {
+    min-height: 260px;
+    display: grid;
+    place-items: center;
+    color: var(--context-muted);
+    text-align: center;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      #111923;
+    background-size: 34px 34px;
+  }
+
   .package-map-caption {
     display: flex;
     justify-content: space-between;
@@ -238,6 +296,15 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 22px;
     margin-bottom: 70px;
+  }
+
+  .package-chart-panel {
+    margin-bottom: 70px;
+    padding: 30px;
+  }
+
+  #packageTimelineChart {
+    min-height: 380px;
   }
 
   .package-analysis-card {
@@ -322,6 +389,7 @@
 
   @media (max-width: 900px) {
     .package-hero-grid,
+    .package-intro-grid,
     .package-analysis-grid {
       grid-template-columns: 1fr;
     }
@@ -338,8 +406,12 @@
       padding: 52px 12px 70px;
     }
     .package-visual-card,
-    .package-analysis-card {
+    .package-analysis-card,
+    .package-chart-panel {
       padding: 22px;
+    }
+    .package-teaser-rail {
+      grid-template-columns: 1fr;
     }
     .package-facts {
       grid-template-columns: 1fr;
@@ -362,9 +434,18 @@
   </div>
 
   <h1 class="package-title">{% firstof paket.titel_oeffentlich paket.name %}</h1>
-  {% if paket.beschreibung %}
-    <p class="package-description">{{ paket.beschreibung|striptags }}</p>
-  {% endif %}
+  <section class="package-intro-grid" aria-label="Paketbeschreibung und Beispiele">
+    {% if paket.beschreibung %}
+      <div class="package-description">{{ paket.beschreibung|striptags|linebreaks }}</div>
+    {% endif %}
+    <aside class="package-teaser-rail" aria-label="Beispielobjekte aus dem Paket">
+      {% for obj in teaser_entries %}
+        {% include "slg/partials/coin_preview_card_mtoa.html" with obj=obj light=True %}
+      {% empty %}
+        <div class="package-teaser-empty">Noch keine Objektkacheln für dieses Paket vorhanden.</div>
+      {% endfor %}
+    </aside>
+  </section>
 
   <section class="package-hero-grid" aria-label="Paketübersicht">
     <div class="package-visual-card">
@@ -377,9 +458,14 @@
           {% endfor %}
         </div>
       {% elif paket.darstellungsart == 'karte' %}
-        <div class="package-map-preview">
-          <strong>{% if paket.fund_lat and paket.fund_lng %}{{ paket.fund_lat }}, {{ paket.fund_lng }}{% else %}Fundkoordinate folgt{% endif %}</strong>
-          <span>Karte über Fundkoordinate</span>
+        <h2 class="package-card-title">Fundkontext</h2>
+        <p class="package-card-subtitle">Die interaktive Karte ist rechts eingebunden.</p>
+        <div class="package-map-empty">
+          {% if paket.fund_lat and paket.fund_lng %}
+            Fundpunkt: {{ paket.fund_lat }}, {{ paket.fund_lng }}
+          {% else %}
+            Fundkoordinate folgt
+          {% endif %}
         </div>
       {% else %}
         <h2 class="package-card-title">Chronologische Verteilung</h2>
@@ -395,13 +481,22 @@
     </div>
 
     <aside class="package-map-card">
-      <div class="package-map-preview">
-        <div class="package-map-caption">
-          <span>{% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}Fundplatz{% endif %}</span>
-          <span>{% if paket.fund_lat and paket.fund_lng %}{{ paket.fund_lat }}, {{ paket.fund_lng }}{% else %}Koordinate offen{% endif %}</span>
-        </div>
+      {% if package_map_markers %}
+        <div id="packageMap" aria-label="Karte zum Paket"></div>
+      {% else %}
+        <div class="package-map-empty">Keine Koordinaten für dieses Paket vorhanden.</div>
+      {% endif %}
+      <div class="package-map-caption mt-3">
+        <span>{% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}Fundplatz{% endif %}</span>
+        <span>{% if paket.fund_lat and paket.fund_lng %}{{ paket.fund_lat }}, {{ paket.fund_lng }}{% else %}Münzstätten{% endif %}</span>
       </div>
     </aside>
+  </section>
+
+  <section class="package-visual-card package-chart-panel" aria-label="Zeitliche Verteilung">
+    <h2 class="package-card-title">Zeitliche Verteilung der Objekte</h2>
+    <p class="package-card-subtitle">Chronologische Verteilung der in diesem Kontext erfassten Münzen.</p>
+    <div id="packageTimelineChart"></div>
   </section>
 
   <section class="package-facts" aria-label="Kennzahlen">
@@ -481,4 +576,164 @@
     </div>
   </section>
 </main>
+{{ package_chart_data|json_script:"package-chart-data" }}
+{{ package_map_markers|json_script:"package-map-markers" }}
 {% endblock content %}
+
+{% block scripts %}
+{{ block.super }}
+{% include 'slg/partials/html/browse_mtoa_vendor_js.html' %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const chartDataElement = document.getElementById('package-chart-data');
+    const mapMarkersElement = document.getElementById('package-map-markers');
+    const chartData = chartDataElement ? JSON.parse(chartDataElement.textContent) : { years: [], counts: [] };
+    const mapMarkers = mapMarkersElement ? JSON.parse(mapMarkersElement.textContent) : [];
+
+    function formatYear(value) {
+      const year = parseInt(value, 10);
+      if (Number.isNaN(year)) return value;
+      if (year < 0) return Math.abs(year) + ' v.Chr.';
+      if (year === 0) return '0';
+      return year.toString();
+    }
+
+    const chartContainer = document.getElementById('packageTimelineChart');
+    if (chartContainer && window.echarts) {
+      const chart = echarts.init(chartContainer, null, { renderer: 'canvas' });
+      const years = chartData.years || [];
+      const counts = chartData.counts || [];
+
+      if (years.length) {
+        chart.setOption({
+          backgroundColor: '#161616',
+          grid: { left: '5%', right: '5%', top: '10%', bottom: '14%', containLabel: true },
+          dataZoom: [
+            { type: 'inside', start: 0, end: 100 },
+            {
+              type: 'slider',
+              start: 0,
+              end: 100,
+              bottom: '2%',
+              borderColor: 'rgba(246, 177, 93, 0.25)',
+              textStyle: { color: '#a89a7e' },
+              backgroundColor: 'transparent',
+              fillerColor: 'rgba(246, 177, 93, 0.12)',
+              handleStyle: { color: '#f6b15d', borderColor: 'rgba(246, 177, 93, 0.25)' }
+            }
+          ],
+          xAxis: {
+            type: 'category',
+            boundaryGap: false,
+            data: years.map(String),
+            name: 'Chronologie',
+            nameLocation: 'middle',
+            nameGap: 38,
+            nameTextStyle: { color: '#d4c5a0', fontSize: 13, fontWeight: 600 },
+            axisLine: { lineStyle: { color: '#8a7d65', width: 1.5 } },
+            axisLabel: { formatter: formatYear, color: '#8a7d65', fontWeight: 500 },
+            splitLine: { show: true, lineStyle: { color: 'rgba(255, 255, 255, 0.04)', type: 'dashed' } }
+          },
+          yAxis: {
+            type: 'value',
+            name: 'Stückzahl',
+            nameTextStyle: { color: '#d4c5a0', fontSize: 13, fontWeight: 600 },
+            axisLine: { show: true, lineStyle: { color: '#8a7d65', width: 1.5 } },
+            axisLabel: { color: '#8a7d65', fontWeight: 500 },
+            splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.06)' } }
+          },
+          tooltip: {
+            trigger: 'axis',
+            backgroundColor: 'rgba(16, 16, 16, 0.95)',
+            borderColor: 'rgba(246, 177, 93, 0.4)',
+            textStyle: { color: '#e8dcc8' },
+            formatter: function (params) {
+              const point = params[0];
+              return '<strong>Jahr: ' + formatYear(point.axisValue) + '</strong><br>Stückzahl: <b>' + point.data + '</b>';
+            }
+          },
+          series: [{
+            name: 'Anzahl der Objekte',
+            type: 'line',
+            smooth: 0.3,
+            showSymbol: false,
+            lineStyle: { width: 2.5, color: '#f6b15d' },
+            itemStyle: { color: '#f6b15d' },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(246, 177, 93, 0.25)' },
+                { offset: 1, color: 'rgba(246, 177, 93, 0.02)' }
+              ])
+            },
+            data: counts
+          }]
+        });
+      } else {
+        chart.setOption({
+          backgroundColor: '#161616',
+          title: {
+            text: 'Keine Datierungsdaten für dieses Paket vorhanden',
+            left: 'center',
+            top: 'center',
+            textStyle: { color: '#8a7d65', fontSize: 15, fontWeight: 400 }
+          }
+        });
+      }
+
+      window.addEventListener('resize', function () {
+        chart.resize();
+      });
+    }
+
+    const mapContainer = document.getElementById('packageMap');
+    if (mapContainer && window.L && mapMarkers.length) {
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, function (char) {
+          return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+          }[char];
+        });
+      }
+
+      const map = L.map(mapContainer, {
+        scrollWheelZoom: false,
+        zoomControl: true
+      });
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 20,
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+      }).addTo(map);
+
+      const markerLayer = L.featureGroup();
+      mapMarkers.forEach(function (marker) {
+        if (marker.latitude === null || marker.longitude === null) return;
+        const popupTitle = marker.type === 'fund' ? 'Fundpunkt' : 'Münzstätte';
+        L.marker([marker.latitude, marker.longitude])
+          .bindPopup(
+            '<strong>' + popupTitle + ': ' + escapeHtml(marker.name) + '</strong><br>' +
+            (marker.region ? 'Region: ' + escapeHtml(marker.region) + '<br>' : '') +
+            'Objekte: ' + (marker.count || 0)
+          )
+          .addTo(markerLayer);
+      });
+
+      markerLayer.addTo(map);
+      if (markerLayer.getLayers().length === 1) {
+        map.setView(markerLayer.getBounds().getCenter(), 10);
+      } else {
+        map.fitBounds(markerLayer.getBounds(), { padding: [28, 28] });
+      }
+
+      setTimeout(function () {
+        map.invalidateSize();
+      }, 100);
+    }
+  });
+</script>
+{% endblock scripts %}

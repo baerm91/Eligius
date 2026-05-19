@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import *
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
+from django.urls import reverse
 
 
 class MzstaettenSerializer(serializers.ModelSerializer):
@@ -30,13 +31,23 @@ class SlgKategorieSerializer(serializers.ModelSerializer):
 class SlgSerializer(serializers.ModelSerializer):
     kategorie = SlgKategorieSerializer(read_only=True)
     absolute_url = serializers.SerializerMethodField()
+    nomisma_rdf_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Slg
-        fields = ['id', 'name', 'beschreibung', 'bildrechte_lizenz', 'cover', 'kategorie', 'absolute_url']
+        fields = [
+            'id', 'name', 'beschreibung', 'bildrechte_lizenz', 'cover',
+            'kategorie', 'absolute_url', 'nomisma_export_erlaubt',
+            'nomisma_rdf_url'
+        ]
 
     def get_absolute_url(self, obj):
         return obj.get_absolute_url()
+
+    def get_nomisma_rdf_url(self, obj):
+        if not obj.nomisma_export_erlaubt:
+            return None
+        return reverse('collection_nomisma_rdf', kwargs={'id': obj.id})
 
 class SlgTeilSerializer(serializers.ModelSerializer):
     class Meta:

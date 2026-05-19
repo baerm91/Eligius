@@ -64,6 +64,7 @@ from .helpers import get_matrix_from_muenztypen
 from django.http import JsonResponse
 from django.shortcuts import render
 from .helpers import get_timeline_data
+from .nomisma_rdf import serialize_collection_nomisma_rdf
 
 logger = logging.getLogger(__name__)
 
@@ -427,6 +428,42 @@ def _build_package_distribution(entries, field_name, limit=4):
         for label, count in counts.most_common(limit)
     ]
 
+def _build_package_chart_data(entries):
+    years_counter = Counter()
+
+    for entry in entries:
+        start = entry.datierung_von
+        end = entry.datierung_bis
+        if start is None or end is None:
+            continue
+
+        try:
+            start = int(start)
+            end = int(end)
+        except (TypeError, ValueError):
+            continue
+
+        if end < start:
+            start, end = end, start
+
+        span = end - start + 1
+        if span <= 0 or span > 3000:
+            continue
+
+        weight = 1.0 / span
+        for year in range(start, end + 1):
+            years_counter[year] += weight
+
+    if not years_counter:
+        return {'years': [], 'counts': []}
+
+    min_year = min(years_counter.keys())
+    max_year = max(years_counter.keys())
+    years = list(range(min_year, max_year + 1))
+    counts = [round(years_counter.get(year, 0), 3) for year in years]
+
+    return {'years': years, 'counts': counts}
+
 def paket_detail(request, slug):
     paket = get_object_or_404(
         Paket.objects
@@ -435,23 +472,74 @@ def paket_detail(request, slug):
         slug=slug
     )
     objekt_ids = list(Obj.objects.filter(pakete=paket).values_list('id', flat=True))
-    package_entries = list(
+    package_entries_qs = (
         MuenztypObjektAnzeige.objects
         .filter(obj_id__in=objekt_ids)
         .order_by('-last_modified')
     )
+    package_entries = list(
+        package_entries_qs
+    )
 
     material_distribution = _build_package_distribution(package_entries, 'metall')
+    mint_markers_qs = (
+        package_entries_qs
+        .exclude(mzstaette_fk__isnull=True)
+        .values(
+            'mzstaette_fk__id',
+            'mzstaette',
+            'region',
+            'mzstaette_fk__lat',
+            'mzstaette_fk__long',
+        )
+        .annotate(
+            mint_id=F('mzstaette_fk__id'),
+            mint_name=F('mzstaette'),
+            mint_region=F('region'),
+            mint_lat=F('mzstaette_fk__lat'),
+            mint_lon=F('mzstaette_fk__long'),
+            obj_count=Count('pk'),
+        )
+        .order_by('mzstaette_fk__id')
+    )
+    map_markers = [
+        {
+            'type': 'fund',
+            'name': paket.titel_oeffentlich or paket.name,
+            'region': paket.get_fundplatz_kontext_display() if paket.fundplatz_kontext else '',
+            'latitude': float(paket.fund_lat),
+            'longitude': float(paket.fund_lng),
+            'count': len(objekt_ids),
+        }
+        for _ in [paket]
+        if paket.fund_lat is not None and paket.fund_lng is not None
+    ]
+    map_markers.extend([
+        {
+            'type': 'mint',
+            'id': marker['mint_id'],
+            'name': marker['mint_name'],
+            'region': marker['mint_region'],
+            'latitude': float(marker['mint_lat']),
+            'longitude': float(marker['mint_lon']),
+            'count': marker['obj_count'],
+        }
+        for marker in mint_markers_qs
+        if marker['mint_lat'] is not None and marker['mint_lon'] is not None
+    ])
 
     context = {
         'paket': paket,
         'objektanzahl_db': len(objekt_ids),
         'package_entries': package_entries,
+        'teaser_entries': package_entries[:4],
         'catalog_entries': package_entries[:12],
         'denomination_distribution': _build_package_distribution(package_entries, 'nominal'),
         'material_distribution': material_distribution,
         'primary_material': material_distribution[0] if material_distribution else None,
         'mint_distribution': _build_package_distribution(package_entries, 'mzstaette'),
+        'package_chart_data': _build_package_chart_data(package_entries),
+        'package_map_markers': map_markers,
     }
 
     return render(request, 'slg/paket_detail.html', context)
@@ -2206,6 +2294,14 @@ def rdfliboutput(request, id):
 	# void:inDataset <http://numismatics.org/search/>.
    turt = g.serialize(format='turtle')
    return HttpResponse(content_type="text/turtle; charset=utf-8", content=turt)
+
+def collection_nomisma_rdf(request, id):
+   slg = get_object_or_404(Slg, pk=id, nomisma_export_erlaubt=True)
+   rdf_xml = serialize_collection_nomisma_rdf(slg, request)
+   return HttpResponse(
+      content=rdf_xml,
+      content_type="application/rdf+xml; charset=utf-8",
+   )
 
 @api_view(['POST'])
 def login(request):

@@ -305,6 +305,12 @@
 </div>
 {% endif %}
 
+{% if Sammlung.nomisma_export_erlaubt %}
+<div class="slg-description">
+  <a href="{% url 'collection_nomisma_rdf' Sammlung.id %}">Nomisma-RDF für diese Sammlung herunterladen</a>
+</div>
+{% endif %}
+
 <!-- Timeline -->
 <div class="slg-timeline-section">
   <div class="slg-section-header">

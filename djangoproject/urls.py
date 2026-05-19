@@ -26,7 +26,7 @@ from rest_framework import routers, serializers, viewsets
 
 from slg.api_views import ExportObjLSNO
 
-from slg.views import about, impressum, datenschutz, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa, sammlungen_uebersicht
+from slg.views import about, impressum, datenschutz, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, collection_nomisma_rdf, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa, sammlungen_uebersicht
 
 browse_view = objekt_list_view_mtoa if settings.DEBUG else cache_page(60 * 5)(objekt_list_view_mtoa)
 
@@ -39,6 +39,7 @@ urlpatterns = [
     #path('posts/', include('posts.urls')),
     #path('slg/', include('slg.urls')),
     path('slg/<int:id>/', SammlungView, name='Sammlung'),
+    path('slg/<int:id>/nomisma.rdf', collection_nomisma_rdf, name='collection_nomisma_rdf'),
     path('objekt/<int:id>/', ObjektView, name='Objekt'),
     path('typ/<int:id>/', TypView, name='Typ'),
     path('av_schlagwort/<int:id>/', AvSchlagwortView, name='AvSchlagwort'),
