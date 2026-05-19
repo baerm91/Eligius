@@ -491,10 +491,10 @@ def paket_detail(request, slug):
         if not source_obj:
             continue
         bild_urls = source_obj.get_bild_urls() or {}
-        entry.av_url = bild_urls.get('av') or entry.av_url
-        entry.rv_url = bild_urls.get('rv') or entry.rv_url
-        entry.thumbnail_av_url = bild_urls.get('thumbnail_av') or entry.thumbnail_av_url
-        entry.thumbnail_rv_url = bild_urls.get('thumbnail_rv') or entry.thumbnail_rv_url
+        entry.av_url = entry.av_url or bild_urls.get('av')
+        entry.rv_url = entry.rv_url or bild_urls.get('rv')
+        entry.thumbnail_av_url = entry.thumbnail_av_url or bild_urls.get('thumbnail_av')
+        entry.thumbnail_rv_url = entry.thumbnail_rv_url or bild_urls.get('thumbnail_rv')
 
     material_distribution = _build_package_distribution(package_entries, 'metall')
     mint_markers_qs = (
