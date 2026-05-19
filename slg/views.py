@@ -547,7 +547,7 @@ def paket_detail(request, slug):
         'paket': paket,
         'objektanzahl_db': len(objekt_ids),
         'package_entries': package_entries,
-        'teaser_entries': package_entries[:4],
+        'teaser_entries': package_entries[:1],
         'catalog_entries': package_entries[:12],
         'denomination_distribution': _build_package_distribution(package_entries, 'nominal'),
         'material_distribution': material_distribution,
