@@ -19,7 +19,7 @@
     <div class="coin-preview-images">
       <div class="image-container">
         <img loading="lazy" decoding="async"
-             src="{{ obj.thumbnail_av_url|default:'' }}"
+             src="{{ obj.thumbnail_av_url|default:obj.av_url|default:'' }}"
              data-fallback-src="{{ obj.av_url|default:'' }}"
              alt="{% trans 'Avers' %}"  class="preview-image"
              onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.fallbackSrc=''; } else { this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; this.parentNode.querySelector('.placeholder-text').style.display='flex'; }">
@@ -29,7 +29,7 @@
       </div>
       <div class="image-container">
         <img loading="lazy" decoding="async"
-             src="{{ obj.thumbnail_rv_url|default:'' }}"
+             src="{{ obj.thumbnail_rv_url|default:obj.rv_url|default:'' }}"
              data-fallback-src="{{ obj.rv_url|default:'' }}"
              alt="{% trans 'Revers' %}" class="preview-image"
              onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.fallbackSrc=''; } else { this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; this.parentNode.querySelector('.placeholder-text').style.display='flex'; }">

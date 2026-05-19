@@ -495,6 +495,10 @@ def paket_detail(request, slug):
         entry.rv_url = entry.rv_url or bild_urls.get('rv')
         entry.thumbnail_av_url = entry.thumbnail_av_url or bild_urls.get('thumbnail_av')
         entry.thumbnail_rv_url = entry.thumbnail_rv_url or bild_urls.get('thumbnail_rv')
+    entries_with_images = [
+        entry for entry in package_entries
+        if entry.thumbnail_av_url or entry.thumbnail_rv_url or entry.av_url or entry.rv_url
+    ]
 
     material_distribution = _build_package_distribution(package_entries, 'metall')
     mint_markers_qs = (
@@ -547,7 +551,7 @@ def paket_detail(request, slug):
         'paket': paket,
         'objektanzahl_db': len(objekt_ids),
         'package_entries': package_entries,
-        'teaser_entries': package_entries[:6],
+        'teaser_entries': (entries_with_images or package_entries)[:3],
         'catalog_entries': package_entries[:12],
         'denomination_distribution': _build_package_distribution(package_entries, 'nominal'),
         'material_distribution': material_distribution,
