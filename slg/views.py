@@ -606,7 +606,11 @@ def paket_detail(request, slug):
         if entry.obj_id not in teaser_obj_ids
     ][:12]
 
+    denomination_distribution = _build_package_distribution(package_entries, 'nominal')
+    denomination_distribution_full = _build_package_distribution(package_entries, 'nominal', limit=None)
     material_distribution = _build_package_distribution(package_entries, 'metall', limit=None)
+    mint_distribution = _build_package_distribution(package_entries, 'mzstaette')
+    mint_distribution_full = _build_package_distribution(package_entries, 'mzstaette', limit=None)
     mint_markers_qs = (
         package_entries_qs
         .exclude(mzstaette_fk__isnull=True)
@@ -697,10 +701,12 @@ def paket_detail(request, slug):
         'package_entries': package_entries,
         'teaser_entries': teaser_entries,
         'catalog_entries': catalog_entries,
-        'denomination_distribution': _build_package_distribution(package_entries, 'nominal'),
+        'denomination_distribution': denomination_distribution,
+        'denomination_distribution_full': denomination_distribution_full,
         'material_distribution': material_distribution,
         'primary_material': material_distribution[0] if material_distribution else None,
-        'mint_distribution': _build_package_distribution(package_entries, 'mzstaette'),
+        'mint_distribution': mint_distribution,
+        'mint_distribution_full': mint_distribution_full,
         'package_chart_data': package_chart_data,
         'package_chart_series': package_chart_series,
         'package_time_extent': {
