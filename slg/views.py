@@ -385,13 +385,13 @@ def index(request):
         ]
 
     av_wordcloud_data = build_wordcloud_data(
-        'Typ__av_bildtyp__avbildtyp_schlagwort__schlagwort__name',
-        'av_bildtyp__avbildtyp_schlagwort__schlagwort__name',
+        'Typ__av_bildtyp__avbildtyp_schlagwort_set__schlagwort__name',
+        'av_bildtyp__avbildtyp_schlagwort_set__schlagwort__name',
         'av_schlagwort',
     )
     rv_wordcloud_data = build_wordcloud_data(
-        'Typ__rv_bildtyp__rvbildtyp_schlagwort__schlagwort__name',
-        'rv_bildtyp__rvbildtyp_schlagwort__schlagwort__name',
+        'Typ__rv_bildtyp__rvbildtyp_schlagwort_set__schlagwort__name',
+        'rv_bildtyp__rvbildtyp_schlagwort_set__schlagwort__name',
         'rv_schlagwort',
     )
 
