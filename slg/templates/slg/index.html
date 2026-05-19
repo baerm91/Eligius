@@ -1088,6 +1088,8 @@
   .numismatica-footer-cta {
     display: flex;
     justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
     flex-shrink: 0;
   }
   .coins-track > .browse-page,
@@ -1170,6 +1172,7 @@
     <p class="numismatica-subtitle">Historische Zeugnisse sichtbar machen</p>
     <div class="numismatica-cta-desktop" style="margin-top: 24px;">
       <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">Alle ansehen</a>
+      <a href="#muenzen-im-kontext" class="prem-btn prem-btn-outline">Münzen im Kontext</a>
     </div>
   </div>
   <div class="coins-carousel-wrapper">
@@ -1189,6 +1192,7 @@
   <div class="coins-mobile-indicators" id="coinsIndicators" aria-hidden="true"></div>
   <div class="numismatica-cta-mobile">
     <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">Alle ansehen</a>
+    <a href="#muenzen-im-kontext" class="prem-btn prem-btn-outline">Münzen im Kontext</a>
   </div>
   <div class="numismatica-footer">
     <div class="coins-progress">
@@ -1197,12 +1201,20 @@
     </div>
     <div class="numismatica-footer-cta">
       <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">Alle ansehen</a>
+      <a href="#muenzen-im-kontext" class="prem-btn prem-btn-outline">Münzen im Kontext</a>
     </div>
   </div>
 </div>
 
+<div id="sammlungen" class="prem-section">
+  <div class="section-header-left">
+    <h2 class="section-title-left">Sammlungen</h2>
+  </div>
+  <div class="prem-collections-grid" id="collectionsGrid"></div>
+</div>
+
 {% if context_packages %}
-<div class="prem-section prem-section-transparent">
+<div id="muenzen-im-kontext" class="prem-section prem-section-transparent">
   <div class="section-header-left">
     <div class="section-eyebrow">Kontexte</div>
     <h2 class="section-title-left">Münzen im Kontext</h2>
@@ -1309,13 +1321,6 @@
   </div>
 </div>
 {% endif %}
-
-<div id="sammlungen" class="prem-section">
-  <div class="section-header-left">
-    <h2 class="section-title-left">Sammlungen</h2>
-  </div>
-  <div class="prem-collections-grid" id="collectionsGrid"></div>
-</div>
 
 <div class="full-bleed">
   <div class="prem-stats">
