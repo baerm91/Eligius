@@ -835,7 +835,8 @@ class Paket(models.Model):
 		max_length=20,
 		choices=DARSTELLUNGSART_CHOICES,
 		default=DARSTELLUNGSART_OBJEKT,
-		verbose_name='Darstellungsart'
+		verbose_name='Startseiten-Darstellung',
+		help_text='Legt fest, ob auf der Startseite Frontcover, Karte, Objektthumbnails oder Diagramm gezeigt werden.'
 	)
 	frontcover = models.FileField(
 		upload_to='pakete/frontcover/',
@@ -845,8 +846,8 @@ class Paket(models.Model):
 	)
 	bekannte_objektanzahl = models.PositiveIntegerField(blank=True, null=True, verbose_name='Bekannte Anzahl der Objekte')
 	kontexttyp = models.CharField(max_length=20, choices=KONTEXTTYP_CHOICES, blank=True, verbose_name='Kontexttyp')
-	fund_lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, verbose_name='Fundkoordinate Breite')
-	fund_lng = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, verbose_name='Fundkoordinate Länge')
+	fund_lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, verbose_name='Fundkoordinate Breite', help_text='Dezimalgrad in WGS84, z. B. 48.116000')
+	fund_lng = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, verbose_name='Fundkoordinate Länge', help_text='Dezimalgrad in WGS84, z. B. 16.867000')
 	fundzeitpunkt_verbal = models.CharField(max_length=200, blank=True, verbose_name='Fundzeitpunkt (verbal)')
 	fundplatz_kontext = models.CharField(
 		max_length=20,

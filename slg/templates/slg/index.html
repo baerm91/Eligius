@@ -259,186 +259,283 @@
   }
   .prem-filter-btn.active, .prem-filter-btn:hover { background: var(--prem-primary); color: #000; }
 
-  .context-packages-grid {
+  .context-showcase-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 22px;
+    gap: 28px;
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
   }
-  .context-package-card {
-    min-height: 100%;
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 22px;
-    background:
-      radial-gradient(circle at top left, rgba(246, 177, 93, 0.14), transparent 34%),
-      rgba(255, 255, 255, 0.045);
+  .context-showcase-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.04fr) minmax(320px, 0.96fr);
+    min-height: 460px;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 6px;
+    background: #0f0f0f;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
   }
-  .context-package-visual {
-    min-height: 210px;
-    padding: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.24);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-  .context-package-cover {
-    width: 100%;
-    height: 220px;
-    object-fit: cover;
-    border-radius: 16px;
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
-  }
-  .context-package-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    min-height: 180px;
-    border: 1px dashed rgba(255, 255, 255, 0.18);
-    border-radius: 16px;
-    color: rgba(255, 255, 255, 0.46);
-    text-align: center;
-  }
-  .context-package-placeholder i {
-    color: var(--prem-primary);
-    font-size: 2rem;
-  }
-  .context-object-stack {
+  .context-showcase-visual {
     position: relative;
-    width: min(100%, 240px);
-    height: 190px;
+    min-height: 460px;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    background: #121a1f;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
   }
-  .context-object-photo {
+  .context-showcase-visual::after {
+    content: '';
     position: absolute;
-    top: 18px;
-    width: 132px;
-    height: 132px;
-    border-radius: 999px;
-    object-fit: cover;
-    border: 2px solid rgba(246, 177, 93, 0.42);
-    background: #111;
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5);
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.42);
   }
-  .context-object-photo:nth-child(1) { left: 0; z-index: 3; }
-  .context-object-photo:nth-child(2) { left: 54px; z-index: 2; transform: translateY(18px); }
-  .context-object-photo:nth-child(3) { left: 108px; z-index: 1; transform: translateY(36px); }
-  .context-map-preview {
+  .context-cover-image {
     width: 100%;
-    min-height: 190px;
-    border-radius: 18px;
-    border: 1px solid rgba(246, 177, 93, 0.22);
-    background:
-      linear-gradient(rgba(246, 177, 93, 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(246, 177, 93, 0.08) 1px, transparent 1px),
-      radial-gradient(circle at 50% 48%, rgba(246, 177, 93, 0.25), transparent 28%),
-      rgba(0, 0, 0, 0.24);
-    background-size: 28px 28px, 28px 28px, auto, auto;
+    height: 100%;
+    object-fit: cover;
+  }
+  .context-placeholder {
+    align-self: center;
+    width: calc(100% - 56px);
+    min-height: 250px;
+    border: 1px dashed rgba(246, 177, 93, 0.24);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    color: var(--prem-text);
+    color: rgba(255, 255, 255, 0.5);
     text-align: center;
   }
+  .context-placeholder i {
+    color: var(--prem-primary);
+    font-size: 2rem;
+  }
+  .context-chart-preview {
+    position: relative;
+    width: 100%;
+    min-height: 460px;
+    padding: 56px 28px 36px;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+      #121a1f;
+    background-size: 58px 58px;
+  }
+  .context-chart-title {
+    position: absolute;
+    top: 18px;
+    left: 22px;
+    right: 22px;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    z-index: 2;
+  }
+  .context-chart-preview svg {
+    position: absolute;
+    inset: 72px 20px 48px;
+    width: calc(100% - 40px);
+    height: calc(100% - 120px);
+    overflow: visible;
+  }
+  .context-chart-line {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 10px currentColor);
+  }
+  .context-chart-line--cyan { color: #35e6ff; stroke: currentColor; }
+  .context-chart-line--gold { color: #f6b15d; stroke: currentColor; }
+  .context-chart-line--magenta { color: #ee39e7; stroke: currentColor; }
+  .context-chart-axis {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    color: rgba(255, 255, 255, 0.44);
+    font-size: 0.72rem;
+  }
+  .context-map-preview {
+    width: 100%;
+    min-height: 460px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    text-align: center;
+    background:
+      linear-gradient(rgba(246, 177, 93, 0.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(246, 177, 93, 0.10) 1px, transparent 1px),
+      radial-gradient(circle at 50% 48%, rgba(246, 177, 93, 0.22), transparent 30%),
+      #121a1f;
+    background-size: 44px 44px, 44px 44px, auto, auto;
+    color: var(--prem-text);
+  }
   .context-map-marker {
-    width: 54px;
-    height: 54px;
+    width: 72px;
+    height: 72px;
     border-radius: 999px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: rgba(246, 177, 93, 0.16);
     color: var(--prem-primary);
-    border: 1px solid rgba(246, 177, 93, 0.36);
-    font-size: 1.5rem;
+    border: 1px solid rgba(246, 177, 93, 0.4);
+    font-size: 2rem;
   }
-  .context-diagram-preview {
-    width: 100%;
-    min-height: 190px;
-    border-radius: 18px;
-    padding: 24px;
-    border: 1px solid rgba(246, 177, 93, 0.18);
-    background: rgba(0, 0, 0, 0.22);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 14px;
+  .context-object-stack {
+    position: relative;
+    align-self: center;
+    width: min(82%, 360px);
+    height: 280px;
   }
-  .context-diagram-row {
-    display: grid;
-    grid-template-columns: minmax(80px, 1fr) 2fr auto;
-    align-items: center;
-    gap: 10px;
-    color: rgba(255, 255, 255, 0.72);
-    font-size: 0.82rem;
-  }
-  .context-diagram-bar {
-    height: 10px;
+  .context-object-photo {
+    position: absolute;
+    width: 190px;
+    height: 190px;
     border-radius: 999px;
-    background: linear-gradient(90deg, var(--prem-primary), rgba(246, 177, 93, 0.22));
+    object-fit: cover;
+    border: 2px solid rgba(246, 177, 93, 0.42);
+    background: #111;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.62);
   }
-  .context-package-content {
-    padding: 24px;
+  .context-object-photo:nth-child(1) { left: 0; top: 16px; z-index: 3; }
+  .context-object-photo:nth-child(2) { left: 84px; top: 50px; z-index: 2; }
+  .context-object-photo:nth-child(3) { left: 168px; top: 84px; z-index: 1; }
+  .context-showcase-content {
+    padding: 44px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    flex: 1;
+    gap: 22px;
   }
-  .context-package-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .context-package-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
+  .context-badge {
+    align-self: flex-start;
+    padding: 6px 12px;
     border-radius: 999px;
     color: var(--prem-primary);
-    background: rgba(246, 177, 93, 0.10);
-    border: 1px solid rgba(246, 177, 93, 0.18);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
+    background: rgba(246, 177, 93, 0.12);
+    border: 1px solid rgba(246, 177, 93, 0.14);
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
   }
-  .context-package-title {
+  .context-showcase-title {
     font-family: 'Cormorant Garamond', 'Playfair Display', serif;
-    font-size: 1.65rem;
-    line-height: 1.15;
+    font-size: clamp(2rem, 3vw, 3rem);
+    line-height: 1.05;
     color: var(--prem-text);
     margin: 0;
   }
-  .context-package-desc {
+  .context-showcase-desc {
     color: var(--prem-text-muted);
-    font-size: 0.95rem;
-    line-height: 1.65;
+    font-size: 0.94rem;
+    line-height: 1.7;
     margin: 0;
+    max-width: 520px;
   }
-  .context-package-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 14px;
-    margin-top: auto;
-    padding-top: 12px;
+  .context-fact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 0.82rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
-  .context-package-meta span {
+  .context-fact {
+    padding: 18px 16px 18px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .context-fact:nth-child(2n) {
+    padding-left: 18px;
+    border-left: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .context-fact:nth-last-child(-n+2) {
+    border-bottom: 0;
+  }
+  .context-fact-label {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--prem-primary);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .context-fact-value {
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+  .context-thumb-strip {
+    display: flex;
+    gap: 12px;
+    margin-top: auto;
+  }
+  .context-thumb {
+    width: 54px;
+    height: 54px;
+    border-radius: 4px;
+    object-fit: cover;
+    background: #151515;
+    border: 1px solid rgba(246, 177, 93, 0.18);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  }
+  .context-showcase-button {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 4px;
+    padding: 14px 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(246, 177, 93, 0.22);
+    background: rgba(246, 177, 93, 0.10);
+    color: var(--prem-primary);
+    text-decoration: none;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  @media (max-width: 900px) {
+    .context-showcase-card {
+      grid-template-columns: 1fr;
+    }
+    .context-showcase-visual {
+      min-height: 320px;
+      border-right: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .context-chart-preview,
+    .context-map-preview {
+      min-height: 320px;
+    }
+  }
+  @media (max-width: 560px) {
+    .context-showcase-content {
+      padding: 28px;
+    }
+    .context-fact-grid {
+      grid-template-columns: 1fr;
+    }
+    .context-fact:nth-child(2n) {
+      padding-left: 0;
+      border-left: 0;
+    }
+    .context-fact:nth-last-child(2) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
   }
 
   .prem-collections-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
@@ -1111,15 +1208,15 @@
     <h2 class="section-title-left">Münzen im Kontext</h2>
     <p class="numismatica-subtitle">Objekte als Teil von Hortfunden, Fundkontexten, Grabungen und Themen betrachten.</p>
   </div>
-  <div class="context-packages-grid">
+  <div class="context-showcase-list">
     {% for paket in context_packages %}
-    <article class="context-package-card">
-      <div class="context-package-visual">
+    <article class="context-showcase-card">
+      <div class="context-showcase-visual">
         {% if paket.darstellungsart == 'frontcover' %}
           {% if paket.frontcover %}
-            <img src="{{ paket.frontcover.url }}" alt="{% firstof paket.titel_oeffentlich paket.name %}" class="context-package-cover" loading="lazy" decoding="async">
+            <img src="{{ paket.frontcover.url }}" alt="{% firstof paket.titel_oeffentlich paket.name %}" class="context-cover-image" loading="lazy" decoding="async">
           {% else %}
-            <div class="context-package-placeholder">
+            <div class="context-placeholder">
               <i class="bi bi-image"></i>
               <span>Frontcover folgt</span>
             </div>
@@ -1136,25 +1233,18 @@
             {% endif %}
           </div>
         {% elif paket.darstellungsart == 'diagramm' %}
-          <div class="context-diagram-preview">
-            <div class="context-diagram-row">
-              <span>{% firstof paket.titel_oeffentlich paket.name %}</span>
-              <span class="context-diagram-bar"></span>
-              <strong>{{ paket.objektanzahl_db|default:"0" }}</strong>
+          <div class="context-chart-preview">
+            <div class="context-chart-title">Numismatic archive: Kontextvergleich</div>
+            <svg viewBox="0 0 640 300" preserveAspectRatio="none" aria-hidden="true">
+              <path class="context-chart-line context-chart-line--cyan" d="M0,270 C60,252 70,218 124,210 C176,202 178,236 224,206 C270,176 264,110 318,122 C370,136 360,214 414,180 C470,144 464,64 520,74 C570,84 570,142 640,104"></path>
+              <path class="context-chart-line context-chart-line--gold" d="M0,282 C58,260 82,236 130,238 C178,240 182,252 226,224 C272,194 274,148 320,154 C368,160 374,230 420,202 C468,174 476,108 522,118 C574,130 584,176 640,150"></path>
+              <path class="context-chart-line context-chart-line--magenta" d="M0,292 C58,276 88,254 132,258 C182,262 190,276 236,246 C278,218 288,176 326,188 C370,202 382,258 426,226 C470,196 486,142 526,156 C574,172 596,206 640,184"></path>
+            </svg>
+            <div class="context-chart-axis">
+              <span>1. Jh.</span>
+              <span>2. Jh.</span>
+              <span>3. Jh.</span>
             </div>
-            {% for vergleichspaket in paket.vergleichspakete.all|slice:":2" %}
-            <div class="context-diagram-row">
-              <span>{% firstof vergleichspaket.titel_oeffentlich vergleichspaket.name %}</span>
-              <span class="context-diagram-bar"></span>
-              <strong>Vergleich</strong>
-            </div>
-            {% empty %}
-            <div class="context-diagram-row">
-              <span>Vergleich</span>
-              <span class="context-diagram-bar"></span>
-              <strong>offen</strong>
-            </div>
-            {% endfor %}
           </div>
         {% else %}
           {% if paket.homepage_preview_objects %}
@@ -1164,42 +1254,51 @@
               {% endfor %}
             </a>
           {% else %}
-            <div class="context-package-placeholder">
+            <div class="context-placeholder">
               <i class="bi bi-collection"></i>
               <span>Objekte folgen</span>
             </div>
           {% endif %}
         {% endif %}
       </div>
-      <div class="context-package-content">
-        <div class="context-package-badges">
-          {% if paket.kontexttyp %}
-            <span class="context-package-badge">{{ paket.get_kontexttyp_display }}</span>
-          {% endif %}
-          <span class="context-package-badge">{{ paket.get_darstellungsart_display }}</span>
-        </div>
-        <h3 class="context-package-title">{% firstof paket.titel_oeffentlich paket.name %}</h3>
+      <div class="context-showcase-content">
+        <span class="context-badge">{% if paket.kontexttyp %}{{ paket.get_kontexttyp_display }}{% else %}Kontext{% endif %}</span>
+        <h3 class="context-showcase-title">{% firstof paket.titel_oeffentlich paket.name %}</h3>
         {% if paket.beschreibung %}
-          <p class="context-package-desc">{{ paket.beschreibung|striptags|truncatechars:180 }}</p>
+          <p class="context-showcase-desc">{{ paket.beschreibung|striptags|truncatechars:190 }}</p>
         {% endif %}
-        <div class="context-package-meta">
-          <span><i class="bi bi-collection"></i>
-            {% if paket.bekannte_objektanzahl %}
-              {{ paket.bekannte_objektanzahl }} bekannt / {{ paket.objektanzahl_db|default:"0" }} in der Datenbank
-            {% else %}
-              {{ paket.objektanzahl_db|default:"0" }} Objekte in der Datenbank
-            {% endif %}
-          </span>
-          {% if paket.fundzeitpunkt_verbal %}
-            <span><i class="bi bi-calendar-event"></i>{{ paket.fundzeitpunkt_verbal }}</span>
-          {% endif %}
-          {% if paket.fundplatz_kontext %}
-            <span><i class="bi bi-pin-map"></i>{{ paket.get_fundplatz_kontext_display }}</span>
-          {% endif %}
-          {% if paket.literatur.all %}
-            <span><i class="bi bi-book"></i>{{ paket.literatur.all|length }} Literatur</span>
-          {% endif %}
+        <div class="context-fact-grid">
+          <div class="context-fact">
+            <span class="context-fact-label">Anzahl</span>
+            <span class="context-fact-value">
+              {% if paket.bekannte_objektanzahl %}
+                {{ paket.bekannte_objektanzahl }} bekannt
+              {% else %}
+                {{ paket.objektanzahl_db|default:"0" }} Objekte
+              {% endif %}
+            </span>
+          </div>
+          <div class="context-fact">
+            <span class="context-fact-label">Datenbank</span>
+            <span class="context-fact-value">{{ paket.objektanzahl_db|default:"0" }} erfasst</span>
+          </div>
+          <div class="context-fact">
+            <span class="context-fact-label">Fundort</span>
+            <span class="context-fact-value">{% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}Nicht angegeben{% endif %}</span>
+          </div>
+          <div class="context-fact">
+            <span class="context-fact-label">Datierung</span>
+            <span class="context-fact-value">{% firstof paket.fundzeitpunkt_verbal "Nicht angegeben" %}</span>
+          </div>
         </div>
+        {% if paket.homepage_preview_objects %}
+        <div class="context-thumb-strip" aria-label="Objektbeispiele">
+          {% for obj in paket.homepage_preview_objects %}
+            <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-thumb" loading="lazy" decoding="async">
+          {% endfor %}
+        </div>
+        {% endif %}
+        <a href="{% url 'Objektliste' %}" class="context-showcase-button">Alle Münzen anzeigen <i class="bi bi-arrow-right"></i></a>
       </div>
     </article>
     {% endfor %}

@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='paket',
             name='darstellungsart',
-            field=models.CharField(choices=[('frontcover', 'Frontcover'), ('karte', 'Karte'), ('objekt', 'Objekt'), ('diagramm', 'Diagramm')], default='objekt', max_length=20, verbose_name='Darstellungsart'),
+            field=models.CharField(choices=[('frontcover', 'Frontcover'), ('karte', 'Karte'), ('objekt', 'Objekt'), ('diagramm', 'Diagramm')], default='objekt', help_text='Legt fest, ob auf der Startseite Frontcover, Karte, Objektthumbnails oder Diagramm gezeigt werden.', max_length=20, verbose_name='Startseiten-Darstellung'),
         ),
         migrations.AddField(
             model_name='paket',
@@ -26,12 +26,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='paket',
             name='fund_lat',
-            field=models.DecimalField(blank=True, decimal_places=6, max_digits=9, null=True, verbose_name='Fundkoordinate Breite'),
+            field=models.DecimalField(blank=True, decimal_places=6, help_text='Dezimalgrad in WGS84, z. B. 48.116000', max_digits=9, null=True, verbose_name='Fundkoordinate Breite'),
         ),
         migrations.AddField(
             model_name='paket',
             name='fund_lng',
-            field=models.DecimalField(blank=True, decimal_places=6, max_digits=9, null=True, verbose_name='Fundkoordinate Länge'),
+            field=models.DecimalField(blank=True, decimal_places=6, help_text='Dezimalgrad in WGS84, z. B. 16.867000', max_digits=9, null=True, verbose_name='Fundkoordinate Länge'),
         ),
         migrations.AddField(
             model_name='paket',

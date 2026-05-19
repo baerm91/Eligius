@@ -2761,6 +2761,11 @@ class PaketAdmin(ImportExportModelAdmin):
     list_filter = ('ist_arbeitspaket', 'online_freigegeben', 'kontexttyp', 'darstellungsart', 'fundplatz_kontext', 'erstellt_am')
     list_editable = ('ist_arbeitspaket', 'online_freigegeben', 'darstellungsart')
     autocomplete_fields = ('vergleichspakete', 'literatur')
+    radio_fields = {
+        'darstellungsart': admin.HORIZONTAL,
+        'kontexttyp': admin.HORIZONTAL,
+        'fundplatz_kontext': admin.HORIZONTAL,
+    }
     ordering = ['name']
     fieldsets = (
         (None, {
