@@ -495,6 +495,23 @@ def _build_package_chart_data(entries):
 
     return {'years': years, 'counts': counts}
 
+def _build_package_chart_series(paket, entries, comparison_entries_by_package):
+    series = [{
+        'name': paket.titel_oeffentlich or paket.name,
+        **_build_package_chart_data(entries),
+    }]
+
+    for comparison_package in paket.vergleichspakete.all():
+        comparison_entries = comparison_entries_by_package.get(comparison_package.id, [])
+        chart_data = _build_package_chart_data(comparison_entries)
+        if chart_data.get('years'):
+            series.append({
+                'name': comparison_package.titel_oeffentlich or comparison_package.name,
+                **chart_data,
+            })
+
+    return series
+
 def _refresh_mtoa_image_urls_from_objects(entries):
     obj_ids = [entry.obj_id for entry in entries if entry.obj_id]
     if not obj_ids:
@@ -515,10 +532,14 @@ def _refresh_mtoa_image_urls_from_objects(entries):
             continue
 
         bild_urls = obj.get_bild_urls() or {}
-        entry.av_url = bild_urls.get('av')
-        entry.rv_url = bild_urls.get('rv')
-        entry.thumbnail_av_url = bild_urls.get('thumbnail_av')
-        entry.thumbnail_rv_url = bild_urls.get('thumbnail_rv')
+        entry.av_url = entry.av_url or bild_urls.get('av')
+        entry.rv_url = entry.rv_url or bild_urls.get('rv')
+        entry.thumbnail_av_url = entry.thumbnail_av_url or bild_urls.get('thumbnail_av')
+        entry.thumbnail_rv_url = entry.thumbnail_rv_url or bild_urls.get('thumbnail_rv')
+        entry.av_alt_url = bild_urls.get('av_alt') or ''
+        entry.rv_alt_url = bild_urls.get('rv_alt') or ''
+        entry.thumbnail_av_alt_url = bild_urls.get('thumbnail_av_alt') or ''
+        entry.thumbnail_rv_alt_url = bild_urls.get('thumbnail_rv_alt') or ''
 
     return entries
 
@@ -600,6 +621,29 @@ def paket_detail(request, slug):
 
     package_chart_data = _build_package_chart_data(package_entries)
     chart_years = package_chart_data.get('years') or []
+    comparison_entries_by_package = {}
+    comparison_package_ids = list(paket.vergleichspakete.values_list('id', flat=True))
+    if comparison_package_ids:
+        comparison_obj_pairs = list(
+            Obj.pakete.through.objects
+            .filter(paket_id__in=comparison_package_ids)
+            .values_list('paket_id', 'obj_id')
+        )
+        comparison_obj_ids = [obj_id for _, obj_id in comparison_obj_pairs]
+        comparison_entries_by_obj_id = {
+            entry.obj_id: entry
+            for entry in MuenztypObjektAnzeige.objects.filter(obj_id__in=comparison_obj_ids)
+        }
+        for comparison_package_id, obj_id in comparison_obj_pairs:
+            entry = comparison_entries_by_obj_id.get(obj_id)
+            if entry:
+                comparison_entries_by_package.setdefault(comparison_package_id, []).append(entry)
+
+    package_chart_series = _build_package_chart_series(
+        paket,
+        package_entries,
+        comparison_entries_by_package,
+    )
 
     context = {
         'paket': paket,
@@ -612,6 +656,7 @@ def paket_detail(request, slug):
         'primary_material': material_distribution[0] if material_distribution else None,
         'mint_distribution': _build_package_distribution(package_entries, 'mzstaette'),
         'package_chart_data': package_chart_data,
+        'package_chart_series': package_chart_series,
         'package_time_extent': {
             'start': chart_years[0] if chart_years else None,
             'end': chart_years[-1] if chart_years else None,

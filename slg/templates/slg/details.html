@@ -529,12 +529,12 @@
                     {% if bild_urls %}
                         <div class="coin-image-col">
                             <div class="item coin-image-stage" data-src="{{ bild_urls.av }}">
-                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.av }}" alt="Avers" class="lazyload img-fluid"></a>
+                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.av }}" data-fallback-src="{{ bild_urls.av_alt|default:'' }}" alt="Avers" class="lazyload img-fluid" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
                             </div>
                         </div>
                         <div class="coin-image-col">
                             <div class="item coin-image-stage" data-src="{{ bild_urls.rv }}">
-                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.rv }}" alt="Revers" class="lazyload img-fluid"></a>
+                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.rv }}" data-fallback-src="{{ bild_urls.rv_alt|default:'' }}" alt="Revers" class="lazyload img-fluid" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
                             </div>
                         </div>
                     {% endif %}

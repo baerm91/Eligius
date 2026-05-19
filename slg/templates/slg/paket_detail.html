@@ -116,7 +116,8 @@
 
   .package-hero-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(260px, 420px);
+    justify-content: end;
     gap: 24px;
     align-items: end;
     padding-bottom: 48px;
@@ -189,13 +190,13 @@
   }
 
   #packageMap {
-    min-height: 260px;
+    min-height: 210px;
     height: 100%;
     background: #111923;
   }
 
   .package-map-empty {
-    min-height: 260px;
+    min-height: 210px;
     display: grid;
     place-items: center;
     color: var(--context-muted);
@@ -261,6 +262,11 @@
     margin-bottom: 70px;
     min-height: 0;
     padding: 30px;
+  }
+
+  .package-chart-container {
+    width: 100%;
+    min-height: 360px;
   }
 
   .package-time-axis {
@@ -431,6 +437,9 @@
     .package-analysis-grid {
       grid-template-columns: 1fr;
     }
+    .package-hero-grid {
+      justify-content: stretch;
+    }
     .package-facts {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -507,11 +516,7 @@
     <h2 class="package-card-title">Zeitliche Verteilung der Objekte</h2>
     <p class="package-card-subtitle">Zeitspanne der im Paket erfassten Münzen.</p>
     {% if package_time_extent.start != None and package_time_extent.end != None %}
-      <div class="package-time-axis" aria-label="Zeitraum von {{ package_time_extent.start_label }} bis {{ package_time_extent.end_label }}">
-        <span class="package-time-axis__year">{{ package_time_extent.start_label }}</span>
-        <span class="package-time-axis__line" aria-hidden="true"></span>
-        <span class="package-time-axis__year">{{ package_time_extent.end_label }}</span>
-      </div>
+      <div id="objectsBarChart" class="package-chart-container" aria-label="Zeitliche Verteilung von {{ package_time_extent.start_label }} bis {{ package_time_extent.end_label }}"></div>
     {% else %}
       <div class="package-time-axis__empty">Keine Datierungsdaten vorhanden.</div>
     {% endif %}
@@ -527,8 +532,8 @@
       <span class="package-fact-value">{{ objektanzahl_db }} erfasst</span>
     </div>
     <div class="package-fact">
-      <span class="package-fact-label">Zeitraum</span>
-      <span class="package-fact-value">{% firstof paket.fundzeitpunkt_verbal "Nicht angegeben" %}</span>
+      <span class="package-fact-label">Datierung</span>
+      <span class="package-fact-value">{% if package_time_extent.start != None and package_time_extent.end != None %}{{ package_time_extent.start_label }} bis {{ package_time_extent.end_label }}{% else %}Nicht angegeben{% endif %}</span>
     </div>
   </section>
 
@@ -594,6 +599,7 @@
   </section>
 </main>
 {{ package_map_markers|json_script:"package-map-markers" }}
+{{ package_chart_series|json_script:"package-chart-series" }}
 {% endblock content %}
 
 {% block scripts %}
@@ -603,6 +609,8 @@
   document.addEventListener('DOMContentLoaded', function () {
     const mapMarkersElement = document.getElementById('package-map-markers');
     const mapMarkers = mapMarkersElement ? JSON.parse(mapMarkersElement.textContent) : [];
+    const chartSeriesElement = document.getElementById('package-chart-series');
+    const chartSeries = chartSeriesElement ? JSON.parse(chartSeriesElement.textContent) : [];
 
     const mapContainer = document.getElementById('packageMap');
     if (mapContainer && window.L && mapMarkers.length) {
@@ -652,6 +660,100 @@
       setTimeout(function () {
         map.invalidateSize();
       }, 100);
+    }
+
+    const chartContainer = document.getElementById('objectsBarChart');
+    if (chartContainer && window.echarts && chartSeries.length) {
+      const packageChart = echarts.init(chartContainer, null, { renderer: 'canvas' });
+      const years = Array.from(new Set(
+        chartSeries.flatMap(function (series) { return series.years || []; })
+      )).sort(function (a, b) { return a - b; });
+      const labels = years.map(function (year) { return year.toString(); });
+      const colors = ['#f6b15d', '#44d8f5', '#e33be6', '#8bd17c', '#d7c7ff'];
+
+      function formatYear(value) {
+        const n = parseInt(value, 10);
+        if (Number.isNaN(n)) return value;
+        return n < 0 ? Math.abs(n) + ' v.Chr.' : n.toString();
+      }
+
+      packageChart.setOption({
+        backgroundColor: '#161616',
+        color: colors,
+        grid: { left: '5%', right: '5%', top: '12%', bottom: '18%', containLabel: true },
+        legend: {
+          top: 10,
+          textStyle: { color: '#d4c5a0', fontWeight: 600 }
+        },
+        dataZoom: [
+          { type: 'inside', start: 0, end: 100 },
+          {
+            type: 'slider',
+            start: 0,
+            end: 100,
+            bottom: '3%',
+            borderColor: 'rgba(246, 177, 93, 0.25)',
+            textStyle: { color: '#a89a7e' },
+            backgroundColor: 'transparent',
+            fillerColor: 'rgba(246, 177, 93, 0.12)',
+            handleStyle: { color: '#f6b15d' }
+          }
+        ],
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: labels,
+          name: 'Chronologie',
+          nameLocation: 'middle',
+          nameGap: 40,
+          nameTextStyle: { color: '#d4c5a0', fontSize: 13, fontWeight: 600 },
+          axisLine: { lineStyle: { color: '#8a7d65', width: 1.5 } },
+          axisTick: { show: true, alignWithLabel: true, lineStyle: { color: '#8a7d65' } },
+          axisLabel: { formatter: formatYear, color: '#8a7d65', fontWeight: 500 },
+          splitLine: { show: true, lineStyle: { color: 'rgba(255, 255, 255, 0.04)', type: 'dashed' } }
+        },
+        yAxis: {
+          type: 'value',
+          name: 'Stückzahl',
+          nameTextStyle: { color: '#d4c5a0', fontSize: 13, fontWeight: 600, padding: [0, 0, 8, 0] },
+          axisLine: { show: true, lineStyle: { color: '#8a7d65', width: 1.5 } },
+          axisLabel: { color: '#8a7d65', fontWeight: 500 },
+          splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.06)' } }
+        },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(16, 16, 16, 0.95)',
+          borderColor: 'rgba(246, 177, 93, 0.4)',
+          textStyle: { color: '#e8dcc8' },
+          axisPointer: { type: 'cross', lineStyle: { color: '#8a7d65', width: 1, type: 'dashed' } }
+        },
+        series: chartSeries.map(function (series, index) {
+          const countsByYear = new Map((series.years || []).map(function (year, i) {
+            return [year, (series.counts || [])[i] || 0];
+          }));
+          return {
+            name: series.name,
+            type: 'line',
+            smooth: 0.3,
+            symbol: 'circle',
+            symbolSize: 3,
+            showSymbol: false,
+            lineStyle: { width: 2.5 },
+            areaStyle: index === 0 ? {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(246, 177, 93, 0.25)' },
+                { offset: 1, color: 'rgba(246, 177, 93, 0.02)' }
+              ])
+            } : undefined,
+            emphasis: { focus: 'series', lineStyle: { width: 3.5 } },
+            data: years.map(function (year) { return countsByYear.get(year) || 0; })
+          };
+        })
+      });
+
+      if (window.ResizeObserver) {
+        new ResizeObserver(function () { packageChart.resize(); }).observe(chartContainer);
+      }
     }
   });
 </script>

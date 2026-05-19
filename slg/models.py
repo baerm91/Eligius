@@ -1517,17 +1517,29 @@ class Obj(models.Model):
 			endung_rv = self.Slg.bild_endung_rv or endung_rv or ''
 			entferne_zeichen = self.Slg.entferne_zeichen or entferne_zeichen or ''
 
-		invnr = self.invnr
+		invnr = self.invnr or ''
 		if entferne_zeichen:
 			invnr = invnr.replace(entferne_zeichen, '')
 
+		invnr_alt = invnr.replace('S', '').replace('/', '-')
+		if self.SlgTeil and str(self.SlgTeil) == "Slg. Neukloster":
+			invnr_alt = invnr.replace('/', '-')
+
 		if basis_url:
-			return {
+			urls = {
 				'av': f"{basis_url}{invnr}{endung_av}.jpg",
 				'rv': f"{basis_url}{invnr}{endung_rv}.jpg",
 				'thumbnail_av': f"{basis_url}thumbnails/{invnr}{endung_av}.webp",
 				'thumbnail_rv': f"{basis_url}thumbnails/{invnr}{endung_rv}.webp"
 			}
+			if invnr_alt and invnr_alt != invnr:
+				urls.update({
+					'av_alt': f"{basis_url}{invnr_alt}{endung_av}.jpg",
+					'rv_alt': f"{basis_url}{invnr_alt}{endung_rv}.jpg",
+					'thumbnail_av_alt': f"{basis_url}thumbnails/{invnr_alt}{endung_av}.webp",
+					'thumbnail_rv_alt': f"{basis_url}thumbnails/{invnr_alt}{endung_rv}.webp",
+				})
+			return urls
 		else:
 			return None
 	
