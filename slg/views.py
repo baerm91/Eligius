@@ -52,6 +52,7 @@ import traceback
 import io
 import json  # Füge diesen Import hinzu
 import logging
+import random
 import re  # Für Regular Expressions
 import shlex  # Für Anführungszeichen-behaftete Strings
 from django.core.cache import cache
@@ -344,11 +345,12 @@ def index(request):
 
     package_preview_map = defaultdict(list)
     if package_object_ids:
-        preview_entries = (
+        preview_entries = list(
             MuenztypObjektAnzeige.objects
             .filter(obj_id__in=package_object_ids)
             .order_by('-last_modified')
         )
+        _refresh_mtoa_image_urls_from_objects(preview_entries)
         previews_by_obj_id = {entry.obj_id: entry for entry in preview_entries}
         for paket in context_packages:
             package_preview_map[paket.id] = [
@@ -361,6 +363,11 @@ def index(request):
         paket.homepage_preview_objects = package_preview_map.get(paket.id, [])
 
     browse_url = reverse('Objektliste')
+    highlighted_context_package = random.choice(context_packages) if context_packages else None
+    secondary_context_packages = [
+        paket for paket in context_packages
+        if paket != highlighted_context_package
+    ]
 
     def build_wordcloud_data(default_field, undetermined_field, filter_name, limit=80):
         counts = Counter()
@@ -399,6 +406,8 @@ def index(request):
     context = {
         'latest_entries': latest_entries,
         'context_packages': context_packages,
+        'highlighted_context_package': highlighted_context_package,
+        'secondary_context_packages': secondary_context_packages,
         'av_wordcloud_data': av_wordcloud_data,
         'rv_wordcloud_data': rv_wordcloud_data,
     }
