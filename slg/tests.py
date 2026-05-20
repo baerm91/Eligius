@@ -4,7 +4,7 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from rdflib import Graph, Namespace, URIRef
 
-from .models import Metall, Muenztyp, Nominal, Obj, Obj_Ref, Ref, Slg, Workflow
+from .models import Metall, Muenztyp, MuenztypObjektAnzeige, Nominal, Obj, Obj_Ref, Ref, Slg, Workflow
 from .signals import disable_mtoa_sync, enable_mtoa_sync
 from .views import _clean_export_invnrs, _export_datetime
 
@@ -81,6 +81,56 @@ class ObjSaveTests(TestCase):
 
         obj.refresh_from_db()
         self.assertEqual(obj.Metall, material)
+
+
+class FacetApiTests(TestCase):
+    def test_nominal_selected_count_uses_current_filtered_result_set(self):
+        nominal = Nominal.objects.create(name="Groschen, 2")
+        other_nominal = Nominal.objects.create(name="Pfennig")
+        slg = Slg.objects.create(name="Testsammlung")
+        other_slg = Slg.objects.create(name="Andere Sammlung")
+
+        MuenztypObjektAnzeige.objects.create(
+            obj_id=1,
+            invnr="1",
+            nominal="Groschen, 2",
+            nominal_fk=nominal,
+            slg_fk=slg,
+        )
+        MuenztypObjektAnzeige.objects.create(
+            obj_id=2,
+            invnr="2",
+            nominal="Groschen, 2",
+            nominal_fk=nominal,
+            slg_fk=slg,
+        )
+        MuenztypObjektAnzeige.objects.create(
+            obj_id=3,
+            invnr="3",
+            nominal="Pfennig",
+            nominal_fk=other_nominal,
+            slg_fk=slg,
+        )
+        MuenztypObjektAnzeige.objects.create(
+            obj_id=4,
+            invnr="4",
+            nominal="Groschen, 2",
+            nominal_fk=nominal,
+            slg_fk=other_slg,
+        )
+
+        response = self.client.get(
+            reverse("facet_api"),
+            {
+                "facet": "Nominal",
+                "Slg": str(slg.id),
+                "Nominal": "Groschen, 2",
+                "include_current_facet": "1",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [{"name": "Groschen, 2", "count": 2, "id": nominal.id}])
 
 
 class NomismaRdfExportTests(TestCase):

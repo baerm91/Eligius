@@ -2281,7 +2281,9 @@ def facet_api(request):
         field_path = facet_config['field']
         id_field = facet_config.get('id_field')
 
-        qs, _, needs_distinct = _get_filtered_mtoa_queryset(request, exclude_field=facet_field)
+        include_current_facet = request.GET.get('include_current_facet') == '1'
+        exclude_field = None if include_current_facet else facet_field
+        qs, _, needs_distinct = _get_filtered_mtoa_queryset(request, exclude_field=exclude_field)
 
         search_term = request.GET.get('term')
         if search_term:

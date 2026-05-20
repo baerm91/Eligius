@@ -906,7 +906,12 @@
       $sel.find('option:not(:first)').remove();
 
       current.forEach(val => {
-          fetch(`/api/facet/?facet=${paramName}&${paramName}=${encodeURIComponent(val)}&term=${encodeURIComponent(val)}`)
+          const selectedFacetUrl = buildFacetUrl(paramName, {
+              [paramName]: val,
+              include_current_facet: '1'
+          });
+
+          fetch(`/api/facet/?${selectedFacetUrl}`)
               .then(r => r.json())
               .then(arr => {
                   const o = arr.find(x => String(x.id ?? x.name) === val || x.name === val);
