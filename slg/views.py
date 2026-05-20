@@ -1941,35 +1941,53 @@ def graph_view(request):
     """View function to display the graph visualization tool."""
     return render(request, 'slg/graphv0.2.html')
 
-def _get_filtered_mtoa_queryset(request):
+MTOA_FILTERS = {
+    'q': {'fields': ['invnr', 'objekttitel', 'rv_legende', 'av_legende', 'typ'], 'lookup': 'icontains'},
+    'avleg': {'fields': ['av_legende'], 'lookup': 'icontains'},
+    'rvleg': {'fields': ['rv_legende'], 'lookup': 'icontains'},
+    'Muenzstaette': {'fields': ['mzstaette'], 'lookup': 'exact'},
+    'Muenzstand': {'fields': ['muenzstand'], 'lookup': 'exact'},
+    'Reichskreis': {'fields': ['reichskreis'], 'lookup': 'exact'},
+    'region': {'fields': ['region'], 'lookup': 'exact'},
+    'Nominal': {'fields': ['nominal'], 'lookup': 'exact'},
+    'Nominal_id': {'fields': ['nominal_fk_id'], 'lookup': 'in'},
+    'material': {'fields': ['metall'], 'lookup': 'icontains'},
+    'Slg': {'fields': ['slg_fk_id'], 'lookup': 'exact'},
+    'SlgTeil': {'fields': ['slgteil_fk_id'], 'lookup': 'exact'},
+    'av_bildtyp': {'fields': ['av_bildtyp_fk_id'], 'lookup': 'exact'},
+    'av_beizeichen': {'fields': ['av_beizeichen'], 'lookup': 'exact'},
+    'rv_bildtyp': {'fields': ['rv_bildtyp_fk_id'], 'lookup': 'exact'},
+    'rv_beizeichen': {'fields': ['rv_beizeichen'], 'lookup': 'exact'},
+    'rv_schlagwort': {'fields': ['rv_schlagworte'], 'lookup': 'icontains'},
+    'av_schlagwort': {'fields': ['av_schlagworte'], 'lookup': 'icontains'},
+    'obj_type': {'fields': ['objekttyp'], 'lookup': 'exact'},
+    'objekttyp': {'fields': ['objekttyp_fk_id'], 'lookup': 'exact'},
+    'coin_type': {'fields': ['typ_fk_id'], 'lookup': 'in'},
+}
+
+MTOA_FACETS = {
+    'Muenzstaette': {'field': 'mzstaette', 'id_field': 'mzstaette_fk_id'},
+    'Muenzstand': {'field': 'muenzstand', 'id_field': 'muenzstand_fk_id'},
+    'Reichskreis': {'field': 'reichskreis'},
+    'region': {'field': 'region', 'id_field': 'region_fk_id'},
+    'Nominal': {'field': 'nominal', 'id_field': 'nominal_fk_id'},
+    'material': {'field': 'metall', 'id_field': 'metall_fk_id'},
+    'Slg': {'field': 'Slg', 'id_field': 'slg_fk_id'},
+    'SlgTeil': {'field': 'SlgTeil', 'id_field': 'slgteil_fk_id'},
+    'av_bildtyp': {'field': 'av_bildtyp', 'id_field': 'av_bildtyp_fk_id'},
+    'rv_bildtyp': {'field': 'rv_bildtyp', 'id_field': 'rv_bildtyp_fk_id'},
+    'av_beizeichen': {'field': 'av_beizeichen'},
+    'rv_beizeichen': {'field': 'rv_beizeichen'},
+    'obj_type': {'field': 'objekttyp', 'id_field': 'objekttyp_fk_id'},
+    'coin_type': {'field': 'typ', 'id_field': 'typ_fk_id'},
+}
+
+
+def _get_filtered_mtoa_queryset(request, exclude_field=None):
     """
     Zentrale Browse-Filterlogik für MTOA, damit Liste, Chart und andere
     Auswertungen dieselbe Treffermenge verwenden.
     """
-    MTOA_FILTERS = {
-        'q': {'fields': ['invnr', 'objekttitel', 'rv_legende', 'av_legende', 'typ'], 'lookup': 'icontains'},
-        'avleg': {'fields': ['av_legende'], 'lookup': 'icontains'},
-        'rvleg': {'fields': ['rv_legende'], 'lookup': 'icontains'},
-        'Muenzstaette': {'fields': ['mzstaette'], 'lookup': 'exact'},
-        'Muenzstand': {'fields': ['muenzstand'], 'lookup': 'exact'},
-        'Reichskreis': {'fields': ['reichskreis'], 'lookup': 'exact'},
-        'region': {'fields': ['region'], 'lookup': 'exact'},
-        'Nominal': {'fields': ['nominal'], 'lookup': 'exact'},
-        'Nominal_id': {'fields': ['nominal_fk_id'], 'lookup': 'in'},
-        'material': {'fields': ['metall'], 'lookup': 'icontains'},
-        'Slg': {'fields': ['slg_fk_id'], 'lookup': 'exact'},
-        'SlgTeil': {'fields': ['slgteil_fk_id'], 'lookup': 'exact'},
-        'av_bildtyp': {'fields': ['av_bildtyp_fk_id'], 'lookup': 'exact'},
-        'av_beizeichen': {'fields': ['av_beizeichen'], 'lookup': 'exact'},
-        'rv_bildtyp': {'fields': ['rv_bildtyp_fk_id'], 'lookup': 'exact'},
-        'rv_beizeichen': {'fields': ['rv_beizeichen'], 'lookup': 'exact'},
-        'rv_schlagwort': {'fields': ['rv_schlagworte'], 'lookup': 'icontains'},
-        'av_schlagwort': {'fields': ['av_schlagworte'], 'lookup': 'icontains'},
-        'obj_type': {'fields': ['objekttyp'], 'lookup': 'exact'},
-        'objekttyp': {'fields': ['objekttyp_fk_id'], 'lookup': 'exact'},
-        'coin_type': {'fields': ['typ_fk_id'], 'lookup': 'in'},
-    }
-
     unbestimmt_param = request.GET.get('unbestimmt', '')
     if unbestimmt_param == 'True':
         is_unbestimmt = True
@@ -1985,6 +2003,8 @@ def _get_filtered_mtoa_queryset(request):
     needs_distinct = False
 
     for param, config in MTOA_FILTERS.items():
+        if param == exclude_field:
+            continue
         values = [v for v in request.GET.getlist(param) if is_valid_qparam(v)]
         if not values:
             continue
@@ -2001,7 +2021,7 @@ def _get_filtered_mtoa_queryset(request):
 
     date_from = request.GET.get('dat_von')
     date_to = request.GET.get('dat_bis')
-    if is_valid_qparam(date_from) and is_valid_qparam(date_to):
+    if exclude_field != 'date' and is_valid_qparam(date_from) and is_valid_qparam(date_to):
         general_filters.append(
             Q(datierung_von__lte=date_to) &
             Q(datierung_bis__gte=date_from)
@@ -2018,6 +2038,8 @@ def _get_filtered_mtoa_queryset(request):
     }
 
     for param_name, config in person_params.items():
+        if param_name == exclude_field:
+            continue
         if param_name in request.GET:
             names = [name for name in request.GET.getlist(param_name) if is_valid_qparam(name)]
             if names:
@@ -2035,12 +2057,12 @@ def _get_filtered_mtoa_queryset(request):
                 qs = qs.filter(name_q)
 
     wappen_names = [name for name in request.GET.getlist('Wappen') if is_valid_qparam(name)]
-    if wappen_names:
+    if exclude_field != 'Wappen' and wappen_names:
         needs_distinct = True
         qs = qs.filter(typ_fk__wappen__name__in=wappen_names)
 
     ref_values = [name for name in request.GET.getlist('Ref') if is_valid_qparam(name)]
-    if ref_values:
+    if exclude_field != 'Ref' and ref_values:
         ref_query = Q()
         if unbestimmt_param != 'True':
             ref_query |= Q(Typ__Ref__abk__in=ref_values)
@@ -2055,7 +2077,7 @@ def _get_filtered_mtoa_queryset(request):
         qs = qs.filter(obj_id__in=ref_obj_ids)
 
     her_merk_values = [name for name in request.GET.getlist('her_merk') if is_valid_qparam(name)]
-    if her_merk_values:
+    if exclude_field != 'her_merk' and her_merk_values:
         obj_ids = set(
             Obj.objects.filter(Herstellungsmerkmale__name__in=her_merk_values)
             .values_list('id', flat=True)
@@ -2063,7 +2085,7 @@ def _get_filtered_mtoa_queryset(request):
         qs = qs.filter(obj_id__in=obj_ids)
 
     sek_merk_values = [name for name in request.GET.getlist('sek_merk') if is_valid_qparam(name)]
-    if sek_merk_values:
+    if exclude_field != 'sek_merk' and sek_merk_values:
         obj_ids = set(
             Obj.objects.filter(sekundaere_Merkmale__name__in=sek_merk_values)
             .values_list('id', flat=True)
@@ -2076,7 +2098,7 @@ def _get_filtered_mtoa_queryset(request):
         for value in request.GET.getlist(key)
         if is_valid_qparam(value)
     ]
-    if paket_values:
+    if exclude_field not in ('Paket', 'pakete') and paket_values:
         paket_ids = []
         paket_names = []
         for value in paket_values:
@@ -2253,6 +2275,41 @@ def facet_api(request):
     facet_field = request.GET.get('facet')
     if not facet_field:
         return Response({"error": "Parameter 'facet' ist erforderlich"}, status=400)
+
+    if facet_field in MTOA_FACETS:
+        facet_config = MTOA_FACETS[facet_field]
+        field_path = facet_config['field']
+        id_field = facet_config.get('id_field')
+
+        qs, _, needs_distinct = _get_filtered_mtoa_queryset(request, exclude_field=facet_field)
+
+        search_term = request.GET.get('term')
+        if search_term:
+            qs = qs.filter(**{f"{field_path}__icontains": search_term})
+
+        values_dict = {'value': F(field_path)}
+        if id_field:
+            values_dict['obj_id'] = F(id_field)
+
+        qs = qs.exclude(**{f"{field_path}__isnull": True})
+        qs = qs.exclude(**{f"{field_path}__exact": ''})
+
+        qs = (
+            qs.order_by()
+              .values(**values_dict)
+              .annotate(count=Count('pk', distinct=needs_distinct))
+              .order_by('value' if search_term else '-count')
+        )[:50]
+
+        result = []
+        for entry in qs:
+            if entry['value']:
+                obj = {'name': entry['value'], 'count': entry['count']}
+                if 'obj_id' in entry:
+                    obj['id'] = entry['obj_id']
+                result.append(obj)
+
+        return Response(result)
 
     unbestimmt_param = request.GET.get('unbestimmt', '')
     context_key = 'unbestimmt' if unbestimmt_param == 'True' else 'default'
