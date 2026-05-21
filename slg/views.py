@@ -3126,6 +3126,57 @@ class ObjektList(generics.ListAPIView):
             queryset = queryset.filter(invnr__iexact=invnr)
         return queryset
 
+
+@api_view(['POST'])
+@authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def objekte_bulk_api(request):
+    payload = request.data or {}
+    raw_invnrs = payload.get('invnrs') or payload.get('objects') or []
+    if not isinstance(raw_invnrs, list):
+        return Response({'error': "'invnrs' must be a list"}, status=400)
+
+    cleaned_invnrs = []
+    seen = set()
+    for value in raw_invnrs:
+        if isinstance(value, dict):
+            text = str(value.get('invnr') or value.get('inv') or '').strip()
+        else:
+            text = str(value or '').strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        cleaned_invnrs.append(text)
+
+    if not cleaned_invnrs:
+        return Response({'error': "'invnrs' list is empty"}, status=400)
+    if len(cleaned_invnrs) > 5000:
+        return Response({'error': 'Too many objects requested (max 5000)'}, status=400)
+
+    queryset = Obj.objects.filter(invnr__in=cleaned_invnrs).select_related(
+        'Typ',
+        'Typ__workflow',
+        'workflow',
+        'rv_offizin',
+    )
+    serialized = ObjInventorySerializer(queryset, many=True).data
+    objects = {}
+    matched_invnrs = set()
+    for obj in serialized:
+        invnr = str(obj.get('invnr') or '').strip()
+        if invnr and invnr not in objects:
+            objects[invnr] = obj
+            matched_invnrs.add(invnr)
+
+    return Response({
+        'ok': True,
+        'requested': len(cleaned_invnrs),
+        'matched': len(objects),
+        'objects': objects,
+        'unmatched_invnrs': [invnr for invnr in cleaned_invnrs if invnr not in matched_invnrs],
+    })
+
+
 class ObjektDetail(generics.RetrieveUpdateAPIView):
     authentication_classes = [
         QueryParamTokenAuthentication,
