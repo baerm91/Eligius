@@ -2291,7 +2291,7 @@ def facet_api(request):
 
         values_dict = {'value': F(field_path)}
         if id_field:
-            values_dict['id'] = F(id_field)
+            values_dict['facet_id'] = F(id_field)
 
         qs = qs.exclude(**{f"{field_path}__isnull": True})
         qs = qs.exclude(**{f"{field_path}__exact": ''})
@@ -2307,8 +2307,8 @@ def facet_api(request):
         for entry in qs:
             if entry['value']:
                 obj = {'name': entry['value'], 'count': entry['count']}
-                if 'id' in entry:
-                    obj['id'] = entry['id']
+                if 'facet_id' in entry:
+                    obj['id'] = entry['facet_id']
                 result.append(obj)
 
         return Response(result)
