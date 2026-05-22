@@ -1970,7 +1970,7 @@ MTOA_FACETS = {
     'Muenzstand': {'field': 'muenzstand', 'id_field': 'muenzstand_fk_id'},
     'Reichskreis': {'field': 'reichskreis'},
     'region': {'field': 'region', 'id_field': 'region_fk_id'},
-    'Nominal': {'field': 'nominal', 'id_field': 'nominal_fk_id'},
+    'Nominal': {'field': 'nominal'},
     'material': {'field': 'metall', 'id_field': 'metall_fk_id'},
     'Slg': {'field': 'Slg', 'id_field': 'slg_fk_id'},
     'SlgTeil': {'field': 'SlgTeil', 'id_field': 'slgteil_fk_id'},
@@ -2291,7 +2291,7 @@ def facet_api(request):
 
         values_dict = {'value': F(field_path)}
         if id_field:
-            values_dict['obj_id'] = F(id_field)
+            values_dict['id'] = F(id_field)
 
         qs = qs.exclude(**{f"{field_path}__isnull": True})
         qs = qs.exclude(**{f"{field_path}__exact": ''})
@@ -2307,8 +2307,8 @@ def facet_api(request):
         for entry in qs:
             if entry['value']:
                 obj = {'name': entry['value'], 'count': entry['count']}
-                if 'obj_id' in entry:
-                    obj['id'] = entry['obj_id']
+                if 'id' in entry:
+                    obj['id'] = entry['id']
                 result.append(obj)
 
         return Response(result)

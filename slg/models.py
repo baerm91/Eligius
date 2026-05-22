@@ -1698,7 +1698,7 @@ class MuenztypObjektAnzeige(models.Model):
 	herstellung = models.CharField(max_length=100, null=True, blank=True,verbose_name='Herstellung')
 	reichskreis = models.CharField(max_length=100, null=True, blank=True,verbose_name='Reichskreis')
 	muenzstand = models.CharField(max_length=100, null=True, blank=True,verbose_name='Münzstand')
-	nominal = models.CharField(max_length=100, null=True, blank=True,verbose_name='Nominal')
+	nominal = models.CharField(max_length=100, null=True, blank=True, db_index=True, verbose_name='Nominal')
 	metall = models.CharField(max_length=100, null=True, blank=True,verbose_name='Material')
 	mzstaette = models.CharField(max_length=100, null=True, blank=True,verbose_name='Münzstätte')
 	region = models.CharField(max_length=100, null=True, blank=True,verbose_name='Region')
