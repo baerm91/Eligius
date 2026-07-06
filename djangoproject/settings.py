@@ -85,8 +85,9 @@ if DEBUG:
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
     INTERNAL_IPS = ['127.0.0.1']
 
-CORS_ALLOW_ALL_ORIGINS = True
-
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+if len(CORS_ALLOWED_ORIGINS) == 0:
+    CORS_ALLOWED_ORIGINS = [ '*' ]
 
 ROOT_URLCONF = 'djangoproject.urls'
 
@@ -108,6 +109,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'djangoproject.wsgi.application'
 
+# read password from file (for use with docker secrets)
+def get_password_from_env(default=None):
+    filename = os.getenv('DATABASE_PASSWORD_FILE')
+    if filename is not None:
+        try:
+            return Path(filename).read_text(encoding='utf8').strip()
+        except (FileNotFoundError, RuntimeError):
+            pass
+    return os.getenv('DATABASE_PASSWORD', default)
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
@@ -115,8 +125,11 @@ WSGI_APPLICATION = 'djangoproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DATABASE_NAME', 'django'),
+        'USER': os.getenv('DATABASE_USER', 'django'),
+        'PASSWORD': get_password_from_env('password'),
+        'HOST': os.getenv('DATABASE_HOST', 'localhost'),
         'OPTIONS': {
-            'read_default_file': os.getenv('DJANGO_DB_CNF_PATH', '/djangoproject/auth/mysql.cnf'),
             'charset': 'utf8mb4',
         },
     }
@@ -163,6 +176,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/djangoproject/site/public/static'
+STATIC_ROOT = os.getenv('DJANGO_STATIC_ROOT', '/djangoproject/site/public/static')
 
 SLG_BILDER_STATIC_SUBDIR = 'slg_bilder'
