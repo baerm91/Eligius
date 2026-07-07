@@ -21,6 +21,7 @@ services:
       DATABASE_PASSWORD_FILE: /run/secrets/db_password
       DATABASE_HOST: /run/mysqld/mysqld.sock
       CORS_ALLOWED_ORIGINS: https://eligius.donau-uni.ac.at
+      CSRF_TRUSTED_ORIGINS: https://eligius.donau-uni.ac.at
       GUNICORN_BIND: unix:/run/eligius/http.socket
     restart: unless-stopped
     volumes:
