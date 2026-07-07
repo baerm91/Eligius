@@ -29,6 +29,9 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes', 'on')
 
 # ALLOWED_HOSTS = ['46.101.237.189']
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
+CSRF_TRUSTED_ORIGINS = [
+    'https://eligius.donau-uni.ac.at',
+]
 SITE_ID = int(os.getenv('DJANGO_SITE_ID', '1'))
 
 # Application definition
