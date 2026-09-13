@@ -1,0 +1,85 @@
+{% extends 'slg/navbar.html' %}
+{% block title %}Eligius Lab{% endblock %}
+{% block stylesheets %}
+{{ block.super }}
+<style>
+  .lab { max-width: 980px; margin: 0 auto; padding: 56px 24px 80px; }
+  .lab .eyebrow { color: var(--accent, #f6b15d); letter-spacing: .14em; text-transform: uppercase; font-size: .8rem; }
+  .lab h1 { font-family: Georgia, serif; font-size: clamp(2.8rem, 7vw, 4.5rem); margin: 12px 0 20px; }
+  .lab h2 { font-family: Georgia, serif; font-size: 2.2rem; }
+  .lab p, .lab li, .lab td { line-height: 1.75; }
+  .lab .intro { max-width: 700px; font-size: 1.15rem; }
+  .lab section { border-top: 1px solid rgba(246,177,93,.25); padding: 32px 0; margin-top: 24px; }
+  .lab .endpoint { display: block; overflow-wrap: anywhere; padding: 20px; border: 1px solid rgba(246,177,93,.4); border-radius: 8px; margin: 16px 0; color: inherit; }
+  .lab .badge { display: inline-block; background: rgba(246,177,93,.12); border: 1px solid rgba(246,177,93,.35); padding: 7px 12px; border-radius: 24px; color: inherit; font-weight: 400; margin: 4px 6px 4px 0; }
+  .lab table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+  .lab caption { caption-side: top; color: inherit; font-size: 1.2rem; padding: 12px 8px; }
+  .lab th, .lab td { text-align: left; padding: 12px 8px; border-bottom: 1px solid rgba(246,177,93,.15); vertical-align: top; }
+  .lab code { color: var(--accent, #f6b15d); overflow-wrap: anywhere; }
+  .lab .future { display: flex; flex-wrap: wrap; gap: 12px; }
+  .lab .future span { border: 1px solid rgba(246,177,93,.2); padding: 12px 16px; border-radius: 6px; }
+  @media(max-width: 600px) {
+    .lab { padding: 32px 16px; }
+    .lab table, .lab tbody, .lab tr, .lab td { display: block; }
+    .lab thead { display: none; }
+    .lab tr { border-bottom: 1px solid rgba(246,177,93,.15); padding: 10px 0; }
+    .lab td { border: 0; padding: 4px; font-size: .9rem; }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<main class="lab">
+  <p class="eyebrow">Sammlungen digital erkunden</p>
+  <h1>Eligius Lab</h1>
+  <p class="intro">Ein Ort für neue Zugänge zu Eligius: digitale Werkzeuge,
+    Schnittstellen und Ideen für die numismatische Forschung.</p>
+
+  <section aria-labelledby="connect-ai">
+    <h2 id="connect-ai">Connect your AI</h2>
+    <p>Verbinden Sie Eligius mit Ihrem eigenen KI-Assistenten. So können Sie
+      Münzen suchen, Sammlungen erkunden und Bestände vergleichen – im Gespräch
+      und mit Links zu den Originaldatensätzen.</p>
+    <p>Dafür nutzt Eligius das <strong>Model Context Protocol (MCP)</strong>:
+      eine gemeinsame Schnittstelle, über die KI-Assistenten Datenquellen abfragen können.</p>
+    <span class="badge">Read-only · nur lesender Zugriff</span>
+    <span class="badge">Öffentliche Eligius-Daten</span>
+    <span class="badge">{% if mcp_enabled %}Development · verfügbar{% else %}In Vorbereitung{% endif %}</span>
+
+    <h3 style="margin-top: 28px">So verbinden Sie sich</h3>
+    <p>Wählen Sie in einem KI-Client mit Unterstützung für Remote-MCP eine neue
+      Verbindung und tragen Sie diese Adresse ein. Der Client muss Streamable HTTP
+      unterstützen. Für den öffentlichen Zugang benötigen Sie kein Eligius-Konto.</p>
+    <code class="endpoint">{{ mcp_endpoint }}</code>
+    <p>Die Bezeichnung und Einrichtung der Verbindung unterscheiden sich je nach
+      KI-Client. Ihr Assistent wählt die passenden Werkzeuge und Filter selbst aus.</p>
+
+    <table>
+      <caption>Verfügbare Werkzeuge</caption>
+      <thead><tr><th scope="col">Werkzeug</th><th scope="col">Damit können Sie …</th></tr></thead>
+      <tbody>
+        <tr><td><code>search_objects</code></td><td>Münzen mit denselben Filtern wie in der Objektsuche finden.</td></tr>
+        <tr><td><code>get_object</code></td><td>Details zu einem einzelnen Objekt aufrufen.</td></tr>
+        <tr><td><code>get_facets</code></td><td>Vertretene Prägeherren, Münzstätten und andere Merkmale erkunden.</td></tr>
+        <tr><td><code>get_distribution</code></td><td>Häufigkeiten und Prozentanteile für Sammlungsvergleiche abfragen.</td></tr>
+        <tr><td><code>get_statistics</code></td><td>Umfang, Datierung und weitere Kennzahlen eines Bestands ermitteln.</td></tr>
+      </tbody>
+    </table>
+    <h3>Probieren Sie zum Beispiel</h3>
+    <ul>
+      <li>„Zeige mir alle Münzen des Valens aus Siscia.“</li>
+      <li>„Welche Nominale kommen bei Valens in Siscia vor?“</li>
+      <li>„Welche Münztypen des Pescennius Niger befinden sich in Eligius?“</li>
+      <li>„Vergleiche zwei Sammlungen nach Prägeherren und Münzstätten – mit Prozentanteilen.“</li>
+    </ul>
+    <p>Die Verbindung kann Daten lesen, aber keine Datensätze bearbeiten.
+      Prüfen Sie Interpretationen Ihres Assistenten anhand der verlinkten Quellen.</p>
+  </section>
+
+  <section aria-labelledby="future-tools">
+    <h2 id="future-tools">Raum für weitere Werkzeuge</h2>
+    <p>Diese Bereiche sind als mögliche Erweiterungen vorgesehen und noch nicht verfügbar.</p>
+    <div class="future"><span>WebMCP</span><span>API</span><span>Research Tools</span>
+      <span>Data Export</span><span>Experimental Tools</span></div>
+  </section>
+</main>
+{% endblock %}

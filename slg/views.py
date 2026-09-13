@@ -1941,196 +1941,7 @@ def graph_view(request):
     """View function to display the graph visualization tool."""
     return render(request, 'slg/graphv0.2.html')
 
-MTOA_FILTERS = {
-    'q': {'fields': ['invnr', 'objekttitel', 'rv_legende', 'av_legende', 'typ'], 'lookup': 'icontains'},
-    'avleg': {'fields': ['av_legende'], 'lookup': 'icontains'},
-    'rvleg': {'fields': ['rv_legende'], 'lookup': 'icontains'},
-    'Muenzstaette': {'fields': ['mzstaette'], 'lookup': 'exact'},
-    'Muenzstand': {'fields': ['muenzstand'], 'lookup': 'exact'},
-    'Reichskreis': {'fields': ['reichskreis'], 'lookup': 'exact'},
-    'region': {'fields': ['region'], 'lookup': 'exact'},
-    'Nominal': {'fields': ['nominal'], 'lookup': 'exact'},
-    'Nominal_id': {'fields': ['nominal_fk_id'], 'lookup': 'in'},
-    'material': {'fields': ['metall'], 'lookup': 'icontains'},
-    'Slg': {'fields': ['slg_fk_id'], 'lookup': 'exact'},
-    'SlgTeil': {'fields': ['slgteil_fk_id'], 'lookup': 'exact'},
-    'av_bildtyp': {'fields': ['av_bildtyp_fk_id'], 'lookup': 'exact'},
-    'av_beizeichen': {'fields': ['av_beizeichen'], 'lookup': 'exact'},
-    'rv_bildtyp': {'fields': ['rv_bildtyp_fk_id'], 'lookup': 'exact'},
-    'rv_beizeichen': {'fields': ['rv_beizeichen'], 'lookup': 'exact'},
-    'rv_schlagwort': {'fields': ['rv_schlagworte'], 'lookup': 'icontains'},
-    'av_schlagwort': {'fields': ['av_schlagworte'], 'lookup': 'icontains'},
-    'obj_type': {'fields': ['objekttyp'], 'lookup': 'exact'},
-    'objekttyp': {'fields': ['objekttyp_fk_id'], 'lookup': 'exact'},
-    'coin_type': {'fields': ['typ_fk_id'], 'lookup': 'in'},
-}
-
-MTOA_FACETS = {
-    'Muenzstaette': {'field': 'mzstaette', 'id_field': 'mzstaette_fk_id'},
-    'Muenzstand': {'field': 'muenzstand', 'id_field': 'muenzstand_fk_id'},
-    'Reichskreis': {'field': 'reichskreis'},
-    'region': {'field': 'region', 'id_field': 'region_fk_id'},
-    'Nominal': {'field': 'nominal'},
-    'material': {'field': 'metall', 'id_field': 'metall_fk_id'},
-    'Slg': {'field': 'Slg', 'id_field': 'slg_fk_id'},
-    'SlgTeil': {'field': 'SlgTeil', 'id_field': 'slgteil_fk_id'},
-    'av_bildtyp': {'field': 'av_bildtyp', 'id_field': 'av_bildtyp_fk_id'},
-    'rv_bildtyp': {'field': 'rv_bildtyp', 'id_field': 'rv_bildtyp_fk_id'},
-    'av_beizeichen': {'field': 'av_beizeichen'},
-    'rv_beizeichen': {'field': 'rv_beizeichen'},
-    'obj_type': {'field': 'objekttyp', 'id_field': 'objekttyp_fk_id'},
-    'coin_type': {'field': 'typ', 'id_field': 'typ_fk_id'},
-}
-
-
-def _get_filtered_mtoa_queryset(request, exclude_field=None):
-    """
-    Zentrale Browse-Filterlogik für MTOA, damit Liste, Chart und andere
-    Auswertungen dieselbe Treffermenge verwenden.
-    """
-    unbestimmt_param = request.GET.get('unbestimmt', '')
-    if unbestimmt_param == 'True':
-        is_unbestimmt = True
-        qs = MuenztypObjektAnzeige.objects.filter(typ_fk__isnull=True)
-    elif unbestimmt_param == 'False':
-        is_unbestimmt = False
-        qs = MuenztypObjektAnzeige.objects.filter(typ_fk__isnull=False)
-    else:
-        is_unbestimmt = False
-        qs = MuenztypObjektAnzeige.objects.all()
-
-    general_filters = []
-    needs_distinct = False
-
-    for param, config in MTOA_FILTERS.items():
-        if param == exclude_field:
-            continue
-        values = [v for v in request.GET.getlist(param) if is_valid_qparam(v)]
-        if not values:
-            continue
-
-        if config['lookup'] == 'in':
-            general_filters.append(Q(**{f"{config['fields'][0]}__in": values}))
-        else:
-            per_value = [
-                Q(**{f"{field}__{config['lookup']}": val})
-                for val in values
-                for field in config['fields']
-            ]
-            general_filters.append(reduce(or_, per_value))
-
-    date_from = request.GET.get('dat_von')
-    date_to = request.GET.get('dat_bis')
-    if exclude_field != 'date' and is_valid_qparam(date_from) and is_valid_qparam(date_to):
-        general_filters.append(
-            Q(datierung_von__lte=date_to) &
-            Q(datierung_bis__gte=date_from)
-        )
-
-    if general_filters:
-        qs = qs.filter(reduce(and_, general_filters))
-
-    person_params = {
-        'Praegeherren': {'funktion_ids': [1, 6, 7], 'appears_on_rev': None},
-        'Dargestellte_AV': {'funktion_ids': [2], 'appears_on_rev': False},
-        'Dargestellte_RV': {'funktion_ids': [2], 'appears_on_rev': True},
-        'Person': {'exclude_funktion_ids': [1, 2, 6, 7], 'appears_on_rev': None},
-    }
-
-    for param_name, config in person_params.items():
-        if param_name == exclude_field:
-            continue
-        if param_name in request.GET:
-            names = [name for name in request.GET.getlist(param_name) if is_valid_qparam(name)]
-            if names:
-                needs_distinct = True
-                name_q = Q(mtoaperson__person__name__in=names)
-
-                if config.get('funktion_ids'):
-                    name_q &= Q(mtoaperson__funktion_id__in=config['funktion_ids'])
-                elif config.get('exclude_funktion_ids'):
-                    name_q &= ~Q(mtoaperson__funktion_id__in=config['exclude_funktion_ids'])
-
-                if config.get('appears_on_rev') is not None:
-                    name_q &= Q(mtoaperson__appears_on_rev=config['appears_on_rev'])
-
-                qs = qs.filter(name_q)
-
-    wappen_names = [name for name in request.GET.getlist('Wappen') if is_valid_qparam(name)]
-    if exclude_field != 'Wappen' and wappen_names:
-        needs_distinct = True
-        qs = qs.filter(typ_fk__wappen__name__in=wappen_names)
-
-    ref_values = [name for name in request.GET.getlist('Ref') if is_valid_qparam(name)]
-    if exclude_field != 'Ref' and ref_values:
-        ref_query = Q()
-        if unbestimmt_param != 'True':
-            ref_query |= Q(Typ__Ref__abk__in=ref_values)
-        if unbestimmt_param != 'False':
-            ref_query |= Q(idfk_Ref__abk__in=ref_values)
-
-        ref_obj_ids = (
-            Obj.objects.filter(ref_query)
-            .values_list('id', flat=True)
-            .distinct()
-        )
-        qs = qs.filter(obj_id__in=ref_obj_ids)
-
-    her_merk_values = [name for name in request.GET.getlist('her_merk') if is_valid_qparam(name)]
-    if exclude_field != 'her_merk' and her_merk_values:
-        obj_ids = set(
-            Obj.objects.filter(Herstellungsmerkmale__name__in=her_merk_values)
-            .values_list('id', flat=True)
-        )
-        qs = qs.filter(obj_id__in=obj_ids)
-
-    sek_merk_values = [name for name in request.GET.getlist('sek_merk') if is_valid_qparam(name)]
-    if exclude_field != 'sek_merk' and sek_merk_values:
-        obj_ids = set(
-            Obj.objects.filter(sekundaere_Merkmale__name__in=sek_merk_values)
-            .values_list('id', flat=True)
-        )
-        qs = qs.filter(obj_id__in=obj_ids)
-
-    paket_values = [
-        value
-        for key in ('Paket', 'pakete')
-        for value in request.GET.getlist(key)
-        if is_valid_qparam(value)
-    ]
-    if exclude_field not in ('Paket', 'pakete') and paket_values:
-        paket_ids = []
-        paket_names = []
-        for value in paket_values:
-            try:
-                paket_ids.append(int(value))
-            except (TypeError, ValueError):
-                paket_names.append(value)
-
-        paket_query = Q()
-        if paket_ids:
-            paket_query |= Q(id__in=paket_ids)
-        if paket_names:
-            paket_query |= Q(name__in=paket_names) | Q(slug__in=paket_names) | Q(titel_oeffentlich__in=paket_names)
-
-        public_paket_ids = Paket.objects.filter(
-            paket_query,
-            online_freigegeben=True,
-        ).values_list('id', flat=True)
-        obj_ids = Obj.objects.filter(pakete__id__in=public_paket_ids).values_list('id', flat=True).distinct()
-        qs = qs.filter(obj_id__in=obj_ids)
-
-    if needs_distinct:
-        qs = qs.distinct()
-
-    qs = qs.annotate(
-        _unbestimmt_sort=Case(
-            When(typ_fk__isnull=True, then=Value(1)),
-            default=Value(0),
-            output_field=IntegerField(),
-        )
-    )
-    return qs.order_by('_unbestimmt_sort', 'datierung_von', 'datierung_bis', 'pk'), is_unbestimmt, needs_distinct
+from .services.search import MTOA_FILTERS, MTOA_FACETS, _get_filtered_mtoa_queryset
 
 # Neuer Endpoint für Chart-Daten
 def area_chart_data(request):
@@ -2272,155 +2083,16 @@ def area_chart_data(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])  # Diese Zeile hinzufügen
 def facet_api(request):
-    facet_field = request.GET.get('facet')
-    if not facet_field:
-        return Response({"error": "Parameter 'facet' ist erforderlich"}, status=400)
-
-    if facet_field in MTOA_FACETS:
-        facet_config = MTOA_FACETS[facet_field]
-        field_path = facet_config['field']
-        id_field = facet_config.get('id_field')
-
-        include_current_facet = request.GET.get('include_current_facet') == '1'
-        exclude_field = None if include_current_facet else facet_field
-        qs, _, needs_distinct = _get_filtered_mtoa_queryset(request, exclude_field=exclude_field)
-
-        search_term = request.GET.get('term')
-        if search_term:
-            qs = qs.filter(**{f"{field_path}__icontains": search_term})
-
-        values_dict = {'value': F(field_path)}
-        if id_field:
-            values_dict['facet_id'] = F(id_field)
-
-        qs = qs.exclude(**{f"{field_path}__isnull": True})
-        qs = qs.exclude(**{f"{field_path}__exact": ''})
-
-        qs = (
-            qs.order_by()
-              .values(**values_dict)
-              .annotate(count=Count('pk', distinct=needs_distinct))
-              .order_by('value' if search_term else '-count')
-        )[:50]
-
-        result = []
-        for entry in qs:
-            if entry['value']:
-                obj = {'name': entry['value'], 'count': entry['count']}
-                if 'facet_id' in entry:
-                    obj['id'] = entry['facet_id']
-                result.append(obj)
-
-        return Response(result)
-
-    unbestimmt_param = request.GET.get('unbestimmt', '')
-    context_key = 'unbestimmt' if unbestimmt_param == 'True' else 'default'
-    # Lade die gesamte Konfiguration für den Kontext
-    all_configs = FILTER_PARAMETERS.get(context_key, {})
-    config = all_configs.get(facet_field)
-
-    if not config:
-        # Prüfen, ob es ein Personen-Facet mit spezifischer Konfiguration ist
-        person_configs = {k: v for k, v in all_configs.items() if k in ['Praegeherren', 'Dargestellte_AV', 'Dargestellte_RV', 'Person']}
-        if facet_field in person_configs:
-            config = person_configs[facet_field]
-        else:
-             return Response({"error": f"Unbekanntes Facetten-Feld oder fehlende Konfiguration: {facet_field}"}, status=400)
-
-
-    # ------------- Feld-Definition (weitgehend unverändert) -----------------
-    field_path = config.get('facet_field', config['fields'][0])
-    id_field = config.get('id_field')
-    if not id_field and '__name' in field_path:
-        id_field = field_path.replace('__name', '__id')
-    # Speziell für Personenpfade den Basispfad bestimmen
-    is_person_facet = facet_field in ['Praegeherren', 'Dargestellte_AV', 'Dargestellte_RV', 'Person']
-    person_base = None
-    if is_person_facet:
-         person_base = 'obj_person' if context_key == 'unbestimmt' else 'Typ__mztyp_person'
-         # Sicherstellen, dass field_path und id_field korrekt sind für den Kontext
-         field_path = f"{person_base}__idfk_Person__name"
-         id_field = f"{person_base}__idfk_Person_id"
-
-
-    # ----------- Basismenge (Obj oder Typ bestimmt / unbestimmt) ----------
-    if unbestimmt_param == 'True':
-        base_qs = Obj.objects.filter(Typ__isnull=True)
-    elif unbestimmt_param == 'False':
-        base_qs = Obj.objects.filter(Typ__isnull=False)
-    else:  # 'Alle' or empty
-        base_qs = Obj.objects.all()
-    # -----------------------------------------------------------------------
-
-    # ----------- alle anderen URL-Filter anwenden (mit Facet-Kontext) -----
-    # Hier werden andere Personenfilter nur nach Namen angewendet
-    qs = apply_filters(request, base_qs, exclude_field=facet_field, facet_context=True)
-    # -----------------------------------------------------------------------
-
-    # ----------- *Zusätzlicher* spezifischer Filter für das *aktuelle* Personen-Facet --
-    if is_person_facet and person_base:
-        facet_filter = Q() # Leeres Q-Objekt
-        function_ids = config.get('person_function_ids')
-        exclude_ids = config.get('exclude_function_ids')
-        appears_on_rev = config.get('appears_on_rev')
-
-        if function_ids:
-             facet_filter &= Q(**{f'{person_base}__idfk_PersonFunktion_id__in': function_ids})
-        elif exclude_ids:
-             facet_filter &= ~Q(**{f'{person_base}__idfk_PersonFunktion_id__in': exclude_ids})
-
-        if appears_on_rev is not None:
-            facet_filter &= Q(**{f'{person_base}__appears_on_rev': appears_on_rev})
-
-        if facet_filter: # Nur filtern, wenn Bedingungen vorhanden sind
-             qs = qs.filter(facet_filter)
-    # ---------------------------------------------------------------------------
-
-    # ----------- freie Suchphrase (Select2 "term" oder "q") ---------------
-    search_term = request.GET.get('term') or request.GET.get('q')
-    if search_term:
-        # Wichtig: Suche im korrekten Namensfeld (besonders für Personen)
-        search_field = field_path # field_path sollte jetzt korrekt sein
-        qs = qs.filter(**{f"{search_field}__icontains": search_term})
-    # -----------------------------------------------------------------------
-
-    # ----------- leere Felder raus, zählen, sortieren ---------------------
-    values_dict = {'value': F(field_path)}
-    if id_field:
-         values_dict['obj_id'] = F(id_field)
-
-    # --- Exclude NULL and potentially empty strings ---
-    exclude_empty_filter = {f"{field_path}__isnull": True}
-
-    # Heuristik: Wenn der Pfad auf '__name' oder ähnliche Textfelder endet,
-    # schließe zusätzlich leere Strings aus. Passe die Endungen bei Bedarf an.
-    if field_path.endswith('__name') or field_path.endswith('__bezeichnung') or field_path.endswith('__label'): # Füge ggf. weitere hinzu
-        # Prüfe zur Sicherheit, ob der Key nicht schon existiert (sollte nicht, aber schadet nicht)
-        if f"{field_path}__exact" not in exclude_empty_filter:
-            exclude_empty_filter[f"{field_path}__exact"] = ''
-
-    qs = (
-        qs.exclude(**exclude_empty_filter)
-          .values(**values_dict)
-          .annotate(count=Count('pk', distinct=True))
-          .order_by('value' if search_term else '-count')
-    )
-
-    # Limit erst nach der Aggregation anwenden
-    qs = qs[:50]
-    # -----------------------------------------------------------------------
-
-    # ----------- JSON-Antwort (weitgehend unverändert) ----------------------
-    result = []
-    for entry in qs:
-        # Erneut prüfen, ob 'value' leer ist, sicherheitshalber
-        if entry['value']:
-            obj = {'name': entry['value'], 'count': entry['count']}
-            if 'obj_id' in entry:
-                obj['id'] = entry['obj_id']
-            result.append(obj)
-
-    return Response(result)
+    from .services.public_api import facet_values
+    try:
+        return Response(facet_values(
+            request, request.GET.get('facet'),
+            include_current=(request.GET.get('include_current_facet') == '1'
+                             or request.GET.get('include_selected') == '1'),
+            term=request.GET.get('term'),
+        )[:50])
+    except (ValueError, TypeError):
+        return Response({'error': 'Ungültige Facette oder Filterparameter.'}, status=400)
 
 
 @api_view(['GET'])
@@ -2619,7 +2291,18 @@ class MuenztypListCreate(generics.ListCreateAPIView):
             queryset = queryset.filter(muenztyptitel=muenztyptitel)
         link = self.request.query_params.get('link', None)
         if link is not None:
-            queryset = queryset.filter(link=link)
+            link_clean = link.strip()
+            links = [link_clean]
+            if link_clean.startswith('http://'):
+                links.append('https://' + link_clean[7:])
+            elif link_clean.startswith('https://'):
+                links.append('http://' + link_clean[8:])
+
+            slash_variants = []
+            for l in links:
+                slash_variants.append(l.rstrip('/'))
+                slash_variants.append(l.rstrip('/') + '/')
+            queryset = queryset.filter(link__in=list(dict.fromkeys(slash_variants)))
         return queryset
         
     def perform_create(self, serializer):
@@ -3738,6 +3421,12 @@ def collections_api(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])  # Diese Zeile hinzufügen
 def stats_api(request):
+    if request.GET:
+        from .services.public_api import statistics_for_request
+        try:
+            return Response(statistics_for_request(request))
+        except (ValueError, TypeError):
+            return Response({'error': 'Ungültige Filterparameter.'}, status=400)
     data = cache.get_or_set(
         'index_stats',
         lambda: {

@@ -63,7 +63,7 @@ FILTER_PARAMETERS = {
             'display_field': 'name',
         },
         'num': {
-            'fields': ['Typ__Ref__mztyp_ref__nummer'],
+            'fields': ['Typ__nummer'],
             'filter': 'in',
             'display_name': 'Nummer',
             'model': None,
@@ -351,7 +351,7 @@ FILTER_PARAMETERS = {
             'display_field': None,
         },
         'num': {
-            'fields': ['idfk_Ref__obj_ref__nummer'],
+            'fields': ['obj_ref__nummer'],
             'filter': 'in',
             'display_name': 'Nummer',
             'model': None,

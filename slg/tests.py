@@ -90,6 +90,14 @@ class FacetApiTests(TestCase):
         slg = Slg.objects.create(name="Testsammlung")
         other_slg = Slg.objects.create(name="Andere Sammlung")
 
+        # Public facets now exclude orphan projection rows. Supply their
+        # canonical objects without triggering unrelated MTOA synchronization.
+        Obj.objects.bulk_create([
+            Obj(pk=i, invnr=str(i), Slg=slg if i < 4 else other_slg,
+                Objekttyp=None, workflow=None)
+            for i in range(1, 5)
+        ])
+
         MuenztypObjektAnzeige.objects.create(
             obj_id=1,
             invnr="1",

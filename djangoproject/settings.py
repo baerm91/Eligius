@@ -110,6 +110,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'djangoproject.wsgi.application'
+ASGI_APPLICATION = 'djangoproject.asgi.application'
+
+# Public read-only MCP. No deployment-specific hosts in application code.
+ELIGIUS_MCP_ENABLED = os.getenv('ELIGIUS_MCP_ENABLED', '0').lower() in ('1', 'true', 'yes')
+ELIGIUS_PUBLIC_BASE_URL = os.getenv('ELIGIUS_PUBLIC_BASE_URL', '').rstrip('/')
+ELIGIUS_MCP_ALLOWED_HOSTS = [v.strip() for v in os.getenv(
+    'ELIGIUS_MCP_ALLOWED_HOSTS', 'localhost:*,127.0.0.1:*').split(',') if v.strip()]
+ELIGIUS_MCP_ALLOWED_ORIGINS = [v.strip() for v in os.getenv(
+    'ELIGIUS_MCP_ALLOWED_ORIGINS', '').split(',') if v.strip()]
 
 
 # Database
