@@ -144,18 +144,38 @@ ungültige Eingaben und öffentliche Felder/Pakete. Acht JavaScript-Tests prüfe
 den Adapter in einer isolierten Node-VM; ihre Testdoubles sind keine auf der
 Webseite installierten Polyfills.
 
-Im nativen Browser lässt sich die Registrierung zusätzlich in der Konsole prüfen:
+Mit `agent-browser` lässt sich die native Browserregistrierung und Ausführung
+zusätzlich prüfen (Chrome mit experimenteller WebMCP-Unterstützung):
 
-```js
-const tools = await document.modelContext.getTools();
-const statistics = tools.find(tool => tool.name === 'get_statistics');
-await document.modelContext.executeTool(statistics, {filters: {Praegeherren: ['Valens']}});
+```sh
+agent-browser --session webmcp open https://46.101.237.189/lab/
+agent-browser --session webmcp webmcp list
+agent-browser --session webmcp webmcp invoke get_current_context
+agent-browser --session webmcp webmcp invoke get_statistics --params '{"filters":{"Praegeherren":["Valens"]}}'
+agent-browser --session without-webmcp --no-webmcp open https://46.101.237.189/lab/
 ```
 
 In den Netzwerkwerkzeugen darf nach dem Laden ohne native Unterstützung kein
 Request an `/api/webmcp/` erscheinen. Mit Unterstützung wird zunächst nur das
 Manifest geladen. Navigationstools müssen reale Seitenwechsel auslösen und
 sich auf der Zielseite erneut registrieren.
+
+### Ergebnis auf Development, 13. September 2026
+
+Die 16 Backendtests bestanden lokal und auf dem Development-Host; alle acht
+JavaScript-Tests bestanden. Der öffentliche HTTPS-Paritätscheck bestand für
+alle fünf Datentools und Schemas. Im nativen Chrome 152 wurden alle elf Tools
+registriert und ausgeführt: Objekt 1271, Typ 2968, Sammlung 1, Browse mit
+Valens/Siscia sowie das Zurücksetzen der Filter öffneten die korrekten Seiten.
+Der Kontext entsprach nach jedem Seitenwechsel der aktuellen Seite.
+Die Valens-Abfrage lieferte 221 Objekte, identisch zur Remote-Schnittstelle.
+
+Ein separat mit `--no-webmcp` gestarteter Browser hatte keine native API,
+zeigte den vorgesehenen Lab-Hinweis und erzeugte null WebMCP-API-Anfragen.
+Lab wurde auf Desktop und bei 390 Pixeln Breite ohne horizontalen Überlauf
+geprüft. Die normale Typseite `/typ/2968/` meldet unabhängig von WebMCP
+`Waypoint is not defined` aus ihrem bestehenden Skript. Dieser bestehende
+UI-Fehler betrifft nicht die hier geprüfte Navigation oder Toolregistrierung.
 
 ## Development-Deployment
 
