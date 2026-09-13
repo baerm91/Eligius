@@ -4,6 +4,10 @@
 für ASGI-Start, Konfiguration, Tools und Tests. `runserver` bedient weiterhin
 die Django-Seiten; `/mcp` benötigt den dort beschriebenen ASGI-Start.
 
+Die optionale native Browserintegration ist in [WEBMCP_DEVELOPMENT.md](WEBMCP_DEVELOPMENT.md)
+beschrieben. Sie verwendet dieselben fünf Datentools und ergänzt Navigation,
+Browse-Filter und Seitenkontext. Aktivierung: `ELIGIUS_WEBMCP_ENABLED=1`.
+
 ## 1) Voraussetzungen
 
 - Docker Desktop läuft

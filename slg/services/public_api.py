@@ -12,14 +12,18 @@ from slg.serializers import HerstellungsmerkmaleSerializer, Sek_MerkmaleSerializ
 from .search import _get_filtered_mtoa_queryset, MTOA_FACETS, public_objects
 
 
+def allowed_filter_names():
+    """The same public filter whitelist for transports and page context."""
+    return set().union(*(set(c) for c in FILTER_PARAMETERS.values())) | {'unbestimmt'}
+
+
 def filter_request(filters=None):
     """Accept only documented filter names and scalar/list values, never ORM paths."""
     if filters is None:
         filters = {}
     if not isinstance(filters, dict):
         raise ValueError('filters must be an object.')
-    allowed = set().union(*(set(c) for c in FILTER_PARAMETERS.values()))
-    allowed.add('unbestimmt')  # Browse mode, not an ORM field.
+    allowed = allowed_filter_names()
     unknown = set(filters) - allowed
     if unknown:
         raise ValueError('Unknown filters: ' + ', '.join(sorted(unknown)))

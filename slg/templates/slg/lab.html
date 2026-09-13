@@ -39,13 +39,15 @@
     <p>Verbinden Sie Eligius mit Ihrem eigenen KI-Assistenten. So können Sie
       Münzen suchen, Sammlungen erkunden und Bestände vergleichen – im Gespräch
       und mit Links zu den Originaldatensätzen.</p>
-    <p>Dafür nutzt Eligius das <strong>Model Context Protocol (MCP)</strong>:
-      eine gemeinsame Schnittstelle, über die KI-Assistenten Datenquellen abfragen können.</p>
+    <p>Zwei Wege führen zu denselben öffentlichen Sammlungsdaten:
+      eine direkte Verbindung für Ihren KI-Assistenten und Werkzeuge für die geöffnete Webseite.</p>
     <span class="badge">Read-only · nur lesender Zugriff</span>
     <span class="badge">Öffentliche Eligius-Daten</span>
     <span class="badge">{% if mcp_enabled %}Development · verfügbar{% else %}In Vorbereitung{% endif %}</span>
 
-    <h3 style="margin-top: 28px">So verbinden Sie sich</h3>
+    <h3 style="margin-top: 28px">Remote MCP · direkt mit Ihrem KI-Assistenten</h3>
+    <p>Für Recherche, Datenanalyse und Sammlungsvergleiche. Diese Verbindung funktioniert
+      auch dann, wenn Sie keine Eligius-Seite geöffnet haben.</p>
     <p>Wählen Sie in einem KI-Client mit Unterstützung für Remote-MCP eine neue
       Verbindung und tragen Sie diese Adresse ein. Der Client muss Streamable HTTP
       unterstützen. Für den öffentlichen Zugang benötigen Sie kein Eligius-Konto.</p>
@@ -53,8 +55,20 @@
     <p>Die Bezeichnung und Einrichtung der Verbindung unterscheiden sich je nach
       KI-Client. Ihr Assistent wählt die passenden Werkzeuge und Filter selbst aus.</p>
 
+    <h3 style="margin-top: 28px">WebMCP · gemeinsam im Browser</h3>
+    <p>Ein unterstützter Browser-Assistent kann auf der geöffneten Eligius-Seite
+      recherchieren, die normale Objektsuche filtern und Objekte, Münztypen oder
+      Sammlungen öffnen. Er kann auch Ihre aktuelle Auswahl für Folgefragen verwenden.</p>
+    <p>Öffnen Sie Eligius in einem Browser mit nativer WebMCP-Unterstützung und nutzen
+      Sie dessen Assistenten. Eine zusätzliche Verbindung mit einer Serveradresse
+      ist dafür nicht nötig. Die Browserunterstützung befindet sich noch in Entwicklung.</p>
+    <p id="webmcp-status" role="status">{% if webmcp_enabled %}Die Verfügbarkeit hängt von Ihrem Browser ab.{% else %}WebMCP ist auf diesem Server noch nicht aktiviert.{% endif %}</p>
+    <p>Zum Beispiel: „Öffne Münze 46736“, „Zeige mir die Sammlung Heiligenkreuz“
+      oder „Welche Nominale kommen in dieser Auswahl vor?“
+      Navigation und Filter ändern nur Ihre Ansicht, keine Katalogdaten.</p>
+
     <table>
-      <caption>Verfügbare Werkzeuge</caption>
+      <caption>Gemeinsame Recherchewerkzeuge</caption>
       <thead><tr><th scope="col">Werkzeug</th><th scope="col">Damit können Sie …</th></tr></thead>
       <tbody>
         <tr><td><code>search_objects</code></td><td>Münzen mit denselben Filtern wie in der Objektsuche finden.</td></tr>
@@ -78,7 +92,7 @@
   <section aria-labelledby="future-tools">
     <h2 id="future-tools">Raum für weitere Werkzeuge</h2>
     <p>Diese Bereiche sind als mögliche Erweiterungen vorgesehen und noch nicht verfügbar.</p>
-    <div class="future"><span>WebMCP</span><span>API</span><span>Research Tools</span>
+    <div class="future"><span>API</span><span>Research Tools</span>
       <span>Data Export</span><span>Experimental Tools</span></div>
   </section>
 </main>

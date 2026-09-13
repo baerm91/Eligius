@@ -140,5 +140,9 @@
   {% block scripts %}
     {% include 'slg/scripte.html' with active_block='jsnavbar' %}
   {% endblock scripts %}
+  {% if webmcp_enabled %}
+    {% load static %}
+    <script defer src="{% static 'js/eligius-webmcp.js' %}" data-manifest="{% url 'webmcp_manifest' %}"></script>
+  {% endif %}
 </body>
 </html>
