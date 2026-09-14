@@ -17,6 +17,7 @@ SALT = 'eligius.editor.preview.v1'
 MAX_AGE = 600
 MAX_BULK = 100
 TYPE_FIELDS = (
+    'titel',
     'link',
     'Mzstaette', 'Nominal', 'Metall', 'dat_von', 'dat_bis', 'dat_verb',
     'avleg', 'rvleg', 'avbeschr', 'rvbeschr', 'av_bildtyp', 'rv_bildtyp',

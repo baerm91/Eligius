@@ -13,6 +13,99 @@ from slg.services import editor_api, editor_persons
 from slg.test_editor_mcp import fixtures
 
 
+class RulerTests(TestCase):
+    def setUp(self):
+        self.user, self.typ, self.obj, self.classified, _ = fixtures()
+        self.user.user_permissions.add(*Permission.objects.filter(content_type__app_label='slg',
+            codename__in=['add_mztyp_person', 'delete_mztyp_person']))
+        self.ruler = PersonFunktion.objects.create(pk=1, name='Münzherr/in')
+        self.depicted = PersonFunktion.objects.create(pk=2, name='Dargestellte Person')
+        self.old = Person.objects.create(name='Bisherige Person')
+        self.new = Person.objects.create(name='Neue Person')
+        Mztyp_Person.objects.bulk_create([
+            Mztyp_Person(Mztyp=self.typ, idfk_Person=self.old, idfk_PersonFunktion=self.ruler, appears_on_rev=False),
+            Mztyp_Person(Mztyp=self.typ, idfk_Person=self.old, idfk_PersonFunktion=self.ruler, appears_on_rev=True),
+            Mztyp_Person(Mztyp=self.typ, idfk_Person=self.old, idfk_PersonFunktion=self.depicted, appears_on_rev=False),
+        ])
+
+    def preview(self, mode='add'):
+        return editor_persons.preview_coin_type_ruler(self.user.pk, [self.typ.pk], self.new.pk, 'av', mode)
+
+    def apply(self, preview):
+        return editor_persons.assign_coin_type_ruler(self.user.pk, preview['preview_token'], True)
+
+    def test_add_preserves_existing_rulers(self):
+        preview = self.preview()
+        self.assertEqual(preview['function']['id'], 1)
+        self.assertEqual(preview['entries'][0]['removed_relation_ids'], [])
+        self.apply(preview)
+        self.assertEqual(Mztyp_Person.objects.count(), 4)
+        self.apply(self.preview())
+        self.assertEqual(Mztyp_Person.objects.count(), 4)
+
+    def test_replace_only_selected_role_and_side_preserves_type_title(self):
+        typ_before = editor_api.row_state(self.typ)
+        obj_before = editor_api.row_state(self.classified)
+        preview = self.preview('replace')
+        self.assertEqual(len(preview['entries'][0]['removed_relation_ids']), 1)
+        self.assertEqual(Mztyp_Person.objects.count(), 3)
+        self.apply(preview)
+        self.assertEqual(Mztyp_Person.objects.count(), 3)
+        self.assertTrue(Mztyp_Person.objects.filter(idfk_Person=self.old, appears_on_rev=True).exists())
+        self.assertTrue(Mztyp_Person.objects.filter(idfk_Person=self.old, idfk_PersonFunktion=self.depicted).exists())
+        self.assertEqual(list(Mztyp_Person.objects.filter(idfk_PersonFunktion=self.ruler,
+            appears_on_rev=False).values_list('idfk_Person_id', flat=True)), [self.new.pk])
+        self.typ.refresh_from_db()
+        self.classified.refresh_from_db()
+        after = editor_api.row_state(self.typ)
+        after.pop('modified_at')
+        typ_before.pop('modified_at')
+        self.assertEqual(after, typ_before)
+        self.assertEqual(editor_api.row_state(self.classified), obj_before)
+        audit = json.loads(LogEntry.objects.get().change_message)[0]
+        self.assertEqual(audit['mode'], 'replace')
+        self.assertEqual(len(audit['old']), 3)
+        self.assertEqual(len(audit['new']), 3)
+
+    def test_replace_with_existing_target_does_not_duplicate(self):
+        self.apply(self.preview())
+        self.apply(self.preview('replace'))
+        self.assertEqual(Mztyp_Person.objects.count(), 3)
+        self.assertEqual(Mztyp_Person.objects.filter(idfk_Person=self.new).count(), 1)
+
+    def test_delete_permission_required_and_rechecked(self):
+        preview = self.preview('replace')
+        self.user.user_permissions.remove(Permission.objects.get(content_type__app_label='slg', codename='delete_mztyp_person'))
+        with self.assertRaisesRegex(ValueError, 'delete_mztyp_person'):
+            self.preview('replace')
+        with self.assertRaisesRegex(ValueError, 'delete_mztyp_person'):
+            self.apply(preview)
+        self.apply(self.preview('add'))
+
+    def test_cross_role_tokens_and_stale_relations_rejected(self):
+        preview = self.preview('replace')
+        with self.assertRaises(ValueError):
+            editor_persons.assign_depicted_person(self.user.pk, preview['preview_token'], True)
+        depicted = editor_persons.preview_assign_depicted_person(self.user.pk, [self.typ.pk], self.new.pk, 'av')
+        with self.assertRaises(ValueError):
+            self.apply(depicted)
+        Mztyp_Person.objects.filter(idfk_PersonFunktion=self.ruler, appears_on_rev=False).update(appears_on_rev=True, idfk_Person=self.new)
+        with self.assertRaisesRegex(ValueError, 'Konflikt'):
+            self.apply(preview)
+
+    def test_replacement_rollback_restores_deleted_relations(self):
+        before = list(Mztyp_Person.objects.order_by('pk').values())
+        typ_before = editor_api.row_state(self.typ)
+        preview = self.preview('replace')
+        with patch('slg.services.editor_persons.LogEntry.objects.create', side_effect=RuntimeError('audit')):
+            with self.assertRaises(RuntimeError):
+                self.apply(preview)
+        self.assertEqual(list(Mztyp_Person.objects.order_by('pk').values()), before)
+        self.typ.refresh_from_db()
+        self.assertEqual(editor_api.row_state(self.typ), typ_before)
+        self.assertEqual(LogEntry.objects.count(), 0)
+
+
 class DepictedPersonTests(TestCase):
     def setUp(self):
         self.user, self.typ, self.obj, self.classified, _ = fixtures()

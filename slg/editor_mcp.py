@@ -39,7 +39,9 @@ mcp = MCPServer(name='Eligius Editor', version='1.0.0', instructions=(
     'Type previews show how many objects inherit the changed presentation. '
     'Use exact Django field names and foreign key IDs. For depicted people use '
     'preview_assign_depicted_person and assign_depicted_person; these add only missing '
-    'Mztyp_Person relations with function 2 on the explicitly selected av/rv side.'))
+    'Mztyp_Person relations with function 2 on the explicitly selected av/rv side. '
+    'For rulers (function 1) use preview_coin_type_ruler and assign_coin_type_ruler; '
+    'mode=add preserves existing rulers, mode=replace replaces only function 1 on the selected side.'))
 
 # Independent registration of the existing public reads. This never registers
 # an editor function on the public server or changes its permission policy.
@@ -111,7 +113,8 @@ async def remove_coin_type(preview_token: Token, confirmed: bool = False) -> dic
 async def preview_coin_type_update(type_id: ID, changes: Changes) -> dict:
     """Preview Muenztyp changes and affected object count. Fields: Mzstaette, Nominal, Metall,
     dat_von, dat_bis, dat_verb, avleg, rvleg, avbeschr, rvbeschr, av_bildtyp, rv_bildtyp,
-    av_beizeichen, rv_beizeichen, av_offizin_symbol, rv_offizin_symbol, link.
+    av_beizeichen, rv_beizeichen, av_offizin_symbol, rv_offizin_symbol, link, titel.
+    titel is the descriptive title (max 200 characters), not muenztyptitel (catalogue citation).
     Relations take IDs. Set link to null or an empty string to remove the type URL.
     """
     return await _call(editor_api.preview, 'update_coin_type', [type_id], changes)
@@ -163,6 +166,24 @@ async def preview_assign_depicted_person(type_ids: IDs, person_id: ID, side: Lit
 async def assign_depicted_person(preview_token: Token, confirmed: Annotated[bool, Field(strict=True)] = False) -> dict:
     """Apply the explicitly confirmed depicted-person preview atomically, with audit and conflict checks."""
     return await _call(editor_persons.assign_depicted_person, preview_token, confirmed)
+
+
+@mcp.tool(annotations=READ)
+async def preview_coin_type_ruler(type_ids: IDs, person_id: ID, side: Literal['av', 'rv'],
+                                  mode: Literal['add', 'replace'] = 'add') -> dict:
+    """Preview ruler (function 1) assignment via Mztyp_Person for 1–100 types.
+    add preserves all existing rulers. replace removes other function-1 people ONLY on the
+    selected side and leaves the selected person as sole ruler there. Other roles and the
+    opposite side remain intact. Requires change_muenztyp/add_mztyp_person; replace also
+    requires delete_mztyp_person. Shows exact removed relations and affected object count.
+    """
+    return await _call(editor_persons.preview_coin_type_ruler, type_ids, person_id, side, mode)
+
+
+@mcp.tool(annotations=WRITE)
+async def assign_coin_type_ruler(preview_token: Token, confirmed: Annotated[bool, Field(strict=True)] = False) -> dict:
+    """Apply confirmed ruler preview atomically. Only the previewed role-1 relations may change."""
+    return await _call(editor_persons.assign_coin_type_ruler, preview_token, confirmed)
 
 
 @mcp.tool(annotations=READ)

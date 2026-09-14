@@ -91,6 +91,37 @@ benötigt. Die Freischaltung im Code ändert keine bestehenden Daten.
 
 ## Speicherung und Konflikte
 
+### Beschreibender Titel und Prägeherren
+
+`preview_coin_type_update(type_id, changes={"titel": "Neuer Titel"})` erlaubt
+jetzt den beschreibenden `Muenztyp.titel` (maximal 200 Zeichen). Apply erfolgt
+wie bisher über `apply_coin_type_update`. `muenztyptitel` (Katalogzitat) und
+Obj-Titel bleiben unverändert; keine automatische Titelgenerierung.
+
+Für Prägeherren (ausschließlich Funktion 1) gibt es separate Tools:
+
+```json
+{"name":"preview_coin_type_ruler","arguments":{"type_ids":[123,456],"person_id":2622,"side":"av","mode":"add"}}
+```
+
+Die IDs sind Beispiele. `mode="add"` ergänzt fehlende Zuordnungen, ohne
+bisherige Prägeherren zu entfernen. `mode="replace"` entfernt dagegen alle
+anderen Personen mit Funktion 1 auf der gewählten Seite und setzt dort die
+angegebene Person als einzigen Prägeherrn. Die Vorschau zeigt die exakten
+entfernten Relations-IDs sowie den vollständigen alten/neuen Relationsstand.
+Die andere Seite und andere Rollen (auch 2, 6 und 7) bleiben erhalten.
+
+```json
+{"name":"assign_coin_type_ruler","arguments":{"preview_token":"<aus Vorschau>","confirmed":true}}
+```
+
+Erforderlich: `slg.change_muenztyp` und `slg.add_mztyp_person`, beim Ersetzen
+zusätzlich `slg.delete_mztyp_person`. Bis zu 100 Typen pro atomarem Batch;
+Audit, Konfliktprüfung und bestehende Anzeigeprojektion wie bei Dargestellten.
+Titeländerungen erfolgen separat. Nicht zu ändernde Typen (z. B. bewusst
+beibehaltene Divus-Typen) dürfen nicht in der vom Client übergebenen ID-Liste
+stehen. Der Server leitet keine fachlichen Ausnahmen aus Titeltexten ab.
+
 ### Dargestellte Personen am Münztyp
 
 Die Relation ist `Muenztyp → Mztyp_Person → Person`, mit
@@ -127,13 +158,13 @@ Konfliktprüfung umfasst auch den bisherigen Relationsstand (Through-Änderungen
 müssen modified_at nicht aktualisieren), die Person, Funktion und die
 Objektzuordnungen. Das normale `preview_coin_type_update` akzeptiert weiterhin
 keine frei benannten Personenfelder. Nach Deployment und ASGI-Neustart werden
-28 statt 26 Editor-Tools registriert. Bestehende Daten werden beim Deployment
+30 Editor-Tools registriert (einschließlich der zwei Prägeherren-Tools). Bestehende Daten werden beim Deployment
 nicht zugeordnet.
 
 Keine neuen Models, Tabellen, Migrationen oder Preview-Datensätze.
-Modellzuordnung: [EDITOR_MCP_PLAN.md](EDITOR_MCP_PLAN.md). Weitere Personenrollen,
-Ersetzungen/Löschungen und Offizinänderungen an bestimmten Objekten gehören
-nicht zum Schreibumfang.
+Modellzuordnung: [EDITOR_MCP_PLAN.md](EDITOR_MCP_PLAN.md). Andere Personenrollen
+als 1/2, frei wählbare Relationslöschungen und Offizinänderungen an bestimmten
+Objekten gehören nicht zum Schreibumfang.
 
 Signierte Vorschauen gelten zehn Minuten und binden Benutzer, Aktion und
 geprüfte Daten. Apply vergleicht vollständige Hauptzeilen einschließlich

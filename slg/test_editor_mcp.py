@@ -127,6 +127,22 @@ class EditorServiceTests(TestCase):
         self.typ.refresh_from_db()
         self.assertEqual(self.typ.link, 'https://example.org/type/123')
 
+    def test_type_title_preview_apply_and_length_validation(self):
+        before = api.row_state(self.typ)
+        obj_before = api.row_state(self.classified)
+        preview = self.preview('update_coin_type', {'titel': 'Neuer beschreibender Titel'}, [self.typ.pk])
+        self.assert_only_changed(self.typ, before, set())
+        self.assertEqual(preview['entries'][0]['old'], {'titel': before['titel']})
+        self.apply(preview)
+        self.assert_only_changed(self.typ, before, {'titel', 'modified_at'})
+        self.assert_only_changed(self.classified, obj_before, set())
+        self.assertEqual(self.typ.titel, 'Neuer beschreibender Titel')
+        self.assertEqual(json.loads(LogEntry.objects.latest('pk').change_message)[0]['new'],
+                         {'titel': 'Neuer beschreibender Titel'})
+        for changes in ({'titel': 'x' * 201}, {'muenztyptitel': 'Not allowed'}):
+            with self.assertRaises(ValueError):
+                self.preview('update_coin_type', changes, [self.typ.pk])
+
     def test_unidentified_changes_and_classified_rejection(self):
         preview = self.preview('update_unidentified_object_data', {'idfk_Mzstaette': self.typ.Mzstaette_id, 'avleg': 'NEW'})
         self.apply(preview)
@@ -357,6 +373,26 @@ class EditorTransportTests(TransactionTestCase):
             result = self.rpc(client, 'tools/call', {'name': 'assign_depicted_person',
                 'arguments': args}, headers, '/mcp').json()['result']
             self.assertTrue(result['isError'])
+
+    def test_ruler_preview_apply_over_http(self):
+        from slg.models import Person, PersonFunktion, Mztyp_Person
+        from starlette.testclient import TestClient
+        from djangoproject.asgi import application
+        self.user.user_permissions.add(Permission.objects.get(codename='add_mztyp_person',
+            content_type__app_label='slg'))
+        person = Person.objects.create(name='Prägeherr')
+        PersonFunktion.objects.create(pk=1, name='Münzherr/in')
+        headers = {'Authorization': 'Token ' + self.token}
+        with TestClient(application) as client:
+            result = self.rpc(client, 'tools/call', {'name': 'preview_coin_type_ruler',
+                'arguments': {'type_ids': [self.typ.pk], 'person_id': person.pk, 'side': 'av'}}, headers).json()['result']
+            self.assertFalse(result.get('isError'), result)
+            preview = result.get('structuredContent') or json.loads(result['content'][0]['text'])
+            result = self.rpc(client, 'tools/call', {'name': 'assign_coin_type_ruler',
+                'arguments': {'preview_token': preview['preview_token'], 'confirmed': True}}, headers).json()['result']
+            self.assertFalse(result.get('isError'), result)
+            self.assertTrue(Mztyp_Person.objects.filter(Mztyp=self.typ, idfk_Person=person,
+                idfk_PersonFunktion_id=1, appears_on_rev=False).exists())
 
     def test_session_requires_csrf_and_rejects_bad_origin(self):
         from django.conf import settings

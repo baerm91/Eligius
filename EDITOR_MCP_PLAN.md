@@ -59,8 +59,11 @@ werden auch kontextsensitive Symbol-/Beizeichenfelder konservativ behandelt.
 
 ## Grenzen
 
-Keine neuen Tabellen. Keine beliebigen ORM-/SQL-/Feldoperationen. Keine
-Löschung/Ersetzung von Personenrollen, keine Obj_Person-Bearbeitung oder
+Keine neuen Tabellen. Keine beliebigen ORM-/SQL-/Feldoperationen. Für Rolle 1
+erlauben preview_coin_type_ruler/assign_coin_type_ruler Ergänzen oder explizites
+Ersetzen ausschließlich auf der gewählten Seite; dafür zusätzlich bestehende
+delete_mztyp_person-Permission. Dargestellte bleiben rein additiv.
+Keine Obj_Person-Bearbeitung oder
 Bearbeitung bestimmter Objekt-Offizinen in diesem Umfang.
 Die Dargestellten-Aktion prüft zusätzlich den vollständigen bisherigen
 Mztyp_Person-Relationsstand, Person, Funktion und Objektzuordnungen und führt
