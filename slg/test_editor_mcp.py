@@ -96,6 +96,37 @@ class EditorServiceTests(TestCase):
         self.assert_only_changed(self.typ, typ_before, {'Mzstaette_id', 'modified_at'})
         self.assertEqual(self.typ.Mzstaette_id, self.other_mint.pk)
 
+    def test_type_link_clear_preview_apply_and_audit(self):
+        old_link = 'http://numismatics.org/ocre/id/ric.8.nic.89'
+        for empty in (None, ''):
+            with self.subTest(empty=empty):
+                Muenztyp.objects.filter(pk=self.typ.pk).update(link=old_link)
+                self.typ.refresh_from_db()
+                typ_before = api.row_state(self.typ)
+                obj_before = api.row_state(self.classified)
+                preview = self.preview('update_coin_type', {'link': empty}, [self.typ.pk])
+                self.assertEqual(preview['entries'][0]['old'], {'link': old_link})
+                self.assertEqual(preview['entries'][0]['new'], {'link': empty})
+                self.assertEqual(preview['impact']['object_count'], 1)
+                self.assert_only_changed(self.typ, typ_before, set())
+                self.apply(preview)
+                self.assert_only_changed(self.typ, typ_before, {'link', 'modified_at'})
+                self.assert_only_changed(self.classified, obj_before, set())
+                self.assertEqual(self.typ.link, empty)
+                audit = json.loads(LogEntry.objects.latest('pk').change_message)[0]
+                self.assertEqual(audit['old'], {'link': old_link})
+                self.assertEqual(audit['new'], {'link': empty})
+
+    def test_type_link_validation_and_object_boundary(self):
+        with self.assertRaises(ValueError):
+            self.preview('update_coin_type', {'link': 'not a URL'}, [self.typ.pk])
+        with self.assertRaises(ValueError):
+            self.preview('update_unidentified_object_data', {'link': None})
+        preview = self.preview('update_coin_type', {'link': 'https://example.org/type/123'}, [self.typ.pk])
+        self.apply(preview)
+        self.typ.refresh_from_db()
+        self.assertEqual(self.typ.link, 'https://example.org/type/123')
+
     def test_unidentified_changes_and_classified_rejection(self):
         preview = self.preview('update_unidentified_object_data', {'idfk_Mzstaette': self.typ.Mzstaette_id, 'avleg': 'NEW'})
         self.apply(preview)

@@ -109,7 +109,8 @@ async def remove_coin_type(preview_token: Token, confirmed: bool = False) -> dic
 async def preview_coin_type_update(type_id: ID, changes: Changes) -> dict:
     """Preview Muenztyp changes and affected object count. Fields: Mzstaette, Nominal, Metall,
     dat_von, dat_bis, dat_verb, avleg, rvleg, avbeschr, rvbeschr, av_bildtyp, rv_bildtyp,
-    av_beizeichen, rv_beizeichen, av_offizin_symbol, rv_offizin_symbol. Relations take IDs.
+    av_beizeichen, rv_beizeichen, av_offizin_symbol, rv_offizin_symbol, link.
+    Relations take IDs. Set link to null or an empty string to remove the type URL.
     """
     return await _call(editor_api.preview, 'update_coin_type', [type_id], changes)
 

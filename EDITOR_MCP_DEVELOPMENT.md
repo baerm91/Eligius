@@ -82,6 +82,13 @@ Die Vorschau zeigt Model, alte/neue Werte und Anzahl zugeordneter Objekte.
 Es wird ausschließlich Muenztyp geändert. Bei bestimmten Objekten lehnen
 Unbestimmten-Tools direkte typbezogene Änderungen ab.
 
+Auch `Muenztyp.link` ist über `preview_coin_type_update` bearbeitbar. Zum
+Entfernen `changes: {"link": null}` (alternativ `{"link": ""}`) übergeben,
+danach mit dem Vorschau-Token `apply_coin_type_update` ausführen. Neue Werte
+unterliegen der bestehenden URL-Feldvalidierung. Für die Typen 2503, 12829,
+12728, 11085, 13306 und 13305 wird jeweils eine eigene Vorschau und Bestätigung
+benötigt. Die Freischaltung im Code ändert keine bestehenden Daten.
+
 ## Speicherung und Konflikte
 
 Keine neuen Models, Tabellen, Migrationen oder Preview-Datensätze.
