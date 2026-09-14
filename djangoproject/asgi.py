@@ -17,15 +17,33 @@ application = get_asgi_application()
 
 from django.conf import settings
 
-if settings.ELIGIUS_MCP_ENABLED:
-    from slg.mcp_server import http_app
+if settings.ELIGIUS_MCP_ENABLED or settings.ELIGIUS_EDITOR_MCP_ENABLED:
+    from contextlib import AsyncExitStack, asynccontextmanager
+    from starlette.applications import Starlette
 
     django_application = application
+    transports = {}
+    sdk_apps = []
+    if settings.ELIGIUS_MCP_ENABLED:
+        from slg.mcp_server import http_app
+        transports['/mcp'] = http_app
+        sdk_apps.append(http_app)
+    if settings.ELIGIUS_EDITOR_MCP_ENABLED:
+        from slg.editor_mcp import http_app as editor_http_app, authenticated_app
+        transports['/mcp/editor'] = authenticated_app
+        sdk_apps.append(editor_http_app)
+
+    @asynccontextmanager
+    async def lifespan(app):
+        async with AsyncExitStack() as stack:
+            for sdk_app in sdk_apps:
+                await stack.enter_async_context(sdk_app.router.lifespan_context(sdk_app))
+            yield
+
+    lifecycle = Starlette(lifespan=lifespan)
 
     async def application(scope, receive, send):
-        # The SDK owns its lifespan at the root; no lost mounted lifespan.
-        # Pass /mcp through unchanged to avoid redirecting JSON-RPC POSTs.
-        if scope['type'] == 'lifespan' or scope.get('path') == '/mcp':
-            await http_app(scope, receive, send)
+        if scope['type'] == 'lifespan':
+            await lifecycle(scope, receive, send)
         else:
-            await django_application(scope, receive, send)
+            await transports.get(scope.get('path'), django_application)(scope, receive, send)

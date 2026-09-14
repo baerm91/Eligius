@@ -115,6 +115,7 @@ ASGI_APPLICATION = 'djangoproject.asgi.application'
 
 # Public read-only MCP. No deployment-specific hosts in application code.
 ELIGIUS_MCP_ENABLED = os.getenv('ELIGIUS_MCP_ENABLED', '0').lower() in ('1', 'true', 'yes')
+ELIGIUS_EDITOR_MCP_ENABLED = os.getenv('ELIGIUS_EDITOR_MCP_ENABLED', '0').lower() in ('1', 'true', 'yes')
 ELIGIUS_WEBMCP_ENABLED = os.getenv('ELIGIUS_WEBMCP_ENABLED', '0').lower() in ('1', 'true', 'yes')
 ELIGIUS_PUBLIC_BASE_URL = os.getenv('ELIGIUS_PUBLIC_BASE_URL', '').rstrip('/')
 ELIGIUS_MCP_ALLOWED_HOSTS = [v.strip() for v in os.getenv(

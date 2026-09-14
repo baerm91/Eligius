@@ -32,8 +32,9 @@ Die vorhandenen umfassenden REST-/Update-Serializer werden nicht exponiert.
 Keine Schreibtools, beliebigen Modelnamen, SQL-Eingaben oder ORM-Pfade.
 `FILTER_PARAMETERS` ist die Whitelist der fachlichen Filter; `unbestimmt`
 ist zusätzlich der bestehende Browse-Modus. Unbekannte MCP-Filter werden
-abgelehnt. Ein späteres Bearbeiter-MCP benötigt eine getrennte Authentifizierung
-und getrennte Tools; die öffentliche Schnittstelle ist dafür kein Ersatz.
+abgelehnt. Das [Bearbeiter-MCP](EDITOR_MCP_DEVELOPMENT.md) hat einen eigenen
+Endpunkt, eigene Authentifizierung und getrennte Tools; die öffentliche
+Schnittstelle bleibt unverändert read-only.
 
 ## URLs und Konfiguration
 

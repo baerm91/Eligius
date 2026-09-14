@@ -8,5 +8,6 @@ MIGRATION_MODULES = {'slg': None}
 PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 ELIGIUS_PUBLIC_BASE_URL = 'https://example.test'
 ELIGIUS_MCP_ENABLED = True
+ELIGIUS_EDITOR_MCP_ENABLED = True
 ELIGIUS_MCP_ALLOWED_HOSTS = ['testserver', 'localhost:*', '127.0.0.1:*']
 ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']

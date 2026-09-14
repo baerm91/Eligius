@@ -1,0 +1,121 @@
+# Authentifizierter Editor-MCP
+
+`/mcp/editor` ist ein eigener stateless Streamable-HTTP-Server unter ASGI.
+`/mcp` behält seine fünf öffentlichen Lesetools. Der Editor stellt diese
+Lesetools ebenfalls bereit und ergänzt interne Abfragen und begrenzte Änderungen.
+
+## Aktivierung und Rechte
+
+Im ASGI-Prozess `ELIGIUS_EDITOR_MCP_ENABLED=1` setzen und neu starten.
+Standardmäßig aus, unabhängig von `ELIGIUS_MCP_ENABLED`. Wie beim Public-MCP
+müssen `ELIGIUS_MCP_ALLOWED_HOSTS`, `ELIGIUS_MCP_ALLOWED_ORIGINS` und
+`DJANGO_ALLOWED_HOSTS` zum Deployment passen. Remote über HTTPS; der Reverse
+Proxy muss Authorization weiterreichen. WSGI/runserver bedienen den MCP nicht.
+
+Authentifizierung mit vorhandenen DRF-Tokens:
+
+```text
+Authorization: Token <vorhandener DRF-Token>
+Accept: application/json, text/event-stream
+```
+
+Alternativ Django-Session mit passendem `X-CSRFToken`-Header für POST.
+Die bestehende CSRF-Origin-Prüfung bleibt aktiv. URL-Tokens werden nicht
+akzeptiert. Kein neuer Token-Speicher oder OAuth-Discovery-Endpunkt; Clients
+müssen eigene Authentifizierungsheader oder Sessions unterstützen.
+
+Aktive Benutzer benötigen `slg.change_obj` oder `slg.change_muenztyp`, direkt
+oder über Django-Gruppen. Jede Schreibaktion prüft das jeweilige Modelrecht
+erneut. `is_staff` allein gewährt keinen Zugriff; aktive Superuser besitzen
+beide Rechte. Keine automatische Rechtezuweisung. Die bestehenden Modelrechte
+gelten global, nicht pro Sammlung.
+
+## Tools
+
+| Vorschau | Anwenden | Vorschauparameter |
+| --- | --- | --- |
+| preview_type_assignment | assign_coin_type | object_ids, type_id, optional Typ_unsicher |
+| preview_type_removal | remove_coin_type | object_ids |
+| preview_coin_type_update | apply_coin_type_update / update_coin_type | type_id, changes |
+| preview_update_unidentified_object_data | update_unidentified_object_data | object_ids, changes |
+| preview_update_unidentified_legend | update_unidentified_legend | object_ids, changes (avleg/rvleg) |
+| preview_update_object_measurements | update_object_measurements | object_ids, changes (gewicht/durchmesser/stempelstellung) |
+| preview_update_object_note | update_object_note | object_ids, changes (anmerkung) |
+| preview_coin_type_legend | update_coin_type_legend | type_id, changes (avleg/rvleg) |
+| preview_workflow_status | set_workflow_status | model (Obj/Muenztyp), record_ids, workflow_id |
+
+Apply nimmt `preview_token` und `confirmed=true` entgegen; Workflow zusätzlich
+das gewählte `model`. Ohne Bestätigung keine Änderung. Der Client muss die
+Vorschau dem Benutzer vorlegen; der Server kann diese Benutzerinteraktion
+nicht verifizieren.
+
+`changes` akzeptiert ausschließlich die in der Toolbeschreibung genannten
+Django-Feldnamen. Relationen nehmen IDs, `null` löscht einen Wert. ORM-Pfade
+und fremde Felder werden abgelehnt. Django-Feldvalidierung, Dezimalpräzision,
+Stempelstellungs-Choices, Datumsreihenfolge und nichtnegative Maße werden
+geprüft. Maximal 100 unterschiedliche Objekt-IDs; genau ein Typ pro Typänderung.
+
+Weitere Abfragen: `get_editor_object(object_id)` liefert `object_data` und
+`coin_type` getrennt (change_obj erforderlich).
+`search_coin_types(mint_id, nominal_id, page)` findet Typen, 25 pro Seite.
+Die fünf bekannten Public-Lesetools bleiben verfügbar.
+
+Beispiel für tools/call:
+
+```json
+{"name":"preview_type_assignment","arguments":{"object_ids":[123],"type_id":456}}
+```
+
+Nach Prüfung der alten/neuen Zuordnung und ausdrücklicher Bestätigung:
+
+```json
+{"name":"assign_coin_type","arguments":{"preview_token":"<aus Vorschau>","confirmed":true}}
+```
+
+Münzstätte eines Typs ändern:
+
+```json
+{"name":"preview_coin_type_update","arguments":{"type_id":456,"changes":{"Mzstaette":789}}}
+```
+
+Die Vorschau zeigt Model, alte/neue Werte und Anzahl zugeordneter Objekte.
+Es wird ausschließlich Muenztyp geändert. Bei bestimmten Objekten lehnen
+Unbestimmten-Tools direkte typbezogene Änderungen ab.
+
+## Speicherung und Konflikte
+
+Keine neuen Models, Tabellen, Migrationen oder Preview-Datensätze.
+Modellzuordnung: [EDITOR_MCP_PLAN.md](EDITOR_MCP_PLAN.md). Personen/Funktionen
+über Through-Modelle und Offizinänderungen an bestimmten Objekten gehören
+nicht zum Schreibumfang.
+
+Signierte Vorschauen gelten zehn Minuten und binden Benutzer, Aktion und
+geprüfte Daten. Apply vergleicht vollständige Hauptzeilen einschließlich
+modified_at, bei Typzuweisung den Zieltyp und bei Typänderung die
+Zuordnungsmenge. Manipulation, Ablauf, Rechteentzug oder Konflikt erfordern
+eine neue Vorschau. Erfolgreiches Apply macht den bisherigen Token ungültig.
+
+Änderung, LogEntry und bestehende MTOA-Projektion werden gemeinsam atomar
+gespeichert. Das Audit enthält Benutzer, Zeitpunkt, Model/ID, Aktion und
+alte/neue Werte. Die Projektion wird über die bestehende Funktion in Batches
+aktualisiert, auch bei mehr als 500 Objekten. Keine Typdatenkopie in Obj.
+Gezielte UPDATEs verhindern fachfremde Default-Ergänzungen aus Model.save;
+geändert werden nur bestätigte Felder und modified_at. Fehler im Audit oder
+Projektionsaufbau rollen alles zurück.
+
+## Tests
+
+```powershell
+.venv/Scripts/python.exe manage.py test slg.test_editor_mcp slg.test_mcp slg.test_webmcp --settings=djangoproject.test_settings --noinput
+```
+
+Isolierte SQLite-Testdatenbank: echte HTTP-MCP-Aufrufe für Token-/Session-Auth,
+CSRF und Preview/Apply; Service-Tests für Modellgrenzen, Audit, Konflikte,
+Replay und Bulk-Rollback. Bestehende Public-/WebMCP-Tests laufen mit.
+MySQL-spezifische parallele Transaktionen sind in der Deployment-Umgebung
+gesondert zu prüfen. Die Tests verbinden sich nicht mit der Entwicklungsdatenbank.
+
+Der zusätzliche vollständige Lauf (`test slg`) enthält sieben unabhängig
+reproduzierbare Bestandsfehler in `slg.tests`: vier ObjSave-Testfixtures mit
+fehlenden Standard-Fremdschlüsseln und drei RDF-Tests wegen des Query-Pfads
+`obj_ref_set` statt `obj_ref`. Diese fachfremden Stellen wurden nicht geändert.
