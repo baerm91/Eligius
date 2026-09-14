@@ -91,9 +91,48 @@ benötigt. Die Freischaltung im Code ändert keine bestehenden Daten.
 
 ## Speicherung und Konflikte
 
+### Dargestellte Personen am Münztyp
+
+Die Relation ist `Muenztyp → Mztyp_Person → Person`, mit
+`idfk_PersonFunktion=2` (bestehende Browse-Semantik für Dargestellte).
+`appears_on_rev=true` bedeutet Revers, `false` Avers. Sie hängt nicht an
+`rv_bildtyp`. `Obj_Person` ist ein separater Objektkontext.
+
+Für additive Zuweisungen gibt es zwei separate Tools:
+
+```json
+{"name":"preview_assign_depicted_person","arguments":{"type_ids":[123,456],"person_id":2622,"side":"rv"}}
+```
+
+Die Typ-IDs im Beispiel sind Platzhalter. Bis zu 100 unterschiedliche IDs
+(also auch 30 Münztypen) können gemeinsam geprüft werden. Die Vorschau nennt
+Person, Funktion, Seite, alte/neue Relationen, bereits vorhandene Zuordnungen
+und die Zahl betroffener Objekte. Bestehende Personen auf beiden Seiten und
+andere Rollen bleiben erhalten; es wird ausschließlich ergänzt.
+
+```json
+{"name":"assign_depicted_person","arguments":{"preview_token":"<aus Vorschau>","confirmed":true}}
+```
+
+Benötigt `slg.change_muenztyp` **und** `slg.add_mztyp_person` (die bestehenden
+Parent-/Inline-Rechte im Django-Admin). Vorschau und Apply prüfen beide Rechte.
+Der komplette Batch wird atomar mit Audit und bestehender MTOA-Projektion
+ausgeführt. Der Typ erhält nur einen neuen modified_at-Zeitstempel; Obj,
+Obj_Person, Bildtypen und andere Typfelder bleiben unverändert. Keine neuen
+Tabellen oder Migrationen. Ist die Relation bereits vorhanden, bleibt der
+entsprechende Typ unverändert, ohne doppelten Eintrag oder Audit einer Änderung.
+Ein vollständig unveränderter No-op kann wiederholt werden.
+
+Konfliktprüfung umfasst auch den bisherigen Relationsstand (Through-Änderungen
+müssen modified_at nicht aktualisieren), die Person, Funktion und die
+Objektzuordnungen. Das normale `preview_coin_type_update` akzeptiert weiterhin
+keine frei benannten Personenfelder. Nach Deployment und ASGI-Neustart werden
+28 statt 26 Editor-Tools registriert. Bestehende Daten werden beim Deployment
+nicht zugeordnet.
+
 Keine neuen Models, Tabellen, Migrationen oder Preview-Datensätze.
-Modellzuordnung: [EDITOR_MCP_PLAN.md](EDITOR_MCP_PLAN.md). Personen/Funktionen
-über Through-Modelle und Offizinänderungen an bestimmten Objekten gehören
+Modellzuordnung: [EDITOR_MCP_PLAN.md](EDITOR_MCP_PLAN.md). Weitere Personenrollen,
+Ersetzungen/Löschungen und Offizinänderungen an bestimmten Objekten gehören
 nicht zum Schreibumfang.
 
 Signierte Vorschauen gelten zehn Minuten und binden Benutzer, Aktion und
@@ -113,7 +152,7 @@ Projektionsaufbau rollen alles zurück.
 ## Tests
 
 ```powershell
-.venv/Scripts/python.exe manage.py test slg.test_editor_mcp slg.test_mcp slg.test_webmcp --settings=djangoproject.test_settings --noinput
+.venv/Scripts/python.exe manage.py test slg.test_editor_persons slg.test_editor_mcp slg.test_mcp slg.test_webmcp --settings=djangoproject.test_settings --noinput
 ```
 
 Isolierte SQLite-Testdatenbank: echte HTTP-MCP-Aufrufe für Token-/Session-Auth,

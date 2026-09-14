@@ -20,7 +20,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.request import Request
 from starlette.responses import JSONResponse
 
-from slg.services import editor_api
+from slg.services import editor_api, editor_persons
 
 logger = logging.getLogger(__name__)
 _user_id = ContextVar('editor_mcp_user_id', default=None)
@@ -37,7 +37,9 @@ mcp = MCPServer(name='Eligius Editor', version='1.0.0', instructions=(
     'Never copy coin type data onto objects. Assigned objects obtain mint, denomination, '
     'material, dating and legends from Muenztyp. Unidentified data tools reject assigned objects. '
     'Type previews show how many objects inherit the changed presentation. '
-    'Use exact Django field names and foreign key IDs. No persons/through-model editing.'))
+    'Use exact Django field names and foreign key IDs. For depicted people use '
+    'preview_assign_depicted_person and assign_depicted_person; these add only missing '
+    'Mztyp_Person relations with function 2 on the explicitly selected av/rv side.'))
 
 # Independent registration of the existing public reads. This never registers
 # an editor function on the public server or changes its permission policy.
@@ -145,6 +147,22 @@ _register_object_action('update_unidentified_object_data',
 _register_object_action('update_unidentified_legend', 'Only unidentified Obj legends: avleg, rvleg.')
 _register_object_action('update_object_measurements', 'Obj measurements: gewicht, durchmesser, stempelstellung; null clears a value.')
 _register_object_action('update_object_note', 'Obj note: anmerkung; null clears the note.')
+
+
+@mcp.tool(annotations=READ)
+async def preview_assign_depicted_person(type_ids: IDs, person_id: ID, side: Literal['av', 'rv']) -> dict:
+    """Preview additive depicted-person assignment to 1–100 Muenztyp IDs via Mztyp_Person.
+    Function 2 is depicted; av=False / rv=True for appears_on_rev. Existing relations are preserved.
+    Shows old/new relations, already assigned types and affected object counts. Requires
+    change_muenztyp and add_mztyp_person. No Obj_Person or Bildtyp changes.
+    """
+    return await _call(editor_persons.preview_assign_depicted_person, type_ids, person_id, side)
+
+
+@mcp.tool(annotations=WRITE)
+async def assign_depicted_person(preview_token: Token, confirmed: Annotated[bool, Field(strict=True)] = False) -> dict:
+    """Apply the explicitly confirmed depicted-person preview atomically, with audit and conflict checks."""
+    return await _call(editor_persons.assign_depicted_person, preview_token, confirmed)
 
 
 @mcp.tool(annotations=READ)

@@ -25,7 +25,11 @@ für ausgeführte Bearbeiteraktionen weniger passend als LogEntry.
 
 Objekt-Offizinen bleiben auch bei Typzuweisung erhalten (ObjInventorySerializer
 zeigt insbesondere Obj.rv_offizin). Personen sind keine einfachen FK-Felder:
-ihre Through-Modelle werden vom ersten Editor-Werkzeugumfang nicht beschrieben.
+ihre Through-Modelle werden nur durch gezielte Relationsaktionen bearbeitet.
+`preview_assign_depicted_person` / `assign_depicted_person` ergänzen fehlende
+Mztyp_Person-Zuordnungen mit der bestehenden Funktion 2 auf explizit gewähltem
+Avers oder Revers. RvBildtyp besitzt keine Personenrelation. Dafür gelten
+change_muenztyp und add_mztyp_person wie für die Parent-/Inline-Bearbeitung im Admin.
 Unbestimmten-Tools lehnen sämtliche Änderungen bei gesetztem Typ ab; damit
 werden auch kontextsensitive Symbol-/Beizeichenfelder konservativ behandelt.
 
@@ -56,8 +60,12 @@ werden auch kontextsensitive Symbol-/Beizeichenfelder konservativ behandelt.
 ## Grenzen
 
 Keine neuen Tabellen. Keine beliebigen ORM-/SQL-/Feldoperationen. Keine
-Personen-Through-Änderungen oder Bearbeitung bestimmter Objekt-Offizinen in
-diesem Umfang. Die vorhandene MTOA ist eine bereits bestehende Anzeigeprojektion,
+Löschung/Ersetzung von Personenrollen, keine Obj_Person-Bearbeitung oder
+Bearbeitung bestimmter Objekt-Offizinen in diesem Umfang.
+Die Dargestellten-Aktion prüft zusätzlich den vollständigen bisherigen
+Mztyp_Person-Relationsstand, Person, Funktion und Objektzuordnungen und führt
+bis zu 100 Typzuweisungen atomar aus. Bereits vorhandene Relationen sind No-ops.
+Die vorhandene MTOA ist eine bereits bestehende Anzeigeprojektion,
 keine Speicherung von Typangaben in Obj. Gleichzeitige externe Änderungen
 an Relationen/Lookup-Bezeichnungen ohne Sperrkonvention können eine Vorschau
 veralten lassen; Apply prüft Hauptzeilen, Zieltyp und aktuelle Zuordnungsmenge.

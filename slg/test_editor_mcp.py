@@ -334,6 +334,30 @@ class EditorTransportTests(TransactionTestCase):
             self.obj.refresh_from_db()
             self.assertEqual(self.obj.Typ_id, self.typ.pk)
 
+    def test_depicted_person_preview_and_apply_over_http(self):
+        from slg.models import Person, PersonFunktion, Mztyp_Person
+        from starlette.testclient import TestClient
+        from djangoproject.asgi import application
+        self.user.user_permissions.add(Permission.objects.get(codename='add_mztyp_person',
+            content_type__app_label='slg'))
+        person = Person.objects.create(name='Dargestellte Person')
+        PersonFunktion.objects.create(pk=2, name='Dargestellt')
+        headers = {'Authorization': 'Token ' + self.token}
+        with TestClient(application) as client:
+            result = self.rpc(client, 'tools/call', {'name': 'preview_assign_depicted_person',
+                'arguments': {'type_ids': [self.typ.pk], 'person_id': person.pk, 'side': 'rv'}}, headers).json()['result']
+            self.assertFalse(result.get('isError'), result)
+            preview = result.get('structuredContent') or json.loads(result['content'][0]['text'])
+            args = {'preview_token': preview['preview_token'], 'confirmed': True}
+            result = self.rpc(client, 'tools/call', {'name': 'assign_depicted_person',
+                'arguments': args}, headers).json()['result']
+            self.assertFalse(result.get('isError'), result)
+            self.assertTrue(Mztyp_Person.objects.filter(Mztyp=self.typ, idfk_Person=person,
+                idfk_PersonFunktion_id=2, appears_on_rev=True).exists())
+            result = self.rpc(client, 'tools/call', {'name': 'assign_depicted_person',
+                'arguments': args}, headers, '/mcp').json()['result']
+            self.assertTrue(result['isError'])
+
     def test_session_requires_csrf_and_rejects_bad_origin(self):
         from django.conf import settings
         from django.middleware.csrf import _get_new_csrf_string
