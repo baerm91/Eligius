@@ -1,4 +1,3 @@
-
 """
 Django settings for djangoproject project.
 
@@ -21,8 +20,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-only-change-me')
+def _get_secret_key():
+    key_file = os.getenv('DJANGO_SECRET_KEY_FILE')
+    if key_file:
+        try:
+            return Path(key_file).read_text(encoding='utf8').strip()
+        except (FileNotFoundError, OSError):
+            pass
+    return os.getenv('DJANGO_SECRET_KEY', 'dev-only-change-me')
+
+SECRET_KEY = _get_secret_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes', 'on')
@@ -30,7 +37,9 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes', 'on')
 # ALLOWED_HOSTS = ['46.101.237.189']
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
 CSRF_TRUSTED_ORIGINS = [
-    'https://eligius.donau-uni.ac.at',
+    origin.strip()
+    for origin in os.getenv('CSRF_TRUSTED_ORIGINS', 'https://eligius.donau-uni.ac.at').split(',')
+    if origin.strip()
 ]
 SITE_ID = int(os.getenv('DJANGO_SITE_ID', '1'))
 
@@ -88,7 +97,13 @@ if DEBUG:
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
     INTERNAL_IPS = ['127.0.0.1']
 
-CORS_ALLOW_ALL_ORIGINS = True
+cors_origins_env = os.getenv('CORS_ALLOWED_ORIGINS', '')
+cors_origins_list = [o.strip() for o in cors_origins_env.split(',') if o.strip()]
+if cors_origins_list:
+    CORS_ALLOWED_ORIGINS = cors_origins_list
+    CORS_ALLOW_ALL_ORIGINS = False
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 
 ROOT_URLCONF = 'djangoproject.urls'
@@ -127,20 +142,50 @@ ELIGIUS_MCP_ALLOWED_ORIGINS = [v.strip() for v in os.getenv(
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
+def _get_database_password(default=None):
+    filename = os.getenv('DATABASE_PASSWORD_FILE')
+    if filename:
+        try:
+            return Path(filename).read_text(encoding='utf8').strip()
+        except (FileNotFoundError, OSError):
+            pass
+    return os.getenv('DATABASE_PASSWORD', default)
+
+db_cnf_path = os.getenv('DJANGO_DB_CNF_PATH')
+has_docker_db_env = any(os.getenv(k) for k in ('DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASSWORD', 'DATABASE_PASSWORD_FILE', 'DATABASE_HOST'))
+
+# Prefer DJANGO_DB_CNF_PATH if explicitly configured.
+# Otherwise, if Docker/production environment DB variables are provided, use them.
+# Fall back to default .cnf location for legacy deployments without env vars.
+if db_cnf_path or not has_docker_db_env:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'OPTIONS': {
+                'read_default_file': db_cnf_path or '/djangoproject/auth/mysql.cnf',
+                'charset': 'utf8mb4',
+            },
+        }
+    }
+else:
+    db_port = os.getenv('DATABASE_PORT')
+    default_db = {
         'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DATABASE_NAME', 'django'),
+        'USER': os.getenv('DATABASE_USER', 'django'),
+        'PASSWORD': _get_database_password('password'),
+        'HOST': os.getenv('DATABASE_HOST', 'localhost'),
         'OPTIONS': {
-            'read_default_file': os.getenv('DJANGO_DB_CNF_PATH', '/djangoproject/auth/mysql.cnf'),
             'charset': 'utf8mb4',
         },
     }
-}
+    if db_port:
+        default_db['PORT'] = db_port
+    DATABASES = {
+        'default': default_db,
+    }
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
-
-# Password validation
-# https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -178,6 +223,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/djangoproject/site/public/static'
+STATIC_ROOT = os.getenv('DJANGO_STATIC_ROOT', '/djangoproject/site/public/static')
 
 SLG_BILDER_STATIC_SUBDIR = 'slg_bilder'

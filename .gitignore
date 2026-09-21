@@ -52,5 +52,6 @@ Thumbs.db
 
 # Backups / dumps
 *.sql
+*.sql.gz
 *.sqlite3
 *.bak
