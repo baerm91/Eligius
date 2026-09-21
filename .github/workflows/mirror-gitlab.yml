@@ -1,0 +1,31 @@
+name: Deploy main to GitLab
+
+on:
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Push tested main to GitLab
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME }}
+          GITLAB_REPOSITORY_URL: ${{ secrets.GITLAB_REPOSITORY_URL }}
+        run: |
+          git remote add gitlab "https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${GITLAB_REPOSITORY_URL#https://}"
+          git fetch gitlab main
+
+          if ! git merge-base --is-ancestor gitlab/main HEAD; then
+            echo "GitLab main contains commits that are not in GitHub main. Aborting."
+            exit 1
+          fi
+
+          git push gitlab HEAD:main
