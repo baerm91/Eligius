@@ -8,24 +8,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main
+      - name: Checkout GitHub main
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
 
-      - name: Push tested main to GitLab
+      - name: Sync to GitLab but preserve Docker deployment files
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
           GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME }}
           GITLAB_REPOSITORY_URL: ${{ secrets.GITLAB_REPOSITORY_URL }}
         run: |
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions@github.com"
+
           git remote add gitlab "https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${GITLAB_REPOSITORY_URL#https://}"
           git fetch gitlab main
 
-          if ! git merge-base --is-ancestor gitlab/main HEAD; then
-            echo "GitLab main contains commits that are not in GitHub main. Aborting."
-            exit 1
+          # Auf dem aktuellen GitLab-Stand beginnen
+          git checkout -B gitlab-sync gitlab/main
+
+          # Änderungen von GitHub übernehmen, Docker-Dateien auf GitLab behalten
+          git diff --binary gitlab/main..main -- . \
+            ':(exclude)Dockerfile' \
+            ':(exclude)docker/**' \
+            ':(exclude)scripts/docker_build.sh' | git apply --index
+
+          if git diff --cached --quiet; then
+            echo "Nothing to sync."
+            exit 0
           fi
 
+          git commit -m "Sync GitHub main to GitLab (preserve Docker deployment files)"
           git push gitlab HEAD:main
