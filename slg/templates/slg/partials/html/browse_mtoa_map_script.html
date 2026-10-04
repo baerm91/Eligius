@@ -17,25 +17,7 @@
       }
     }).setView([48.2082, 16.3719], 5);
 
-    // Tile Layer hinzufügen
-    const HighPrioTileLayer = L.TileLayer.extend({
-      createTile: function (coords, done) {
-        const img = L.TileLayer.prototype.createTile.call(this, coords, done);
-        // Nur die ersten ~10 Kacheln hoch priorisieren
-        if (this._tileNum === undefined) this._tileNum = 0;
-        if (this._tileNum++ < 10) img.fetchPriority = 'high';
-        return img;
-      }
-    });
-
-    const tileLayer = new HighPrioTileLayer(
-      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      {
-        subdomains: 'abcd',
-        maxZoom: 20,
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-      }
-    ).addTo(map);
+    EligiusMaps.addDarkBasemap(map);
 
     // Scroll-Zoom Einstellungen (bestehender Code)
     map.scrollWheelZoom.disable();

@@ -913,11 +913,9 @@
         zoomControl: true
       });
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd',
-        maxZoom: 20,
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-      }).addTo(map);
+      // The vector layer needs an initial view before fitting the marker bounds.
+      map.setView([48.2082, 16.3719], 5);
+      EligiusMaps.addDarkBasemap(map);
 
       const markerLayer = L.featureGroup();
       mapMarkers.forEach(function (marker) {
