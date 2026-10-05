@@ -27,12 +27,14 @@ from rest_framework import routers, serializers, viewsets
 from slg.api_views import ExportObjLSNO
 from slg.lab_views import lab, health
 from slg import webmcp
+from slg.oai.views import oai_endpoint
 
 from slg.views import about, impressum, datenschutz, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, collection_nomisma_rdf, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa, sammlungen_uebersicht
 
 browse_view = objekt_list_view_mtoa if settings.DEBUG else cache_page(60 * 5)(objekt_list_view_mtoa)
 
 urlpatterns = [
+    path('oai/', oai_endpoint, name='oai_endpoint'),
     path('api/webmcp/manifest/', webmcp.manifest, name='webmcp_manifest'),
     path('api/webmcp/data/<str:tool_name>/', webmcp.data, name='webmcp_data'),
     path('api/webmcp/navigation/<str:tool_name>/', webmcp.navigation, name='webmcp_navigation'),

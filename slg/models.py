@@ -120,6 +120,9 @@ class Slg(models.Model):
 	bildrechte_lizenz = models.TextField(verbose_name='Copyrightlizenz der Bilder', blank=True)
 	nomisma_export_erlaubt = models.BooleanField(default=False, verbose_name='Nomisma-Export erlauben')
 	nomisma_collection_uri = models.URLField(max_length=250, blank=True, verbose_name='Nomisma Collection URI')
+	kulturpool_export_erlaubt = models.BooleanField(default=False, verbose_name='Kulturpool-Export erlauben')
+	kulturpool_rights_uri = models.URLField(max_length=500, blank=True, verbose_name='Kulturpool: Rechte-URI der Bilder', help_text='Nur eine bestätigte HTTP(S)-Rechte-URI eintragen. Keine Lizenz wird vorausgesetzt.')
+	kulturpool_metadata_rights_uri = models.URLField(max_length=500, blank=True, verbose_name='Kulturpool: Rechte-URI der Metadaten', help_text='Separat von den Bildrechten; nur nach Vereinbarung ausfüllen.')
 	created_at = models.DateTimeField(default=datetime.now, blank=True, null=True)
 	bildurl = models.CharField(max_length=250, blank=True, null=True, verbose_name='Url zum Bilderverzeichnis')
 	cover = models.CharField(max_length=250, verbose_name='Coverbild-Url', blank=True)
@@ -1684,6 +1687,9 @@ class KatalogFirmen(models.Model):
 		verbose_name_plural = "KatalogFirmen"
 
 class MuenztypObjektAnzeige(models.Model):
+	class Meta:
+		indexes = [models.Index(fields=['last_modified', 'obj_id'], name='mtoa_oai_modified_obj_idx')]
+
 	obj_id = models.PositiveIntegerField(
 		db_index=True,
 		null=True,      # für das Daten-Backfill

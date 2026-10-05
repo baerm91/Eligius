@@ -375,19 +375,21 @@ class SlgView(nested_admin.NestedModelAdmin):
     # PERFORMANCE-OPTIMIERUNG: Nested-Inlines deaktiviert für deutlich bessere Performance
     inlines = []  # SlgInformation wird separat über den eigenen Admin verwaltet
     exclude = ['created_at']
-    list_display = ('name', 'kategorie', 'nomisma_export_erlaubt', 'beschreibung', 'ereignis_count', 'ereignisse_link')
-    list_filter = ('kategorie', 'nomisma_export_erlaubt')
+    list_display = ('name', 'kategorie', 'nomisma_export_erlaubt', 'kulturpool_export_erlaubt', 'kulturpool_readiness', 'beschreibung', 'ereignis_count', 'ereignisse_link')
+    list_filter = ('kategorie', 'nomisma_export_erlaubt', 'kulturpool_export_erlaubt')
     search_fields = ('name',)
     show_full_result_count = False  # Reduziert COUNT-Queries für bessere Performance
-    readonly_fields = ('ereignisse_link',)
+    readonly_fields = ('ereignisse_link', 'kulturpool_readiness')
     
     fieldsets = (
         (None, {
             'fields': ('name', 'kategorie', 'beschreibung', 'bildrechte_lizenz', 'cover')
         }),
-        ('Datenweitergabe / Nomisma', {
-            'fields': ('nomisma_export_erlaubt', 'nomisma_collection_uri'),
-            'description': 'Steuert, ob kuratierte Sammlungsdaten öffentlich als Nomisma-RDF bereitgestellt werden.'
+        ('Datenweitergabe / Nomisma und Kulturpool', {
+            'fields': ('nomisma_export_erlaubt', 'nomisma_collection_uri',
+                       'kulturpool_export_erlaubt', 'kulturpool_rights_uri',
+                       'kulturpool_metadata_rights_uri', 'kulturpool_readiness'),
+            'description': 'Kulturpool nutzt /oai/. Vor produktiver Übernahme Rechte separat klären und validate_kulturpool_export --strict ausführen.'
         }),
         ('Bildeinstellungen', {
             'classes': ('collapse',),
@@ -398,6 +400,14 @@ class SlgView(nested_admin.NestedModelAdmin):
             'description': 'Ereignisse werden für bessere Performance separat verwaltet.'
         }),
     )
+
+    @admin.display(description='Kulturpool-Bereitschaft')
+    def kulturpool_readiness(self, obj):
+        from .oai.readiness import collection_readiness
+        if not obj.kulturpool_export_erlaubt:
+            return 'Export deaktiviert'
+        issues = collection_readiness(obj)
+        return '; '.join(issues) if issues else 'Rechte konfiguriert; Objektqualität mit validate_kulturpool_export prüfen'
     
     def get_queryset(self, request):
         """Optimiertes QuerySet ohne teure Nested-Inlines"""

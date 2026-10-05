@@ -8,6 +8,7 @@ Wird verwendet von:
 """
 
 import logging
+from django.db import transaction
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ def _build_schlagwort_maps_for_ids(av_bt_ids, rv_bt_ids):
     return av_sw_map, rv_sw_map
 
 
+@transaction.atomic
 def sync_objs_to_mtoa(obj_ids):
     """
     Synchronisiert eine Liste von Obj-IDs in die MuenztypObjektAnzeige-Tabelle.

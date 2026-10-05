@@ -133,6 +133,12 @@ ELIGIUS_MCP_ENABLED = os.getenv('ELIGIUS_MCP_ENABLED', '0').lower() in ('1', 'tr
 ELIGIUS_EDITOR_MCP_ENABLED = os.getenv('ELIGIUS_EDITOR_MCP_ENABLED', '0').lower() in ('1', 'true', 'yes')
 ELIGIUS_WEBMCP_ENABLED = os.getenv('ELIGIUS_WEBMCP_ENABLED', '0').lower() in ('1', 'true', 'yes')
 ELIGIUS_PUBLIC_BASE_URL = os.getenv('ELIGIUS_PUBLIC_BASE_URL', '').rstrip('/')
+# Keep this namespace unchanged once harvested, including across host changes.
+ELIGIUS_OAI_IDENTIFIER_NAMESPACE = os.getenv('ELIGIUS_OAI_IDENTIFIER_NAMESPACE', 'eligius.donau-uni.ac.at')
+ELIGIUS_OAI_REPOSITORY_NAME = os.getenv('ELIGIUS_OAI_REPOSITORY_NAME', 'Eligius – Kulturpool')
+ELIGIUS_OAI_ADMIN_EMAIL = os.getenv('ELIGIUS_OAI_ADMIN_EMAIL', 'martin.baer@donau-uni.ac.at')
+ELIGIUS_OAI_PAGE_SIZE = int(os.getenv('ELIGIUS_OAI_PAGE_SIZE', '200'))
+ELIGIUS_OAI_TOKEN_MAX_AGE = int(os.getenv('ELIGIUS_OAI_TOKEN_MAX_AGE', '86400'))
 ELIGIUS_MCP_ALLOWED_HOSTS = [v.strip() for v in os.getenv(
     'ELIGIUS_MCP_ALLOWED_HOSTS', 'localhost:*,127.0.0.1:*').split(',') if v.strip()]
 ELIGIUS_MCP_ALLOWED_ORIGINS = [v.strip() for v in os.getenv(
