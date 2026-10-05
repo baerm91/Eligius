@@ -968,6 +968,17 @@
     flex-shrink: 0;
   }
 
+  .contact-detail-item a {
+    color: var(--prem-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .contact-detail-item a:hover,
+  .contact-detail-item a:focus-visible {
+    color: var(--prem-primary);
+  }
+
   .contact-form-wrap {
     padding: 10px 0;
   }
@@ -1543,8 +1554,8 @@
       </p>
       <div class="contact-details">
         <div class="contact-detail-item">
-          <i class="bi bi-envelope-fill"></i>
-          <span>archiv@eligius-numismatik.org</span>
+          <i class="bi bi-envelope-fill" aria-hidden="true"></i>
+          <a href="https://www.donau-uni.ac.at/de/universitaet/organisation/mitarbeiterinnen/person/4295335375" target="_blank" rel="noopener noreferrer">Martin Baer &ndash; Kontaktdaten</a>
         </div>
       </div>
     </div>
