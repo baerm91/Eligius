@@ -1,0 +1,83 @@
+{% extends "admin/index.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/admin-contact-dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+  {% if contact_dashboard %}
+    <section class="module contact-dashboard" aria-labelledby="contact-dashboard-title">
+      <h2 id="contact-dashboard-title">
+        Offene Kontaktanfragen
+        <span class="contact-dashboard-count">{{ contact_dashboard.count }}</span>
+      </h2>
+      {% if contact_dashboard.count %}
+        <div class="contact-dashboard-summary">
+          <p>Anfragen bleiben hier sichtbar, bis du sie als bearbeitet markierst.</p>
+          <a href="{{ contact_dashboard.list_url }}">Alle offenen Anfragen ansehen</a>
+        </div>
+        <ul class="contact-dashboard-list">
+          {% for contact in contact_dashboard.latest %}
+            <li>
+              <h3>
+                <a href="{% url 'admin:slg_kontaktanfrage_change' contact.pk %}">
+                  {{ contact.betreff|default:"(Ohne Betreff)" }}
+                </a>
+              </h3>
+              <p class="contact-dashboard-meta">
+                {{ contact.name|default:"(Ohne Namen)" }} · {{ contact.email }} ·
+                {{ contact.erstellt_am|date:"d.m.Y H:i" }}
+              </p>
+              <p>{{ contact.nachricht|truncatechars:240 }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+        {% if contact_dashboard.count > 5 %}
+          <p class="contact-dashboard-footer">Hier siehst du die fünf neuesten offenen Anfragen.</p>
+        {% endif %}
+      {% else %}
+        <p class="contact-dashboard-empty">Zurzeit gibt es keine offenen Kontaktanfragen.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+  {% if object_change_dashboard %}
+    <section class="module contact-dashboard" aria-labelledby="object-change-dashboard-title">
+      <h2 id="object-change-dashboard-title">
+        Offene Objektänderungen
+        <span class="contact-dashboard-count">{{ object_change_dashboard.count }}</span>
+      </h2>
+      {% if object_change_dashboard.count %}
+        <div class="contact-dashboard-summary">
+          <p>Vorschläge bleiben hier sichtbar, bis du sie annimmst oder ablehnst.</p>
+          <a href="{{ object_change_dashboard.list_url }}">Alle offenen Objektänderungen ansehen</a>
+        </div>
+        <ul class="contact-dashboard-list">
+          {% for change in object_change_dashboard.latest %}
+            <li>
+              <h3>
+                <a href="{% url 'admin:slg_objektaenderung_change' change.pk %}">
+                  Objekt {{ change.objekt.invnr|default:change.objekt_id }} · {{ change.field_label }}
+                </a>
+              </h3>
+              <p class="contact-dashboard-meta">
+                {{ change.name|default:"(Ohne Namen)" }} · {{ change.email }} ·
+                {{ change.erstellt_am|date:"d.m.Y H:i" }}
+              </p>
+              <p><strong>Bisher:</strong> {{ change.alter_wert|default:"(Keine Angabe)"|truncatechars:160 }}</p>
+              <p><strong>Vorschlag:</strong> {{ change.neuer_wert|truncatechars:160 }}</p>
+              <p><strong>Begründung:</strong> {{ change.begruendung|truncatechars:240 }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+        {% if object_change_dashboard.count > 5 %}
+          <p class="contact-dashboard-footer">Hier siehst du die fünf neuesten offenen Objektänderungen.</p>
+        {% endif %}
+      {% else %}
+        <p class="contact-dashboard-empty">Zurzeit gibt es keine offenen Objektänderungen.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

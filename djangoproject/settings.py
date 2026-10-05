@@ -48,7 +48,7 @@ SITE_ID = int(os.getenv('DJANGO_SITE_ID', '1'))
 INSTALLED_APPS = [
     'model_clone',
     'adminactions',
-    'django.contrib.admin',
+    'djangoproject.admin.EligiusAdminConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
