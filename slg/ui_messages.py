@@ -79,4 +79,11 @@ JS_MESSAGES = (
     _("nicht in dieser Münzstätte"),
     _("v. Chr."),
     _("von"),
+    _('%(current)s von %(total)s'),
+    _('Münzen:'),
+    _('Motive:'),
+    _('dem Prägeherrn'),
+    _('Rang %(rank)s (%(percentage)s aller Prägungen unter %(ruler)s)'),
+    _('%(start)s bis %(end)s'),
+    _('Gesamt: %(start)s bis %(end)s'),
 )

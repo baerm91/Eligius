@@ -1275,6 +1275,7 @@
 </style>
 {% endblock stylesheets %}
 {% block content %}
+{% translate "Objekt" as object_fallback_label %}
 <div class="hero-image-col" aria-hidden="true">
   <img src="{% static 'img/hero_coin.png' %}" alt="" class="hero-coin-image">
 </div>
@@ -1356,7 +1357,7 @@
         {% if paket.homepage_preview_objects %}
           <a href="{% url 'Objekt' paket.homepage_preview_objects.0.obj_id %}" class="context-object-stack" aria-label="{% translate 'Zum Beispielobjekt' %}">
             {% for obj in paket.homepage_preview_objects %}
-              <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-object-photo" loading="lazy" decoding="async">
+              <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:object_fallback_label|striptags }}" class="context-object-photo" loading="lazy" decoding="async">
             {% endfor %}
           </a>
         {% elif paket.darstellungsart == 'frontcover' %}
@@ -1433,7 +1434,7 @@
         {% if paket.homepage_preview_objects %}
         <div class="context-thumb-strip" aria-label="{% translate 'Objektbeispiele' %}">
           {% for obj in paket.homepage_preview_objects %}
-            <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-thumb" loading="lazy" decoding="async">
+            <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:object_fallback_label|striptags }}" class="context-thumb" loading="lazy" decoding="async">
           {% endfor %}
         </div>
         {% endif %}
@@ -1460,7 +1461,7 @@
         <div class="context-related-meta">
           <div class="context-related-row">
             <span>{% translate "Datenbank:" %}</span>
-            <strong>{{ paket.objektanzahl_db|default:"0" }} Stk.</strong>
+            <strong>{{ paket.objektanzahl_db|default:"0" }} {% translate "Stk." %}</strong>
           </div>
           <div class="context-related-row">
             <span>{% translate "Datierung:" %}</span>
@@ -1470,7 +1471,7 @@
         </div>
         <div class="context-related-thumbs" aria-label="{% translate 'Objektbeispiele' %}">
           {% for obj in paket.homepage_preview_objects %}
-            <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-related-thumb" loading="lazy" decoding="async">
+            <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:object_fallback_label|striptags }}" class="context-related-thumb" loading="lazy" decoding="async">
           {% empty %}
             <div class="context-related-empty-thumb"><i class="bi bi-collection"></i></div>
             <div class="context-related-empty-thumb"><i class="bi bi-collection"></i></div>
@@ -1618,7 +1619,7 @@ document.addEventListener('DOMContentLoaded', function() {
           dot.classList.toggle('is-active', index === activeIndex);
         });
 
-        coinsProgressText.textContent = `${activeIndex + 1} ${gettext('von')} ${coinItems.length}`;
+        coinsProgressText.textContent = interpolate(gettext('%(current)s von %(total)s'), {current: activeIndex + 1, total: coinItems.length}, true);
       };
 
       if (coinItems.length > 1) {

@@ -164,6 +164,9 @@ class PublicTemplateLanguageTests(TestCase):
         self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = 'en'
         script = self.client.get(reverse('ui_javascript_catalog'))
         self.assertContains(script, 'Search mints')
+        self.assertContains(script, '%(current)s of %(total)s')
+        self.assertContains(script, 'Overall: %(start)s to %(end)s')
+        self.assertContains(script, 'Rank %(rank)s (%(percentage)s of all coins issued by %(ruler)s)')
         self.assertEqual(script.headers['Content-Language'], 'en')
         response = self.client.get('/api/facet/', {'facet': 'Nominal'})
         self.assertEqual(response.status_code, 200)

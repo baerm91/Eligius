@@ -1280,3 +1280,31 @@ msgid ""
 msgstr ""
 "Coins: %(coins)s · Designs: %(motifs)s · Mints: %(mints)s · Denominations: "
 "%(denominations)s"
+
+#, python-format
+msgid "%(current)s von %(total)s"
+msgstr "%(current)s of %(total)s"
+
+msgid "Stk."
+msgstr "pcs."
+
+msgid "Münzen:"
+msgstr "Coins:"
+
+msgid "Motive:"
+msgstr "Motifs:"
+
+msgid "dem Prägeherrn"
+msgstr "the issuing authority"
+
+#, python-format
+msgid "Rang %(rank)s (%(percentage)s aller Prägungen unter %(ruler)s)"
+msgstr "Rank %(rank)s (%(percentage)s of all coins issued by %(ruler)s)"
+
+#, python-format
+msgid "%(start)s bis %(end)s"
+msgstr "%(start)s to %(end)s"
+
+#, python-format
+msgid "Gesamt: %(start)s bis %(end)s"
+msgstr "Overall: %(start)s to %(end)s"

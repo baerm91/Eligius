@@ -530,12 +530,12 @@
                     {% if bild_urls %}
                         <div class="coin-image-col">
                             <div class="item coin-image-stage" data-src="{{ bild_urls.av }}">
-                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.av }}" data-fallback-src="{{ bild_urls.av_alt|default:'' }}" alt="Avers" class="lazyload img-fluid" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
+                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.av }}" data-fallback-src="{{ bild_urls.av_alt|default:'' }}" alt="{% translate 'Avers' %}" class="lazyload img-fluid" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
                             </div>
                         </div>
                         <div class="coin-image-col">
                             <div class="item coin-image-stage" data-src="{{ bild_urls.rv }}">
-                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.rv }}" data-fallback-src="{{ bild_urls.rv_alt|default:'' }}" alt="Revers" class="lazyload img-fluid" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
+                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.rv }}" data-fallback-src="{{ bild_urls.rv_alt|default:'' }}" alt="{% translate 'Revers' %}" class="lazyload img-fluid" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
                             </div>
                         </div>
                     {% endif %}
@@ -2051,7 +2051,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         motifDetails.innerHTML = `
           <p>${mintNameForDetails}</p>
-          <p>${totalCount} Münze(n) · ${distinctMotifCount} Motiv(e)${uniqueNominaleInSelection.size > 0 ? ` · ${uniqueNominaleInSelection.size} Nominal(e)` : ''}</p>
+          <p>${gettext('Münzen:')} ${totalCount} · ${gettext('Motive:')} ${distinctMotifCount}${uniqueNominaleInSelection.size > 0 ? ` · ${gettext('Nominale:')} ${uniqueNominaleInSelection.size}` : ''}</p>
         `;
       }
       
@@ -2087,19 +2087,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // Finde das Motif in der all_motifs-Liste, um auf first_used und last_used zuzugreifen
         const fullMotifData = coinContextData.ruler_motif_stats?.all_motifs?.find(m => m.id === currentMotif.id);
         
-        const rulerNameForStats = coinContextData.ruler_motif_stats?.ruler_name || 'dem Prägeherrn';
+        const rulerNameForStats = coinContextData.ruler_motif_stats?.ruler_name || gettext('dem Prägeherrn');
 
         currentMotifStats.innerHTML = `
           <div class="card mb-3 current-motif">
             <div class="card-body p-2">
               <p class="card-text small mb-1">
-                Rang ${currentMotif.rank || '?'} (${currentMotif.percentage || '?'}% aller Prägungen unter ${rulerNameForStats})
+                ${interpolate(gettext('Rang %(rank)s (%(percentage)s aller Prägungen unter %(ruler)s)'), {rank: currentMotif.rank || '?', percentage: `${currentMotif.percentage ?? '?'}%`, ruler: rulerNameForStats}, true)}
               </p>
               <p class="card-text small mb-0">
-                ${rulerNameForStats}: ${currentMotif.first_date || '?'} bis ${currentMotif.last_date || '?'}
+                ${rulerNameForStats}: ${interpolate(gettext('%(start)s bis %(end)s'), {start: currentMotif.first_date ?? '?', end: currentMotif.last_date ?? '?'}, true)}
               </p>
               <p class="card-text small mb-0">
-                Gesamt: ${fullMotifData?.first_used || '?'} bis ${fullMotifData?.last_used || '?'}
+                ${interpolate(gettext('Gesamt: %(start)s bis %(end)s'), {start: fullMotifData?.first_used ?? '?', end: fullMotifData?.last_used ?? '?'}, true)}
               </p>
             </div>
           </div>
