@@ -3,6 +3,54 @@
 Stand: 13. November 2026. Ausschließlich lesende HTTP-Abfragen und lokale
 Berichtsdateien; keine Datenbankänderungen, keine Deployment-Änderungen.
 
+## Nachtrag: Deployment und vollständiger Dev-Export
+
+Dieser Nachtrag ersetzt die unten beschriebenen Zugangshindernisse und nächsten
+Deployment-Schritte. Commit `4d3e991` wurde über den bestehenden Dev-Deployment-
+Ablauf ausgeliefert. Der Dienst ist aktiv, `/health` meldet `ok`; es waren keine
+Migrationen anzuwenden. Produktion wurde dabei nicht verändert.
+
+Der lesende Export wurde auf Dev ausgeführt. Er liegt geschützt außerhalb des
+Webverzeichnisses unter `/var/lib/eligius/authority-inventory-dev-4d3e991.json`.
+Lokale Kopie: `dev-local/authority-audit-dev/inventory-full.json` (nicht versioniert).
+
+Erfasst: 6.224 befüllte Referenzfelder, davon 5.089 erkannte Nomisma-Verweise,
+523 GND-Verweise und 2 direkte Wikidata-Verweise. Zusammen 5.583 unterschiedliche
+Normdatenkennungen. Weitere 610 Werte benötigen andere Auflösung oder Prüfung;
+dazu gehören insbesondere Wikipedia-Links. Diese Zahl ist keine Fehlerzahl.
+Alle Angaben betreffen Normdatentabellen inklusive unbenutzter Datensätze.
+
+Der Personenbestand umfasst 4.326 Datensätze: 2.524 befüllte Nomisma-Felder,
+545 DNB-Felder, 517 WikiDe- und 8 WikiEn-Felder. Feldbelegung und erkannte
+URI-Quelle sind getrennte Zahlen; zwei Wikidata-URIs stehen beispielsweise in WikiDe.
+
+Fünf echte GND-Verweise aus diesem Export wurden aufgelöst. Alle fünf lieferten
+Vorzugsnamen ohne englisches Sprachkennzeichen. Vier enthielten explizite
+Identitätsverweise auf Wikidata. Dort wurden folgende englische Labels gefunden;
+die Wikidata-Datensätze enthalten jeweils auch die ursprüngliche GND-ID als P227:
+
+| Lokaler Name | Englisches Wikidata-Label | GND | Wikidata |
+| --- | --- | --- | --- |
+| Abgar X. | Abgar X | 1221829440 | Q61104534 |
+| Abt Robert Leeb | Robert Leeb | 139172955 | Q2157997 |
+| Adalbert III. von Harstall (1789-1802) | Adalbert of Harstall | 116007419 | Q347857 |
+| Adam Franz I. zu Schwarzenberg | Adam Francis of Schwarzenberg | 119154056 | Q320833 |
+
+Diese Labels bezeichnen die Entität, sind aber keine vollständigen Übersetzungen
+lokaler Texte mit Titeln, Ordnungszahlen oder Datierungen. Zusätze dürfen durch
+einen Labelimport nicht still verloren gehen.
+
+Beide direkt gespeicherten Wikidata-URIs lieferten `en`-Labels. Bei Q89826597 ist
+dies jedoch `Schwarzenberg, Maria Anna Fürstin (gest. 1698) (BLKÖ)`: trotz Sprach-
+kennzeichen ein weitgehend deutscher Katalogtext. Das ist ein konkreter Grund,
+Sprachkennzeichnung nicht mit fachlicher Freigabe gleichzusetzen.
+
+Rohantworten und Ergebnisdatei: `dev-local/authority-audit-dev/person-pilot.json`.
+Noch keine Übersetzungen in Eligius gespeichert oder angezeigt. Nächster Schritt:
+einen Vorschlagsbestand mit Quellen, unverändertem Original, Konfliktmarkierungen
+und expliziter Freigabe erzeugen; zunächst für Nomisma und die geprüften
+GND→Wikidata-Ketten auf Dev.
+
 ## Ergebnisse
 
 Quelle: http://46.101.237.189. Vollständige öffentliche Listen-APIs für
