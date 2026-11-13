@@ -288,7 +288,7 @@
                             <td></td>
                             <td>
                                 {% if Muenztyp.av_bildtyp %}
-                                    <a href="/browse/?av_bildtyp={{ Muenztyp.av_bildtyp.id }}" title="Browse">{{Muenztyp.av_bildtyp}}</a>
+                                    <a href="/browse/?av_bildtyp={{ Muenztyp.av_bildtyp.id }}" title="Browse">{{Muenztyp.av_bildtyp.display_name}}</a>
                                 {% endif %}{% if Muenztyp.av_beizeichen %}, {% endif %}
                                 
                                 {% if Muenztyp.av_beizeichen %}
@@ -322,7 +322,7 @@
                             <td></td>
                             <td>
                                 {% if Muenztyp.rv_bildtyp %}
-                                    <a href="/browse/?rv_bildtyp={{ Muenztyp.rv_bildtyp.id }}" title="Browse">{{Muenztyp.rv_bildtyp}}</a>
+                                    <a href="/browse/?rv_bildtyp={{ Muenztyp.rv_bildtyp.id }}" title="Browse">{{Muenztyp.rv_bildtyp.display_name}}</a>
                                 {% endif %}{% if Muenztyp.rv_beizeichen %}, {% endif %}
                                 {% if Muenztyp.rv_beizeichen %}
                                 <a href="/browse/?rv_beizeichen={{ Muenztyp.rv_beizeichen.id }}" title="Browse">{{Muenztyp.rv_beizeichen}}</a><br>

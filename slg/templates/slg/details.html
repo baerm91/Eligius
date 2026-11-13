@@ -558,7 +558,7 @@
                     <br>
                     
                     {% if coin_data.av_bildtyp %}
-                    <a href="/browse/?av_bildtyp={{ coin_data.av_bildtyp.id }}" title="{% translate 'Av.-Bildbeschreibung' %}">{{coin_data.av_bildtyp}}</a>{% if coin_data.av_beizeichen_display or coin_data.av_offizin_display %}, {% endif %}
+                    <a href="/browse/?av_bildtyp={{ coin_data.av_bildtyp.id }}" title="{% translate 'Av.-Bildbeschreibung' %}">{{coin_data.av_bildtyp.display_name}}</a>{% if coin_data.av_beizeichen_display or coin_data.av_offizin_display %}, {% endif %}
                     {% endif %}
                     {% if coin_data.av_beizeichen_display %}
                         <a href="/browse/?av_beizeichen={{coin_data.av_beizeichen.id|default:"-"}}" title="{% translate 'Beizeichen' %}">{{coin_data.av_beizeichen_display|safe}}</a>
@@ -616,7 +616,7 @@
                     <br>
                     
                     {% if coin_data.rv_bildtyp %}
-                    <a href="/browse/?rv_bildtyp={{ coin_data.rv_bildtyp.id }}" title="{% translate 'Rv.-Beschreibung' %}">{{coin_data.rv_bildtyp}}</a>{% if coin_data.rv_beizeichen_display or coin_data.rv_offizin_display %}, {% endif %}
+                    <a href="/browse/?rv_bildtyp={{ coin_data.rv_bildtyp.id }}" title="{% translate 'Rv.-Beschreibung' %}">{{coin_data.rv_bildtyp.display_name}}</a>{% if coin_data.rv_beizeichen_display or coin_data.rv_offizin_display %}, {% endif %}
                     {% endif %}
                     {% if coin_data.rv_beizeichen_display %}
                         <a href="/browse/?rv_beizeichen={{coin_data.rv_beizeichen.id|default:"-"}}" title="{% translate 'Beizeichen' %}">{{coin_data.rv_beizeichen_display|safe}}</a>

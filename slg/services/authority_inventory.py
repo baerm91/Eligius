@@ -8,7 +8,7 @@ def identify_authority(value, *, allow_nomisma_id=False):
     if not isinstance(value, str) or not value.strip():
         return None
     value = value.strip()
-    if allow_nomisma_id and re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.'-]*", value):
+    if allow_nomisma_id and re.fullmatch(r"(?:[A-Za-z0-9_]|-[A-Za-z0-9_])[A-Za-z0-9_.'()-]*", value):
         return ('nomisma', value)
     try:
         url = urlsplit(value)
@@ -19,7 +19,7 @@ def identify_authority(value, *, allow_nomisma_id=False):
     if url.query or url.fragment:
         return None
     patterns = {
-        'nomisma.org': ('nomisma', r"/id/([A-Za-z0-9_][A-Za-z0-9_.'-]*)/?"),
+        'nomisma.org': ('nomisma', r"/id/((?:[A-Za-z0-9_]|-[A-Za-z0-9_])[A-Za-z0-9_.'()-]*)/?"),
         'www.wikidata.org': ('wikidata', r'/(?:entity|wiki)/(Q[1-9][0-9]*)/?'),
         'wikidata.org': ('wikidata', r'/(?:entity|wiki)/(Q[1-9][0-9]*)/?'),
         'd-nb.info': ('gnd', r'/gnd/([0-9][0-9Xx-]*)/?'),

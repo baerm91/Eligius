@@ -14,12 +14,15 @@ class AuthorityParsingTests(SimpleTestCase):
         for value, expected in [
             ('http://nomisma.org/id/siscia', ('nomisma', 'siscia')),
             ("https://nomisma.org/id/ba'albakk", ('nomisma', "ba'albakk")),
+            ('http://nomisma.org/id/ais(-)_callatis', ('nomisma', 'ais(-)_callatis')),
             ('https://www.wikidata.org/wiki/Q42', ('wikidata', 'Q42')),
             ('http://d-nb.info/gnd/118540238', ('gnd', '118540238')),
         ]:
             self.assertEqual(identify_authority(value), expected)
         self.assertIsNone(identify_authority('siscia'))
         self.assertEqual(identify_authority('siscia', allow_nomisma_id=True), ('nomisma', 'siscia'))
+        self.assertEqual(identify_authority('-des_cos', allow_nomisma_id=True), ('nomisma', '-des_cos'))
+        self.assertIsNone(identify_authority('-', allow_nomisma_id=True))
 
     def test_untrusted_or_ambiguous_values_not_followed(self):
         for value in [None, '', 'Frankreich / Departement Loire-Atlantique',

@@ -71,7 +71,7 @@
                         {% for bildtyp in avbildtypen %}
                           
                             <tr data-toggle="collapse" data-target="#typen{{forloop.counter}}" class="accordion-toggle" id="AvBildtypen">
-                                <td colspan="2"><button class="btn btn-default btn-xs">{{bildtyp.name}}</button></td>
+                                <td colspan="2"><button class="btn btn-default btn-xs">{{bildtyp.display_name}}</button></td>
                                 <td>{% if request.user.is_authenticated %}<a href="{% url 'admin:slg_avbildtyp_change' bildtyp.pk %}">{% translate "bearbeiten" %}</a>{% endif %}</td>
                             </tr>
                             <tr>

@@ -16,6 +16,7 @@ from django.utils.http import urlencode
 from django.shortcuts import redirect
 # Register your models here.
 from .models import *
+from .translation_resources import AvBildtypTranslationResource, RvBildtypTranslationResource, TranslationStatusFilter, TranslationAdminMixin
 # from .models import Slg, Obj, SlgTeil, Person, PersonFunktion, Herstellung, Ref, Nominal, Mzstaette, Obj_Person, Obj_Ref, Muenzstand, Variantenbeschr, AvBildtyp, RvBildtyp, AvBeizeichen, RvBeizeichen, AvBildrand, RvBildrand, Workflow, Obj_interne_Anmerkung, interneAnmerkung, Schlagwort, AvBildtyp_Schlagwort, RvBildtyp_Schlagwort, Muenztyp, Mztyp_Person, Faelschung
 from import_export.admin import ImportExportModelAdmin, ExportActionMixin, ImportExportActionModelAdmin
 from import_export import resources, fields, widgets
@@ -708,12 +709,19 @@ class AvBildtypAdminForm(forms.ModelForm):
         model = AvBildtyp
         fields = '__all__'        
         widgets = {
-            'name': forms.Textarea(attrs={'cols': 80, 'rows': 20}),
+            'name': forms.Textarea(attrs={'cols': 60, 'rows': 4}),
+            'name_en': forms.Textarea(attrs={'cols': 60, 'rows': 4}),
         }
 
-class AvBildtypAdmin(ImportExportActionModelAdmin, admin.ModelAdmin):
+class AvBildtypAdmin(TranslationAdminMixin, ImportExportActionModelAdmin, admin.ModelAdmin):
     #list_editable = ('name',)
     #list_editable = ('name',)
+    resource_classes = [AvBildtypTranslationResource]
+    list_editable = ('name_en',)
+    list_display_links = ('id',)
+    list_filter = (TranslationStatusFilter,)
+    list_per_page = 25
+    fields = (('name', 'name_en'), 'abk')
     form = AvBildtypAdminForm
     #list_select_related = ('object_count', '_mztyp_count',)
     # actions = [actions.export_as_xls]
@@ -722,8 +730,8 @@ class AvBildtypAdmin(ImportExportActionModelAdmin, admin.ModelAdmin):
     #list_select_related = ('object_count', '_mztyp_count',)
     # actions = [actions.export_as_xls]
         # return obj.schlagworte.all()
-    search_fields = ['name', 'abk',]
-    list_display = ('id', 'name', 'Schlagworte','object_count', 'mztyp_count')
+    search_fields = ['name', 'name_en', 'abk',]
+    list_display = ('id', 'name', 'name_en', 'Schlagworte','object_count', 'mztyp_count')
     inlines = (AvBildtyp_SchlagwortInline,)
         #return super(AvBildtypAdmin,self).get_queryset(request).prefetch_related('obj_set', 'muenztyp_set')
 
@@ -758,17 +766,24 @@ class RvBildtypAdminForm(forms.ModelForm):
         model = RvBildtyp
         fields = '__all__'
         widgets = {
-            'name': forms.Textarea(attrs={'cols': 80, 'rows': 20}),
+            'name': forms.Textarea(attrs={'cols': 60, 'rows': 4}),
+            'name_en': forms.Textarea(attrs={'cols': 60, 'rows': 4}),
     # actions = [actions.merge, actions.export_as_xls]
         }
 
         # return obj.schlagworte.all()
-class RvBildtypAdmin(ImportExportActionModelAdmin, admin.ModelAdmin):
+class RvBildtypAdmin(TranslationAdminMixin, ImportExportActionModelAdmin, admin.ModelAdmin):
+    resource_classes = [RvBildtypTranslationResource]
+    list_editable = ('name_en',)
+    list_display_links = ('id',)
+    list_filter = (TranslationStatusFilter,)
+    list_per_page = 25
+    fields = (('name', 'name_en'), 'abk')
     form = RvBildtypAdminForm
     ordering = ['name']
     # actions = [actions.merge, actions.export_as_xls]
-    search_fields = ['name', 'abk',]
-    list_display = ('id', 'name', 'Schlagworte','object_count', 'mztyp_count')
+    search_fields = ['name', 'name_en', 'abk',]
+    list_display = ('id', 'name', 'name_en', 'Schlagworte','object_count', 'mztyp_count')
         # return obj.schlagworte.all()
         #return super(RvBildtypAdmin,self).get_queryset(request).prefetch_related('obj_set', 'muenztyp_set')
     inlines = (RvBildtyp_SchlagwortInline,)

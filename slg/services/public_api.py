@@ -2,7 +2,9 @@
 from types import SimpleNamespace
 
 from django.conf import settings
-from django.db.models import Count, F, Min, Max
+from django.db.models import Count, F, Min, Max, Value, CharField
+from django.db.models.functions import Coalesce, NullIf
+from django.utils.translation import get_language
 from django.http import QueryDict
 from django.utils.html import strip_tags
 
@@ -166,7 +168,12 @@ def facet_values(request, facet, include_current=False, term=None):
             'dat_von': {'field': 'datierung_von'},
             'dat_bis': {'field': 'datierung_bis'},
         }[facet]
-        return _group(rows, config['field'], config.get('id_field'), 'obj_id', term)
+        field = config['field']
+        if facet in ('av_bildtyp', 'rv_bildtyp') and (get_language() or '').startswith('en'):
+            rows = rows.annotate(translated_bildtyp=Coalesce(
+                NullIf(F(facet + '_fk__name_en'), Value('')), F(field), output_field=CharField()))
+            field = 'translated_bildtyp'
+        return _group(rows, field, config.get('id_field'), 'obj_id', term)
     if facet in PERSON_FACETS:
         config = FILTER_PARAMETERS['default'][facet]
         people = MtoaPerson.objects.filter(mtoa__in=rows)

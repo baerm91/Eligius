@@ -20,7 +20,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.request import Request
 from starlette.responses import JSONResponse
 
-from slg.services import editor_api, editor_persons, ui_translations
+from slg.services import editor_api, editor_persons, ui_translations, bildtyp_translations
 
 logger = logging.getLogger(__name__)
 _user_id = ContextVar('editor_mcp_user_id', default=None)
@@ -67,6 +67,23 @@ async def _call(function, *args):
     except Exception:
         logger.exception('Editor MCP operation failed')
         raise ValueError('Bearbeitung fehlgeschlagen. Es wurde keine Teiländerung übernommen.') from None
+
+
+@mcp.tool(annotations=READ)
+async def get_bildtyp_translation_batch(side: Literal['av', 'rv'], after_id: int = 0,
+                                       missing_only: bool = True) -> dict:
+    """Read up to 50 image descriptions with English fields and revision tokens. Editor only."""
+    return await _call(bildtyp_translations.get_translation_batch, side, after_id, missing_only)
+
+
+@mcp.tool(annotations=READ)
+async def draft_bildtyp_translations(side: Literal['av', 'rv'], translations: list[dict]) -> dict:
+    """Validate translation drafts and return admin-importable JSON. Never saves or publishes.
+
+    Read get_bildtyp_translation_batch first. Each row: id, name, name_en, revision.
+    Preserve names and revision tokens exactly. Review then import in Django admin.
+    """
+    return await _call(bildtyp_translations.draft_translations, side, translations)
 
 
 @mcp.tool(annotations=READ)

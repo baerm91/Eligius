@@ -576,8 +576,14 @@ class Rand(models.Model):
 
 class AvBildtyp(models.Model):
 	name = models.CharField(max_length=250, unique=True, verbose_name='AvBildtyp')
+	name_en = models.CharField(max_length=500, blank=True, default='', verbose_name='Englische Übersetzung')
 	abk = models.CharField(max_length=20, blank=True, null=True, verbose_name='Abkürzung')
 	schlagworte = models.ManyToManyField('Schlagwort', through="AvBildtyp_Schlagwort", verbose_name = ("Schlagwort"))
+	@property
+	def display_name(self):
+		from django.utils.translation import get_language
+		return self.name_en if (get_language() or '').startswith('en') and self.name_en else self.name
+
 	def __str__(self):
 		return self.name
 	
@@ -626,8 +632,14 @@ class AvBildrand(models.Model):
 
 class RvBildtyp(models.Model):
 	name = models.CharField(max_length=250, unique=True, verbose_name='RvBildtyp')
+	name_en = models.CharField(max_length=500, blank=True, default='', verbose_name='Englische Übersetzung')
 	abk = models.CharField(max_length=20, blank=True, null=True, verbose_name='Abkürzung')
 	schlagworte = models.ManyToManyField('Schlagwort', through="RvBildtyp_Schlagwort", verbose_name = ("Schlagwort"))
+	@property
+	def display_name(self):
+		from django.utils.translation import get_language
+		return self.name_en if (get_language() or '').startswith('en') and self.name_en else self.name
+
 	def __str__(self):
 		return self.name
 	
