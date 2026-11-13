@@ -6,6 +6,8 @@ Filterwerte und URLs werden nicht überschrieben. Priorität: Nomisma, Wikidata,
 GND; fehlende englische Labels fallen auf das Original zurück. GND-Verweise auf
 Wikidata werden nur mit bestätigtem Rückverweis verwendet. Unterschiedliche
 Namensformen aus verschiedenen Quellen benötigen keine manuelle Freigabe.
+Lokale Schlusszusätze in Klammern, eckigen Klammern und Fragezeichen bleiben
+erhalten; eindeutige Seitenkürzel Av./Rv. werden als obv./rev. angezeigt.
 
 ## Quellenbestand installieren
 

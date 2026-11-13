@@ -1,5 +1,6 @@
 """Language-aware presentation only. Never changes identifiers, filters or source fields."""
 import json
+import re
 from functools import lru_cache
 from pathlib import Path
 from threading import RLock
@@ -46,7 +47,7 @@ def catalog():
 
 
 def _label(values, labels):
-    original = values.get('name', '')
+    original = values.get('name') or ''
     if values.get('name_en'):
         return values['name_en']
     refs = [identify_authority(values.get(field), allow_nomisma_id=field == 'name_nom_id')
@@ -57,8 +58,22 @@ def _label(values, labels):
             if ref and ref[0] == provider:
                 entry = labels.get(':'.join(ref))
                 if entry and entry.get('label'):
-                    return entry['label']
+                    return qualified_label(original, entry['label'])
     return original
+
+
+def qualified_label(original, label):
+    """Keep local side/dating/uncertainty qualifiers outside the authority label."""
+    match = re.search(r'\s*((?:\([^()]*\)|\[[^\[\]]*\]|\?)(?:\s*(?:\([^()]*\)|\[[^\[\]]*\]|\?))*)\s*$', original)
+    if not match:
+        return label
+    suffix = match.group(1)
+    if suffix.casefold() in label.casefold():
+        return label
+    # Only unambiguous side abbreviations are translated automatically.
+    suffix = re.sub(r'\bAv\.', 'obv.', suffix)
+    suffix = re.sub(r'\bRv\.', 'rev.', suffix)
+    return label + ' ' + suffix
 
 
 def display_label(instance):

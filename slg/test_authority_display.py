@@ -9,7 +9,7 @@ from django.test import TestCase, RequestFactory
 from django.utils.translation import override
 
 from slg.models import Metall, Nominal, Person, Obj, MuenztypObjektAnzeige
-from slg.services.authority_display import display_label, display_text, clear_display_cache
+from slg.services.authority_display import display_label, display_text, clear_display_cache, qualified_label
 from slg.services.public_api import facet_values
 
 
@@ -89,3 +89,8 @@ class AuthorityDisplayTests(TestCase):
         saved = self.path.read_text(encoding='utf-8')
         self.assertNotIn('PRIVATE', saved)
         self.assertEqual(json.loads(saved)['labels']['gnd:118521071']['label'], 'English person')
+
+    def test_local_side_dates_and_uncertainty_are_preserved(self):
+        self.assertEqual(qualified_label('dezentriert (Av.)', 'Off centre'), 'Off centre (obv.)')
+        self.assertEqual(qualified_label('Herrscher [188–217] (?)', 'Ruler'), 'Ruler [188–217] (?)')
+        self.assertEqual(qualified_label('Name (?)', 'Name (?)'), 'Name (?)')
