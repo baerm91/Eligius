@@ -1,6 +1,16 @@
+{% load i18n %}
 {% load slg_extras %}
 
 <style>
+  /* Select2 is initialized inside collapsed facets. Keep its search input
+     usable even when its initial measurement was zero pixels. */
+  .facets-wrapper .select2-search--inline {
+    width: 100%;
+  }
+  .facets-wrapper .select2-search--inline .select2-search__field {
+    width: 100% !important;
+    min-width: 0;
+  }
   /* ── Filter Panel – AETCAR Gold/Neutral Dark ────── */
   .offcanvas.offcanvas-start {
     width: min(420px, 100vw);
@@ -360,7 +370,7 @@
           aria-controls="sammlungenUndTeileCollapse"
         >
           <i class="bi bi-collection me-2 text-primary"></i>
-          Sammlungen und Sammlungsteile
+          {% translate "Sammlungen und Sammlungsteile" %}
         </button>
       </h2>
       <div
@@ -371,24 +381,24 @@
       >
         <div class="accordion-body">
           <div class="form-group">
-            <label for="SlgSelect">Sammlung</label>
+            <label for="SlgSelect">{% translate "Sammlung" %}</label>
             <select
               name="Slg"
               class="form-control select2-filter"
               id="SlgSelect"
             >
-              <option value="">Alle Sammlungen</option>
+              <option value="">{% translate "Alle Sammlungen" %}</option>
             </select>
           </div>
           <div class="form-group mt-3">
-            <label for="SlgteilSelect">Sammlungsteil</label>
+            <label for="SlgteilSelect">{% translate "Sammlungsteil" %}</label>
             <select
               name="SlgTeil"
               class="form-control select2-filter"
               id="SlgteilSelect"
               disabled
             >
-              <option value="">Bitte zuerst eine Sammlung auswählen</option>
+              <option value="">{% translate "Bitte zuerst eine Sammlung auswählen" %}</option>
             </select>
           </div>
         </div>
@@ -407,7 +417,7 @@
           aria-controls="vorderseiteCollapse"
         >
           <i class="bi bi-circle me-2 text-primary"></i>
-          Vorderseite
+          {% translate "Vorderseite" %}
         </button>
       </h2>
       <div
@@ -418,17 +428,17 @@
       >
         <div class="accordion-body">
           <div class="form-group">
-            <label>Legende</label>
+            <label>{% translate "Legende" %}</label>
             <input
               type="text"
               name="avleg"
               class="form-control text-input-filter"
               value="{{ request.GET.avleg }}"
-              placeholder="Suchen..."
+              placeholder="{% translate 'Suchen...' %}"
             />
           </div>
           <div class="form-group mt-3">
-            <label for="AvBildtypSelect">Beschreibungen</label>
+            <label for="AvBildtypSelect">{% translate "Beschreibungen" %}</label>
             <select
               name="av_bildtyp"
               id="AvBildtypSelect"
@@ -437,7 +447,7 @@
             ></select>
           </div>
           <div class="form-group mt-3">
-            <label for="AvSchlagworteFormControlSelect2">Schlagworte</label>
+            <label for="AvSchlagworteFormControlSelect2">{% translate "Schlagworte" %}</label>
             <select
               name="av_schlagwort"
               id="AvSchlagworteFormControlSelect2"
@@ -446,7 +456,7 @@
             ></select>
           </div>
           <div class="form-group mt-3">
-            <label>Dargestellte/r</label>
+            <label>{% translate "Dargestellte/r" %}</label>
             <select
               name="Dargestellte_AV"
               id="AvDargestellteSelect"
@@ -470,7 +480,7 @@
           aria-controls="rueckseiteCollapse"
         >
           <i class="bi bi-circle-fill me-2 text-primary"></i>
-          Rückseite
+          {% translate "Rückseite" %}
         </button>
       </h2>
       <div
@@ -481,17 +491,17 @@
       >
         <div class="accordion-body">
           <div class="form-group">
-            <label>Legende</label>
+            <label>{% translate "Legende" %}</label>
             <input
               type="text"
               name="rvleg"
               class="form-control text-input-filter"
               value="{{ request.GET.rvleg }}"
-              placeholder="Suchen..."
+              placeholder="{% translate 'Suchen...' %}"
             />
           </div>
           <div class="form-group mt-3">
-            <label for="RvBildtypSelect">Beschreibungen</label>
+            <label for="RvBildtypSelect">{% translate "Beschreibungen" %}</label>
             <select
               name="rv_bildtyp"
               id="RvBildtypSelect"
@@ -500,7 +510,7 @@
             ></select>
           </div>
           <div class="form-group mt-3">
-            <label for="RvSchlagworteFormControlSelect2">Schlagworte</label>
+            <label for="RvSchlagworteFormControlSelect2">{% translate "Schlagworte" %}</label>
             <select
               name="rv_schlagwort"
               id="RvSchlagworteFormControlSelect2"
@@ -509,7 +519,7 @@
             ></select>
           </div>
           <div class="form-group mt-3">
-            <label>Dargestellte/r</label>
+            <label>{% translate "Dargestellte/r" %}</label>
             <select
               name="Dargestellte_RV"
               id="RvDargestellteSelect"
@@ -533,7 +543,7 @@
           aria-controls="personenCollapse"
         >
           <i class="bi bi-people me-2 text-primary"></i>
-          Personen
+          {% translate "Personen" %}
         </button>
       </h2>
       <div
@@ -544,7 +554,7 @@
       >
         <div class="accordion-body">
           <div class="form-group">
-            <h5>Münzherr/in</h5>
+            <h5>{% translate "Münzherr/in" %}</h5>
             <select
               name="Praegeherren"
               id="PraegeherrenSelect"
@@ -553,7 +563,7 @@
             ></select>
           </div>
           <div class="form-group mt-3">
-            <h5>Weitere Personen</h5>
+            <h5>{% translate "Weitere Personen" %}</h5>
             <select
               name="Person"
               id="PersonSelect"
@@ -577,7 +587,7 @@
           aria-controls="muenzstaettenCollapse"
         >
           <i class="bi bi-bank me-2 text-primary"></i>
-          Münzstätten
+          {% translate "Münzstätten" %}
         </button>
       </h2>
       <div
@@ -588,7 +598,7 @@
       >
         <div class="accordion-body">
           <div class="form-group">
-            <label for="MzstaetteSelect">Ort</label>
+            <label for="MzstaetteSelect">{% translate "Ort" %}</label>
             <select
               name="Muenzstaette"
               id="MzstaetteSelect"
@@ -612,7 +622,7 @@
           aria-controls="nominaleCollapse"
         >
           <i class="bi bi-coin me-2 text-primary"></i>
-          Nominale
+          {% translate "Nominale" %}
         </button>
       </h2>
       <div
@@ -623,7 +633,7 @@
       >
         <div class="accordion-body">
           <div class="form-group">
-            <label for="NominalSelect">Ausprägung</label>
+            <label for="NominalSelect">{% translate "Ausprägung" %}</label>
             <select
               id="NominalSelect"
               name="Nominal"
@@ -647,7 +657,7 @@
           aria-controls="materialCollapse"
         >
           <i class="bi bi-boxes me-2 text-primary"></i>
-          Material
+          {% translate "Material" %}
         </button>
       </h2>
       <div
@@ -658,7 +668,7 @@
       >
         <div class="accordion-body">
           <div class="form-group">
-            <label for="MaterialSelect">Beschaffenheit</label>
+            <label for="MaterialSelect">{% translate "Beschaffenheit" %}</label>
             <select
               name="material"
               id="MaterialSelect"
@@ -682,7 +692,7 @@
           aria-controls="merkmaleCollapse"
         >
           <i class="bi bi-tags me-2 text-primary"></i>
-          Merkmale
+          {% translate "Merkmale" %}
         </button>
       </h2>
       <div
@@ -693,25 +703,25 @@
       >
         <div class="accordion-body">
           <div class="form-group">
-            <label for="HmerkSelect">Herstellungsmerkmale</label>
+            <label for="HmerkSelect">{% translate "Herstellungsmerkmale" %}</label>
             <select
               name="her_merk"
               class="form-control select2-filter"
               id="HmerkSelect"
               multiple
             >
-              <option value="">Alle Herstellungsmerkmale</option>
+              <option value="">{% translate "Alle Herstellungsmerkmale" %}</option>
             </select>
           </div>
           <div class="form-group mt-3">
-            <label for="SmerkSelect">Sekundäre Merkmale</label>
+            <label for="SmerkSelect">{% translate "Sekundäre Merkmale" %}</label>
             <select
               name="sek_merk"
               class="form-control select2-filter"
               id="SmerkSelect"
               multiple
             >
-              <option value="">Alle sekundären Merkmale</option>
+              <option value="">{% translate "Alle sekundären Merkmale" %}</option>
             </select>
           </div>
         </div>
@@ -730,7 +740,7 @@
           aria-controls="literaturCollapse"
         >
           <i class="bi bi-book me-2 text-primary"></i>
-          Literatur
+          {% translate "Literatur" %}
         </button>
       </h2>
       <div
@@ -741,7 +751,7 @@
       >
         <div class="accordion-body">
           <div class="form-group">
-            <label for="LiteraturSelect">Referenz</label>
+            <label for="LiteraturSelect">{% translate "Referenz" %}</label>
             <select
               name="Ref"
               id="LiteraturSelect"
@@ -750,14 +760,14 @@
             ></select>
           </div>
           <div class="form-group mt-3">
-            <label for="CoinTypeSelect">Münztyp (Nummer)</label>
+            <label for="CoinTypeSelect">{% translate "Münztyp (Nummer)" %}</label>
             <select
               name="coin_type"
               id="CoinTypeSelect"
               class="form-control select2-filter"
               multiple
             ></select>
-            <small class="text-muted">Wird über die gewählte Referenz sinnvoll vorgefiltert.</small>
+            <small class="text-muted">{% translate "Wird über die gewählte Referenz sinnvoll vorgefiltert." %}</small>
           </div>
         </div>
       </div>
@@ -775,7 +785,7 @@
           aria-controls="wappenCollapse"
         >
           <i class="bi bi-shield me-2 text-primary"></i>
-          Wappen
+          {% translate "Wappen" %}
         </button>
       </h2>
       <div
@@ -786,7 +796,7 @@
       >
         <div class="accordion-body">
           <div class="form-group">
-            <label for="WappenSelect">Bezeichnung</label>
+            <label for="WappenSelect">{% translate "Bezeichnung" %}</label>
             <select
               name="Wappen"
               id="WappenSelect"
@@ -803,7 +813,7 @@
   <div class="date-filter-container">
     <label>
       <i class="bi bi-calendar-range me-2 text-primary"></i>
-      Datierung
+      {% translate "Datierung" %}
     </label>
     <div class="row gx-2 mt-2">
       <div class="col-6">
@@ -814,7 +824,7 @@
           name="dat_von"
           step="1"
           value="{{ request.GET.dat_von }}"
-          placeholder="von"
+          placeholder="{% translate 'von' %}"
         />
       </div>
       <div class="col-6">
@@ -825,7 +835,7 @@
           name="dat_bis"
           step="1"
           value="{{ request.GET.dat_bis }}"
-          placeholder="bis"
+          placeholder="{% translate 'bis' %}"
         />
       </div>
     </div>
@@ -839,7 +849,7 @@
   {% else %}
   <button type="submit" class="facet-search-button" form="freitextForm">
   {% endif %}
-    <i class="bi bi-search me-2"></i> Suchen
+    <i class="bi bi-search me-2"></i> {% translate "Suchen" %}
   </button>
 </div>
 
@@ -882,7 +892,7 @@
       const $sel = $(selectorId);
       if ($sel.data('select2')) $sel.select2('destroy');
 
-      $sel.select2({
+      $sel.select2({ width: '100%', dropdownParent: $sel.closest('.offcanvas').length ? $sel.closest('.offcanvas') : $(document.body), language: window.eligiusSelect2Language,
           placeholder,
           allowClear: true,
           ajax: {
@@ -937,7 +947,7 @@
 
       /* 0) Platzhalter + Reset -------------------------------------- */
       sel.innerHTML = '';
-      sel.appendChild(new Option('Alle …', ''));
+      sel.appendChild(new Option(gettext("Alle …"), ''));
 
       /* 1) Haupt-Daten einfügen ------------------------------------- */
       const returned = new Set();
@@ -985,7 +995,7 @@
               if (window.jQuery) {
                   const $sel = $(sel);
                   if (!$sel.data('select2')) {
-                      $sel.select2({ placeholder: 'Sammlung wählen …' })
+                      $sel.select2({ width: '100%', dropdownParent: $sel.closest('.offcanvas').length ? $sel.closest('.offcanvas') : $(document.body), language: window.eligiusSelect2Language, placeholder: gettext("Sammlung wählen …") })
                           .on('select2:select select2:unselect', onFacetChange);
                       allowClear: true
                   } else {
@@ -1002,7 +1012,7 @@
   function loadSlgTeile(slgId) {
       const sel = document.getElementById('SlgteilSelect');
       sel.disabled = true;
-      sel.innerHTML = '<option>Lade …</option>';
+      sel.innerHTML = '<option>' + gettext('Lade …') + '</option>';
 
       fetch('/api/facet/?' + buildFacetUrl('SlgTeil', { Slg: slgId }))
           .then(r => r.json())
@@ -1012,7 +1022,7 @@
               if (window.jQuery) {
                   const $sel = $(sel);
                   if (!$sel.data('select2')) {
-                      $sel.select2({ placeholder: 'Sammlungsteil wählen …' });
+                      $sel.select2({ width: '100%', dropdownParent: $sel.closest('.offcanvas').length ? $sel.closest('.offcanvas') : $(document.body), language: window.eligiusSelect2Language, placeholder: gettext("Sammlungsteil wählen …") });
                   }
                   $sel.prop('disabled', false).trigger('change.select2');
               } else {
@@ -1021,38 +1031,38 @@
           })
           .catch(e => {
               console.error('SlgTeil-Load-Error', e);
-              sel.innerHTML = '<option>Fehler beim Laden</option>';
+              sel.innerHTML = '<option>' + gettext('Fehler beim Laden') + '</option>';
           });
   }
 
   /* ---------- Spezialfacetten per Alias ------------------------- */
   {% comment %} Wenn dieser Parameter auf true gesetzt ist, wird o.name als id  {% endcomment %}
   const initMuenzstaettenAutocomplete = () =>
-      initFacetAutocomplete('Muenzstaette', '#MzstaetteSelect', 'Münzstätte suchen …', true);
+      initFacetAutocomplete('Muenzstaette', '#MzstaetteSelect', gettext("Münzstätte suchen …"), true);
   const initNominalAutocomplete = () =>
-      initFacetAutocomplete('Nominal', '#NominalSelect', 'Nominal suchen …', true);
+      initFacetAutocomplete('Nominal', '#NominalSelect', gettext("Nominal suchen …"), true);
   const initHerMerkAutocomplete = () =>
-      initFacetAutocomplete('her_merk', '#HmerkSelect', 'Herstellungsmerkmale suchen …', true);
+      initFacetAutocomplete('her_merk', '#HmerkSelect', gettext("Herstellungsmerkmale suchen …"), true);
   const initSekMerkAutocomplete = () =>
-      initFacetAutocomplete('sek_merk', '#SmerkSelect', 'Sekundäre Merkmale suchen …', true);
+      initFacetAutocomplete('sek_merk', '#SmerkSelect', gettext("Sekundäre Merkmale suchen …"), true);
   const initPraegeherrenAutocomplete = () =>
-      initFacetAutocomplete('Praegeherren', '#PraegeherrenSelect', 'Prägeherren suchen …', true);
+      initFacetAutocomplete('Praegeherren', '#PraegeherrenSelect', gettext("Prägeherren suchen …"), true);
   const initPersonAutocomplete = () =>
-      initFacetAutocomplete('Person', '#PersonSelect', 'Personen suchen …', true);
+      initFacetAutocomplete('Person', '#PersonSelect', gettext("Personen suchen …"), true);
   const initWappenAutocomplete = () =>
-      initFacetAutocomplete('Wappen', '#WappenSelect', 'Wappen suchen …', true);
+      initFacetAutocomplete('Wappen', '#WappenSelect', gettext("Wappen suchen …"), true);
   const initAvBildtypAutocomplete = () =>
-      initFacetAutocomplete('av_bildtyp', '#AvBildtypSelect', 'Beschreibungen suchen …');
+      initFacetAutocomplete('av_bildtyp', '#AvBildtypSelect', gettext("Beschreibungen suchen …"));
   const initRvBildtypAutocomplete = () =>
-      initFacetAutocomplete('rv_bildtyp', '#RvBildtypSelect', 'Beschreibungen suchen …');
+      initFacetAutocomplete('rv_bildtyp', '#RvBildtypSelect', gettext("Beschreibungen suchen …"));
   const initAvSchlagworteAutocomplete = () =>
-      initFacetAutocomplete('av_schlagwort', '#AvSchlagworteFormControlSelect2', 'Schlagworte suchen …', true);
+      initFacetAutocomplete('av_schlagwort', '#AvSchlagworteFormControlSelect2', gettext("Schlagworte suchen …"), true);
   const initRvSchlagworteAutocomplete = () =>
-      initFacetAutocomplete('rv_schlagwort', '#RvSchlagworteFormControlSelect2', 'Schlagworte suchen …', true);
+      initFacetAutocomplete('rv_schlagwort', '#RvSchlagworteFormControlSelect2', gettext("Schlagworte suchen …"), true);
   const initAvDargestellteAutocomplete = () => {
       const selector = '#AvDargestellteSelect';
       if (document.querySelector(selector)) {
-          initFacetAutocomplete('Dargestellte_AV', selector, 'Dargestellte/r suchen …', true);
+          initFacetAutocomplete('Dargestellte_AV', selector, gettext("Dargestellte/r suchen …"), true);
       } else {
           console.warn('Element not found:', selector);
       }
@@ -1060,17 +1070,17 @@
   const initRvDargestellteAutocomplete = () => {
       const selector = '#RvDargestellteSelect';
       if (document.querySelector(selector)) {
-          initFacetAutocomplete('Dargestellte_RV', selector, 'Dargestellte/r suchen …', true);
+          initFacetAutocomplete('Dargestellte_RV', selector, gettext("Dargestellte/r suchen …"), true);
       } else {
           console.warn('Element not found:', selector);
       }
   };
   const initLiteraturAutocomplete = () =>
-      initFacetAutocomplete('Ref', '#LiteraturSelect', 'Referenz suchen …', true);
+      initFacetAutocomplete('Ref', '#LiteraturSelect', gettext("Referenz suchen …"), true);
   const initCoinTypeAutocomplete = () =>
-      initFacetAutocomplete('coin_type', '#CoinTypeSelect', 'Münztyp-Nummer suchen …');
+      initFacetAutocomplete('coin_type', '#CoinTypeSelect', gettext("Münztyp-Nummer suchen …"));
   const initMaterialAutocomplete = () =>
-      initFacetAutocomplete('material', '#MaterialSelect', 'Material suchen …', true);
+      initFacetAutocomplete('material', '#MaterialSelect', gettext("Material suchen …"), true);
 
   /* ---------- Facet-Änderung ------------------------------------ */
   const onFacetChange = evt => {
@@ -1220,6 +1230,17 @@
       const termIn = $('#searchInput');
       const indefSel = $('#bestimmungSelect');
 
+      // Restore the active search on reload/language switch. Otherwise pressing
+      // Search with another facet would silently remove an existing query.
+      const searchParams = new URLSearchParams(window.location.search);
+      const searchKey = Array.from(catSel[0].options)
+          .map(option => option.value)
+          .find(key => key && searchParams.has(key));
+      if (searchKey) {
+          catSel.val(searchKey);
+          termIn.attr('name', searchKey).val(searchParams.get(searchKey));
+      }
+
       catSel.on('change', () => termIn.attr('name', catSel.val()));
       $('#freitextForm').on('submit', function (e) {
           if (window.location.pathname.includes('/browse')) {
@@ -1233,9 +1254,8 @@
 
   // BFCache-kompatible History Updates
   function updateHistoryForBfcache(params) {
-      // Kleinere Verzögerung um Browser-Optimierungen zu ermöglichen
-      requestAnimationFrame(() => {
-          history.replaceState(null, '', '?' + params.toString());
-      });
+      // Search navigates immediately after this call; do not defer the update.
+      const query = params.toString();
+      history.replaceState(null, '', window.location.pathname + (query ? '?' + query : '') + window.location.hash);
   }
 </script>

@@ -1,3 +1,4 @@
+{% load i18n %}
 <!-- objekt_detail_partial.html -->
 <div class="coin-details">
     {% if Obj.titel %}
@@ -6,12 +7,12 @@
 
     {% if Obj.slg %}
         <div class="detail-row">
-            <div class="detail-label">Sammlung:</div>
-            <div class="detail-value"><a href="/browse/?Slg={{ Obj.slg.id }}" title="Durchsuchen">{{ Obj.slg }}</a></div>
+            <div class="detail-label">{% translate "Sammlung:" %}</div>
+            <div class="detail-value"><a href="/browse/?Slg={{ Obj.slg.id }}" title="{% translate 'Durchsuchen' %}">{{ Obj.slg }}</a></div>
         </div>
     {% endif %}
     <div class="detail-row">
-        <div class="detail-label">Inv.-Nr.:</div>
+        <div class="detail-label">{% translate "Inv.-Nr.:" %}</div>
         <div class="detail-value">{{ Obj.invnr }}</div>
     </div>
 

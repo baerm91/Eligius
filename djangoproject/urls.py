@@ -22,6 +22,8 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.decorators.cache import cache_page
+from slg.language_views import switch_language
+from django.views.i18n import JavaScriptCatalog
 from rest_framework import routers, serializers, viewsets
 
 from slg.api_views import ExportObjLSNO
@@ -34,6 +36,9 @@ from slg.views import about, impressum, datenschutz, objekt_detail_partial, expo
 browse_view = objekt_list_view_mtoa if settings.DEBUG else cache_page(60 * 5)(objekt_list_view_mtoa)
 
 urlpatterns = [
+    # Language is a cookie preference, never part of resource URLs/URIs.
+    path('i18n/setlang/', switch_language, name='set_language'),
+    path('i18n/ui.js', JavaScriptCatalog.as_view(domain='django'), name='ui_javascript_catalog'),
     path('oai/', oai_endpoint, name='oai_endpoint'),
     path('api/webmcp/manifest/', webmcp.manifest, name='webmcp_manifest'),
     path('api/webmcp/data/<str:tool_name>/', webmcp.data, name='webmcp_data'),

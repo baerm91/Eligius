@@ -1,5 +1,8 @@
 # Eligius – Local Development (Docker MySQL)
 
+Deutsch/Englisch, stabile URLs und MCP-Übersetzungsentwürfe:
+[I18N_DEVELOPMENT.md](I18N_DEVELOPMENT.md).
+
 Öffentlicher Remote MCP und Eligius Lab: siehe [MCP_DEVELOPMENT.md](MCP_DEVELOPMENT.md)
 für ASGI-Start, Konfiguration, Tools und Tests. `runserver` bedient weiterhin
 die Django-Seiten; `/mcp` benötigt den dort beschriebenen ASGI-Start.

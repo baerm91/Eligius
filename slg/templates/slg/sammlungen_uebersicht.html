@@ -1,5 +1,6 @@
 {% extends 'slg/navbar.html' %}
-{% block title %}Eligius – Sammlungen{% endblock title %}
+{% load i18n %}
+{% block title %}{% translate "Eligius – Sammlungen" %}{% endblock title %}
 {% load static %}
 
 {% block stylesheets %}
@@ -282,23 +283,23 @@
     </div>
 
     <div class="slg-panel-content">
-      <div class="slg-panel-num">Kollektion {{ forloop.counter|stringformat:"02d" }}</div>
+      <div class="slg-panel-num">{% translate "Kollektion" %} {{ forloop.counter|stringformat:"02d" }}</div>
       <h2 class="slg-panel-name">{{ slg.name }}</h2>
       {% if slg.beschreibung %}
         <p class="slg-panel-desc">{{ slg.beschreibung|truncatewords:35 }}</p>
       {% endif %}
       {% if slg.obj_count %}
-        <div class="slg-panel-meta"><span>{{ slg.obj_count }}</span> Objekte</div>
+        <div class="slg-panel-meta"><span>{{ slg.obj_count }}</span> {% translate "Objekte" %}</div>
       {% endif %}
       <div class="slg-panel-links">
-        <a href="{{ slg.get_absolute_url }}" class="slg-panel-link">Timeline ansehen</a>
-        <a href="/browse/?q=&Slg={{ slg.id }}" class="slg-panel-link">Alle Objekte</a>
+        <a href="{{ slg.get_absolute_url }}" class="slg-panel-link">{% translate "Timeline ansehen" %}</a>
+        <a href="/browse/?q=&Slg={{ slg.id }}" class="slg-panel-link">{% translate "Alle Objekte" %}</a>
       </div>
     </div>
   </div>
 {% empty %}
   <p style="text-align:center; color:var(--text-muted); padding: 80px 20px;">
-    Derzeit sind keine Sammlungen verfügbar.
+    {% translate "Derzeit sind keine Sammlungen verfügbar." %}
   </p>
 {% endfor %}
 {% endblock content %}

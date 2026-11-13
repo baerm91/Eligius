@@ -21,7 +21,7 @@
         }
 
         if (!data.years || data.years.length === 0) {
-          showEmptyChart("Keine Daten für diesen Zeitraum verfügbar");
+          showEmptyChart(gettext("Keine Daten für diesen Zeitraum verfügbar"));
           return;
         }
 
@@ -52,14 +52,14 @@
         }
       })
       .catch(err => {
-        showEmptyChart(err.message);
+        showEmptyChart(gettext('Fehler beim Laden der Daten.'));
       });
   }
 
   function formatYear(value) {
     const n = parseInt(value, 10);
     if (isNaN(n)) return value;
-    if (n < 0) return Math.abs(n) + ' v.Chr.';
+    if (n < 0) return Math.abs(n) + ' ' + gettext('v. Chr.');
     if (n === 0) return '0';
     return n.toString();
   }
@@ -119,7 +119,7 @@
         type: 'category',
         boundaryGap: false,
         data: labels,
-        name: 'Chronologie',
+        name: gettext("Chronologie"),
         nameLocation: 'middle',
         nameGap: 40,
         nameTextStyle: { color: textColor, fontSize: 13, fontWeight: 600 },
@@ -130,7 +130,7 @@
       },
       yAxis: {
         type: 'value',
-        name: 'Stückzahl',
+        name: gettext("Stückzahl"),
         nameTextStyle: { color: textColor, fontSize: 13, fontWeight: 600, padding: [0, 0, 8, 0] },
         axisLine: { show: true, lineStyle: { color: axisColor, width: 1.5 } },
         axisLabel: { color: axisColor, fontWeight: 500 },
@@ -147,15 +147,15 @@
         },
         formatter: function(params) {
           const p = params[0];
-          return '<div style="font-weight:600;margin-bottom:4px;border-bottom:1px solid rgba(246,177,93,0.3);padding-bottom:4px;">Jahr: '
+          return '<div style="font-weight:600;margin-bottom:4px;border-bottom:1px solid rgba(246,177,93,0.3);padding-bottom:4px;">' + gettext('Jahr') + ': '
             + formatYear(p.axisValue) + '</div>'
             + '<span style="display:inline-block;width:10px;height:10px;background-color:'
             + p.color + ';margin-right:5px;border-radius:50%;"></span>'
-            + 'Stückzahl: <b>' + p.data + ' Objekte</b>';
+            + gettext('Stückzahl') + ': <b>' + p.data + ' ' + gettext('Objekte') + '</b>';
         }
       },
       series: [{
-        name: 'Anzahl der Objekte',
+        name: gettext("Anzahl der Objekte"),
         type: 'line',
         smooth: 0.3,
         symbol: 'circle',

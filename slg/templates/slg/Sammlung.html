@@ -1,4 +1,5 @@
 {% extends 'slg/navbar.html' %}
+{% load i18n %}
 {% block title %}Eligius – {{Sammlung.name}}{% endblock title %}
 {% load static %}
 {% block stylesheets %}
@@ -293,7 +294,7 @@
   {% endif %}
   <div class="slg-hero-overlay"></div>
   <div class="slg-hero-content">
-    <div class="slg-hero-eyebrow">Sammlung</div>
+    <div class="slg-hero-eyebrow">{% translate "Sammlung" %}</div>
     <h1 class="slg-hero-title">{{Sammlung.name}}</h1>
   </div>
 </div>
@@ -307,15 +308,15 @@
 
 {% if Sammlung.nomisma_export_erlaubt %}
 <div class="slg-description">
-  <a href="{% url 'collection_nomisma_rdf' Sammlung.id %}">Nomisma-RDF für diese Sammlung herunterladen</a>
+  <a href="{% url 'collection_nomisma_rdf' Sammlung.id %}">{% translate "Nomisma-RDF für diese Sammlung herunterladen" %}</a>
 </div>
 {% endif %}
 
 <!-- Timeline -->
 <div class="slg-timeline-section">
   <div class="slg-section-header">
-    <div class="slg-section-eyebrow">Chronik</div>
-    <h2 class="slg-section-title" id="timeline-title">Geschichte der Münzsammlung</h2>
+    <div class="slg-section-eyebrow">{% translate "Chronik" %}</div>
+    <h2 class="slg-section-title" id="timeline-title">{% translate "Geschichte der Münzsammlung" %}</h2>
   </div>
   <div id="timeline">
     <div id="timeline-content">

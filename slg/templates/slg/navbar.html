@@ -1,19 +1,24 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{% block title %}Eligius{% endblock title %}</title>
+    {% load static %}
+    <script src="{% url 'ui_javascript_catalog' %}"></script>
+    <script src="{% static 'js/eligius-i18n.js' %}"></script>
     {% block meta_tags %}{% endblock meta_tags %}
-    
+
     {% block stylesheets %}
       {% load static %}
       {% include 'slg/styles.html' with active_block='cssnavbar' %}
       <link rel="preload" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
       <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" /></noscript>
     {% endblock stylesheets %}
-    
+
     <!-- Google Analytics wird nur geladen, wenn Cookies akzeptiert wurden -->
     <script>
       function loadGoogleAnalytics() {
@@ -32,51 +37,52 @@
 <body>
   <div class="site-wrap">
 
-    
+
     <header class="site-navbar" role="banner">
       <div class="container-fluid">
         <div class="nav-row">
-          
+
           <div class="nav-side nav-side--left">
             <a href="/" class="text-decoration-none">
               <span class="brand-title">ELIGIUS</span>
             </a>
           </div>
-          
+
           <!-- Hamburger-Menü-Button für mobile Geräte -->
           <div class="d-xl-none" style="margin-left:auto;">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu" aria-label="Menu">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu" aria-label="{% translate 'Menü' %}" aria-controls="navbarMenu" aria-expanded="false">
               <span class="navbar-toggler-icon">&#9776;</span>
             </button>
           </div>
-          
+
           <!-- Menü für Desktop -->
           <div class="nav-center d-none d-xl-flex">
-            <a class="nav-link" href="/">Home</a>
-            <a class="nav-link" href="{% url 'sammlungen_uebersicht' %}">Sammlungen</a>
-            <a class="nav-link" href="/browse">Objekte</a>
-            <a class="nav-link" href="{% url 'about' %}">Projekt</a>
-            <a class="nav-link" href="{% url 'lab' %}">Eligius Lab</a>
+            <a class="nav-link" href="/">{% translate "Start" %}</a>
+            <a class="nav-link" href="{% url 'sammlungen_uebersicht' %}">{% translate "Sammlungen" %}</a>
+            <a class="nav-link" href="/browse">{% translate "Objekte" %}</a>
+            <a class="nav-link" href="{% url 'about' %}">{% translate "Projekt" %}</a>
+            <a class="nav-link" href="{% url 'lab' %}">{% translate "Eligius Lab" %}</a>
           </div>
 
           <!-- Login-Icon rechts -->
-          <div class="nav-side nav-side--right d-none d-xl-flex">
-            <a class="nav-login-icon" href="/admin" title="Login">
+          <div class="nav-side nav-side--right d-flex">
+            {% include 'slg/partials/language_switcher.html' %}
+            <a class="nav-login-icon d-none d-xl-inline-flex" href="/admin" title="{% translate 'Anmelden' %}" aria-label="{% translate 'Anmelden' %}">
               <i class="bi bi-person-circle"></i>
             </a>
           </div>
 
         </div>
-        
+
         <!-- Mobile Menü (collapse) -->
         <div class="collapse navbar-collapse d-xl-none" id="navbarMenu">
           <div class="d-flex flex-column align-items-center py-3 gap-2">
-            <a class="nav-link" href="/">Home</a>
-            <a class="nav-link" href="{% url 'sammlungen_uebersicht' %}">Sammlungen</a>
-            <a class="nav-link" href="/browse">Objekte</a>
-            <a class="nav-link" href="{% url 'about' %}">Projekt</a>
-            <a class="nav-link" href="{% url 'lab' %}">Eligius Lab</a>
-            <a class="nav-link" href="/admin">Login</a>
+            <a class="nav-link" href="/">{% translate "Start" %}</a>
+            <a class="nav-link" href="{% url 'sammlungen_uebersicht' %}">{% translate "Sammlungen" %}</a>
+            <a class="nav-link" href="/browse">{% translate "Objekte" %}</a>
+            <a class="nav-link" href="{% url 'about' %}">{% translate "Projekt" %}</a>
+            <a class="nav-link" href="{% url 'lab' %}">{% translate "Eligius Lab" %}</a>
+            <a class="nav-link" href="/admin">{% translate "Anmelden" %}</a>
           </div>
         </div>
       </div>
@@ -89,18 +95,22 @@
         {% block content %}
         {% endblock %}
     </div>
-    
+
     <footer class="site-footer">
       <div class="footer-copyright">MMXXVI &bull; Cultural Heritage of Austria</div>
       <nav class="footer-links">
-        <a href="{% url 'impressum' %}">Impressum</a>
+        <a href="{% url 'impressum' %}">{% translate "Impressum" %}</a>
         <span class="footer-sep">&bull;</span>
-        <a href="{% url 'datenschutz' %}">Datenschutzerklärung</a>
+        <a href="{% url 'datenschutz' %}">{% translate "Datenschutzerklärung" %}</a>
       </nav>
     </footer>
 
     <script defer src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"></script>
     <script>
+    {% translate "Diese Website verwendet Cookies, um Ihnen das beste Erlebnis auf unserer Webseite zu ermöglichen." as cookie_message %}
+    {% translate "Ablehnen" as cookie_dismiss %}
+    {% translate "Akzeptieren" as cookie_allow %}
+    {% translate "Mehr erfahren" as cookie_link %}
     window.addEventListener("load", function(){
       window.cookieconsent.initialise({
         "palette": {
@@ -117,10 +127,10 @@
         "position": "bottom",
         "type": "opt-in",
         "content": {
-          "message": "Diese Website verwendet Cookies, um Ihnen das beste Erlebnis auf unserer Webseite zu ermöglichen.",
-          "dismiss": "Ablehnen",
-          "allow": "Akzeptieren",
-          "link": "Mehr erfahren",
+          "message": "{{ cookie_message|escapejs }}",
+          "deny": "{{ cookie_dismiss|escapejs }}",
+          "allow": "{{ cookie_allow|escapejs }}",
+          "link": "{{ cookie_link|escapejs }}",
           "href": "/datenschutz/"
         },
         onInitialise: function(status) {

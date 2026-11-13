@@ -20,7 +20,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.request import Request
 from starlette.responses import JSONResponse
 
-from slg.services import editor_api, editor_persons
+from slg.services import editor_api, editor_persons, ui_translations
 
 logger = logging.getLogger(__name__)
 _user_id = ContextVar('editor_mcp_user_id', default=None)
@@ -67,6 +67,22 @@ async def _call(function, *args):
     except Exception:
         logger.exception('Editor MCP operation failed')
         raise ValueError('Bearbeitung fehlgeschlagen. Es wurde keine Teiländerung übernommen.') from None
+
+
+@mcp.tool(annotations=READ)
+async def get_ui_translation_catalog() -> dict:
+    """Read the English UI catalogue. Excludes database text and resource identifiers."""
+    return await _call(ui_translations.get_ui_translation_catalog)
+
+
+@mcp.tool(annotations=READ)
+async def draft_ui_translations(translations: dict[str, str]) -> dict:
+    """Create a reviewable English UI translation draft keyed by exact German source text.
+
+    Returns PO entries only; never saves or publishes. Read get_ui_translation_catalog first.
+    Merge reviewed entries through the repository and compile messages before deployment.
+    """
+    return await _call(ui_translations.draft_ui_translations, translations)
 
 
 @mcp.tool(annotations=READ)

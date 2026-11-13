@@ -1,4 +1,5 @@
 {% load slg_extras %}
+{% load i18n %}
 {% load custom_tags %}
 
 {% for key, values in request.GET.lists %}
@@ -8,7 +9,7 @@
                 {% if value %}
                     <div class="tags mr-2 mb-2">
                         <a href="{% remove_query_value request.get_full_path key value %}" rel="tag" class="btn btn-outline-secondary btn-sm">
-                            <span class="tag-key">{{ config.display_name }}:</span>
+                            <span class="tag-key">{% translate config.display_name %}:</span>
                             {% if config.model %}
                                 <strong>{{ key|get_display_name:value }}</strong>
                             {% else %}
@@ -25,6 +26,6 @@
 
 {% if request.GET|length > 0 %}
     <div class="tag-wrapper ml-2 mb-2">
-        <a href="." rel="tag" class="btn btn-sm">Reset</a>
+        <a href="." rel="tag" class="btn btn-sm">{% translate 'Zurücksetzen' %}</a>
     </div>
-{% endif %} 
+{% endif %}

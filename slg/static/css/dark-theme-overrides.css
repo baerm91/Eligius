@@ -99,6 +99,50 @@ body, .site-wrap {
 .nav-side--right {
   justify-content: flex-end;
   align-items: center;
+  gap: 16px;
+}
+
+.language-switcher {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+  margin: 0;
+}
+
+.language-switcher button {
+  min-width: 36px;
+  min-height: 40px;
+  padding: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #d1d1d1;
+  font: 600 12px 'Plus Jakarta Sans', system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.language-switcher button[aria-pressed="true"] {
+  color: #f6b15d;
+  border-bottom-color: currentColor;
+}
+
+.language-switcher button:hover,
+.language-switcher button:focus-visible {
+  color: #fff;
+  outline: 2px solid #f6b15d;
+  outline-offset: 1px;
+}
+
+@media (max-width: 1199.98px) {
+  .nav-side--right {
+    flex: 0 0 auto;
+    margin-left: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .site-navbar { padding-left: 8px; padding-right: 8px; }
+  .site-navbar .brand-title { font-size: 1.8rem; }
 }
 
 .nav-center {

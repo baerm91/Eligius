@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load slg_extras i18n %}
 
 {% firstof obj.Typ.dat_verb obj.Typ.Metall obj.Typ.Nominal obj.Typ.Mzstaette as has_f1 %}
@@ -131,7 +132,7 @@
   <div class="d-flex align-items-baseline mb-1">
     <div class="flex-shrink-0 pe-2">
       <span
-        class="btn btn-outline-secondary btn-sm disabled rounded-pill py-0 px-1"><small><strong>Av:</strong></small></span>
+        class="btn btn-outline-secondary btn-sm disabled rounded-pill py-0 px-1"><small><strong>{% translate "Av:" %}</strong></small></span>
     </div>
     <div class="flex-grow-1">
       {# dargestellte Personen Avers #}
@@ -179,7 +180,7 @@
   <div class="d-flex align-items-baseline mb-1">
     <div class="flex-shrink-0 pe-2">
       <span
-        class="btn btn-outline-secondary btn-sm rounded-pill disabled py-0 px-1"><small><strong>Rv:</strong></small></span>
+        class="btn btn-outline-secondary btn-sm rounded-pill disabled py-0 px-1"><small><strong>{% translate "Rv:" %}</strong></small></span>
     </div>
     <div class="flex-grow-1">
       {# dargestellte Personen Revers #}

@@ -1,15 +1,16 @@
 {% load i18n %}
+{% load i18n %}
 <p class="text-center">
   <table>
-    {% if Person.dat_verb %}<tr><td>Lebensdaten: </td><td>{{Person.dat_verb}}</td></tr>{% endif %}
-    {% if not Person.WikiDe and not Definition %}<tr><td>Kurzbeschreibung: </td><td>{{Person.beschreibung}}</td></tr>{% endif %}
-    {% if Person.zeichen %}<tr><td>Zeichen/Signatur: </td><td>{{Person.zeichen}}</td></tr>{% endif %}
+    {% if Person.dat_verb %}<tr><td>{% translate "Lebensdaten:" %} </td><td>{{Person.dat_verb}}</td></tr>{% endif %}
+    {% if not Person.WikiDe and not Definition %}<tr><td>{% translate "Kurzbeschreibung:" %} </td><td>{{Person.beschreibung}}</td></tr>{% endif %}
+    {% if Person.zeichen %}<tr><td>{% translate "Zeichen/Signatur:" %} </td><td>{{Person.zeichen}}</td></tr>{% endif %}
     {% if Person.dat_verb or not Person.WikiDe or Person.zeichen or not Definition%}<tr><td colspan="2"><hr width="80%"></td></tr>{% endif %}
     {% if Person.name_nom_id %}
     <tr><td><a href="{{Person.name_nom_id}}" class="badge badge-info">Nomisma:</a></td><td>{{Definition}}</td></tr>
     {% endif %}
     <tr><td>{% if Person.WikiDe %}<a href="{{Person.WikiDe}}" class="badge badge-info">Wikipedia:</a></td><td>{% elif Person.WikiEn%}<a href="{{Person.WikiEn}}" class="badge badge-info">Wikipedia:</a></td><td>{% endif %}{% if WikiBild %}<img src="{{WikiBild}}" alt="WikiBild" style="float:right">{% endif %}{% if Person.WikiEn or Person.WikiDe %}{{Wiki}}{% else %}{% endif %}</td></tr>
-    <tr><td>Links:</td><td>
+    <tr><td>{% translate "Links:" %}</td><td>
       {% if Person.Zisterzienserlexikon %}<a href="{{Person.Zisterzienserlexikon}}" class="badge badge-info">Zisterzienserlexikon</a>{% endif %}
       {% if Person.Benediktinerlexikon %}<a href="{{Person.Benediktinerlexikon}}" class="badge badge-info">Benediktinerlexikon</a>{% endif %}
       
@@ -24,7 +25,7 @@
         <a href="{{link.link}}" class="badge badge-info">{{link.link}}</a>
       {% endfor %}
     </td></tr>
-    <tr><td colspan="2">Weitere Quellen:</td></tr>
+    <tr><td colspan="2">{% translate "Weitere Quellen:" %}</td></tr>
     {%for quelle in Person.person_ref_set.all%}
     <tr>
       <td>

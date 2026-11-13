@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_noop as _
 from .models import *
 
 FILTER_PARAMETERS = {
@@ -5,35 +6,35 @@ FILTER_PARAMETERS = {
         'q': {
             'fields': ['invnr', 'Typ__titel', 'Typ__muenztyptitel', 'Typ__rvleg', 'Typ__avleg'],
             'filter': 'icontains',
-            'display_name': 'Suche',
+            'display_name': _('Suche'),
             'model': None,
             'display_field': None,
         },
         'avleg': {
             'fields': ['Typ__avleg'],
             'filter': 'icontains',
-            'display_name': 'Av.-Legende',
+            'display_name': _('Av.-Legende'),
             'model': None,
             'display_field': None,
         },
         'rvleg': {
             'fields': ['Typ__rvleg'],
             'filter': 'icontains',
-            'display_name': 'Rv.-Legende',
+            'display_name': _('Rv.-Legende'),
             'model': None,
             'display_field': None,
         },
         # 'Muenzstaette': {
         #     'fields': ['Typ__Mzstaette__name'],
         #     'filter': 'exact',
-        #     'display_name': 'Münzstätte',
+        #     'display_name': _('Münzstätte'),
         #     'model': Mzstaette,
         #     'display_field': 'name',
         # },
         'Muenzstaette': {
             'fields': ['Typ__Mzstaette__name'],      #  ←  weiter per ID filtern
             'filter': 'exact',
-            'display_name': 'Münzstätte',
+            'display_name': _('Münzstätte'),
             'model': Mzstaette,
             'display_field': 'name',
 
@@ -44,35 +45,35 @@ FILTER_PARAMETERS = {
         'Muenzstand': {
             'fields': ['Typ__Muenzstand__name'],
             'filter': 'exact',
-            'display_name': 'Münzstand',
+            'display_name': _('Münzstand'),
             'model': Muenzstand,
             'display_field': 'name',
         },
         'Reichskreis': {
             'fields': ['Typ__Reichskreis__name'],
             'filter': 'exact',
-            'display_name': 'Reichskreis',
+            'display_name': _('Reichskreis'),
             'model': Reichskreis,
             'display_field': 'name',
         },
         'region': {
             'fields': ['Typ__Mzstaette__region__name'],
             'filter': 'exact',
-            'display_name': 'Region',
+            'display_name': _('Region'),
             'model': Region,
             'display_field': 'name',
         },
         'num': {
             'fields': ['Typ__nummer'],
             'filter': 'in',
-            'display_name': 'Nummer',
+            'display_name': _('Nummer'),
             'model': None,
             'display_field': None,
         },
         # 'Nominal': {
         #     'fields': ['Typ__Nominal__name'],
         #     'filter': 'icontains',
-        #     'display_name': 'Nominal',
+        #     'display_name': _('Nominal'),
         #     'model': Nominal,
         #     'display_field': 'name',
         # },
@@ -80,7 +81,7 @@ FILTER_PARAMETERS = {
         'Nominal': {                            # ❶  Name-Suche bleibt
             'fields':        ['Typ__Nominal__name'],
             'filter':        'exact',
-            'display_name':  'Nominal',
+            'display_name':  _('Nominal'),
             'model':         Nominal,
             'display_field': 'name',
         },
@@ -94,14 +95,14 @@ FILTER_PARAMETERS = {
         'material': {
             'fields': ['Typ__Metall__name'],
             'filter': 'icontains',
-            'display_name': 'Material',
+            'display_name': _('Material'),
             'model': Metall,
             'display_field': 'name',
         },
         'sek_merk': {                                  #  Sekundäre Merkmale
             'fields': ['sekundaere_Merkmale__name'],
             'filter': 'icontains',
-            'display_name': 'Sekundäre Merkmale',
+            'display_name': _('Sekundäre Merkmale'),
             'model': Sek_Merkmale,
             'display_field': 'name',
 
@@ -110,14 +111,14 @@ FILTER_PARAMETERS = {
         # 'sek_merk': {
         #     'fields': ['sekundaere_Merkmale__name'],
         #     'filter': 'icontains',
-        #     'display_name': 'Sekundäre Merkmale',
+        #     'display_name': _('Sekundäre Merkmale'),
         #     'model': Sek_Merkmale,
         #     'display_field': 'name',
         # },
         # 'her_merk': {
         #     'fields': ['Herstellungsmerkmale__name'],
         #     'filter': 'icontains',
-        #     'display_name': 'Herstellungsmerkmale',
+        #     'display_name': _('Herstellungsmerkmale'),
         #     'model': Herstellungsmerkmale,
         #     'display_field': 'name',
         # },
@@ -125,7 +126,7 @@ FILTER_PARAMETERS = {
             # zum Filtern weiterhin der Name  (wenn dir das reicht)
             'fields': ['Herstellungsmerkmale__name'],
             'filter': 'icontains',
-            'display_name': 'Herstellungsmerkmale',
+            'display_name': _('Herstellungsmerkmale'),
             'model': Herstellungsmerkmale,
             'display_field': 'name',
 
@@ -137,7 +138,7 @@ FILTER_PARAMETERS = {
             # bleibt bei der ID – das Browser-Filtering braucht das
             'fields': ['Slg_id'],
             'filter': 'exact',
-            'display_name': 'Sammlung',
+            'display_name': _('Sammlung'),
             'model': Slg,
             'display_field': 'name',
 
@@ -148,7 +149,7 @@ FILTER_PARAMETERS = {
         'SlgTeil': {
             'fields': ['SlgTeil_id'],
             'filter': 'exact',
-            'display_name': 'Sammlungsteil',
+            'display_name': _('Sammlungsteil'),
             'model': SlgTeil,
             'display_field': 'name',
 
@@ -158,28 +159,28 @@ FILTER_PARAMETERS = {
         'Paket': {
             'fields': ['pakete__id'],
             'filter': 'exact',
-            'display_name': 'Paket',
+            'display_name': _('Paket'),
             'model': Paket,
             'display_field': 'oeffentlicher_titel',
         },
         'Ref': {
             'fields': ['Typ__Ref__abk'],
             'filter': 'exact',
-            'display_name': 'Referenz',
+            'display_name': _('Referenz'),
             'model': Ref,
             'display_field': 'abk',
         },
         'coin_type': {
             'fields': ['Typ_id'],
             'filter': 'in',
-            'display_name': 'Münztyp',
+            'display_name': _('Münztyp'),
             'facet_field': 'Typ__nummer',
             'id_field': 'Typ_id',
         },
         'av_bildtyp': {
             'fields': ['Typ__av_bildtyp_id'],
             'filter': 'exact',
-            'display_name': 'Av.-Bildtyp',
+            'display_name': _('Av.-Bildtyp'),
             'model': AvBildtyp,
             'display_field': 'name',
             'facet_field': 'Typ__av_bildtyp__name',
@@ -188,21 +189,21 @@ FILTER_PARAMETERS = {
         'av_beizeichen': {
             'fields': ['Typ__av_beizeichen_id'],
             'filter': 'exact',
-            'display_name': 'Av.-Beizeichen',
+            'display_name': _('Av.-Beizeichen'),
             'model': AvBeizeichen,
             'display_field': 'name',
         },
         'av_schlagwort': {
             'fields': ['Typ__av_bildtyp__schlagworte__name'],
             'filter': 'exact',
-            'display_name': 'Av.-Schlagwort',
+            'display_name': _('Av.-Schlagwort'),
             'model': Schlagwort,
             'display_field': 'name',
         },
         'rv_bildtyp': {
             'fields': ['Typ__rv_bildtyp_id'],
             'filter': 'exact',
-            'display_name': 'Rv.-Bildtyp',
+            'display_name': _('Rv.-Bildtyp'),
             'model': RvBildtyp,
             'display_field': 'name',
             'facet_field': 'Typ__rv_bildtyp__name',
@@ -211,35 +212,35 @@ FILTER_PARAMETERS = {
         'rv_beizeichen': {
             'fields': ['Typ__rv_beizeichen_id'],
             'filter': 'exact',
-            'display_name': 'Rv.-Beizeichen',
+            'display_name': _('Rv.-Beizeichen'),
             'model': RvBeizeichen,
             'display_field': 'name',
         },
         'rv_schlagwort': {
             'fields': ['Typ__rv_bildtyp__schlagworte__name'],
             'filter': 'exact',
-            'display_name': 'Rv.-Schlagwort',
+            'display_name': _('Rv.-Schlagwort'),
             'model': Schlagwort,
             'display_field': 'name',
         },
         'obj_type': {
             'fields': ['Objekttyp_id', 'Typ__Objekttyp_id'],
             'filter': 'exact',
-            'display_name': 'Objekttyp',
+            'display_name': _('Objekttyp'),
             'model': Objekttyp,
             'display_field': 'name',
         },
         'dat_von': {
             'fields': ['Typ__dat_von'],
             'filter': 'gte',
-            'display_name': 'Datierung von',
+            'display_name': _('Datierung von'),
             'model': None,
             'display_field': None,
         },
         'dat_bis': {
             'fields': ['Typ__dat_bis'],
             'filter': 'lte',
-            'display_name': 'Datierung bis',
+            'display_name': _('Datierung bis'),
             'model': None,
             'display_field': None,
         },
@@ -248,7 +249,7 @@ FILTER_PARAMETERS = {
             'id_field': 'Typ__mztyp_person__idfk_Person_id',
             'fields': ['Typ__mztyp_person__idfk_Person__name'],
             'filter': 'exact',
-            'display_name': 'Prägeherr/-in',
+            'display_name': _('Prägeherr/-in'),
             'person_function_ids': [1, 6, 7],  # Spezifische Funktionen für Prägeherren
             'appears_on_rev': None  # Keine Einschränkung auf Vorder- oder Rückseite
         },
@@ -257,7 +258,7 @@ FILTER_PARAMETERS = {
             'id_field': 'Typ__mztyp_person__idfk_Person_id',
             'fields': ['Typ__mztyp_person__idfk_Person__name'],
             'filter': 'exact',
-            'display_name': 'Weitere Personen',
+            'display_name': _('Weitere Personen'),
             'person_function_ids': None,  # Keine spezifischen IDs, sondern Ausschluss
             'exclude_function_ids': [1, 2, 6, 7],  # Ausschluss der IDs für Prägeherren und Dargestellte
             'appears_on_rev': None  # Keine Einschränkung auf Vorder- oder Rückseite
@@ -267,7 +268,7 @@ FILTER_PARAMETERS = {
             'id_field': 'Typ__mztyp_person__idfk_Person_id',
             'fields': ['Typ__mztyp_person__idfk_Person__name'],
             'filter': 'exact',
-            'display_name': 'Av.-Dargestellte/r',
+            'display_name': _('Av.-Dargestellte/r'),
             'model': Person,
             'display_field': 'name',
             'person_function_ids': [2],  # Spezifische Funktion für Dargestellte
@@ -278,7 +279,7 @@ FILTER_PARAMETERS = {
             'id_field': 'Typ__mztyp_person__idfk_Person_id',
             'fields': ['Typ__mztyp_person__idfk_Person__name'],
             'filter': 'exact',
-            'display_name': 'Rv.-Dargestellte/r',
+            'display_name': _('Rv.-Dargestellte/r'),
             'model': Person,
             'display_field': 'name',
             'person_function_ids': [2],  # Spezifische Funktion für Dargestellte
@@ -290,7 +291,7 @@ FILTER_PARAMETERS = {
             'facet_field' : 'Typ__wappen__name',     # <-- wichtig für facet_api
             'id_field'    : 'Typ__wappen__id',
             'filter'      : 'exact',
-            'display_name': 'Wappen',
+            'display_name': _('Wappen'),
             'model'       : Wappen,
             'display_field': 'name',
         },
@@ -299,21 +300,21 @@ FILTER_PARAMETERS = {
         'avleg': {
             'fields': ['avleg'],
             'filter': 'icontains',
-            'display_name': 'Av.-Legende',
+            'display_name': _('Av.-Legende'),
             'model': None,
             'display_field': None,
         },
         'rvleg': {
             'fields': ['rvleg'],
             'filter': 'icontains',
-            'display_name': 'Rv.-Legende',
+            'display_name': _('Rv.-Legende'),
             'model': None,
             'display_field': None,
         },
         'invnr': {
             'fields': ['invnr'],
             'filter': 'icontains',
-            'display_name': 'Inventarnummer',
+            'display_name': _('Inventarnummer'),
             'model': None,
             'display_field': None,
         },
@@ -321,7 +322,7 @@ FILTER_PARAMETERS = {
             # --------- filtern ---------
             'fields':        ['idfk_Mzstaette__name'],     # direkt am Objekt
             'filter':        'exact',
-            'display_name':  'Münzstätte',
+            'display_name':  _('Münzstätte'),
             'model':         Mzstaette,
             'display_field': 'name',
 
@@ -332,28 +333,28 @@ FILTER_PARAMETERS = {
         'Muenzstand': {
             'fields': ['Typ__Muenzstand__name'],
             'filter': 'exact',
-            'display_name': 'Münzstand',
+            'display_name': _('Münzstand'),
             'model': Muenzstand,
             'display_field': 'name',
         },
         'region': {
             'fields': ['Typ__Mzstaette__region__name'],
             'filter': 'exact',
-            'display_name': 'Region',
+            'display_name': _('Region'),
             'model': Region,
             'display_field': 'name',
         },
         'q': {
             'fields': ['invnr', 'rvleg', 'avleg', 'titel'],
             'filter': 'icontains',
-            'display_name': 'Suche',
+            'display_name': _('Suche'),
             'model': None,
             'display_field': None,
         },
         'num': {
             'fields': ['obj_ref__nummer'],
             'filter': 'in',
-            'display_name': 'Nummer',
+            'display_name': _('Nummer'),
             'model': None,
             'display_field': None,
         },
@@ -361,7 +362,7 @@ FILTER_PARAMETERS = {
         'Nominal': {                            # ❶  Name-Suche bleibt
             'fields':        ['idfk_Nominal__name'],
             'filter':        'icontains',
-            'display_name':  'Nominal',
+            'display_name':  _('Nominal'),
             'model':         Nominal,
             'display_field': 'name',
         },
@@ -375,14 +376,14 @@ FILTER_PARAMETERS = {
         'material': {
             'fields': ['Metall__name'],
             'filter': 'icontains',
-            'display_name': 'Material',
+            'display_name': _('Material'),
             'model': Metall,
             'display_field': 'name',
         },
         'sek_merk': {
             'fields': ['sekundaere_Merkmale__name'],
             'filter': 'icontains',
-            'display_name': 'Sekundäre Merkmale',
+            'display_name': _('Sekundäre Merkmale'),
             'model': Sek_Merkmale,
             'display_field': 'name',
             'facet_field': 'sekundaere_Merkmale__name',
@@ -390,7 +391,7 @@ FILTER_PARAMETERS = {
         'her_merk': {
             'fields': ['Herstellungsmerkmale__name'],      # liegt auch direkt am Obj
             'filter': 'icontains',
-            'display_name': 'Herstellungsmerkmale',
+            'display_name': _('Herstellungsmerkmale'),
             'model': Herstellungsmerkmale,
             'display_field': 'name',
             'facet_field': 'Herstellungsmerkmale__name',
@@ -399,7 +400,7 @@ FILTER_PARAMETERS = {
             # bleibt bei der ID – das Browser-Filtering braucht das
             'fields': ['Slg_id'],
             'filter': 'exact',
-            'display_name': 'Sammlung',
+            'display_name': _('Sammlung'),
             'model': Slg,
             'display_field': 'name',
 
@@ -410,7 +411,7 @@ FILTER_PARAMETERS = {
         'SlgTeil': {
             'fields': ['SlgTeil_id'],
             'filter': 'exact',
-            'display_name': 'Sammlungsteil',
+            'display_name': _('Sammlungsteil'),
             'model': SlgTeil,
             'display_field': 'name',
 
@@ -420,28 +421,28 @@ FILTER_PARAMETERS = {
         'Paket': {
             'fields': ['pakete__id'],
             'filter': 'exact',
-            'display_name': 'Paket',
+            'display_name': _('Paket'),
             'model': Paket,
             'display_field': 'oeffentlicher_titel',
         },
         'Ref': {
             'fields': ['idfk_Ref__abk'],
             'filter': 'exact',
-            'display_name': 'Referenz',
+            'display_name': _('Referenz'),
             'model': Ref,
             'display_field': 'abk',
         },
         'coin_type': {
             'fields': ['Typ_id'],
             'filter': 'in',
-            'display_name': 'Münztyp',
+            'display_name': _('Münztyp'),
             'facet_field': 'Typ__nummer',
             'id_field': 'Typ_id',
         },
         # 'av_bildtyp': {
         #     'fields': ['Typ__av_bildtyp_id'],
         #     'filter': 'exact',
-        #     'display_name': 'Av.-Bildtyp',
+        #     'display_name': _('Av.-Bildtyp'),
         #     'model': AvBildtyp,
         #     'display_field': 'name',
         #     'facet_field': 'Typ__av_bildtyp__name',
@@ -450,7 +451,7 @@ FILTER_PARAMETERS = {
         'av_bildtyp': {
             'fields': ['av_bildtyp_id'],
             'filter': 'exact',
-            'display_name': 'Av.-Bildtyp',
+            'display_name': _('Av.-Bildtyp'),
             'model': AvBildtyp,
             'display_field': 'name',
             'facet_field': 'av_bildtyp__name',
@@ -459,21 +460,21 @@ FILTER_PARAMETERS = {
         'av_beizeichen': {
             'fields': ['av_beizeichen_id'],
             'filter': 'exact',
-            'display_name': 'Av.-Beizeichen',
+            'display_name': _('Av.-Beizeichen'),
             'model': AvBeizeichen,
             'display_field': 'name',
         },
         'av_schlagwort': {
             'fields': ['av_bildtyp__schlagworte__name'],
             'filter': 'exact',
-            'display_name': 'Av.-Schlagwort',
+            'display_name': _('Av.-Schlagwort'),
             'model': Schlagwort,
             'display_field': 'name',
         },
         'rv_bildtyp': {
             'fields': ['rv_bildtyp_id'],
             'filter': 'exact',
-            'display_name': 'Rv.-Bildtyp',
+            'display_name': _('Rv.-Bildtyp'),
             'model': RvBildtyp,
             'display_field': 'name',
             'facet_field': 'rv_bildtyp__name',
@@ -482,35 +483,35 @@ FILTER_PARAMETERS = {
         'rv_beizeichen': {
             'fields': ['rv_beizeichen_id'],
             'filter': 'exact',
-            'display_name': 'Rv.-Beizeichen',
+            'display_name': _('Rv.-Beizeichen'),
             'model': RvBeizeichen,
             'display_field': 'name',
         },
         'rv_schlagwort': {
             'fields': ['rv_bildtyp__schlagworte__name'],
             'filter': 'exact',
-            'display_name': 'Rv.-Schlagwort',
+            'display_name': _('Rv.-Schlagwort'),
             'model': Schlagwort,
             'display_field': 'name',
         },
         'obj_type': {
             'fields': ['Objekttyp_id'],
             'filter': 'in',
-            'display_name': 'Objekttyp',
+            'display_name': _('Objekttyp'),
             'model': Objekttyp,
             'display_field': 'name',
         },
         'dat_von': {
             'fields': ['dat_von'],
             'filter': 'gte',
-            'display_name': 'Datierung von',
+            'display_name': _('Datierung von'),
             'model': None,
             'display_field': None,
         },
         'dat_bis': {
             'fields': ['dat_bis'],
             'filter': 'lte',
-            'display_name': 'Datierung bis',
+            'display_name': _('Datierung bis'),
             'model': None,
             'display_field': None,
         },
@@ -519,7 +520,7 @@ FILTER_PARAMETERS = {
             'id_field'           : 'obj_person__idfk_Person_id',
             'fields'             : ['obj_person__idfk_Person__name'],
             'filter'             : 'exact',
-            'display_name'       : 'Prägeherr/-in',
+            'display_name'       : _('Prägeherr/-in'),
             'person_function_ids': [1, 6, 7],        #  <-- NEU
             'appears_on_rev'     : None,             #  <-- NEU
         },
@@ -528,7 +529,7 @@ FILTER_PARAMETERS = {
             'id_field'           : 'obj_person__idfk_Person_id',
             'fields'             : ['obj_person__idfk_Person__name'],
             'filter'             : 'exact',
-            'display_name'       : 'Weitere Personen',
+            'display_name'       : _('Weitere Personen'),
             'exclude_function_ids': [1, 2, 6, 7],    #  <-- NEU
             'appears_on_rev'      : None,            #  <-- NEU
         },
@@ -537,7 +538,7 @@ FILTER_PARAMETERS = {
             'id_field'           : 'obj_person__idfk_Person_id',
             'fields'             : ['obj_person__idfk_Person__name'],
             'filter'             : 'exact',
-            'display_name'       : 'Av.-Dargestellte/r',
+            'display_name'       : _('Av.-Dargestellte/r'),
             'person_function_ids': [2],              #  <-- NEU
             'appears_on_rev'     : False,            #  <-- NEU  (Avers)
         },
@@ -546,7 +547,7 @@ FILTER_PARAMETERS = {
             'id_field'           : 'obj_person__idfk_Person_id',
             'fields'             : ['obj_person__idfk_Person__name'],
             'filter'             : 'exact',
-            'display_name'       : 'Rv.-Dargestellte/r',
+            'display_name'       : _('Rv.-Dargestellte/r'),
             'person_function_ids': [2],              #  <-- NEU
             'appears_on_rev'     : True,             #  <-- NEU  (Revers)
         },

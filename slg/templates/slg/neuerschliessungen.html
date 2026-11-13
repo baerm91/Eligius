@@ -1,6 +1,7 @@
 {% extends 'slg/navbar.html' %}
+{% load i18n %}
 {% load static %}
-{% block title %}Eligius – Neuerschließungen{% endblock title %}
+{% block title %}{% translate "Eligius – Neuerschließungen" %}{% endblock title %}
 
 {% block stylesheets %}
 {{ block.super }}
@@ -130,37 +131,37 @@
 {% block content %}
 <div class="latest-page">
   <div class="latest-header">
-    <div class="latest-eyebrow">Neuerschließungen</div>
+    <div class="latest-eyebrow">{% translate "Neuerschließungen" %}</div>
     <h1 class="latest-title">Numismatica</h1>
-    <p class="latest-subtitle">Hier finden Sie alle zuletzt bearbeiteten numismatischen Einträge in chronologischer Reihenfolge.</p>
+    <p class="latest-subtitle">{% translate "Hier finden Sie alle zuletzt bearbeiteten numismatischen Einträge in chronologischer Reihenfolge." %}</p>
   </div>
 
   <div class="latest-meta">
-    {{ latest_entries.paginator.count }} Einträge insgesamt
+    {{ latest_entries.paginator.count }} {% translate "Einträge insgesamt" %}
   </div>
 
   <div class="latest-grid">
     {% for Obj in latest_entries %}
       {% include "slg/partials/coin_preview_card_mtoa.html" with obj=Obj light=False %}
     {% empty %}
-      <p class="latest-empty">Derzeit sind keine Neuerschließungen verfügbar.</p>
+      <p class="latest-empty">{% translate "Derzeit sind keine Neuerschließungen verfügbar." %}</p>
     {% endfor %}
   </div>
 
   {% if latest_entries.has_other_pages %}
-    <nav class="latest-pagination" aria-label="Seitennavigation">
+    <nav class="latest-pagination" aria-label="{% translate 'Seitennavigation' %}">
       {% if latest_entries.has_previous %}
-        <a href="?page={{ latest_entries.previous_page_number }}" class="latest-pagination-link">Zurück</a>
+        <a href="?page={{ latest_entries.previous_page_number }}" class="latest-pagination-link">{% translate "Zurück" %}</a>
       {% else %}
-        <span class="latest-pagination-link disabled">Zurück</span>
+        <span class="latest-pagination-link disabled">{% translate "Zurück" %}</span>
       {% endif %}
 
-      <span class="latest-pagination-status">Seite {{ latest_entries.number }} von {{ latest_entries.paginator.num_pages }}</span>
+      <span class="latest-pagination-status">{% translate "Seite" %} {{ latest_entries.number }} {% translate "von" %} {{ latest_entries.paginator.num_pages }}</span>
 
       {% if latest_entries.has_next %}
-        <a href="?page={{ latest_entries.next_page_number }}" class="latest-pagination-link">Weiter</a>
+        <a href="?page={{ latest_entries.next_page_number }}" class="latest-pagination-link">{% translate "Weiter" %}</a>
       {% else %}
-        <span class="latest-pagination-link disabled">Weiter</span>
+        <span class="latest-pagination-link disabled">{% translate "Weiter" %}</span>
       {% endif %}
     </nav>
   {% endif %}

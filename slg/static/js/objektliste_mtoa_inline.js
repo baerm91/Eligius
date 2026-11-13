@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         minValueElement.textContent = minValue;
         maxValueElement.textContent = maxValue;
-        rangeDisplayElement.textContent = `Jahr ${minValue} - ${maxValue}`;
+        rangeDisplayElement.textContent = `${gettext('Jahr')} ${minValue} - ${maxValue}`;
       });
 
       // Apply button click handler

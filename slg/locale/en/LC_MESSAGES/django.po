@@ -1,0 +1,1282 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Eligius\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Start"
+msgstr "Home"
+
+msgid "Sammlungen"
+msgstr "Collections"
+
+msgid "Objekte"
+msgstr "Objects"
+
+msgid "Projekt"
+msgstr "Project"
+
+msgid "Eligius Lab"
+msgstr "Eligius Lab"
+
+msgid "Impressum"
+msgstr "Legal notice"
+
+msgid "Datenschutzerklärung"
+msgstr "Privacy policy"
+
+msgid "Anmelden"
+msgstr "Log in"
+
+msgid "Menü"
+msgstr "Menu"
+
+msgid "Sprache"
+msgstr "Language"
+
+msgid ""
+"Diese Website verwendet Cookies, um Ihnen das beste Erlebnis auf unserer "
+"Webseite zu ermöglichen."
+msgstr ""
+"This website uses cookies to give you the best experience on our website."
+
+msgid "Ablehnen"
+msgstr "Decline"
+
+msgid "Akzeptieren"
+msgstr "Accept"
+
+msgid "Mehr erfahren"
+msgstr "Learn more"
+
+msgid "Sammlung"
+msgstr "Collection"
+
+msgid "Sammlungsteil"
+msgstr "Collection section"
+
+msgid "Sammlungen und Sammlungsteile"
+msgstr "Collections and sections"
+
+msgid "Alle Sammlungen"
+msgstr "All collections"
+
+msgid "Bitte zuerst eine Sammlung auswählen"
+msgstr "Select a collection first"
+
+msgid "Vorderseite"
+msgstr "Obverse"
+
+msgid "Rückseite"
+msgstr "Reverse"
+
+msgid "Avers"
+msgstr "Obverse"
+
+msgid "Revers"
+msgstr "Reverse"
+
+msgid "Legende"
+msgstr "Legend"
+
+msgid "Beschreibungen"
+msgstr "Descriptions"
+
+msgid "Schlagworte"
+msgstr "Keywords"
+
+msgid "Schlagwort"
+msgstr "Keyword"
+
+msgid "Dargestellte/r"
+msgstr "Depicted person"
+
+msgid "Dargestellte Person"
+msgstr "Depicted person"
+
+msgid "Personen"
+msgstr "People"
+
+msgid "Person"
+msgstr "Person"
+
+msgid "Münzherr/in"
+msgstr "Issuing authority"
+
+msgid "Prägeherr"
+msgstr "Issuing authority"
+
+msgid "Weitere Personen"
+msgstr "Other people"
+
+msgid "Münzstätten"
+msgstr "Mints"
+
+msgid "Münzstätte"
+msgstr "Mint"
+
+msgid "Ort"
+msgstr "Place"
+
+msgid "Nominale"
+msgstr "Denominations"
+
+msgid "Nominal"
+msgstr "Denomination"
+
+msgid "Ausprägung"
+msgstr "Denomination"
+
+msgid "Material"
+msgstr "Material"
+
+msgid "Beschaffenheit"
+msgstr "Composition"
+
+msgid "Merkmale"
+msgstr "Features"
+
+msgid "Herstellungsmerkmale"
+msgstr "Manufacturing features"
+
+msgid "Sekundäre Merkmale"
+msgstr "Secondary features"
+
+msgid "Alle Herstellungsmerkmale"
+msgstr "All manufacturing features"
+
+msgid "Alle sekundären Merkmale"
+msgstr "All secondary features"
+
+msgid "Literatur"
+msgstr "Bibliography"
+
+msgid "Referenz"
+msgstr "Reference"
+
+msgid "Münztyp (Nummer)"
+msgstr "Coin type (number)"
+
+msgid "Wird über die gewählte Referenz sinnvoll vorgefiltert."
+msgstr "Filtered by the selected reference."
+
+msgid "Wappen"
+msgstr "Coat of arms"
+
+msgid "Bezeichnung"
+msgstr "Name"
+
+msgid "Datierung"
+msgstr "Dating"
+
+msgid "von"
+msgstr "from"
+
+msgid "bis"
+msgstr "to"
+
+msgid "Suchen"
+msgstr "Search"
+
+msgid "Suchen..."
+msgstr "Search..."
+
+msgid "Suche.."
+msgstr "Search..."
+
+msgid "Suchbegriff"
+msgstr "Search term"
+
+msgid "Suchbegriff eingeben..."
+msgstr "Enter a search term..."
+
+msgid "Suchkategorie"
+msgstr "Search category"
+
+msgid "Kategorie wählen"
+msgstr "Choose a category"
+
+msgid "Allgemein"
+msgstr "General"
+
+msgid "Titel"
+msgstr "Title"
+
+msgid "Inventarnummer"
+msgstr "Inventory number"
+
+msgid "Metall"
+msgstr "Metal"
+
+msgid "Avers-Legende"
+msgstr "Obverse legend"
+
+msgid "Revers-Legende"
+msgstr "Reverse legend"
+
+msgid "Textsuche &amp; Eingrenzung"
+msgstr "Text search &amp; filters"
+
+msgid "Münztyp-Zuweisung"
+msgstr "Coin type assignment"
+
+msgid "Alle Objekte"
+msgstr "All objects"
+
+msgid "Mit Münztyp-Zuweisung"
+msgstr "With coin type assignment"
+
+msgid "Ohne Münztyp-Zuweisung"
+msgstr "Without coin type assignment"
+
+msgid "Filter"
+msgstr "Filters"
+
+msgid "Filter anzeigen"
+msgstr "Show filters"
+
+msgid "Anzahl der Objekte:"
+msgstr "Number of objects:"
+
+msgid "Vollbildmodus beenden"
+msgstr "Exit fullscreen"
+
+msgid "Drücken Sie"
+msgstr "Press"
+
+msgid ""
+"oder klicken Sie auf die Schaltfläche, um den Vollbildmodus zu beenden."
+msgstr "or click the button to exit fullscreen."
+
+msgid "Strg + Mausrad zum Zoomen"
+msgstr "Ctrl + mouse wheel to zoom"
+
+msgid "Zeitliche Verteilung der Objekte"
+msgstr "Distribution of objects over time"
+
+msgid "Zeitraum einschränken"
+msgstr "Restrict date range"
+
+msgid "Jahr 0 - 2000"
+msgstr "Year 0 - 2000"
+
+msgid "Anwenden"
+msgstr "Apply"
+
+msgid "Keine Objekte gefunden."
+msgstr "No objects found."
+
+msgid "Eligius - Objekte"
+msgstr "Eligius - Objects"
+
+msgid "Eligius - Objekt"
+msgstr "Eligius - Object"
+
+msgid "Eligius - Typ"
+msgstr "Eligius - Type"
+
+msgid "Eligius - Av.-Schlagworte"
+msgstr "Eligius - Obverse keywords"
+
+msgid "Eligius - Rv.-Schlagworte"
+msgstr "Eligius - Reverse keywords"
+
+msgid "Eligius – Sammlungen"
+msgstr "Eligius – Collections"
+
+msgid "Eligius – Neuerschließungen"
+msgstr "Eligius – Recently catalogued"
+
+msgid "Neuerschließungen"
+msgstr "Recently catalogued"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "Reset"
+msgstr "Reset"
+
+msgid "Abbrechen"
+msgstr "Cancel"
+
+msgid "Aktueller Wert"
+msgstr "Current value"
+
+msgid "Aktuelles Motiv"
+msgstr "Current motif"
+
+msgid "Alle Münzen anzeigen"
+msgstr "View all coins"
+
+msgid "Alle Münzstätten anzeigen"
+msgstr "View all mints"
+
+msgid "Alle Nominale anzeigen"
+msgstr "View all denominations"
+
+msgid "Analysen"
+msgstr "Analyses"
+
+msgid "Anmerkungen"
+msgstr "Notes"
+
+msgid "Ansicht wählen"
+msgstr "Choose view"
+
+msgid "Ansicht"
+msgstr "View"
+
+msgid "Auflage"
+msgstr "Mintage"
+
+msgid "Ausgabedatum"
+msgstr "Issue date"
+
+msgid "Av.-Bildbeschreibung"
+msgstr "Obverse description"
+
+msgid "Av"
+msgstr "Obv."
+
+msgid "Rv"
+msgstr "Rev."
+
+msgid "Bearbeitung abgeschlossen"
+msgstr "Editing completed"
+
+msgid "Bearbeitungsstand"
+msgstr "Editing status"
+
+msgid "Begründung"
+msgstr "Reason"
+
+msgid "Beispielobjekte aus dem Paket"
+msgstr "Example objects from this group"
+
+msgid "Beizeichen"
+msgstr "Control mark"
+
+msgid "Beschlussdatum"
+msgstr "Decision date"
+
+msgid "Bildrand"
+msgstr "Border"
+
+msgid "Bildrechte"
+msgstr "Image rights"
+
+msgid ""
+"Bitte begründen Sie Ihren Änderungsvorschlag und geben Sie nach Möglichkeit "
+"Quellen an."
+msgstr ""
+"Please explain your proposed change and provide sources where possible."
+
+msgid "Bitte geben Sie den aktuellen Wert an, falls vorhanden."
+msgstr "Please enter the current value, if available."
+
+msgid "Bitte wählen Sie"
+msgstr "Please select"
+
+msgid "Chronik"
+msgstr "Chronicle"
+
+msgid "Derzeit sind keine Neuerschließungen verfügbar."
+msgstr "No recently catalogued entries are available."
+
+msgid "Derzeit sind keine Sammlungen verfügbar."
+msgstr "No collections are currently available."
+
+msgid ""
+"Die Karte zeigt den Fundplatz des Pakets und die Münzstätten, aus denen die "
+"verknüpften Objekte stammen."
+msgstr ""
+"The map shows the findspot of this group and the mints of its associated "
+"objects."
+
+msgid "Dominantes Material im Paket; Details beim Überfahren."
+msgstr "Predominant material in this group; hover for details."
+
+msgid "Durchmesser"
+msgstr "Diameter"
+
+msgid "Durchsuchen"
+msgstr "Browse"
+
+msgid "Eingrenzung"
+msgstr "Filters"
+
+msgid "Einträge insgesamt"
+msgstr "total entries"
+
+msgid "Ergänzende Literatur"
+msgstr "Additional bibliography"
+
+msgid "Ergänzung"
+msgstr "Addition"
+
+msgid "Erste"
+msgstr "First"
+
+msgid "Externer Link"
+msgstr "External link"
+
+msgid "Fundplatz"
+msgstr "Findspot"
+
+msgid "Fälschung"
+msgstr "Forgery"
+
+msgid "Für dieses Paket sind noch keine Objekte verknüpft."
+msgstr "No objects have been linked to this group yet."
+
+msgid ""
+"Geografische Herkunft der erfassten Prägungen; Details beim Überfahren."
+msgstr "Geographical origin of the recorded coins; hover for details."
+
+msgid "Gesamtanzahl"
+msgstr "Total count"
+
+msgid "Geschichte der Münzsammlung"
+msgstr "History of the coin collection"
+
+msgid "Gewicht"
+msgstr "Weight"
+
+msgid "Herstellung"
+msgstr "Manufacture"
+
+msgid ""
+"Hier finden Sie alle zuletzt bearbeiteten numismatischen Einträge in "
+"chronologischer Reihenfolge."
+msgstr "Browse all recently edited numismatic entries in chronological order."
+
+msgid "Historische Ereignisse"
+msgstr "Historical events"
+
+msgid "Ihr Name *"
+msgstr "Your name *"
+
+msgid "Ihre E-Mail *"
+msgstr "Your email *"
+
+msgid "Inv.-Nr."
+msgstr "Inv. no."
+
+msgid "Karte zum Paket"
+msgstr "Group map"
+
+msgid "Karteninformationen anzeigen"
+msgstr "Show map information"
+
+msgid "Kartenlegende"
+msgstr "Map legend"
+
+msgid "Katalog der Funde"
+msgstr "Finds catalogue"
+
+msgid "Keine Datierungsdaten vorhanden."
+msgstr "No dating information available."
+
+msgid "Keine Koordinaten für dieses Paket vorhanden."
+msgstr "No coordinates available for this group."
+
+msgid "Keine Materialdaten vorhanden"
+msgstr "No material data available"
+
+msgid "Kennzahlen"
+msgstr "Key figures"
+
+msgid "Kollektion"
+msgstr "Collection"
+
+msgid "Konkordanz"
+msgstr "Concordance"
+
+msgid "Kurzbeschreibung"
+msgstr "Short description"
+
+msgid "Lade Kontextdaten..."
+msgstr "Loading context data..."
+
+msgid "Lebensdaten"
+msgstr "Biographical dates"
+
+msgid "Letzte"
+msgstr "Last"
+
+msgid "Link"
+msgstr "Link"
+
+msgid "Links"
+msgstr "Links"
+
+msgid "Loading..."
+msgstr "Loading..."
+
+msgid "Materialität"
+msgstr "Materials"
+
+msgid "Materialmix anzeigen"
+msgstr "Show material composition"
+
+msgid "Materialverteilung"
+msgstr "Material distribution"
+
+msgid "Metadaten"
+msgstr "Metadata"
+
+msgid "Mit diesem Typ verbundene Objekte:"
+msgstr "Objects associated with this type:"
+
+msgid "Motiv-Info"
+msgstr "Motif information"
+
+msgid "Motivverteilung"
+msgstr "Motif distribution"
+
+msgid "Münze"
+msgstr "Coin"
+
+msgid "Münze bisher unbestimmt"
+msgstr "Coin not yet identified"
+
+msgid "Münzen"
+msgstr "Coins"
+
+msgid "Münzen aus Eligius"
+msgstr "Coins from Eligius"
+
+msgid "Münzkontext-Analyse"
+msgstr "Coin context analysis"
+
+msgid "Münzstand"
+msgstr "Issuing state"
+
+msgid "Münzstättenverteilung"
+msgstr "Mint distribution"
+
+msgid "Münztyp"
+msgstr "Coin type"
+
+msgid "Nicht angegeben"
+msgstr "Not specified"
+
+msgid "Noch keine Münzstättendaten vorhanden."
+msgstr "No mint data available yet."
+
+msgid "Noch keine Nominaldaten vorhanden."
+msgstr "No denomination data available yet."
+
+msgid "Noch keine Objektkacheln für dieses Paket vorhanden."
+msgstr "No object cards available for this group yet."
+
+msgid "Nominalverteilung"
+msgstr "Denomination distribution"
+
+msgid "Nomisma-RDF für diese Sammlung herunterladen"
+msgstr "Download Nomisma RDF for this collection"
+
+msgid "Nächste"
+msgstr "Next"
+
+msgid "Objektbiographie"
+msgstr "Object history"
+
+msgid "Objekte Paginierung"
+msgstr "Object pagination"
+
+msgid "Objektnavigation"
+msgstr "Object navigation"
+
+msgid "Objekttyp"
+msgstr "Object type"
+
+msgid "Paketbeschreibung und Beispiele"
+msgstr "Group description and examples"
+
+msgid "Paketübersicht"
+msgstr "Group overview"
+
+msgid "Region"
+msgstr "Region"
+
+msgid "Reichskreis"
+msgstr "Imperial circle"
+
+msgid "Rv.-Beschreibung"
+msgstr "Reverse description"
+
+msgid "Rückseite Beschreibung"
+msgstr "Reverse description"
+
+msgid "Rückseite Legende"
+msgstr "Reverse legend"
+
+msgid "Seite"
+msgstr "Page"
+
+msgid "Seitennavigation"
+msgstr "Page navigation"
+
+msgid "Sonstiges"
+msgstr "Other"
+
+msgid "Textsuche"
+msgstr "Text search"
+
+msgid "Technica"
+msgstr "Technical details"
+
+msgid "Timeline ansehen"
+msgstr "View timeline"
+
+msgid "Unbestimmt"
+msgstr "Unidentified"
+
+msgid "Verteilung der im Paket erfassten Nominale; Details beim Überfahren."
+msgstr ""
+"Distribution of denominations recorded in this group; hover for details."
+
+msgid "Vorderseite Beschreibung"
+msgstr "Obverse description"
+
+msgid "Vorderseite Legende"
+msgstr "Obverse legend"
+
+msgid "Vorgeschlagener neuer Wert"
+msgstr "Proposed new value"
+
+msgid "Vorherige"
+msgstr "Previous"
+
+msgid "Weiter"
+msgstr "Next"
+
+msgid ""
+"Weitere Katalogobjekte sind über die vollständige Münzliste erreichbar."
+msgstr "More catalogue objects are available in the full coin list."
+
+msgid "Weitere Quellen"
+msgstr "Other sources"
+
+msgid "Zeichen/Signatur"
+msgstr "Mark/signature"
+
+msgid "Zeitbereich der Münzen"
+msgstr "Date range of the coins"
+
+msgid "Zeitleiste"
+msgstr "Timeline"
+
+msgid "Zeitliche Verteilung"
+msgstr "Distribution over time"
+
+msgid "Zeitspanne der im Paket erfassten Münzen."
+msgstr "Date range of the coins recorded in this group."
+
+msgid "Zu änderndes Feld *"
+msgstr "Field to change *"
+
+msgid "Zurück"
+msgstr "Back"
+
+msgid "bearbeiten"
+msgstr "edit"
+
+msgid "bekannt"
+msgstr "known"
+
+msgid "hinzugefügt"
+msgstr "added"
+
+msgid "in Bearbeitung"
+msgstr "in progress"
+
+msgid "keine Objekte"
+msgstr "no objects"
+
+msgid "kontrolliert"
+msgstr "checked"
+
+msgid "nicht definiert"
+msgstr "undefined"
+
+msgid "noch offen"
+msgstr "pending"
+
+msgid "unsicher"
+msgstr "uncertain"
+
+msgid "Änderung vorschlagen"
+msgstr "Suggest a change"
+
+msgid "Öffentliches Paket"
+msgstr "Public group"
+
+msgid "Alle …"
+msgstr "All …"
+
+msgid "Sammlung wählen …"
+msgstr "Choose a collection …"
+
+msgid "Sammlungsteil wählen …"
+msgstr "Choose a collection section …"
+
+msgid "Lade …"
+msgstr "Loading …"
+
+msgid "Fehler beim Laden"
+msgstr "Error loading data"
+
+msgid "Münzstätte suchen …"
+msgstr "Search mints …"
+
+msgid "Nominal suchen …"
+msgstr "Search denominations …"
+
+msgid "Herstellungsmerkmale suchen …"
+msgstr "Search manufacturing features …"
+
+msgid "Sekundäre Merkmale suchen …"
+msgstr "Search secondary features …"
+
+msgid "Prägeherren suchen …"
+msgstr "Search issuing authorities …"
+
+msgid "Personen suchen …"
+msgstr "Search people …"
+
+msgid "Wappen suchen …"
+msgstr "Search coats of arms …"
+
+msgid "Beschreibungen suchen …"
+msgstr "Search descriptions …"
+
+msgid "Schlagworte suchen …"
+msgstr "Search keywords …"
+
+msgid "Dargestellte/r suchen …"
+msgstr "Search depicted people …"
+
+msgid "Referenz suchen …"
+msgstr "Search references …"
+
+msgid "Münztyp-Nummer suchen …"
+msgstr "Search coin type numbers …"
+
+msgid "Material suchen …"
+msgstr "Search materials …"
+
+msgid "Keine Daten für diesen Zeitraum verfügbar"
+msgstr "No data available for this period"
+
+msgid "Chronologie"
+msgstr "Chronology"
+
+msgid "Stückzahl"
+msgstr "Count"
+
+msgid "Anzahl der Objekte"
+msgstr "Number of objects"
+
+msgid "Suche"
+msgstr "Search"
+
+msgid "Av.-Legende"
+msgstr "Obverse legend"
+
+msgid "Rv.-Legende"
+msgstr "Reverse legend"
+
+msgid "Nummer"
+msgstr "Number"
+
+msgid "Paket"
+msgstr "Group"
+
+msgid "Av.-Bildtyp"
+msgstr "Obverse design"
+
+msgid "Rv.-Bildtyp"
+msgstr "Reverse design"
+
+msgid "Av.-Beizeichen"
+msgstr "Obverse control mark"
+
+msgid "Rv.-Beizeichen"
+msgstr "Reverse control mark"
+
+msgid "Av.-Schlagwort"
+msgstr "Obverse keyword"
+
+msgid "Rv.-Schlagwort"
+msgstr "Reverse keyword"
+
+msgid "Alle ansehen"
+msgstr "View all"
+
+msgid "Münzen im Kontext"
+msgstr "Coins in context"
+
+msgid "Historische Zeugnisse sichtbar machen"
+msgstr "Bringing historical evidence to light"
+
+msgid "Derzeit keine neuen Objekte"
+msgstr "No new objects at present"
+
+msgid "Kontexte"
+msgstr "Contexts"
+
+msgid ""
+"Objekte als Teil von Hortfunden, Fundkontexten, Grabungen und Themen "
+"betrachten."
+msgstr ""
+"Explore objects as part of hoards, find contexts, excavations and themes."
+
+msgid "Zum Beispielobjekt"
+msgstr "View example object"
+
+msgid "Frontcover folgt"
+msgstr "Cover image coming soon"
+
+msgid "Fundkoordinate"
+msgstr "Find coordinates"
+
+msgid "Karte"
+msgstr "Map"
+
+msgid "Fundkoordinate folgt"
+msgstr "Find coordinates coming soon"
+
+msgid "Objekte folgen"
+msgstr "Objects coming soon"
+
+msgid "Kontext"
+msgstr "Context"
+
+msgid "Anzahl"
+msgstr "Count"
+
+msgid "Datenbank"
+msgstr "Database"
+
+msgid "Fundort"
+msgstr "Findspot"
+
+msgid "Objektbeispiele"
+msgstr "Example objects"
+
+msgid "Paket ansehen"
+msgstr "View group"
+
+msgid "Weitere Fundkomplexe"
+msgstr "Other find assemblages"
+
+msgid "Statistiken"
+msgstr "Statistics"
+
+msgid "Zahlen & Fakten"
+msgstr "Facts & figures"
+
+msgid "Münztypen"
+msgstr "Coin types"
+
+msgid "Ikonografie"
+msgstr "Iconography"
+
+msgid "Schlagwort-Wordcloud"
+msgstr "Keyword cloud"
+
+msgid ""
+"Je häufiger ein Schlagwort vorkommt, desto größer wird es dargestellt. Ein "
+"Klick öffnet direkt die gefilterte Objektliste."
+msgstr ""
+"More frequent keywords appear larger. Click a keyword to open the filtered "
+"object list."
+
+msgid "Schlagworte der Vorderseiten in Eligius."
+msgstr "Obverse keywords in Eligius."
+
+msgid "Schlagworte der Rückseiten in Eligius."
+msgstr "Reverse keywords in Eligius."
+
+msgid "E-Mail Adresse"
+msgstr "Email address"
+
+msgid "Ihre Nachricht"
+msgstr "Your message"
+
+msgid "Anfrage senden"
+msgstr "Send enquiry"
+
+msgid "Sammlung:"
+msgstr "Collection:"
+
+msgid "Sammlungsteil:"
+msgstr "Collection section:"
+
+msgid "Inv.-Nr.:"
+msgstr "Inv. no.:"
+
+msgid "Objekttyp:"
+msgstr "Object type:"
+
+msgid "Bearbeitungsstand:"
+msgstr "Editing status:"
+
+msgid "Fälschung:"
+msgstr "Forgery:"
+
+msgid "Münzstand:"
+msgstr "Issuing state:"
+
+msgid "Reichskreis:"
+msgstr "Imperial circle:"
+
+msgid "Auflage:"
+msgstr "Mintage:"
+
+msgid "Ausgabedatum:"
+msgstr "Issue date:"
+
+msgid "Beschlussdatum:"
+msgstr "Decision date:"
+
+msgid "Münzstätte:"
+msgstr "Mint:"
+
+msgid "Region:"
+msgstr "Region:"
+
+msgid "Nominal:"
+msgstr "Denomination:"
+
+msgid "Material:"
+msgstr "Material:"
+
+msgid "Herstellung:"
+msgstr "Manufacture:"
+
+msgid "Merkmale:"
+msgstr "Features:"
+
+msgid "Technica:"
+msgstr "Technical details:"
+
+msgid "Objektbiographie:"
+msgstr "Object history:"
+
+msgid "Ergänzende Literatur:"
+msgstr "Additional bibliography:"
+
+msgid "Anmerkungen:"
+msgstr "Notes:"
+
+msgid "Metadaten:"
+msgstr "Metadata:"
+
+msgid "Bildrechte:"
+msgstr "Image rights:"
+
+msgid "Wappen:"
+msgstr "Coat of arms:"
+
+msgid "Ansicht:"
+msgstr "View:"
+
+msgid "Münztyp:"
+msgstr "Coin type:"
+
+msgid "Literatur:"
+msgstr "Bibliography:"
+
+msgid "Link:"
+msgstr "Link:"
+
+msgid "Konkordanz:"
+msgstr "Concordance:"
+
+msgid "Ergänzung:"
+msgstr "Addition:"
+
+msgid "Avers:"
+msgstr "Obverse:"
+
+msgid "Revers:"
+msgstr "Reverse:"
+
+msgid "Lebensdaten:"
+msgstr "Biographical dates:"
+
+msgid "Kurzbeschreibung:"
+msgstr "Short description:"
+
+msgid "Zeichen/Signatur:"
+msgstr "Mark/signature:"
+
+msgid "Links:"
+msgstr "Links:"
+
+msgid "Weitere Quellen:"
+msgstr "Other sources:"
+
+msgid "Datenbank:"
+msgstr "Database:"
+
+msgid "Datierung:"
+msgstr "Dating:"
+
+msgid "Av:"
+msgstr "Obv.:"
+
+msgid "Rv:"
+msgstr "Rev.:"
+
+msgid "Zurücksetzen"
+msgstr "Reset"
+
+msgid "Datierung von"
+msgstr "Date from"
+
+msgid "Datierung bis"
+msgstr "Date to"
+
+msgid "Prägeherr/-in"
+msgstr "Issuing authority"
+
+msgid "Av.-Dargestellte/r"
+msgstr "Obverse depicted person"
+
+msgid "Rv.-Dargestellte/r"
+msgstr "Reverse depicted person"
+
+msgid "Bitte geben Sie weitere Zeichen ein."
+msgstr "Please enter more characters."
+
+msgid "Bitte kürzen Sie Ihre Eingabe."
+msgstr "Please shorten your input."
+
+msgid "Weitere Ergebnisse werden geladen …"
+msgstr "Loading more results …"
+
+msgid "Die maximale Anzahl ist ausgewählt."
+msgstr "The maximum number of items is selected."
+
+msgid "Keine Ergebnisse gefunden."
+msgstr "No results found."
+
+msgid "Suche läuft …"
+msgstr "Searching …"
+
+msgid "Auswahl löschen"
+msgstr "Clear selection"
+
+msgid "Jahr"
+msgstr "Year"
+
+msgid "v. Chr."
+msgstr "BC"
+
+msgid "n. Chr."
+msgstr "AD"
+
+msgid "Kein Bild"
+msgstr "No image"
+
+msgid "Zum Objekt"
+msgstr "View object"
+
+msgid "Ereignis-Info"
+msgstr "Event information"
+
+msgid "Gesamtübersicht"
+msgstr "Overview"
+
+msgid "Gesamtübersicht Matrix"
+msgstr "Overview matrix"
+
+msgid "Zeitleistenansicht aktiv"
+msgstr "Timeline view active"
+
+msgid "Gesamtübersicht (Matrix) aktiv"
+msgstr "Overview matrix active"
+
+msgid "Ausgewählte Münzstätte nicht gefunden."
+msgstr "Selected mint not found."
+
+msgid "Bitte eine Münzstätte auswählen."
+msgstr "Please select a mint."
+
+msgid "Keine Münzstätten verfügbar."
+msgstr "No mints available."
+
+msgid "Keine Zeitleisten-Daten verfügbar"
+msgstr "No timeline data available"
+
+msgid "Keine Münzen verfügbar"
+msgstr "No coins available"
+
+msgid "Keine Zeitangaben verfügbar"
+msgstr "No dates available"
+
+msgid "Keine Ereignisse gefunden"
+msgstr "No events found"
+
+msgid "Keine ausreichenden Daten für Matrix-Ansicht vorhanden."
+msgstr "Insufficient data for the matrix view."
+
+msgid "Gesamtübersicht aller Münzstätten."
+msgstr "Overview of all mints."
+
+msgid "Nominale:"
+msgstr "Denominations:"
+
+msgid "Motive des Prägeherren:"
+msgstr "Designs of the issuing authority:"
+
+msgid ""
+"Bitte wählen Sie eine Münzstätte aus oder zeigen Sie die Gesamtübersicht an."
+msgstr "Please select a mint or display the overview."
+
+msgid "Summe"
+msgstr "Total"
+
+msgid "Keine Münzen für diese Münzstätte gefunden"
+msgstr "No coins found for this mint"
+
+msgid "Keine Schlagworte verfügbar"
+msgstr "No keywords available"
+
+msgid "Keine Schlagworte verfügbar."
+msgstr "No keywords available."
+
+msgid "Fundpunkt"
+msgstr "Findspot"
+
+msgid "Objekte: "
+msgstr "Objects: "
+
+msgid "Ausgewählte Münzstätte:"
+msgstr "Selected mint:"
+
+msgid "Münzverteilung"
+msgstr "Coin distribution"
+
+msgid "Motiv"
+msgstr "Design"
+
+msgid "Motive"
+msgstr "Designs"
+
+msgid "gesamt"
+msgstr "total"
+
+msgid "nicht in Matrix-Daten"
+msgstr "not in matrix data"
+
+msgid "nicht in dieser Münzstätte"
+msgstr "not in this mint"
+
+msgid "Zuordnungen"
+msgstr "assignments"
+
+msgid "erfasst"
+msgstr "recorded"
+
+msgid "Schließen"
+msgstr "Close"
+
+msgid "Fehler beim Laden der Daten."
+msgstr "Error loading data."
+
+msgid "Zeigt eine Matrix aller Münzstätten und deren Motive"
+msgstr "Shows a matrix of all mints and their designs"
+
+msgid "Vollbildmodus"
+msgstr "Fullscreen"
+
+msgid ""
+"Eligius bietet Einblicke in klösterliche und öffentliche numismatische "
+"Bestände und macht diese digital zugänglich."
+msgstr ""
+"Eligius offers insights into monastic and public numismatic collections and "
+"makes them digitally accessible."
+
+msgid "Details öffnen"
+msgstr "Open details"
+
+msgid "Münzen anzeigen"
+msgstr "View coins"
+
+msgid "Dialog &amp; Partnerschaft"
+msgstr "Dialogue &amp; partnership"
+
+msgid "Kontaktieren"
+msgstr "Contact"
+
+msgid "Sie uns"
+msgstr "us"
+
+msgid "Martin Baer &ndash; Kontaktdaten"
+msgstr "Martin Baer &ndash; contact details"
+
+msgid ""
+"Haben Sie Fragen zu einer Sammlung oder einem bestimmten Objekt? Wir "
+"vermitteln gerne den Kontakt zu den jeweiligen Kuratoren. Auch bei Interesse"
+" an einer Partnerschaft oder allgemeinen Anliegen sind wir für Sie da "
+"&ndash; wir melden uns zeitnah bei Ihnen."
+msgstr ""
+"Do you have questions about a collection or a particular object? We can put "
+"you in touch with the relevant curators. For partnerships or general "
+"enquiries, please contact us and we will get back to you shortly."
+
+msgid "Historische Ereignisse &amp; Münzen"
+msgstr "Historical events &amp; coins"
+
+msgid ""
+"Hier können Sie Änderungen oder Ergänzungen zu diesem Objekt vorschlagen. "
+"Ihre Vorschläge werden von unserem Team geprüft und gegebenenfalls "
+"übernommen."
+msgstr ""
+"You can suggest changes or additions to this object here. Our team will "
+"review your suggestions and incorporate them where appropriate."
+
+#, python-format
+msgid "Vergleich der Prägungen von %(ruler)s"
+msgstr "Comparison of coins issued by %(ruler)s"
+
+#, python-format
+msgid " im Zeitraum %(start)s – %(end)s"
+msgstr " in the period %(start)s – %(end)s"
+
+#, python-format
+msgid " (ab %(start)s)"
+msgstr " (from %(start)s)"
+
+#, python-format
+msgid " (bis %(end)s)"
+msgstr " (until %(end)s)"
+
+#, python-format
+msgid "Münzkontext-Analyse im Zeitraum %(start)s – %(end)s"
+msgstr "Coin context analysis for %(start)s – %(end)s"
+
+#, python-format
+msgid "Münzkontext-Analyse ab %(start)s"
+msgstr "Coin context analysis from %(start)s"
+
+#, python-format
+msgid "Münzkontext-Analyse bis %(end)s"
+msgstr "Coin context analysis until %(end)s"
+
+#, python-format
+msgid ""
+"Münzen: %(coins)s · Motive: %(motifs)s · Münzstätten: %(mints)s · Nominale: "
+"%(denominations)s"
+msgstr ""
+"Coins: %(coins)s · Designs: %(motifs)s · Mints: %(mints)s · Denominations: "
+"%(denominations)s"

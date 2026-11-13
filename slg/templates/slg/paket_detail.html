@@ -1,4 +1,5 @@
 {% extends 'slg/navbar.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block title %}{% firstof paket.titel_oeffentlich paket.name %} | Eligius{% endblock title %}
@@ -691,89 +692,89 @@
 <main class="package-detail">
   <div class="package-eyebrow">
     <i class="bi bi-geo-alt-fill"></i>
-    {% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}Öffentliches Paket{% endif %}
+    {% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}{% translate "Öffentliches Paket" %}{% endif %}
     {% if paket.kontexttyp %}&bull; {{ paket.get_kontexttyp_display }}{% endif %}
   </div>
 
   <h1 class="package-title">{% firstof paket.titel_oeffentlich paket.name %}</h1>
-  <section class="package-intro-grid" aria-label="Paketbeschreibung und Beispiele">
+  <section class="package-intro-grid" aria-label="{% translate 'Paketbeschreibung und Beispiele' %}">
     {% if paket.beschreibung %}
       <div class="package-description">{{ paket.beschreibung|striptags|linebreaks }}</div>
     {% endif %}
-    <aside class="package-teaser-rail package-coin-scope browse-page" aria-label="Beispielobjekte aus dem Paket">
+    <aside class="package-teaser-rail package-coin-scope browse-page" aria-label="{% translate 'Beispielobjekte aus dem Paket' %}">
       {% for obj in teaser_entries %}
         {% include "slg/partials/coin_preview_card_mtoa.html" with obj=obj light=True %}
       {% empty %}
-        <div class="package-teaser-empty">Noch keine Objektkacheln für dieses Paket vorhanden.</div>
+        <div class="package-teaser-empty">{% translate "Noch keine Objektkacheln für dieses Paket vorhanden." %}</div>
       {% endfor %}
     </aside>
   </section>
 
-  <section class="package-hero-grid" aria-label="Paketübersicht">
+  <section class="package-hero-grid" aria-label="{% translate 'Paketübersicht' %}">
     <aside class="package-map-card">
       {% if package_map_markers %}
-        <div id="packageMap" aria-label="Karte zum Paket"></div>
+        <div id="packageMap" aria-label="{% translate 'Karte zum Paket' %}"></div>
       {% else %}
-        <div class="package-map-empty">Keine Koordinaten für dieses Paket vorhanden.</div>
+        <div class="package-map-empty">{% translate "Keine Koordinaten für dieses Paket vorhanden." %}</div>
       {% endif %}
       <div class="package-map-info">
-        <button type="button" class="package-map-info__button" aria-label="Karteninformationen anzeigen">
+        <button type="button" class="package-map-info__button" aria-label="{% translate 'Karteninformationen anzeigen' %}">
           <i class="bi bi-info-lg"></i>
         </button>
         <div class="package-map-info__panel">
           <div class="package-map-caption">
-            <span>{% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}Fundplatz{% endif %}</span>
-            <span>{% if paket.fund_lat and paket.fund_lng %}{{ paket.fund_lat }}, {{ paket.fund_lng }}{% else %}Münzstätten{% endif %}</span>
+            <span>{% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}{% translate "Fundplatz" %}{% endif %}</span>
+            <span>{% if paket.fund_lat and paket.fund_lng %}{{ paket.fund_lat }}, {{ paket.fund_lng }}{% else %}{% translate "Münzstätten" %}{% endif %}</span>
           </div>
-          <p class="package-map-explanation">Die Karte zeigt den Fundplatz des Pakets und die Münzstätten, aus denen die verknüpften Objekte stammen.</p>
-          <div class="package-map-legend" aria-label="Kartenlegende">
-            <span class="package-map-legend__item"><span class="package-map-legend__dot package-map-legend__dot--fund"></span>Fundplatz</span>
-            <span class="package-map-legend__item"><span class="package-map-legend__dot package-map-legend__dot--mint"></span>Münzstätten</span>
+          <p class="package-map-explanation">{% translate "Die Karte zeigt den Fundplatz des Pakets und die Münzstätten, aus denen die verknüpften Objekte stammen." %}</p>
+          <div class="package-map-legend" aria-label="{% translate 'Kartenlegende' %}">
+            <span class="package-map-legend__item"><span class="package-map-legend__dot package-map-legend__dot--fund"></span>{% translate "Fundplatz" %}</span>
+            <span class="package-map-legend__item"><span class="package-map-legend__dot package-map-legend__dot--mint"></span>{% translate "Münzstätten" %}</span>
           </div>
         </div>
       </div>
     </aside>
   </section>
 
-  <section class="package-visual-card package-chart-panel" aria-label="Zeitliche Verteilung">
-    <h2 class="package-card-title">Zeitliche Verteilung der Objekte</h2>
-    <p class="package-card-subtitle">Zeitspanne der im Paket erfassten Münzen.</p>
+  <section class="package-visual-card package-chart-panel" aria-label="{% translate 'Zeitliche Verteilung' %}">
+    <h2 class="package-card-title">{% translate "Zeitliche Verteilung der Objekte" %}</h2>
+    <p class="package-card-subtitle">{% translate "Zeitspanne der im Paket erfassten Münzen." %}</p>
     {% if package_time_extent.start != None and package_time_extent.end != None %}
       <div id="objectsBarChart" class="package-chart-container" aria-label="Zeitliche Verteilung von {{ package_time_extent.start_label }} bis {{ package_time_extent.end_label }}"></div>
     {% else %}
-      <div class="package-time-axis__empty">Keine Datierungsdaten vorhanden.</div>
+      <div class="package-time-axis__empty">{% translate "Keine Datierungsdaten vorhanden." %}</div>
     {% endif %}
   </section>
 
-  <section class="package-facts" aria-label="Kennzahlen">
+  <section class="package-facts" aria-label="{% translate 'Kennzahlen' %}">
     <div class="package-fact">
-      <span class="package-fact-label">Gesamtanzahl</span>
-      <span class="package-fact-value">{% if paket.bekannte_objektanzahl %}{{ paket.bekannte_objektanzahl }} bekannt{% else %}{{ objektanzahl_db }} Objekte{% endif %}</span>
+      <span class="package-fact-label">{% translate "Gesamtanzahl" %}</span>
+      <span class="package-fact-value">{% if paket.bekannte_objektanzahl %}{{ paket.bekannte_objektanzahl }} {% translate "bekannt" %}{% else %}{{ objektanzahl_db }} {% translate "Objekte" %}{% endif %}</span>
     </div>
     <div class="package-fact">
-      <span class="package-fact-label">Bearbeitungsstand</span>
-      <span class="package-fact-value">{{ package_workflow_progress.controlled }} von {{ package_workflow_progress.added }} kontrolliert</span>
-      <span class="package-fact-note">{{ package_workflow_progress.open }} noch offen</span>
+      <span class="package-fact-label">{% translate "Bearbeitungsstand" %}</span>
+      <span class="package-fact-value">{{ package_workflow_progress.controlled }} {% translate "von" %} {{ package_workflow_progress.added }} {% translate "kontrolliert" %}</span>
+      <span class="package-fact-note">{{ package_workflow_progress.open }} {% translate "noch offen" %}</span>
       <div class="package-progress" aria-label="{{ package_workflow_progress.percent }} Prozent kontrolliert">
         <div class="package-progress__track">
           <div class="package-progress__bar" style="width: {{ package_workflow_progress.percent }}%;"></div>
         </div>
         <div class="package-progress__labels">
-          <span>hinzugefügt</span>
+          <span>{% translate "hinzugefügt" %}</span>
           <span>{{ package_workflow_progress.percent }}%</span>
         </div>
       </div>
     </div>
     <div class="package-fact">
-      <span class="package-fact-label">Zeitbereich der Münzen</span>
-      <span class="package-fact-value">{% if package_time_extent.start != None and package_time_extent.end != None %}{{ package_time_extent.start_label }} bis {{ package_time_extent.end_label }}{% else %}Nicht angegeben{% endif %}</span>
+      <span class="package-fact-label">{% translate "Zeitbereich der Münzen" %}</span>
+      <span class="package-fact-value">{% if package_time_extent.start != None and package_time_extent.end != None %}{{ package_time_extent.start_label }} {% translate "bis" %} {{ package_time_extent.end_label }}{% else %}{% translate "Nicht angegeben" %}{% endif %}</span>
     </div>
   </section>
 
-  <section class="package-analysis-grid" aria-label="Analysen">
+  <section class="package-analysis-grid" aria-label="{% translate 'Analysen' %}">
     <article class="package-analysis-card">
-      <h2 class="package-card-title">Nominale</h2>
-      <p class="package-card-subtitle">Verteilung der im Paket erfassten Nominale; Details beim Überfahren.</p>
+      <h2 class="package-card-title">{% translate "Nominale" %}</h2>
+      <p class="package-card-subtitle">{% translate "Verteilung der im Paket erfassten Nominale; Details beim Überfahren." %}</p>
       {% if denomination_distribution %}
         <div class="distribution-summary" tabindex="0">
           <div class="distribution-list">
@@ -784,8 +785,8 @@
               </div>
             {% endfor %}
           </div>
-          <p class="distribution-summary-hint">Alle Nominale anzeigen</p>
-          <div class="distribution-popover" aria-label="Nominalverteilung">
+          <p class="distribution-summary-hint">{% translate "Alle Nominale anzeigen" %}</p>
+          <div class="distribution-popover" aria-label="{% translate 'Nominalverteilung' %}">
             <div class="distribution-list">
               {% for item in denomination_distribution_full %}
                 <div class="distribution-item">
@@ -797,21 +798,21 @@
           </div>
         </div>
       {% else %}
-        <p class="package-card-subtitle">Noch keine Nominaldaten vorhanden.</p>
+        <p class="package-card-subtitle">{% translate "Noch keine Nominaldaten vorhanden." %}</p>
       {% endif %}
     </article>
 
     <article class="package-analysis-card">
-      <h2 class="package-card-title">Materialität</h2>
-      <p class="package-card-subtitle">Dominantes Material im Paket; Details beim Überfahren.</p>
+      <h2 class="package-card-title">{% translate "Materialität" %}</h2>
+      <p class="package-card-subtitle">{% translate "Dominantes Material im Paket; Details beim Überfahren." %}</p>
       {% if primary_material %}
         <div class="material-summary" tabindex="0">
           <div class="material-donut" style="--material-percent: {{ primary_material.percent }}%;">
             <div class="material-donut-inner">{{ primary_material.percent }}%</div>
           </div>
           <p class="package-card-subtitle" style="text-align: center;">{{ primary_material.label }}</p>
-          <p class="material-summary-hint">Materialmix anzeigen</p>
-          <div class="material-popover" aria-label="Materialverteilung">
+          <p class="material-summary-hint">{% translate "Materialmix anzeigen" %}</p>
+          <div class="material-popover" aria-label="{% translate 'Materialverteilung' %}">
             <div class="distribution-list">
               {% for item in material_distribution %}
                 <div class="distribution-item">
@@ -823,13 +824,13 @@
           </div>
         </div>
       {% else %}
-        <div class="package-empty-visual">Keine Materialdaten vorhanden</div>
+        <div class="package-empty-visual">{% translate "Keine Materialdaten vorhanden" %}</div>
       {% endif %}
     </article>
 
     <article class="package-analysis-card">
-      <h2 class="package-card-title">Münzstätten</h2>
-      <p class="package-card-subtitle">Geografische Herkunft der erfassten Prägungen; Details beim Überfahren.</p>
+      <h2 class="package-card-title">{% translate "Münzstätten" %}</h2>
+      <p class="package-card-subtitle">{% translate "Geografische Herkunft der erfassten Prägungen; Details beim Überfahren." %}</p>
       {% if mint_distribution %}
         <div class="distribution-summary" tabindex="0">
           <div class="mint-preview">
@@ -842,8 +843,8 @@
               {% endfor %}
             </div>
           </div>
-          <p class="distribution-summary-hint">Alle Münzstätten anzeigen</p>
-          <div class="distribution-popover" aria-label="Münzstättenverteilung">
+          <p class="distribution-summary-hint">{% translate "Alle Münzstätten anzeigen" %}</p>
+          <div class="distribution-popover" aria-label="{% translate 'Münzstättenverteilung' %}">
             <div class="distribution-list">
               {% for item in mint_distribution_full %}
                 <div class="distribution-item">
@@ -855,15 +856,15 @@
           </div>
         </div>
       {% else %}
-        <p class="package-card-subtitle">Noch keine Münzstättendaten vorhanden.</p>
+        <p class="package-card-subtitle">{% translate "Noch keine Münzstättendaten vorhanden." %}</p>
       {% endif %}
     </article>
   </section>
 
-  <section aria-label="Katalog der Funde">
+  <section aria-label="{% translate 'Katalog der Funde' %}">
     <div class="catalog-header">
-      <h2 class="catalog-title">Katalog der Funde</h2>
-      <a href="{{ package_browse_url }}" class="context-showcase-button">Alle Münzen anzeigen <i class="bi bi-arrow-right"></i></a>
+      <h2 class="catalog-title">{% translate "Katalog der Funde" %}</h2>
+      <a href="{{ package_browse_url }}" class="context-showcase-button">{% translate "Alle Münzen anzeigen" %} <i class="bi bi-arrow-right"></i></a>
     </div>
     <div class="catalog-grid package-coin-scope browse-page">
       {% for obj in catalog_entries %}
@@ -871,9 +872,9 @@
       {% empty %}
         <p class="package-card-subtitle">
           {% if package_entries %}
-            Weitere Katalogobjekte sind über die vollständige Münzliste erreichbar.
+            {% translate "Weitere Katalogobjekte sind über die vollständige Münzliste erreichbar." %}
           {% else %}
-            Für dieses Paket sind noch keine Objekte verknüpft.
+            {% translate "Für dieses Paket sind noch keine Objekte verknüpft." %}
           {% endif %}
         </p>
       {% endfor %}

@@ -1,4 +1,5 @@
 {% extends 'slg/navbar.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block stylesheets %}
@@ -1285,7 +1286,7 @@
         <span class="prem-pre-title">Numotheca Austriaca</span>
         <h1 class="prem-title">Eligius</h1>
         <p class="prem-intro-text">
-          Eligius bietet Einblicke in klösterliche und öffentliche numismatische Bestände und macht diese digital zugänglich.
+          {% translate "Eligius bietet Einblicke in klösterliche und öffentliche numismatische Bestände und macht diese digital zugänglich." %}
         </p>
       </div>
     </div>
@@ -1295,12 +1296,12 @@
 <!-- Latest Coins (Numismatica) using MTOA card -->
 <div class="prem-section">
   <div class="numismatica-header">
-    <div class="numismatica-pre-title">Neuerschließungen</div>
+    <div class="numismatica-pre-title">{% translate "Neuerschließungen" %}</div>
     <h2 class="numismatica-title">Numismatica</h2>
-    <p class="numismatica-subtitle">Historische Zeugnisse sichtbar machen</p>
+    <p class="numismatica-subtitle">{% translate "Historische Zeugnisse sichtbar machen" %}</p>
     <div class="numismatica-cta-desktop" style="margin-top: 24px;">
-      <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">Alle ansehen</a>
-      <a href="#muenzen-im-kontext" class="prem-btn prem-btn-outline">Münzen im Kontext</a>
+      <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">{% translate "Alle ansehen" %}</a>
+      <a href="#muenzen-im-kontext" class="prem-btn prem-btn-outline">{% translate "Münzen im Kontext" %}</a>
     </div>
   </div>
   <div class="coins-carousel-wrapper">
@@ -1312,15 +1313,15 @@
               {% include "slg/partials/coin_preview_card_mtoa.html" with obj=Obj light=False %}
             </div>
         {% empty %}
-        <p style="text-align: center; width: 100%; color: var(--prem-text-muted);">Derzeit keine neuen Objekte</p>
+        <p style="text-align: center; width: 100%; color: var(--prem-text-muted);">{% translate "Derzeit keine neuen Objekte" %}</p>
         {% endfor %}
     </div>
     <button class="coin-nav-btn next" onclick="document.getElementById('coinsContainer').scrollBy({left: 350, behavior: 'smooth'})"><i class="bi bi-chevron-right"></i></button>
   </div>
   <div class="coins-mobile-indicators" id="coinsIndicators" aria-hidden="true"></div>
   <div class="numismatica-cta-mobile">
-    <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">Alle ansehen</a>
-    <a href="#muenzen-im-kontext" class="prem-btn prem-btn-outline">Münzen im Kontext</a>
+    <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">{% translate "Alle ansehen" %}</a>
+    <a href="#muenzen-im-kontext" class="prem-btn prem-btn-outline">{% translate "Münzen im Kontext" %}</a>
   </div>
   <div class="numismatica-footer">
     <div class="coins-progress">
@@ -1328,15 +1329,15 @@
       <div class="coins-progress-text" id="coinsProgressText" aria-live="polite"></div>
     </div>
     <div class="numismatica-footer-cta">
-      <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">Alle ansehen</a>
-      <a href="#muenzen-im-kontext" class="prem-btn prem-btn-outline">Münzen im Kontext</a>
+      <a href="{% url 'Objektliste' %}" class="prem-btn prem-btn-outline">{% translate "Alle ansehen" %}</a>
+      <a href="#muenzen-im-kontext" class="prem-btn prem-btn-outline">{% translate "Münzen im Kontext" %}</a>
     </div>
   </div>
 </div>
 
 <div id="sammlungen" class="prem-section">
   <div class="section-header-left">
-    <h2 class="section-title-left">Sammlungen</h2>
+    <h2 class="section-title-left">{% translate "Sammlungen" %}</h2>
   </div>
   <div class="prem-collections-grid" id="collectionsGrid"></div>
 </div>
@@ -1344,16 +1345,16 @@
 {% if context_packages %}
 <div id="muenzen-im-kontext" class="prem-section prem-section-transparent">
   <div class="section-header-left">
-    <div class="section-eyebrow">Kontexte</div>
-    <h2 class="section-title-left">Münzen im Kontext</h2>
-    <p class="numismatica-subtitle">Objekte als Teil von Hortfunden, Fundkontexten, Grabungen und Themen betrachten.</p>
+    <div class="section-eyebrow">{% translate "Kontexte" %}</div>
+    <h2 class="section-title-left">{% translate "Münzen im Kontext" %}</h2>
+    <p class="numismatica-subtitle">{% translate "Objekte als Teil von Hortfunden, Fundkontexten, Grabungen und Themen betrachten." %}</p>
   </div>
   <div class="context-showcase-list">
     {% with paket=highlighted_context_package %}
     <article class="context-showcase-card">
       <div class="context-showcase-visual">
         {% if paket.homepage_preview_objects %}
-          <a href="{% url 'Objekt' paket.homepage_preview_objects.0.obj_id %}" class="context-object-stack" aria-label="Zum Beispielobjekt">
+          <a href="{% url 'Objekt' paket.homepage_preview_objects.0.obj_id %}" class="context-object-stack" aria-label="{% translate 'Zum Beispielobjekt' %}">
             {% for obj in paket.homepage_preview_objects %}
               <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-object-photo" loading="lazy" decoding="async">
             {% endfor %}
@@ -1364,7 +1365,7 @@
           {% else %}
             <div class="context-placeholder">
               <i class="bi bi-image"></i>
-              <span>Frontcover folgt</span>
+              <span>{% translate "Frontcover folgt" %}</span>
             </div>
           {% endif %}
         {% elif paket.darstellungsart == 'karte' %}
@@ -1372,10 +1373,10 @@
             <span class="context-map-marker"><i class="bi bi-geo-alt"></i></span>
             {% if paket.fund_lat and paket.fund_lng %}
               <strong>{{ paket.fund_lat }}, {{ paket.fund_lng }}</strong>
-              <span>Fundkoordinate</span>
+              <span>{% translate "Fundkoordinate" %}</span>
             {% else %}
-              <strong>Karte</strong>
-              <span>Fundkoordinate folgt</span>
+              <strong>{% translate "Karte" %}</strong>
+              <span>{% translate "Fundkoordinate folgt" %}</span>
             {% endif %}
           </div>
         {% elif paket.darstellungsart == 'diagramm' %}
@@ -1395,51 +1396,51 @@
         {% else %}
           <div class="context-placeholder">
             <i class="bi bi-collection"></i>
-            <span>Objekte folgen</span>
+            <span>{% translate "Objekte folgen" %}</span>
           </div>
         {% endif %}
       </div>
       <div class="context-showcase-content">
-        <span class="context-badge">{% if paket.kontexttyp %}{{ paket.get_kontexttyp_display }}{% else %}Kontext{% endif %}</span>
+        <span class="context-badge">{% if paket.kontexttyp %}{{ paket.get_kontexttyp_display }}{% else %}{% translate "Kontext" %}{% endif %}</span>
         <h3 class="context-showcase-title">{% firstof paket.titel_oeffentlich paket.name %}</h3>
         {% if paket.beschreibung %}
           <p class="context-showcase-desc">{{ paket.beschreibung|striptags|truncatechars:190 }}</p>
         {% endif %}
         <div class="context-fact-grid">
           <div class="context-fact">
-            <span class="context-fact-label">Anzahl</span>
+            <span class="context-fact-label">{% translate "Anzahl" %}</span>
             <span class="context-fact-value">
               {% if paket.bekannte_objektanzahl %}
-                {{ paket.bekannte_objektanzahl }} bekannt
+                {{ paket.bekannte_objektanzahl }} {% translate "bekannt" %}
               {% else %}
-                {{ paket.objektanzahl_db|default:"0" }} Objekte
+                {{ paket.objektanzahl_db|default:"0" }} {% translate "Objekte" %}
               {% endif %}
             </span>
           </div>
           <div class="context-fact">
-            <span class="context-fact-label">Datenbank</span>
-            <span class="context-fact-value">{{ paket.objektanzahl_db|default:"0" }} erfasst</span>
+            <span class="context-fact-label">{% translate "Datenbank" %}</span>
+            <span class="context-fact-value">{{ paket.objektanzahl_db|default:"0" }} {% translate "erfasst" %}</span>
           </div>
           <div class="context-fact">
-            <span class="context-fact-label">Fundort</span>
-            <span class="context-fact-value">{% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}Nicht angegeben{% endif %}</span>
+            <span class="context-fact-label">{% translate "Fundort" %}</span>
+            <span class="context-fact-value">{% if paket.fundplatz_kontext %}{{ paket.get_fundplatz_kontext_display }}{% else %}{% translate "Nicht angegeben" %}{% endif %}</span>
           </div>
           <div class="context-fact">
-            <span class="context-fact-label">Datierung</span>
+            <span class="context-fact-label">{% translate "Datierung" %}</span>
             <span class="context-fact-value">{% firstof paket.homepage_date_range_label paket.fundzeitpunkt_verbal "Nicht angegeben" %}</span>
           </div>
         </div>
         {% if paket.homepage_preview_objects %}
-        <div class="context-thumb-strip" aria-label="Objektbeispiele">
+        <div class="context-thumb-strip" aria-label="{% translate 'Objektbeispiele' %}">
           {% for obj in paket.homepage_preview_objects %}
             <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-thumb" loading="lazy" decoding="async">
           {% endfor %}
         </div>
         {% endif %}
         {% if paket.slug %}
-          <a href="{% url 'paket_detail' paket.slug %}" class="context-showcase-button">Paket ansehen <i class="bi bi-arrow-right"></i></a>
+          <a href="{% url 'paket_detail' paket.slug %}" class="context-showcase-button">{% translate "Paket ansehen" %} <i class="bi bi-arrow-right"></i></a>
         {% else %}
-          <a href="{% url 'Objektliste' %}" class="context-showcase-button">Alle Münzen anzeigen <i class="bi bi-arrow-right"></i></a>
+          <a href="{% url 'Objektliste' %}" class="context-showcase-button">{% translate "Alle Münzen anzeigen" %} <i class="bi bi-arrow-right"></i></a>
         {% endif %}
       </div>
     </article>
@@ -1448,26 +1449,26 @@
 
   {% if secondary_context_packages %}
   <div class="context-related-section">
-    <h3 class="context-related-title">Weitere Fundkomplexe</h3>
+    <h3 class="context-related-title">{% translate "Weitere Fundkomplexe" %}</h3>
     <div class="context-related-grid">
       {% for paket in secondary_context_packages %}
       <article class="context-related-card">
         <div class="context-related-head">
           <h4 class="context-related-name">{% firstof paket.titel_oeffentlich paket.name %}</h4>
-          <span class="context-related-badge">{% if paket.kontexttyp %}{{ paket.get_kontexttyp_display }}{% else %}Kontext{% endif %}</span>
+          <span class="context-related-badge">{% if paket.kontexttyp %}{{ paket.get_kontexttyp_display }}{% else %}{% translate "Kontext" %}{% endif %}</span>
         </div>
         <div class="context-related-meta">
           <div class="context-related-row">
-            <span>Datenbank:</span>
+            <span>{% translate "Datenbank:" %}</span>
             <strong>{{ paket.objektanzahl_db|default:"0" }} Stk.</strong>
           </div>
           <div class="context-related-row">
-            <span>Datierung:</span>
+            <span>{% translate "Datierung:" %}</span>
             <strong>{% firstof paket.homepage_date_range_label paket.fundzeitpunkt_verbal "Nicht angegeben" %}</strong>
           </div>
           <div class="context-related-progress" aria-hidden="true"><span></span></div>
         </div>
-        <div class="context-related-thumbs" aria-label="Objektbeispiele">
+        <div class="context-related-thumbs" aria-label="{% translate 'Objektbeispiele' %}">
           {% for obj in paket.homepage_preview_objects %}
             <img src="{{ obj.thumbnail_av_url|default:obj.thumbnail_rv_url|default:obj.av_url|default:obj.rv_url|default:'' }}" alt="{{ obj.objekttitel|default:'Objekt'|striptags }}" class="context-related-thumb" loading="lazy" decoding="async">
           {% empty %}
@@ -1477,9 +1478,9 @@
           {% endfor %}
         </div>
         {% if paket.slug %}
-          <a href="{% url 'paket_detail' paket.slug %}" class="context-related-link">Details öffnen</a>
+          <a href="{% url 'paket_detail' paket.slug %}" class="context-related-link">{% translate "Details öffnen" %}</a>
         {% else %}
-          <a href="{% url 'Objektliste' %}" class="context-related-link">Münzen anzeigen</a>
+          <a href="{% url 'Objektliste' %}" class="context-related-link">{% translate "Münzen anzeigen" %}</a>
         {% endif %}
       </article>
       {% endfor %}
@@ -1492,25 +1493,25 @@
 <div class="full-bleed">
   <div class="prem-stats">
     <div class="section-header-left">
-      <div class="section-eyebrow">Statistiken</div>
-      <h2 class="section-title-left">Zahlen & Fakten</h2>
+      <div class="section-eyebrow">{% translate "Statistiken" %}</div>
+      <h2 class="section-title-left">{% translate "Zahlen & Fakten" %}</h2>
     </div>
     <div class="prem-stats-card" id="statsCard">
       <div class="prem-stat">
         <div class="prem-stat-value" id="statObjekte">&ndash;</div>
-        <div class="prem-stat-label">Objekte</div>
+        <div class="prem-stat-label">{% translate "Objekte" %}</div>
       </div>
       <div class="prem-stat">
         <div class="prem-stat-value" id="statMuenztypen">&ndash;</div>
-        <div class="prem-stat-label">Münztypen</div>
+        <div class="prem-stat-label">{% translate "Münztypen" %}</div>
       </div>
       <div class="prem-stat">
         <div class="prem-stat-value" id="statPersonen">&ndash;</div>
-        <div class="prem-stat-label">Personen</div>
+        <div class="prem-stat-label">{% translate "Personen" %}</div>
       </div>
       <div class="prem-stat">
         <div class="prem-stat-value" id="statMstaetten">&ndash;</div>
-        <div class="prem-stat-label">Münzstätten</div>
+        <div class="prem-stat-label">{% translate "Münzstätten" %}</div>
       </div>
     </div>
   </div>
@@ -1519,25 +1520,25 @@
 <div class="prem-section prem-section-transparent">
   <div class="wordcloud-section-inner">
     <div class="section-header-left" style="padding: 0; margin-bottom: 32px;">
-      <div class="section-eyebrow">Ikonografie</div>
-      <h2 class="section-title-left">Schlagwort-Wordcloud</h2>
-      <p class="numismatica-subtitle">Je häufiger ein Schlagwort vorkommt, desto größer wird es dargestellt. Ein Klick öffnet direkt die gefilterte Objektliste.</p>
+      <div class="section-eyebrow">{% translate "Ikonografie" %}</div>
+      <h2 class="section-title-left">{% translate "Schlagwort-Wordcloud" %}</h2>
+      <p class="numismatica-subtitle">{% translate "Je häufiger ein Schlagwort vorkommt, desto größer wird es dargestellt. Ein Klick öffnet direkt die gefilterte Objektliste." %}</p>
     </div>
     <div class="wordcloud-grid">
       <div class="wordcloud-card">
         <div>
-          <h3 class="wordcloud-card-title">Avers</h3>
-          <p class="wordcloud-card-subtitle">Schlagworte der Vorderseiten in Eligius.</p>
+          <h3 class="wordcloud-card-title">{% translate "Avers" %}</h3>
+          <p class="wordcloud-card-subtitle">{% translate "Schlagworte der Vorderseiten in Eligius." %}</p>
         </div>
-        <div class="wordcloud-meta" id="avWordcloudMeta">{{ av_wordcloud_data|length }} Schlagworte</div>
+        <div class="wordcloud-meta" id="avWordcloudMeta">{{ av_wordcloud_data|length }} {% translate "Schlagworte" %}</div>
         <div class="wordcloud-canvas" id="avWordcloud"></div>
       </div>
       <div class="wordcloud-card">
         <div>
-          <h3 class="wordcloud-card-title">Revers</h3>
-          <p class="wordcloud-card-subtitle">Schlagworte der Rückseiten in Eligius.</p>
+          <h3 class="wordcloud-card-title">{% translate "Revers" %}</h3>
+          <p class="wordcloud-card-subtitle">{% translate "Schlagworte der Rückseiten in Eligius." %}</p>
         </div>
-        <div class="wordcloud-meta" id="rvWordcloudMeta">{{ rv_wordcloud_data|length }} Schlagworte</div>
+        <div class="wordcloud-meta" id="rvWordcloudMeta">{{ rv_wordcloud_data|length }} {% translate "Schlagworte" %}</div>
         <div class="wordcloud-canvas" id="rvWordcloud"></div>
       </div>
     </div>
@@ -1547,15 +1548,15 @@
 <div id="kontakt" class="prem-section prem-section-transparent">
   <div class="contact-split">
     <div class="contact-info">
-      <div class="contact-eyebrow">Dialog &amp; Partnerschaft</div>
-      <h2 class="contact-headline">Kontaktieren<br>Sie uns</h2>
+      <div class="contact-eyebrow">{% translate "Dialog &amp; Partnerschaft" %}</div>
+      <h2 class="contact-headline">{% translate "Kontaktieren" %}<br>{% translate "Sie uns" %}</h2>
       <p class="contact-desc">
-        Haben Sie Fragen zu einer Sammlung oder einem bestimmten Objekt? Wir vermitteln gerne den Kontakt zu den jeweiligen Kuratoren. Auch bei Interesse an einer Partnerschaft oder allgemeinen Anliegen sind wir für Sie da &ndash; wir melden uns zeitnah bei Ihnen.
+        {% translate "Haben Sie Fragen zu einer Sammlung oder einem bestimmten Objekt? Wir vermitteln gerne den Kontakt zu den jeweiligen Kuratoren. Auch bei Interesse an einer Partnerschaft oder allgemeinen Anliegen sind wir für Sie da &ndash; wir melden uns zeitnah bei Ihnen." %}
       </p>
       <div class="contact-details">
         <div class="contact-detail-item">
           <i class="bi bi-envelope-fill" aria-hidden="true"></i>
-          <a href="https://www.donau-uni.ac.at/de/universitaet/organisation/mitarbeiterinnen/person/4295335375" target="_blank" rel="noopener noreferrer">Martin Baer &ndash; Kontaktdaten</a>
+          <a href="https://www.donau-uni.ac.at/de/universitaet/organisation/mitarbeiterinnen/person/4295335375" target="_blank" rel="noopener noreferrer">{% translate "Martin Baer &ndash; Kontaktdaten" %}</a>
         </div>
       </div>
     </div>
@@ -1568,15 +1569,15 @@
             <input type="text" class="prem-form-control" name="name" required>
           </div>
           <div class="contact-form-group">
-            <label class="prem-form-label">E-Mail Adresse</label>
+            <label class="prem-form-label">{% translate "E-Mail Adresse" %}</label>
             <input type="email" class="prem-form-control" name="email" required>
           </div>
         </div>
         <div class="contact-form-group">
-          <label class="prem-form-label">Ihre Nachricht</label>
+          <label class="prem-form-label">{% translate "Ihre Nachricht" %}</label>
           <textarea class="prem-form-control" name="nachricht" rows="1" required></textarea>
         </div>
-        <button type="submit" class="contact-submit-btn">Anfrage senden</button>
+        <button type="submit" class="contact-submit-btn">{% translate "Anfrage senden" %}</button>
       </form>
     </div>
   </div>
@@ -1617,7 +1618,7 @@ document.addEventListener('DOMContentLoaded', function() {
           dot.classList.toggle('is-active', index === activeIndex);
         });
 
-        coinsProgressText.textContent = `${activeIndex + 1} von ${coinItems.length}`;
+        coinsProgressText.textContent = `${activeIndex + 1} ${gettext('von')} ${coinItems.length}`;
       };
 
       if (coinItems.length > 1) {
@@ -1646,8 +1647,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <h4 class="prem-col-title">${col.name}</h4>
             <p class="prem-col-desc">${col.beschreibung ? col.beschreibung.substring(0, 100) + '...' : ''}</p>
             <div class="prem-col-footer">
-              <a href="${col.absolute_url}" class="prem-col-link"><i class="bi bi-clock-history"></i> Zeitleiste</a>
-              <a href="/browse/?q=&Slg=${col.id}" class="prem-col-link"><i class="bi bi-search"></i> Objekte</a>
+              <a href="${col.absolute_url}" class="prem-col-link"><i class="bi bi-clock-history"></i> ${gettext("Zeitleiste")}</a>
+              <a href="/browse/?q=&Slg=${col.id}" class="prem-col-link"><i class="bi bi-search"></i> ${gettext("Objekte")}</a>
             </div>
           </div>
         </div>
@@ -1707,11 +1708,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (meta) {
       const totalOccurrences = words.reduce((sum, word) => sum + Number(word.value || 0), 0);
-      meta.textContent = words.length ? `${words.length} Schlagworte · ${totalOccurrences} Zuordnungen` : 'Keine Schlagworte verfügbar';
+      meta.textContent = words.length ? `${words.length} ${gettext('Schlagworte')} · ${totalOccurrences} ${gettext('Zuordnungen')}` : gettext("Keine Schlagworte verfügbar");
     }
 
     if (!words.length) {
-      container.innerHTML = '<div class="wordcloud-fallback"><span class="wordcloud-card-subtitle">Keine Schlagworte verfügbar.</span></div>';
+      container.innerHTML = '<div class="wordcloud-fallback"><span class="wordcloud-card-subtitle">' + gettext("Keine Schlagworte verfügbar.") + '</span></div>';
       return;
     }
 

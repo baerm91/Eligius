@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load slg_extras i18n %}
 {% firstof obj.datierung_verbale obj.metall obj.nominal obj.mzstaette as has_f1 %}
 {% firstof obj.personen_mit_funktion obj.Typ.wappen.all obj.av_schlagworte obj.rv_schlagworte as has_f2 %}
@@ -142,7 +143,7 @@
     <a
       href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Praegeherren=p.name %}"
       class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
-      title="Prägeherr"
+      title="{% translate 'Prägeherr' %}"
       style="
         background-color: rgba(13, 110, 253, 0.1) !important;
         color: #0a58ca !important;
@@ -172,7 +173,7 @@
     <a
       href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Person=p.name %}"
       class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
-      title="Person"
+      title="{% translate 'Person' %}"
       style="
         background-color: rgba(13, 110, 253, 0.1) !important;
         color: #0a58ca !important;
@@ -240,7 +241,7 @@
     <div
       class="flex-shrink-0 pe-2 fw-bold av-rv-label"
     >
-      Av:
+      {% translate "Av:" %}
     </div>
     <div class="flex-grow-1 d-flex flex-wrap gap-1">
       {# dargestellte Personen Avers #} {% for p in obj.personen_mit_funktion %}
@@ -248,7 +249,7 @@
       <a
         href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Dargestellte_AV=p.name %}"
         class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
-        title="Dargestellte Person"
+        title="{% translate 'Dargestellte Person' %}"
         style="
           background-color: rgba(13, 110, 253, 0.1) !important;
           color: #0a58ca !important;
@@ -314,7 +315,7 @@
     <div
       class="flex-shrink-0 pe-2 fw-bold av-rv-label"
     >
-      Rv:
+      {% translate "Rv:" %}
     </div>
     <div class="flex-grow-1 d-flex flex-wrap gap-1">
       {# dargestellte Personen Revers #}
@@ -323,7 +324,7 @@
       <a
         href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Dargestellte_RV=p.name %}"
         class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-decoration-none d-inline-flex align-items-center fw-medium px-2 py-1"
-        title="Dargestellte Person"
+        title="{% translate 'Dargestellte Person' %}"
         style="
           background-color: rgba(13, 110, 253, 0.1) !important;
           color: #0a58ca !important;

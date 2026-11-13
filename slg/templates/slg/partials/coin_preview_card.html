@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load i18n static slg_extras %}
 {% with light=light|default:False %}
 <div class="infinite-item">
@@ -42,7 +43,7 @@
         {% elif obj.Typ and obj.Typ.muenztyptitel %}
             {{ obj.Typ.muenztyptitel|safe }}
         {% else %}
-            Unbestimmt
+            {% translate "Unbestimmt" %}
         {% endif %}
       </div>
       {# --- Datierung ----------------------------------------------------------- #}

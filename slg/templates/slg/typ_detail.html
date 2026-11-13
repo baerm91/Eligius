@@ -1,5 +1,6 @@
 {% extends 'slg/navbar.html' %}
-{% block title %}Eligius - Typ{% endblock title %}
+{% load i18n %}
+{% block title %}{% translate "Eligius - Typ" %}{% endblock title %}
 {% load static %}
 
 {% block content %}
@@ -13,7 +14,7 @@
                             <td width="*"></td>
                             <td width="*" align="left">
                                 {% if request.user.is_authenticated %}
-                                <a href="{% url 'admin:slg_muenztyp_change' Muenztyp.pk %}">Münztyp: {{Muenztyp.workflow.name}}</a>
+                                <a href="{% url 'admin:slg_muenztyp_change' Muenztyp.pk %}">{% translate "Münztyp:" %} {{Muenztyp.workflow.name}}</a>
                                 
                             </td>
                             <td width="*">
@@ -74,13 +75,13 @@
                         </tr>
                         {% endif %}
                             <tr>
-                                <td>Literatur:</td>
+                                <td>{% translate "Literatur:" %}</td>
                                 <td><a href="/browse/?Ref={% if Muenztyp.Ref.abk %}{{ Muenztyp.Ref.abk }}{% else %}{{ Muenztyp.Ref.zitat }}{% endif %}">{{ Muenztyp.Ref.zitat }}</a></td>
                             </tr>
                             
                         {% if Muenztyp.link %}
                             <tr>
-                                <td>Link:</td>
+                                <td>{% translate "Link:" %}</td>
                                 <td>
                                     <a href="{{ Muenztyp.link }}">{{ Muenztyp.link }}</a>
                                 </td>
@@ -89,7 +90,7 @@
                         
                         {% if Muenztyp.Konkordanz.all %}
                             <tr>
-                                <td>Konkordanz:</td>
+                                <td>{% translate "Konkordanz:" %}</td>
                                 <td>
                             {% for Konkordanz in Muenztyp.Konkordanz.all %}
                                 {% if forloop.counter == 2 %}, {% endif %}
@@ -122,7 +123,7 @@
                         {% endif %}
                         {% if Muenztyp.typ_ref_set.all %}
                             <tr>
-                                <td>Ergänzung:</td>
+                                <td>{% translate "Ergänzung:" %}</td>
                                 <td>
                                     {% for i in Muenztyp.typ_ref_set.all %}
                                         {% if i.link %}
@@ -154,19 +155,19 @@
                         {% endif %}
                         {% if Muenztyp.Objekttyp %}
                             <tr>
-                                <td>Objekttyp:</td>
+                                <td>{% translate "Objekttyp:" %}</td>
                                 <td>
                                     {{ Muenztyp.Objekttyp }}
                                 </td>
                             </tr>
                         {% endif %}
                             <tr>
-                                <td>Bearbeitungsstand:</td>
+                                <td>{% translate "Bearbeitungsstand:" %}</td>
                                 <td>
                                     {% if Muenztyp.workflow.id != 3 %}
-                                        in Bearbeitung
+                                        {% translate "in Bearbeitung" %}
                                     {% else %}
-                                        Bearbeitung abgeschlossen
+                                        {% translate "Bearbeitung abgeschlossen" %}
                                     {% endif %}
                                 </td>
                             </tr>
@@ -182,13 +183,13 @@
                         
                         {% if Muenztyp.Muenzstand %}
                             <tr>
-                                <td>Münzstand:</td>
+                                <td>{% translate "Münzstand:" %}</td>
                                 <td><a href="/browse/?Muenzstand={{ Muenztyp.Muenzstand }}" title="Browse">{{ Muenztyp.Muenzstand }}</a></td>
                             </tr>
                         {% endif %}
                         {% if Muenztyp.Reichskreis %}
                             <tr>
-                                <td>Reichskreis:</td>
+                                <td>{% translate "Reichskreis:" %}</td>
                                 <td><a href="/browse/?Reichskreis={{ Muenztyp.Reichskreis }}" title="Browse">{{ Muenztyp.Reichskreis }}</a></td>
                             </tr>
                         {% endif %}
@@ -209,7 +210,7 @@
                                                 data-footer="{% url 'admin:slg_person_change' person.idfk_Person.id %}" 
                                                 data-toggle="modal" 
                                                 data-target="#theModal" 
-                                                title="Person">
+                                                title="{% translate 'Person' %}">
                                                     <i class="bi bi-box-arrow-up-right"></i>
                                                 </a>
                                                 {% if not forloop.last %}<br>{% endif %}
@@ -221,49 +222,49 @@
                         {% endif %}
                         {% if Muenztyp.Mzstaette %}
                             <tr>
-                                <td>Münzstätte:</td>
+                                <td>{% translate "Münzstätte:" %}</td>
                                 <td><a href="/browse/?Muenzstaette={{ Muenztyp.Mzstaette }}" title="Browse">{{ Muenztyp.Mzstaette }}</a></td>
                                 <td><a href="{{ Muenztyp.Mzstaette.name_nom_id }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a></td>
                             </tr>
                         {% endif %}
                         {% if Muenztyp.region %}
                             <tr>
-                                <td>Region:</td>
+                                <td>{% translate "Region:" %}</td>
                                 <td><a href="/browse/?region={{ Muenztyp.region }}" title="Browse">{{ Muenztyp.region }}</a></td>
                                 <td><a href="{{ Muenztyp.region.name_nom_id }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a></td>
                             </tr>
                         {% endif %}
                         {% if Muenztyp.auflage %}
                             <tr>
-                                <td>Auflage:</td>
+                                <td>{% translate "Auflage:" %}</td>
                                 <td>{{ Muenztyp.auflage }}</td>
                             </tr>
                         {% endif %}
                         {% if Muenztyp.beschlussdatum %}
                             <tr>
-                                <td>Beschlussdatum:</td>
+                                <td>{% translate "Beschlussdatum:" %}</td>
                                 <td>{{ Muenztyp.beschlussdatum|date:"d.m.Y" }}</td>
                             </tr>
                         {% endif %}
                         {% if Muenztyp.Nominal %}
                             <tr>
-                                <td>Nominal:</td>
+                                <td>{% translate "Nominal:" %}</td>
                                 <td><a href="/browse/?Nominal={{ Muenztyp.Nominal }}" title="Browse">{{ Muenztyp.Nominal }}</a></td>
                                 {% comment %} <td><a href="{{ Muenztyp.Nominal.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> {% endcomment %}
-                                <td><a href="#theModal" data-title="{{ Muenztyp.Nominal }}" data-footer="{% url 'admin:slg_nominal_change' Muenztyp.Nominal.id %}" data-remote="{% url 'NominalModal' id=Muenztyp.Nominal.id %}" data-toggle="modal" data-target="#theModal" title="Nominal"><i class="bi bi-box-arrow-up-right"></i></small></a></td>
+                                <td><a href="#theModal" data-title="{{ Muenztyp.Nominal }}" data-footer="{% url 'admin:slg_nominal_change' Muenztyp.Nominal.id %}" data-remote="{% url 'NominalModal' id=Muenztyp.Nominal.id %}" data-toggle="modal" data-target="#theModal" title="{% translate 'Nominal' %}"><i class="bi bi-box-arrow-up-right"></i></small></a></td>
                                     
                             </tr>
                         {% endif %}
                         {% if Muenztyp.Metall %}
                             <tr>
-                                <td>Material:</td>
+                                <td>{% translate "Material:" %}</td>
                                 <td><a href="/browse/?material={{ Muenztyp.Metall }}" title="Browse">{{ Muenztyp.Metall }}</a></td>
                                 <td><a href="{{ Muenztyp.Metall.name_nom_id }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a></td>
                             </tr>
                         {% endif %}
                         {% if Muenztyp.Herstellung %}
                             <tr>
-                                <td>Herstellung:</td>
+                                <td>{% translate "Herstellung:" %}</td>
                                 
                                 <td>{{ Muenztyp.Herstellung }}</td>
                             </tr>
@@ -271,13 +272,13 @@
                         {% if Muenztyp.anmerkung %}
                         <tr><td colspan="2"><hr width="80%"></td></tr>
                         <tr>
-                            <td>Anmerkungen: </td> 
+                            <td>{% translate "Anmerkungen:" %} </td>
                             <td>{{ Muenztyp.anmerkung}}</td>
                         </tr>
                         {% endif %}
                         <tr><td colspan="2"><hr width="80%"></td></tr>
                         <tr>
-                            <td>Avers:</td>
+                            <td>{% translate "Avers:" %}</td>
                             <td>
                                 
                                 <a href="/browse/?q={{ Muenztyp.avleg }}" title="Browse">{{Muenztyp.avleg|default:"-"}}
@@ -310,7 +311,7 @@
                         </tr>
                         
                         <tr>
-                            <td>Revers:</td>
+                            <td>{% translate "Revers:" %}</td>
                             <td>
                                 
                                 <a href="/browse/?q={{ Muenztyp.rvleg }}" title="Browse">{{Muenztyp.rvleg|default:"-"}}</a>
@@ -352,7 +353,7 @@
                 </table>
             </div>
             <div class="col-md-8 pt-2 align-top-center table-responsive" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
-                <h5>Mit diesem Typ verbundene Objekte: {{ objekte_page.paginator.count }}</h5>
+                <h5>{% translate "Mit diesem Typ verbundene Objekte:" %} {{ objekte_page.paginator.count }}</h5>
                 <div class="row infinite-container">
                     {% for Obj in objekte_page %}
                         {% include "slg/partials/coin_preview_card_mtoa.html" with obj=Obj light=True %}
@@ -360,14 +361,14 @@
                 </div>
 
                 {% if objekte_page.has_other_pages %}
-                <nav aria-label="Objekte Paginierung" class="mt-4">
+                <nav aria-label="{% translate 'Objekte Paginierung' %}" class="mt-4">
                     <ul class="pagination justify-content-center">
                         {% if objekte_page.has_previous %}
                             <li class="page-item"><a class="page-link" href="?page=1">&laquo; Erste</a></li>
-                            <li class="page-item"><a class="page-link" href="?page={{ objekte_page.previous_page_number }}">Vorherige</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ objekte_page.previous_page_number }}">{% translate "Vorherige" %}</a></li>
                         {% else %}
                             <li class="page-item disabled"><span class="page-link">&laquo; Erste</span></li>
-                            <li class="page-item disabled"><span class="page-link">Vorherige</span></li>
+                            <li class="page-item disabled"><span class="page-link">{% translate "Vorherige" %}</span></li>
                         {% endif %}
 
                         {% for i in objekte_page.paginator.page_range %}
@@ -381,10 +382,10 @@
                         {% endfor %}
 
                         {% if objekte_page.has_next %}
-                            <li class="page-item"><a class="page-link" href="?page={{ objekte_page.next_page_number }}">Nächste</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ objekte_page.next_page_number }}">{% translate "Nächste" %}</a></li>
                             <li class="page-item"><a class="page-link" href="?page={{ objekte_page.paginator.num_pages }}">Letzte &raquo;</a></li>
                         {% else %}
-                            <li class="page-item disabled"><span class="page-link">Nächste</span></li>
+                            <li class="page-item disabled"><span class="page-link">{% translate "Nächste" %}</span></li>
                             <li class="page-item disabled"><span class="page-link">Letzte &raquo;</span></li>
                         {% endif %}
                     </ul>

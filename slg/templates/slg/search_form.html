@@ -1,3 +1,4 @@
+{% load i18n %}
 <!-- Textsuche als Accordion-Item (wird in filterAccordion eingebettet) -->
 <div class="accordion-item">
   <h2 class="accordion-header" id="textsucheHeading">
@@ -10,7 +11,7 @@
       aria-controls="textsucheCollapse"
     >
       <i class="bi bi-search me-2 text-primary"></i>
-      Textsuche &amp; Eingrenzung
+      {% translate "Textsuche &amp; Eingrenzung" %}
     </button>
   </h2>
   <div
@@ -22,39 +23,39 @@
     <div class="accordion-body">
       <form id="freitextForm" method="GET" action="{{ request.path }}" class="search-form">
         <div class="form-group">
-          <label for="rubrikSelect">Suchkategorie</label>
+          <label for="rubrikSelect">{% translate "Suchkategorie" %}</label>
           <select id="rubrikSelect" class="form-select">
-            <option value="" selected disabled>Kategorie wählen</option>
-            <optgroup label="Allgemein">
-              <option value="q">Titel</option>
-              <option value="invnr">Inventarnummer</option>
-              <option value="Muenzstaette">Münzstätte</option>
-              <option value="Person">Person</option>
-              <option value="Nominal">Nominal</option>
-              <option value="material">Metall</option>
+            <option value="" selected disabled>{% translate "Kategorie wählen" %}</option>
+            <optgroup label="{% translate 'Allgemein' %}">
+              <option value="q">{% translate "Titel" %}</option>
+              <option value="invnr">{% translate "Inventarnummer" %}</option>
+              <option value="Muenzstaette">{% translate "Münzstätte" %}</option>
+              <option value="Person">{% translate "Person" %}</option>
+              <option value="Nominal">{% translate "Nominal" %}</option>
+              <option value="material">{% translate "Metall" %}</option>
             </optgroup>
-            <optgroup label="Avers">
-              <option value="avleg">Avers-Legende</option>
-              <option value="av_schlagwort">Schlagwort</option>
+            <optgroup label="{% translate 'Avers' %}">
+              <option value="avleg">{% translate "Avers-Legende" %}</option>
+              <option value="av_schlagwort">{% translate "Schlagwort" %}</option>
             </optgroup>
-            <optgroup label="Revers">
-              <option value="rvleg">Revers-Legende</option>
-              <option value="rv_schlagwort">Schlagwort</option>
+            <optgroup label="{% translate 'Revers' %}">
+              <option value="rvleg">{% translate "Revers-Legende" %}</option>
+              <option value="rv_schlagwort">{% translate "Schlagwort" %}</option>
             </optgroup>
           </select>
         </div>
 
         <div id="searchFields" class="form-group mt-3">
-          <label for="searchInput">Suchbegriff</label>
-          <input type="text" class="form-control text-input-filter" id="searchInput" name="q" placeholder="Suchbegriff eingeben...">
+          <label for="searchInput">{% translate "Suchbegriff" %}</label>
+          <input type="text" class="form-control text-input-filter" id="searchInput" name="q" placeholder="{% translate 'Suchbegriff eingeben...' %}">
         </div>
 
         <div class="form-group mt-3">
-          <label for="bestimmungSelect">Münztyp-Zuweisung</label>
+          <label for="bestimmungSelect">{% translate "Münztyp-Zuweisung" %}</label>
           <select id="bestimmungSelect" name="unbestimmt" class="form-select text-input-filter">
-            <option value="" {% if not request.GET.unbestimmt %}selected{% endif %}>Alle Objekte</option>
-            <option value="False" {% if request.GET.unbestimmt == 'False' %}selected{% endif %}>Mit Münztyp-Zuweisung</option>
-            <option value="True" {% if request.GET.unbestimmt == 'True' %}selected{% endif %}>Ohne Münztyp-Zuweisung</option>
+            <option value="" {% if not request.GET.unbestimmt %}selected{% endif %}>{% translate "Alle Objekte" %}</option>
+            <option value="False" {% if request.GET.unbestimmt == 'False' %}selected{% endif %}>{% translate "Mit Münztyp-Zuweisung" %}</option>
+            <option value="True" {% if request.GET.unbestimmt == 'True' %}selected{% endif %}>{% translate "Ohne Münztyp-Zuweisung" %}</option>
           </select>
         </div>
       </form>
