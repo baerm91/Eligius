@@ -1,6 +1,6 @@
 {% load slg_extras %}
 {% load i18n %}
-{% load custom_tags %}
+{% load custom_tags authority_labels %}
 
 {% for key, values in request.GET.lists %}
     {% if key in filter_config %}
@@ -13,7 +13,7 @@
                             {% if config.model %}
                                 <strong>{{ key|get_display_name:value }}</strong>
                             {% else %}
-                                <strong>{{ value }}</strong>
+                                <strong>{{ value|facet_label:key }}</strong>
                             {% endif %}
                             <span class="close-icon ml-1">&times;</span>
                         </a>

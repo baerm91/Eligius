@@ -3,6 +3,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 from slg.filter_config import FILTER_PARAMETERS
 from django.apps import apps
 from django.shortcuts import get_object_or_404
+from slg.services.authority_display import display_label, display_text, FACET_MODELS
 
 register = template.Library()
 
@@ -36,7 +37,7 @@ def get_display_name(key, value):
     try:
         int_value = int(value)
     except ValueError:
-        return value  # Wert ist keine ID, also geben wir ihn direkt zurück
+        return display_text(value, FACET_MODELS.get(key))
 
     try:
         model = config['model']
@@ -47,7 +48,7 @@ def get_display_name(key, value):
             return getattr(related_obj, config['display_field'], value)
         # Annahme: 'value' ist die ID des Objekts
         related_obj = get_object_or_404(model, pk=value)
-        return getattr(related_obj, config['display_field'], value)
+        return display_label(related_obj)
     except (model.DoesNotExist, AttributeError):
         return value
 

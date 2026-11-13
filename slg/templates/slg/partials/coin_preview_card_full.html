@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load authority_labels %}
 {% load slg_extras i18n %}
 
 {% firstof obj.Typ.dat_verb obj.Typ.Metall obj.Typ.Nominal obj.Typ.Mzstaette as has_f1 %}
@@ -38,7 +39,7 @@
       class="btn btn-outline-primary btn-sm rounded-pill py-0 px-1 text-decoration-none d-inline-block mb-1"
       title="{{ obj.Typ.Metall.name|safe }}">
       {# Consider adding a generic 'metal' or 'material' SVG icon here if you have one, with me-1 class #}
-      <small><strong>{{ obj.Typ.Metall.name|truncatechars:15|safe }}</strong></small>
+      <small><strong>{{ obj.Typ.Metall|display_label|truncatechars:15 }}</strong></small>
     </a>
     {% endif %}
 
@@ -55,7 +56,7 @@
         <path d="M7 6h1v4"></path>
         <path d="m16.71 13.88.7.71-2.82 2.82"></path>
       </svg>
-      <small><strong>{{ obj.Typ.Nominal.name|truncatechars:15|safe }}</strong></small>
+      <small><strong>{{ obj.Typ.Nominal|display_label|truncatechars:15 }}</strong></small>
     </a>
     {% endif %}
 
@@ -74,7 +75,7 @@
         <line x1="18" x2="18" y1="18" y2="11"></line>
         <polygon points="12 2 20 7 4 7"></polygon>
       </svg>
-      <small><strong>{{ obj.Typ.Mzstaette.name|truncatechars:15|safe }}</strong></small>
+      <small><strong>{{ obj.Typ.Mzstaette|display_label|truncatechars:15 }}</strong></small>
     </a>
     {% endif %}
     {# 2 · Personen (Prägeherren & Sonstige) -------------------- #}
@@ -92,7 +93,7 @@
         <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
       </svg>
-      <small><strong title="{{ person.name|safe }}">{{ person.name|truncatechars:15|safe }}</strong></small>
+      <small><strong title="{{ person.name|safe }}">{{ person.name|authority_text:"Person"|truncatechars:15 }}</strong></small>
     </a>
     {% else %} {# Alle anderen Personen #}
     <a href="{% if is_object_list %}?{% else %}/browse/?{% endif %}{% add_filter_param Person=person.name %}"
@@ -106,7 +107,7 @@
         <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
       </svg>
-      <small><strong title="{{ person.name|safe }}">{{ person.name|truncatechars:15|safe }}</strong></small>
+      <small><strong title="{{ person.name|safe }}">{{ person.name|authority_text:"Person"|truncatechars:15 }}</strong></small>
     </a>
     {% endif %}
     {% endif %}
@@ -149,7 +150,7 @@
           <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
-        <small><strong title="{{ p.name|safe }}">{{ p.name|truncatechars:12|safe }}</strong></small>
+        <small><strong title="{{ p.name|safe }}">{{ p.name|authority_text:"Person"|truncatechars:12 }}</strong></small>
       </a>
       {% endif %}
       {% endfor %}
@@ -168,7 +169,7 @@
           </path>
           <circle cx="6.5" cy="9.5" r=".5" fill="currentColor"></circle>
         </svg>
-        <small><strong>{{ kw.name|truncatechars:10|safe }}</strong></small>
+        <small><strong>{{ kw.name|authority_text:"Schlagwort"|truncatechars:10 }}</strong></small>
       </a>
       {% endfor %}
     </div>
@@ -197,7 +198,7 @@
           <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
-        <small><strong title="{{ p.name|safe }}">{{ p.name|truncatechars:12|safe }}</strong></small>
+        <small><strong title="{{ p.name|safe }}">{{ p.name|authority_text:"Person"|truncatechars:12 }}</strong></small>
       </a>
       {% endif %}
       {% endfor %}
@@ -216,7 +217,7 @@
           </path>
           <circle cx="6.5" cy="9.5" r=".5" fill="currentColor"></circle>
         </svg>
-        <small><strong>{{ kw.name|truncatechars:10|safe }}</strong></small>
+        <small><strong>{{ kw.name|authority_text:"Schlagwort"|truncatechars:10 }}</strong></small>
       </a>
       {% endfor %}
     </div>

@@ -902,7 +902,7 @@
               processResults: data => ({
                   results: data.map(o => ({
                       id: useNameAsId ? o.name : (o.id ?? o.name),
-                      text: `${o.name} (${o.count})`
+                      text: `${o.label ?? o.name} (${o.count})`
                   }))
               }),
               cache: true,
@@ -925,7 +925,7 @@
               .then(r => r.json())
               .then(arr => {
                   const o = arr.find(x => String(x.id ?? x.name) === val || x.name === val);
-                  const txt = o ? `${o.name} (${o.count})` : `${val} (0)`;
+                  const txt = o ? `${o.label ?? o.name} (${o.count})` : `${val} (0)`;
                   if ($sel.find(`option[value="${val}"]`).length === 0) {
                       $sel.append(new Option(txt, val, true, true)).trigger('change.select2');
                   }
@@ -956,7 +956,7 @@
           const value = String(o.id ?? o.name);               // Wert immer String
           returned.add(value);
 
-          const label = `${o.name ?? o.label ?? o.bezeichnung ?? value} (${o.count})`;
+          const label = `${o.label ?? o.name ?? o.bezeichnung ?? value} (${o.count})`;
           const isSel = selected.includes(value);
 
           sel.appendChild(new Option(label, value, isSel, isSel));
@@ -970,7 +970,7 @@
               .then(r => r.json())
               .then(arr => {
                   const o = arr.find(x => String(x.id ?? x.name) === v);
-                  const label = o ? `${o.name ?? o.label ?? o.bezeichnung ?? v} (${o.count})`
+                  const label = o ? `${o.label ?? o.name ?? o.bezeichnung ?? v} (${o.count})`
                       : `(ID ${v}) (0)`;
                   sel.appendChild(new Option(label, v, true, true));
                   if (window.jQuery && $(sel).data('select2')) $(sel).trigger('change');

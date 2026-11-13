@@ -1,6 +1,7 @@
 {% extends "slg/navbar.html" %}
+{% load authority_labels %}
 {% load i18n %}
-{% block title %}{{ coin_data.slg }}: {{ coin_data.invnr }} - {{ coin_data.titel }}{% endblock title %}
+{% block title %}{{ coin_data.slg|display_label }}: {{ coin_data.invnr }} - {{ coin_data.titel }}{% endblock title %}
 
 {% block meta_tags %}
     <meta name="description" content="Details zur Münze {{ coin_data.invnr }} aus der Sammlung {{ coin_data.slg }}: {{ coin_data.titel }}. {% if coin_data.personen %}{% for person in coin_data.personen.all %}{% if person.idfk_PersonFunktion.id == 1 %}{{ person.idfk_Person.name }}{% endif %}{% endfor %}. {% endif %}{% if coin_data.mzstaette %}{{ coin_data.mzstaette }}. {% endif %}{% if coin_data.nominal %}{{ coin_data.nominal }}. {% endif %}{% if coin_data.dat_verb %}{{ coin_data.dat_verb }}.{% endif %}">
@@ -164,7 +165,7 @@
                     {% if coin_data.slg %}
                         <div class="detail-row">
                             <div class="detail-label">{% translate "Sammlung:" %}</div>
-                            <div class="detail-value"><a href="/browse/?Slg={{ coin_data.slg.id }}" title="{% translate 'Durchsuchen' %}">{{ coin_data.slg }}</a></div>
+                            <div class="detail-value"><a href="/browse/?Slg={{ coin_data.slg.id }}" title="{% translate 'Durchsuchen' %}">{{ coin_data.slg|display_label }}</a></div>
                         </div>
                     {% endif %}
                     {% if coin_data.slgteil %}
@@ -181,7 +182,7 @@
                         <div class="detail-row">
                             <div class="detail-label">{% translate "Objekttyp:" %}</div>
                             <div class="detail-value">
-                                <a href="/browse/?objekttyp={{ coin_data.objekttyp.id }}" title="{% translate 'Objekttyp' %}">{{ coin_data.objekttyp }}</a>
+                                <a href="/browse/?objekttyp={{ coin_data.objekttyp.id }}" title="{% translate 'Objekttyp' %}">{{ coin_data.objekttyp|display_label }}</a>
                             </div>
                         </div>
                     {% endif %}
@@ -235,7 +236,7 @@
                                             {% else %}
                                                 <a href="/browse/?Person={{ person.idfk_Person.name }}" title="{% translate 'Person' %}">
                                             {% endif %}
-                                                {{ person.idfk_Person.name }}{% if person.idfk_Person.zeichen %}, Zeichen: {{person.idfk_Person.zeichen}}{% endif %}
+                                                {{ person.idfk_Person|display_label }}{% if person.idfk_Person.zeichen %}, Zeichen: {{person.idfk_Person.zeichen}}{% endif %}
                                             </a>
                                             <a href="#theModal" data-title="{{ person.idfk_Person.name }}" data-remote="{% url 'PersonModal' id=person.idfk_Person.id %}" data-footer="{% url 'admin:slg_person_change' person.idfk_Person.id %}" data-toggle="modal" data-target="#theModal" title="{% translate 'Person' %}">
                                                 <i class="bi bi-box-arrow-up-right"></i>
@@ -271,7 +272,7 @@
                     {% if coin_data.mzstaette %}
                         <div class="detail-row">
                             <div class="detail-label">{% translate "Münzstätte:" %}</div>
-                            <div class="detail-value"><a href="/browse/?Muenzstaette={{ coin_data.mzstaette }}" title="{% translate 'Münzstätte' %}">{{ coin_data.mzstaette }}{% if coin_data.mzstaette.zeichen %}, Zeichen: {{coin_data.mzstaette.zeichen}}{% endif %}</a><a href="{{ coin_data.mzstaette.name_nom_id }}" title="Nomisma" target="_blank">
+                            <div class="detail-value"><a href="/browse/?Muenzstaette={{ coin_data.mzstaette }}" title="{% translate 'Münzstätte' %}">{{ coin_data.mzstaette|display_label }}{% if coin_data.mzstaette.zeichen %}, Zeichen: {{coin_data.mzstaette.zeichen}}{% endif %}</a><a href="{{ coin_data.mzstaette.name_nom_id }}" title="Nomisma" target="_blank">
                                 <i class="bi bi-box-arrow-up-right"></i>
                             </a></div>
                             
@@ -280,7 +281,7 @@
                     {% if coin_data.region %}
                         <div class="detail-row">
                             <div class="detail-label">{% translate "Region:" %}</div>
-                            <div class="detail-value"><a href="/browse/?region={{ coin_data.region }}" title="{% translate 'Region' %}">{{ coin_data.region }}</a>
+                            <div class="detail-value"><a href="/browse/?region={{ coin_data.region }}" title="{% translate 'Region' %}">{{ coin_data.region|display_label }}</a>
                             <a href="{{ coin_data.region.name_nom_id }}" title="Nomisma" target="_blank">
                                 <i class="bi bi-box-arrow-up-right"></i>
                             </a></div>
@@ -291,7 +292,7 @@
                     {% if coin_data.nominal %}
                         <div class="detail-row">
                             <div class="detail-label">{% translate "Nominal:" %}</div>
-                            <div class="detail-value"><a href="/browse/?Nominal={{ coin_data.nominal }}" title="{% translate 'Nominal' %}">{{ coin_data.nominal }}</a>
+                            <div class="detail-value"><a href="/browse/?Nominal={{ coin_data.nominal }}" title="{% translate 'Nominal' %}">{{ coin_data.nominal|display_label }}</a>
                             <a href="{{ coin_data.nominal.name_nom_id }}" title="Nomisma" target="_blank">
                                 <i class="bi bi-box-arrow-up-right"></i>
                             </a></div>
@@ -301,7 +302,7 @@
                     {% if coin_data.metall %}
                         <div class="detail-row">
                             <div class="detail-label">{% translate "Material:" %}</div>
-                            <div class="detail-value"><a href="/browse/?material={{ coin_data.metall }}" title="{% translate 'Material' %}">{{ coin_data.metall }}</a>
+                            <div class="detail-value"><a href="/browse/?material={{ coin_data.metall }}" title="{% translate 'Material' %}">{{ coin_data.metall|display_label }}</a>
                             <a href="{{ coin_data.metall.name_nom_id }}" title="Nomisma" target="_blank">
                                 <i class="bi bi-box-arrow-up-right"></i>
                             </a></div>
@@ -319,10 +320,10 @@
                             <div class="detail-label" style="vertical-align: top;">{% translate "Merkmale:" %}</div>
                             <div class="detail-value">
                             {% for Merkmal in coin_data.Herstellungsmerkmale %}
-                                <a href="/browse/?her_merk={{Merkmal.name}}">{{ Merkmal.name }}</a> <br>
+                                <a href="/browse/?her_merk={{Merkmal.name}}">{{ Merkmal|display_label }}</a> <br>
                             {% endfor %}
                             {% for Merkmal in coin_data.sekundaere_Merkmale %}
-                                <a href="/browse/?sek_merk={{Merkmal.name}}">{{ Merkmal.name }}</a><br>
+                                <a href="/browse/?sek_merk={{Merkmal.name}}">{{ Merkmal|display_label }}</a><br>
                             {% endfor %}
                             </div>
                         </div>
@@ -542,7 +543,7 @@
                 {% endwith %}
                 {% if coin_data.slg.bildrechte_lizenz %}
                     <div class="coin-image-license">
-                        {% translate "Bildrechte:" %} {{ coin_data.slg.name }} - {{ coin_data.slg.bildrechte_lizenz|linebreaksbr }}
+                        {% translate "Bildrechte:" %} {{ coin_data.slg|display_label }} - {{ coin_data.slg.bildrechte_lizenz|linebreaksbr }}
                     </div>
                 {% endif %}
             </div>
@@ -590,13 +591,13 @@
                         
                         {% for i in coin_data.personen %}
                                 {% if i.appears_on_rev == 0 and i.idfk_PersonFunktion.id == 2 %}
-                                    <a href="/browse/?Dargestellte_AV={{ i.idfk_Person.name }}" title="{% translate 'Dargestellte/r' %}" rel="tag">{{ i.idfk_Person.name }}</a>
+                                    <a href="/browse/?Dargestellte_AV={{ i.idfk_Person.name }}" title="{% translate 'Dargestellte/r' %}" rel="tag">{{ i.idfk_Person|display_label }}</a>
                                     <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
                                     
                                 {% endif %}
                         {% endfor %}
                         {% for schlagwort in coin_data.av_schlagworte %}
-                        <a href="/browse/?av_schlagwort={{ schlagwort.schlagwort.name }}" title="{% translate 'Schlagwort' %}" rel="tag">{{ schlagwort.schlagwort }}</a>
+                        <a href="/browse/?av_schlagwort={{ schlagwort.schlagwort.name }}" title="{% translate 'Schlagwort' %}" rel="tag">{{ schlagwort.schlagwort|display_label }}</a>
                         {% endfor %}
                         {% if coin_data.av_bildrand %}
                         <a href="/browse/?av_bildrand={{ coin_data.av_bildrand.id }}" title="{% translate 'Bildrand' %}" rel="tag">{{coin_data.av_bildrand}}</a>
@@ -636,13 +637,13 @@
                         {% endfor %}
                         {% for i in coin_data.personen %}
                                 {% if i.appears_on_rev == 1 and i.idfk_PersonFunktion.id == 2 %}
-                                    <a href="/browse/?Dargestellte_RV={{ i.idfk_Person.name }}" title="{% translate 'Dargestellte/r' %}" rel="tag">{{ i.idfk_Person.name }}</a>
+                                    <a href="/browse/?Dargestellte_RV={{ i.idfk_Person.name }}" title="{% translate 'Dargestellte/r' %}" rel="tag">{{ i.idfk_Person|display_label }}</a>
                                     <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
                                     
                                 {% endif %}
                         {% endfor %}
                         {% for schlagwort in coin_data.rv_schlagworte %}
-                            <a href="/browse/?rv_schlagwort={{ schlagwort.schlagwort.name }}" title="{% translate 'Schlagwort' %}" rel="tag">{{ schlagwort.schlagwort }}</a>
+                            <a href="/browse/?rv_schlagwort={{ schlagwort.schlagwort.name }}" title="{% translate 'Schlagwort' %}" rel="tag">{{ schlagwort.schlagwort|display_label }}</a>
                         {% endfor %}
                         {% if coin_data.rv_bildrand %}
                             <a href="/browse/?rv_bildrand={{ coin_data.rv_bildrand.id }}" title="{% translate 'Rv.-Beschreibung' %}" rel="tag">{{coin_data.rv_bildrand}}</a>

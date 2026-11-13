@@ -1,4 +1,5 @@
 {% load i18n static slg_extras %}
+{% load authority_labels %}
 {% with light=light|default:False %}
 <div class="infinite-item">
   <div class="coin-preview-card{% if light %} coin-preview-card--light{% endif %}">
@@ -11,7 +12,7 @@
     {# --- Sammlungsname ---------------------------------------------------- #}
     {% if obj.Slg %}
       <div class="coin-preview-header">
-        <div class="coin-preview-collection">{{ obj.Slg }}</div>
+        <div class="coin-preview-collection">{{ obj.Slg|authority_text:"Slg" }}</div>
       </div>
     {% endif %}
 

@@ -12,6 +12,7 @@ from slg.filter_config import FILTER_PARAMETERS
 from slg.models import MtoaPerson, Obj
 from slg.serializers import HerstellungsmerkmaleSerializer, Sek_MerkmaleSerializer
 from .search import _get_filtered_mtoa_queryset, MTOA_FACETS, public_objects
+from .authority_display import display_label, english, localize_facets
 
 
 def allowed_filter_names():
@@ -82,13 +83,14 @@ def _object_data(obj, detail=False):
     def resolved(own, inherited=None):
         return getattr(obj, own) or (getattr(typ, inherited or own) if typ else None)
     def named(value):
-        return {'id': value.pk, 'name': text(value.name)} if value else None
+        return {'id': value.pk, 'name': text(value.name), 'display_name': display_label(value)} if value else None
     people = []
     relations = list(obj.obj_person_set.all())
     if typ:
         relations += list(typ.mztyp_person_set.all())
     for rel in relations:
         people.append({'id': rel.idfk_Person_id, 'name': text(rel.idfk_Person.name),
+                       'display_name': display_label(rel.idfk_Person),
                        'role': text(rel.idfk_PersonFunktion.name),
                        'role_id': rel.idfk_PersonFunktion_id,
                        'reverse': rel.appears_on_rev})
@@ -105,9 +107,9 @@ def _object_data(obj, detail=False):
                  'to': obj.dat_bis if obj.dat_bis is not None else (typ.dat_bis if typ else None),
                  'label': text(resolved('dat_verb'))},
         'obverse': {'legend': text(resolved('avleg')),
-                    'description': text(resolved('avbeschr') or resolved('av_bildtyp'))},
+                    'description': text(resolved('avbeschr') or display_label(resolved('av_bildtyp')))},
         'reverse': {'legend': text(resolved('rvleg')),
-                    'description': text(resolved('rvbeschr') or resolved('rv_bildtyp'))},
+                    'description': text(resolved('rvbeschr') or display_label(resolved('rv_bildtyp')))},
         'url': settings.ELIGIUS_PUBLIC_BASE_URL.rstrip('/') + obj.get_absolute_url(),
     }
     if detail:
@@ -149,6 +151,11 @@ PERSON_FACETS = ('Praegeherren', 'Dargestellte_AV', 'Dargestellte_RV', 'Person')
 
 
 def facet_values(request, facet, include_current=False, term=None):
+    values = _facet_values(request, facet, include_current, None if english() else term)
+    return localize_facets(values, facet, term) if english() else values
+
+
+def _facet_values(request, facet, include_current=False, term=None):
     """Shared Browse/REST/MCP counts. Always count distinct objects, not joins.
 
     Browse excludes its own selected facet; distributions deliberately do not.

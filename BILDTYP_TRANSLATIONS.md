@@ -38,6 +38,5 @@ URLs und Filterwerte bleiben unverändert. `__str__`, Originalfelder, bestehende
 Rohdatenexporte und REST-`name`-Felder bleiben deutsch; diese Änderung ist keine
 vollständige Übersetzung aller Ausgabewege.
 
-Der automatische Bezug von Normdatenlabels (Nomisma/Wikidata/GND) ist weiterhin
-ein separater, noch nicht in die öffentliche Anzeige integrierter Arbeitsstand.
-Die lokale HTML-Prüfseite stellt keine Veröffentlichung dar.
+Normdatenlabels aus Nomisma/Wikidata/GND werden über den lokalen Quellenbestand
+angezeigt; siehe AUTHORITY_DISPLAY.md. Die HTML-Prüfseite ist dafür nicht erforderlich.

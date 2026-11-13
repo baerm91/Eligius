@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load authority_labels %}
 {% load slg_extras i18n %}
 {% firstof obj.datierung_verbale obj.metall obj.nominal obj.mzstaette as has_f1 %}
 {% firstof obj.personen_mit_funktion obj.Typ.wappen.all obj.av_schlagworte obj.rv_schlagworte as has_f2 %}
@@ -71,7 +72,7 @@
         <path d="m3.3 7 8.7 5 8.7-5"></path>
         <path d="M12 22V12"></path>
       </svg>
-      {{ obj.metall|truncatechars:15|safe }}
+      {{ obj.metall|authority_text:"Metall"|truncatechars:15 }}
     </a>
     {% endif %} {# Nominal #} {% if obj.nominal %}
     <a
@@ -101,7 +102,7 @@
         <path d="M7 6h1v4"></path>
         <path d="m16.71 13.88.7.71-2.82 2.82"></path>
       </svg>
-      {{ obj.nominal|truncatechars:15|safe }}
+      {{ obj.nominal|authority_text:"Nominal"|truncatechars:15 }}
     </a>
     {% endif %} {# Münzstätte #} {% if obj.mzstaette %}
     <a
@@ -133,7 +134,7 @@
         <line x1="18" x2="18" y1="18" y2="11"></line>
         <polygon points="12 2 20 7 4 7"></polygon>
       </svg>
-      {{ obj.mzstaette|truncatechars:18|safe }}
+      {{ obj.mzstaette|authority_text:"Mzstaette"|truncatechars:18 }}
     </a>
     {% endif %}
     {# 2 · Personen (Prägeherren & Sonstige) -------------------- #}
@@ -167,7 +168,7 @@
         <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
       </svg>
-      <span title="{{ p.name|safe }}">{{ p.name|truncatechars:15|safe }}</span>
+      <span title="{{ p.name|safe }}">{{ p.name|authority_text:"Person"|truncatechars:15 }}</span>
     </a>
     {% else %}
     <a
@@ -195,7 +196,7 @@
         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
         <circle cx="12" cy="7" r="4"></circle>
       </svg>
-      <span title="{{ p.name|safe }}">{{ p.name|truncatechars:15|safe }}</span>
+      <span title="{{ p.name|safe }}">{{ p.name|authority_text:"Person"|truncatechars:15 }}</span>
     </a>
     {% endif %}
     {% endif %}
@@ -272,7 +273,7 @@
           <path d="M20 21a8 8 0 0 0-16 0"></path>
         </svg>
         <span title="{{ p.name|safe }}">
-          {{ p.name|truncatechars:15|safe }}
+          {{ p.name|authority_text:"Person"|truncatechars:15 }}
         </span>
       </a>
       {% endif %}
@@ -304,7 +305,7 @@
           ></path>
           <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle>
         </svg>
-        <span>{{ kw|truncatechars:15|safe }}</span>
+        <span>{{ kw|authority_text:"Schlagwort"|truncatechars:15 }}</span>
       </a>
       {% endif %} {% endfor %} {% endwith %} {% endif %}
     </div>
@@ -347,7 +348,7 @@
           <path d="M20 21a8 8 0 0 0-16 0"></path>
         </svg>
         <span title="{{ p.name|safe }}">
-          {{ p.name|truncatechars:15|safe }}
+          {{ p.name|authority_text:"Person"|truncatechars:15 }}
         </span>
       </a>
       {% endif %}
@@ -379,7 +380,7 @@
           ></path>
           <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle>
         </svg>
-        <span>{{ kw|truncatechars:15|safe }}</span>
+        <span>{{ kw|authority_text:"Schlagwort"|truncatechars:15 }}</span>
       </a>
       {% endif %} {% endfor %} {% endwith %} {% endif %}
     </div>

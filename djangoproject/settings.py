@@ -15,6 +15,8 @@ from pathlib import Path
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve().parent.parent
+ELIGIUS_AUTHORITY_LABELS_PATH = Path(os.getenv(
+    'ELIGIUS_AUTHORITY_LABELS_PATH', str(BASE_DIR / 'var' / 'authority-labels.en.json')))
 
 
 # Quick-start development settings - unsuitable for production

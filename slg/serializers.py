@@ -6,17 +6,25 @@ from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 
 
-class MzstaettenSerializer(serializers.ModelSerializer):
+class DisplayLabelSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        from slg.services.authority_display import display_label
+        data = super().to_representation(instance)
+        data['display_name'] = display_label(instance)
+        return data
+
+
+class MzstaettenSerializer(DisplayLabelSerializer):
     class Meta:
         model = Mzstaette
         fields = ['id', 'name', 'name_nom_id']
 
-class SchlagwortSerializer(serializers.ModelSerializer):
+class SchlagwortSerializer(DisplayLabelSerializer):
     class Meta:
         model = Schlagwort
         fields = ['id', 'name']
 
-class PersonSerializer(serializers.ModelSerializer):
+class PersonSerializer(DisplayLabelSerializer):
     class Meta:
         model = Person
         fields = ['id', 'name', 'name_nom_id']
@@ -28,7 +36,7 @@ class SlgKategorieSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 # 2. Serializer mit einfachen Abhängigkeiten
-class SlgSerializer(serializers.ModelSerializer):
+class SlgSerializer(DisplayLabelSerializer):
     kategorie = SlgKategorieSerializer(read_only=True)
     absolute_url = serializers.SerializerMethodField()
     nomisma_rdf_url = serializers.SerializerMethodField()
@@ -54,14 +62,14 @@ class SlgTeilSerializer(serializers.ModelSerializer):
         model = SlgTeil
         fields = ['id', 'name',]
 
-class AvBildtypSerializer(serializers.ModelSerializer):
+class AvBildtypSerializer(DisplayLabelSerializer):
     schlagworte = SchlagwortSerializer(many=True, read_only=True)
 
     class Meta:
         model = AvBildtyp
         fields = ['id', 'name', 'abk', 'schlagworte']
 
-class RvBildtypSerializer(serializers.ModelSerializer):
+class RvBildtypSerializer(DisplayLabelSerializer):
     class Meta:
         model = RvBildtyp
         fields = ['id', 'name']
@@ -101,12 +109,12 @@ class ObjSerializer(serializers.ModelSerializer):
         model = Obj
         fields = '__all__'
 
-class MetallSerializer(serializers.ModelSerializer):
+class MetallSerializer(DisplayLabelSerializer):
     class Meta:
         model = Metall
         fields = ['id', 'name']
 
-class NominalSerializer(serializers.ModelSerializer):
+class NominalSerializer(DisplayLabelSerializer):
     class Meta:
         model = Nominal
         fields = ['id', 'name', 'name_nom_id']
@@ -145,12 +153,12 @@ class ObjInventoryUpdateSerializer(serializers.ModelSerializer):
         model = Obj
         fields = ['Typ']
 
-class HerstellungsmerkmaleSerializer(serializers.ModelSerializer):
+class HerstellungsmerkmaleSerializer(DisplayLabelSerializer):
     class Meta:
         model = Herstellungsmerkmale
         fields = ['id', 'name']
 
-class Sek_MerkmaleSerializer(serializers.ModelSerializer):
+class Sek_MerkmaleSerializer(DisplayLabelSerializer):
     class Meta:
         model = Sek_Merkmale
         fields = ['id', 'name']
@@ -381,7 +389,7 @@ class PersonCoinImageSerializer(serializers.ModelSerializer):
         objs = Obj.objects.filter(Typ__in=mztyps_with_funktion_2).distinct()
         return CoinImageSerializer(objs, many=True, context=self.context).data
 
-class AvBildtypSerializer(serializers.ModelSerializer):
+class AvBildtypSerializer(DisplayLabelSerializer):
     schlagworte = SchlagwortSerializer(many=True, read_only=True)
 
     class Meta:

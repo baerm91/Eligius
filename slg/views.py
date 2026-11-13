@@ -4031,6 +4031,7 @@ def objekt_list_view_mtoa(request):
     Browse-View auf Basis der MuenztypObjektAnzeige (MTOA).
     Nutzt die flache MTOA-Tabelle und MtoaPerson-Bridge für effiziente Abfragen.
     """
+    from .services.authority_display import display_text
     invnr = request.GET.get('invnr')
     if invnr:
         obj = Obj.objects.only('id').filter(invnr=invnr).first()
@@ -4062,8 +4063,8 @@ def objekt_list_view_mtoa(request):
     mints_for_js = [
         {
             'id': m['mint_id'],
-            'name': m['mint_name'],
-            'region': m['mint_region'],
+            'name': display_text(m['mint_name'], 'Mzstaette'),
+            'region': display_text(m['mint_region'], 'Region'),
             'longitude': float(m['mint_lon']) if m['mint_lon'] is not None else None,
             'latitude': float(m['mint_lat']) if m['mint_lat'] is not None else None,
             'count': m['obj_count'],
