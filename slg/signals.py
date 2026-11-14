@@ -129,8 +129,11 @@ def sync_mztyp_person_change(sender, instance, **kwargs):
 def sync_authority_change(sender, instance, **kwargs):
     if _sync_disabled or kwargs.get('raw'):
         return
-    from .models import Obj, Obj_Person, Mztyp_Person
     name = sender._meta.model_name
+    if name in ('avbildtyp', 'rvbildtyp') and kwargs.get('update_fields') == {'name_en'}:
+        # English labels are read from the motif itself, not the object projection.
+        return
+    from .models import Obj, Obj_Person, Mztyp_Person
     if name in ('person', 'personfunktion'):
         field = 'idfk_Person_id' if name == 'person' else 'idfk_PersonFunktion_id'
         objects = Obj.objects.filter(

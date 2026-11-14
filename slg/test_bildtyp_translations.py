@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.contrib.admin.models import LogEntry
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -102,16 +104,20 @@ class BildtypTranslationTests(TestCase):
         import_url = reverse('admin:slg_avbildtyp_import')
         formats = self.client.get(import_url).context['form'].fields['format'].choices
         xlsx_format = next(value for value, label in formats if label == 'xlsx')
-        preview = self.client.post(import_url, {
-            'format': xlsx_format,
-            'import_file': SimpleUploadedFile('translations.xlsx', XLSX().export_data(data)),
-        })
+        with patch('slg.signals._sync_queryset') as sync_objects:
+            preview = self.client.post(import_url, {
+                'format': xlsx_format,
+                'import_file': SimpleUploadedFile('translations.xlsx', XLSX().export_data(data)),
+            })
+            sync_objects.assert_not_called()
         self.assertContains(preview, 'Head right')
         first.refresh_from_db()
         self.assertEqual(first.name_en, '')
 
         confirm_data = preview.context['confirm_form'].initial
-        result = self.client.post(reverse('admin:slg_avbildtyp_process_import'), confirm_data)
+        with patch('slg.signals._sync_queryset') as sync_objects:
+            result = self.client.post(reverse('admin:slg_avbildtyp_process_import'), confirm_data)
+            sync_objects.assert_not_called()
         self.assertRedirects(result, reverse('admin:slg_avbildtyp_changelist'))
         first.refresh_from_db()
         second.refresh_from_db()

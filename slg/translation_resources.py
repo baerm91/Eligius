@@ -81,6 +81,9 @@ class BildtypTranslationResource(resources.ModelResource):
             return self._meta.model.objects.select_for_update().get(pk=instance.pk)
         return instance
 
+    def do_instance_save(self, instance, is_create):
+        instance.save(update_fields=['name_en'])
+
     def import_data(self, dataset, dry_run=False, raise_errors=False, **kwargs):
         kwargs.update(use_transactions=True, rollback_on_validation_errors=True)
         return super().import_data(dataset, dry_run=dry_run, raise_errors=raise_errors, **kwargs)
