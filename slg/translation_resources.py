@@ -5,11 +5,15 @@ import json
 from django.contrib import admin
 from django import forms
 from import_export import fields, resources
+from import_export.forms import ExportForm
 
 from slg.models import AvBildtyp, RvBildtyp
 
 
 class TranslationAdminMixin:
+    import_export_change_list_template = 'admin/import_export/change_list_import_export.html'
+    export_form_class = ExportForm
+
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         if db_field.name == 'name_en':
             kwargs['widget'] = forms.Textarea(attrs={'rows': 3, 'cols': 45,
@@ -87,6 +91,7 @@ class BildtypTranslationResource(resources.ModelResource):
         import_id_fields = ('id',)
         clean_model_instances = True
         skip_unchanged = True
+        report_skipped = False
         use_transactions = True
 
 

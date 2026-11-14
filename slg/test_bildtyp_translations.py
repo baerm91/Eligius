@@ -1,7 +1,10 @@
 from django.contrib.auth import get_user_model
+from django.contrib.admin.models import LogEntry
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.utils.translation import override
+from import_export.formats.base_formats import XLSX
 from tablib import Dataset
 
 from slg.models import AvBildtyp, RvBildtyp, Obj, MuenztypObjektAnzeige
@@ -71,6 +74,50 @@ class BildtypTranslationTests(TestCase):
         row.refresh_from_db()
         self.assertEqual(row.name_en, 'Bust left')
         self.assertNotContains(self.client.get(url, {'english': 'missing'}), 'Büste nach links')
+
+    def test_admin_exports_all_matching_rows_with_required_import_columns(self):
+        for model in (AvBildtyp, RvBildtyp):
+            model.objects.bulk_create([model(name=f'Beschreibung {i}') for i in range(30)])
+            model.objects.create(name='Bereits übersetzt', name_en='Already translated')
+            url_name = f'admin:slg_{model._meta.model_name}'
+            export_url = reverse(f'{url_name}_export')
+            self.assertContains(self.client.get(reverse(f'{url_name}_changelist')), export_url)
+            formats = self.client.get(export_url).context['form'].fields['format'].choices
+            xlsx_format = next(value for value, label in formats if label == 'xlsx')
+            for query, count in [('', 31), ('?english=missing', 30)]:
+                response = self.client.post(export_url + query, {'format': xlsx_format})
+                self.assertEqual(response.status_code, 200)
+                data = XLSX().create_dataset(response.content)
+                self.assertEqual(data.headers, ['id', 'name', 'name_en', 'revision'])
+                self.assertEqual(len(data), count)
+
+    def test_admin_confirms_xlsx_with_changed_and_skipped_rows(self):
+        first = AvBildtyp.objects.create(name='Kopf nach rechts')
+        second = AvBildtyp.objects.create(name='Kopf nach links')
+        data = AvBildtypTranslationResource().export(AvBildtyp.objects.order_by('pk'))
+        row = list(data[0])
+        row[2] = 'Head right'
+        data[0] = row
+
+        import_url = reverse('admin:slg_avbildtyp_import')
+        formats = self.client.get(import_url).context['form'].fields['format'].choices
+        xlsx_format = next(value for value, label in formats if label == 'xlsx')
+        preview = self.client.post(import_url, {
+            'format': xlsx_format,
+            'import_file': SimpleUploadedFile('translations.xlsx', XLSX().export_data(data)),
+        })
+        self.assertContains(preview, 'Head right')
+        first.refresh_from_db()
+        self.assertEqual(first.name_en, '')
+
+        confirm_data = preview.context['confirm_form'].initial
+        result = self.client.post(reverse('admin:slg_avbildtyp_process_import'), confirm_data)
+        self.assertRedirects(result, reverse('admin:slg_avbildtyp_changelist'))
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual(first.name_en, 'Head right')
+        self.assertEqual(second.name_en, '')
+        self.assertEqual(list(LogEntry.objects.values_list('object_id', flat=True)), [str(first.pk)])
 
     def test_mcp_drafts_roundtrip_without_writing_and_permissions(self):
         row = RvBildtyp.objects.create(name='Altar (?)')

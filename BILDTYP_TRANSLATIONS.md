@@ -11,7 +11,9 @@ Im jeweiligen Django-Admin stehen Original und bearbeitbare Übersetzung
 nebeneinander. Filter „Englische Übersetzung: Fehlt“ und Suche über beide Sprachen
 helfen bei der Stapelbearbeitung. Mit „Sichern“ werden die Änderungen gespeichert.
 
-Für Export Zeilen auswählen und Aktion „Ausgewählte … exportieren“ verwenden.
+„Exportieren“ oben in der Admin-Liste lädt alle Treffer über alle Seiten hinweg.
+Für den vollständigen Bestand die Suche und den Übersetzungsfilter zurücksetzen.
+Einzelne Zeilen lassen sich über „Ausgewählte … exportieren“ herunterladen.
 CSV, XLSX und JSON stehen über django-import-export zur Verfügung. Nur `name_en`
 bearbeiten; `id`, `name` und `revision` unverändert lassen. Importieren zeigt eine
 Vorschau und benötigt eine Bestätigung. Leere Übersetzungszellen bleiben unverändert;
