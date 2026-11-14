@@ -4,10 +4,13 @@ import json
 
 from django.contrib import admin
 from django import forms
+from django.db import transaction
 from import_export import fields, resources
 from import_export.forms import ExportForm
+from import_export.instance_loaders import CachedInstanceLoader
 
 from slg.models import AvBildtyp, RvBildtyp
+from slg.services.authority_display import clear_display_cache
 
 
 class TranslationAdminMixin:
@@ -50,6 +53,13 @@ class TranslationStatusFilter(admin.SimpleListFilter):
         return queryset
 
 
+class LockedTranslationLoader(CachedInstanceLoader):
+    def get_queryset(self):
+        return super().get_queryset().using(
+            self.resource.get_db_connection_name(),
+        ).order_by('pk').select_for_update()
+
+
 class BildtypTranslationResource(resources.ModelResource):
     name = fields.Field(attribute='name', column_name='name', readonly=True)
     revision = fields.Field(column_name='revision', readonly=True)
@@ -58,9 +68,11 @@ class BildtypTranslationResource(resources.ModelResource):
         return translation_revision(instance)
 
     def before_import(self, dataset, **kwargs):
-        if set(dataset.headers or []) != {'id', 'name', 'name_en', 'revision'}:
+        if len(dataset.headers or []) != 4 or set(dataset.headers) != {'id', 'name', 'name_en', 'revision'}:
             raise ValueError('Erforderliche Spalten: id, name, name_en, revision. Bitte Übersetzungsexport verwenden.')
-        ids = [str(row['id']) for row in dataset.dict]
+        id_column = dataset.headers.index('id')
+        id_field = self.fields['id']
+        ids = [id_field.clean({'id': row[id_column]}) for row in dataset]
         if len(ids) != len(set(ids)):
             raise ValueError('Doppelte IDs sind nicht zulässig.')
 
@@ -75,14 +87,19 @@ class BildtypTranslationResource(resources.ModelResource):
         elif not isinstance(value, str) or len(value) > 500:
             raise ValueError('Englische Übersetzung darf maximal 500 Zeichen enthalten.')
 
-    def get_instance(self, instance_loader, row):
-        instance = super().get_instance(instance_loader, row)
-        if instance is not None:
-            return self._meta.model.objects.select_for_update().get(pk=instance.pk)
-        return instance
+    def get_bulk_update_fields(self):
+        return ['name_en']
 
-    def do_instance_save(self, instance, is_create):
-        instance.save(update_fields=['name_en'])
+    def bulk_update(self, using_transactions, dry_run, raise_errors, batch_size=None, result=None):
+        if dry_run:
+            self.update_instances.clear()
+            return
+        super().bulk_update(using_transactions, dry_run, raise_errors, batch_size, result)
+
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
+        if result.totals['update']:
+            transaction.on_commit(clear_display_cache, using=self.get_db_connection_name())
 
     def import_data(self, dataset, dry_run=False, raise_errors=False, **kwargs):
         kwargs.update(use_transactions=True, rollback_on_validation_errors=True)
@@ -92,7 +109,10 @@ class BildtypTranslationResource(resources.ModelResource):
         fields = ('id', 'name', 'name_en', 'revision')
         export_order = fields
         import_id_fields = ('id',)
-        clean_model_instances = True
+        # Only name_en is editable and after_init_instance validates it.
+        instance_loader_class = LockedTranslationLoader
+        use_bulk = True
+        batch_size = 250
         skip_unchanged = True
         report_skipped = False
         use_transactions = True
