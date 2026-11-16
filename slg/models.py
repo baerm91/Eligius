@@ -472,6 +472,20 @@ class Schlagwort(models.Model):
 	name_en = models.CharField(max_length=200, blank=True, default='', verbose_name='Englische Übersetzung')
 	name_nom_id = models.CharField(max_length=200, blank=True, verbose_name='Nomisma ID')
 	
+	def clean(self):
+		super().clean()
+		if not self.name:
+			return
+		if self.pk:
+			previous = Schlagwort.objects.filter(pk=self.pk).values_list('name', flat=True).first()
+			if previous is not None and previous.strip().casefold() == self.name.strip().casefold():
+				return
+		from django.db.models.functions import Trim
+		if Schlagwort.objects.alias(trimmed_name=Trim('name')).filter(
+			trimmed_name__iexact=self.name.strip(),
+		).exclude(pk=self.pk).exists():
+			raise ValidationError({'name': 'Ein Schlagwort mit diesem Namen existiert bereits.'})
+
 	def __str__(self):
 		return self.name
 	class Meta:

@@ -3,6 +3,7 @@ from urllib.request import Request
 from django.core.checks import messages
 from django.db import IntegrityError, transaction, models
 from django.contrib import admin, messages
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.admin.models import LogEntry, DELETION
 from django.contrib.admin.utils import quote
 from django.db.models.query import Prefetch, Q
@@ -10,6 +11,7 @@ from django.http import HttpResponse
 from django.http.response import HttpResponseRedirect
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.utils.http import urlencode
@@ -18,13 +20,15 @@ from django.shortcuts import redirect
 from .models import *
 from .translation_resources import (AvBildtypTranslationResource, RvBildtypTranslationResource, TranslationStatusFilter, TranslationAdminMixin,
     ObjekttypTranslationResource, HerstellungTranslationResource, PersonFunktionTranslationResource, SchlagwortTranslationResource)
+from .services.schlagwort_merge import METADATA, lock_keyword_writes, merge_keywords, merge_preview
 from import_export.resources import modelresource_factory
 # from .models import Slg, Obj, SlgTeil, Person, PersonFunktion, Herstellung, Ref, Nominal, Mzstaette, Obj_Person, Obj_Ref, Muenzstand, Variantenbeschr, AvBildtyp, RvBildtyp, AvBeizeichen, RvBeizeichen, AvBildrand, RvBildrand, Workflow, Obj_interne_Anmerkung, interneAnmerkung, Schlagwort, AvBildtyp_Schlagwort, RvBildtyp_Schlagwort, Muenztyp, Mztyp_Person, Faelschung
 from import_export.admin import ImportExportModelAdmin, ExportActionMixin, ImportExportActionModelAdmin
 from import_export import resources, fields, widgets
 from import_export.fields import Field
 from import_export.widgets import ForeignKeyWidget
-from django.db.models import Count
+from django.db.models import Count, Exists, OuterRef
+from django.db.models.functions import Trim
 import urllib.request, json
 import requests
 from requests.exceptions import RequestException, ConnectionError, Timeout, HTTPError
@@ -43,6 +47,7 @@ from django.contrib.admin import site
 from urllib.parse import urlencode, urlparse, urlunparse, urljoin
 import traceback
 from rdflib import Graph, Namespace, URIRef, XSD, Literal
+from django.core import signing
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -650,17 +655,103 @@ class RegionAdmin(admin.ModelAdmin):
     ordering = ['name']
     search_fields = ['name']
     
+class DuplicateKeywordFilter(admin.SimpleListFilter):
+    title = 'Namensgleiche Schlagworte'
+    parameter_name = 'duplicates'
+
+    def lookups(self, request, model_admin):
+        return [('yes', 'Nur namensgleiche')]
+
+    def queryset(self, request, queryset):
+        if self.value() == 'yes':
+            duplicates = Schlagwort.objects.alias(trimmed_name=Trim('name')).filter(
+                trimmed_name__iexact=OuterRef('trimmed_name'),
+            ).exclude(pk=OuterRef('pk'))
+            return queryset.alias(trimmed_name=Trim('name')).filter(Exists(duplicates))
+        return queryset
+
+
+class KeywordMergeForm(forms.Form):
+    revision = forms.CharField(widget=forms.HiddenInput)
+    target = forms.TypedChoiceField(label='Schlagwort, das erhalten bleibt', coerce=int)
+
+    def __init__(self, keywords, metadata, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['target'].choices = [
+            ('', 'Bitte wählen'),
+            *((keyword.pk, f'{keyword.name} (ID {keyword.pk})') for keyword in keywords),
+        ]
+        for field, values in metadata.items():
+            if len(values) > 1:
+                self.fields[field] = forms.ChoiceField(
+                    label=METADATA[field], choices=[('', 'Bitte wählen'), *((value, value) for value in values)],
+                )
+
+
 class SchlagwortAdmin(TranslationAdminMixin, ImportExportActionModelAdmin, admin.ModelAdmin):
     resource_classes = [SchlagwortTranslationResource]
+    actions = ['merge_selected_keywords']
     ordering = ['name']
-    search_fields = ['name', 'name_en']
+    search_fields = ['name', 'name_en', 'name_nom_id']
     list_display = ('id', 'name', 'name_en', 'name_nom_id')
     list_display_links = ('id', 'name')
     list_editable = ('name_en',)
-    list_filter = (TranslationStatusFilter,)
+    list_filter = (DuplicateKeywordFilter, TranslationStatusFilter)
     list_per_page = 50
     fields = (('name', 'name_en'), 'name_nom_id')
-    # autocomplete_fields=['name']
+
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        if request.method == 'POST':
+            with transaction.atomic():
+                lock_keyword_writes()
+                return super().changeform_view(request, object_id, form_url, extra_context)
+        return super().changeform_view(request, object_id, form_url, extra_context)
+
+    def has_merge_permission(self, request):
+        return self.has_change_permission(request) and self.has_delete_permission(request)
+
+    @admin.action(permissions=['merge'], description='Ausgewählte Schlagworte zusammenführen')
+    def merge_selected_keywords(self, request, queryset):
+        ids = list(queryset.order_by('pk').values_list('pk', flat=True))
+        try:
+            keywords, counts, metadata, _, _, revision = merge_preview(ids)
+        except ValueError as exc:
+            self.message_user(request, str(exc), messages.WARNING)
+            return
+
+        signer = signing.Signer(salt='slg.schlagwort.merge')
+        if 'confirm_merge' in request.POST:
+            form = KeywordMergeForm(keywords, metadata, request.POST)
+            if form.is_valid():
+                try:
+                    expected = signer.unsign(form.cleaned_data['revision'])
+                    with transaction.atomic():
+                        target, snapshot = merge_keywords(ids, form.cleaned_data['target'], form.cleaned_data, expected)
+                        self.log_change(request, target, 'Schlagworte zusammengeführt. ' +
+                                        json.dumps(snapshot, ensure_ascii=False))
+                except signing.BadSignature:
+                    form.add_error(None, 'Die Vorschau ist ungültig. Starten Sie die Aktion erneut.')
+                except ValueError as exc:
+                    form.add_error(None, str(exc))
+                except IntegrityError:
+                    form.add_error(None, 'Verknüpfungen wurden gleichzeitig geändert. Starten Sie die Aktion erneut.')
+                else:
+                    self.message_user(request, f'{len(ids)} Schlagworte zu „{target.name}“ '
+                                               f'(ID {target.pk}) zusammengeführt.', messages.SUCCESS)
+                    return
+        else:
+            form = KeywordMergeForm(keywords, metadata, initial={'revision': signer.sign(revision)})
+
+        return TemplateResponse(request, 'admin/slg/schlagwort/merge.html', {
+            **self.admin_site.each_context(request),
+            'title': 'Schlagworte zusammenführen',
+            'opts': self.model._meta,
+            'rows': [(keyword, counts[keyword.pk]) for keyword in keywords],
+            'form': form,
+            'action_checkbox_name': ACTION_CHECKBOX_NAME,
+            'return_url': request.get_full_path(),
+        })
+
 
 class KatSchlagwortAdmin(admin.ModelAdmin):
     ordering = ['name']

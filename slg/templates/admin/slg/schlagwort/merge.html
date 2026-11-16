@@ -1,0 +1,84 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
+<style>
+  #keyword-merge-preview { width: 100%; table-layout: fixed; }
+  #keyword-merge-preview th, #keyword-merge-preview td { overflow-wrap: anywhere; }
+  #keyword-merge-preview dl, #keyword-merge-preview dd { margin: 0; }
+  #keyword-merge-preview dt:not(:first-child) { margin-top: .5em; }
+  #keyword-merge-form select { max-width: 100%; }
+  @media (max-width: 600px) {
+    #keyword-merge-preview th, #keyword-merge-preview td { padding: 8px; }
+  }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs" role="navigation" aria-label="Brotkrümelnavigation">
+  <a href="{% url 'admin:index' %}">Start</a> &rsaquo;
+  <a href="{{ return_url }}">Schlagworte</a> &rsaquo; Zusammenführen
+</div>
+{% endblock %}
+
+{% block content %}
+<p>Wählen Sie den Eintrag, der erhalten bleibt. Die übrigen Einträge werden entfernt und ihre
+Verknüpfungen auf das Ziel übertragen. Mehrfachverknüpfungen zum selben Datensatz werden einmal geführt.</p>
+
+<div class="results">
+  <table id="keyword-merge-preview">
+    <thead>
+      <tr>
+        <th scope="col">Schlagwort</th>
+        <th scope="col">Übersetzung und Nomisma</th>
+        <th scope="col">Verknüpfungen</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for keyword, counts in rows %}
+      <tr>
+        <th scope="row">{{ keyword.name }}<br><span class="quiet">ID {{ keyword.pk }}</span></th>
+        <td>
+          <dl>
+            <dt>Englisch</dt><dd>{{ keyword.name_en|default:"—" }}</dd>
+            <dt>Nomisma</dt><dd>{{ keyword.name_nom_id|default:"—" }}</dd>
+          </dl>
+        </td>
+        <td>
+          <div>Av.-Bildtypen {{ counts.0 }}</div>
+          <div>Rv.-Bildtypen {{ counts.1 }}</div>
+          <div>Münztypen {{ counts.2 }}</div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<form id="keyword-merge-form" method="post">
+  {% csrf_token %}
+  {% for keyword, counts in rows %}
+    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ keyword.pk }}">
+  {% endfor %}
+  <input type="hidden" name="action" value="merge_selected_keywords">
+  <input type="hidden" name="confirm_merge" value="1">
+  {{ form.revision }}
+  {{ form.non_field_errors }}
+  <p>Ein eindeutiger vorhandener Wert für Englisch oder Nomisma wird übernommen.
+  Bei unterschiedlichen Werten wählen Sie den zu übernehmenden Wert.</p>
+  <fieldset class="module aligned">
+    {% for field in form.visible_fields %}
+      <div class="form-row">
+        {{ field.errors }}
+        {{ field.label_tag }} {{ field }}
+      </div>
+    {% endfor %}
+  </fieldset>
+  <div class="submit-row">
+    <input type="submit" value="Zusammenführen" class="default">
+    <a href="{{ return_url }}">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}

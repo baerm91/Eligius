@@ -11,6 +11,7 @@ from import_export.instance_loaders import CachedInstanceLoader
 
 from slg.models import AvBildtyp, Herstellung, Objekttyp, PersonFunktion, RvBildtyp, Schlagwort
 from slg.services.authority_display import clear_display_cache
+from slg.templatetags.authority_labels import nomisma_url
 
 
 class TranslationAdminMixin:
@@ -74,6 +75,7 @@ class LockedTranslationLoader(CachedInstanceLoader):
 
 
 class BildtypTranslationResource(resources.ModelResource):
+    optional_import_columns = frozenset()
     name = fields.Field(attribute='name', column_name='name', readonly=True)
     revision = fields.Field(column_name='revision', readonly=True)
 
@@ -81,7 +83,9 @@ class BildtypTranslationResource(resources.ModelResource):
         return translation_revision(instance)
 
     def before_import(self, dataset, **kwargs):
-        if len(dataset.headers or []) != 4 or set(dataset.headers) != {'id', 'name', 'name_en', 'revision'}:
+        headers = dataset.headers or []
+        required = {'id', 'name', 'name_en', 'revision'}
+        if len(headers) != len(set(headers)) or set(headers) - self.optional_import_columns != required:
             raise ValueError('Erforderliche Spalten: id, name, name_en, revision. Bitte Übersetzungsexport verwenden.')
         id_column = dataset.headers.index('id')
         id_field = self.fields['id']
@@ -155,4 +159,17 @@ def translation_resource(model_class):
 ObjekttypTranslationResource = translation_resource(Objekttyp)
 HerstellungTranslationResource = translation_resource(Herstellung)
 PersonFunktionTranslationResource = translation_resource(PersonFunktion)
-SchlagwortTranslationResource = translation_resource(Schlagwort)
+
+
+class SchlagwortTranslationResource(BildtypTranslationResource):
+    nomisma_url = fields.Field(column_name='nomisma_url', readonly=True)
+    optional_import_columns = frozenset({'nomisma_url'})
+
+    def dehydrate_nomisma_url(self, instance):
+        return nomisma_url(instance.name_nom_id)
+
+    class Meta(BildtypTranslationResource.Meta):
+        model = Schlagwort
+        name = 'Englische Übersetzungen'
+        fields = (*BildtypTranslationResource.Meta.fields, 'nomisma_url')
+        export_order = fields
