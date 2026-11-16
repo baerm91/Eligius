@@ -30,6 +30,12 @@ class TranslationAdminMixin:
             kwargs['widget'] = forms.Textarea(attrs=attrs)
         return super().formfield_for_dbfield(db_field, request, **kwargs)
 
+    def save_model(self, request, obj, form, change):
+        if change and form.changed_data == ['name_en']:
+            obj.save(update_fields=['name_en'])
+        else:
+            super().save_model(request, obj, form, change)
+
     def has_import_permission(self, request):
         return self.has_change_permission(request)
 

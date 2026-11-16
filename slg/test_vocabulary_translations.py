@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from django.contrib.admin.models import LogEntry
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -8,7 +9,7 @@ from django.urls import reverse
 from django.utils.translation import override
 from tablib import Dataset
 
-from slg.models import Nominal, Person
+from slg.models import Herstellung, Nominal, Person
 from slg.services.authority_display import display_label
 from slg.services.vocabulary_translations import (
     VOCABULARIES,
@@ -65,6 +66,39 @@ class VocabularyTranslationTests(TestCase):
                     self.assertEqual(display_label(entry), 'Original')
                 with self.assertRaisesMessage(ValueError, 'inzwischen geändert'):
                     draft_vocabulary_translations(self.user.pk, key, batch['rows'])
+
+    def test_inline_translation_saves_only_english_without_object_sync(self):
+        entries = [Herstellung.objects.create(name=name) for name in ('Prägung', 'Guss', 'Druck')]
+        labels = ['Struck', 'Cast', 'Printed']
+        data = {'form-TOTAL_FORMS': '3', 'form-INITIAL_FORMS': '3', '_save': 'Save'}
+        for index, (entry, label) in enumerate(zip(entries, labels)):
+            data.update({f'form-{index}-id': entry.pk, f'form-{index}-name_en': label})
+
+        url = reverse('admin:slg_herstellung_changelist')
+        with patch('slg.signals._sync_queryset') as sync_objects:
+            response = self.client.post(url, data)
+        self.assertRedirects(response, url)
+        sync_objects.assert_not_called()
+        saved = Herstellung.objects.in_bulk(entry.pk for entry in entries)
+        for entry, label in zip(entries, labels):
+            self.assertEqual(saved[entry.pk].name, entry.name)
+            self.assertEqual(saved[entry.pk].name_en, label)
+        self.assertEqual(LogEntry.objects.filter(user=self.user, action_flag=2).count(), 3)
+
+    def test_detail_form_synchronizes_objects_when_original_label_changes(self):
+        entry = Herstellung.objects.create(name='Prägung')
+        url = reverse('admin:slg_herstellung_change', args=[entry.pk])
+        data = {'name': entry.name, 'name_en': 'Struck', 'name_nom_id': '', '_save': 'Save'}
+        with patch('slg.signals._sync_queryset') as sync_objects:
+            response = self.client.post(url, data)
+            self.assertEqual(response.status_code, 302)
+            sync_objects.assert_not_called()
+
+            response = self.client.post(url, {**data, 'name': 'Handprägung', 'name_en': 'Hand-struck'})
+            self.assertEqual(response.status_code, 302)
+            sync_objects.assert_called_once()
+        entry.refresh_from_db()
+        self.assertEqual((entry.name, entry.name_en), ('Handprägung', 'Hand-struck'))
 
     def test_permissions_and_pagination(self):
         user = get_user_model().objects.create_user('limited-editor')
