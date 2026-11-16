@@ -2,10 +2,12 @@
 import hashlib
 import json
 from collections import defaultdict
+from itertools import islice
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Case, Q, TextField, Value, When
+from django.db.models.functions import Coalesce
 
 from slg.models import (
     AvBildtyp_Schlagwort,
@@ -89,20 +91,22 @@ def _move_links(model, owner_field, rows, target_id):
 def _update_search_keywords(av_ids, rv_ids):
     maps = _build_schlagwort_maps_for_ids(av_ids, rv_ids)
     for side, affected_ids, labels in zip(('av', 'rv'), (av_ids, rv_ids), maps):
-        grouped = defaultdict(list)
-        for owner_id in affected_ids:
-            grouped[labels.get(owner_id, '')].append(owner_id)
+        if not affected_ids:
+            continue
         field = f'{side}_bildtyp_id'
-        for label, owners in grouped.items():
-            for start in range(0, len(owners), 500):
-                group = owners[start:start + 500]
-                objects = Obj.objects.filter(
-                    Q(**{f'{field}__in': group}) |
-                    Q(**{f'{field}__isnull': True, f'Typ__{field}__in': group})
-                )
-                MuenztypObjektAnzeige.objects.filter(obj_id__in=objects.values('pk')).update(
-                    **{f'{side}_schlagworte': label},
-                )
+        objects = Obj.objects.filter(
+            Q(**{f'{field}__in': affected_ids}) |
+            Q(**{f'{field}__isnull': True, f'Typ__{field}__in': affected_ids})
+        ).annotate(keyword_owner=Coalesce(field, f'Typ__{field}')).order_by('pk')
+        rows = objects.values_list('pk', 'keyword_owner').iterator(chunk_size=500)
+        while batch := list(islice(rows, 500)):
+            grouped = defaultdict(list)
+            for obj_id, owner_id in batch:
+                grouped[labels.get(owner_id, '')].append(obj_id)
+            values = [When(obj_id__in=ids, then=Value(label)) for label, ids in grouped.items()]
+            MuenztypObjektAnzeige.objects.filter(obj_id__in=[pk for pk, _ in batch]).update(
+                **{f'{side}_schlagworte': Case(*values, output_field=TextField())},
+            )
 
 
 @transaction.atomic
