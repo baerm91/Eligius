@@ -1308,3 +1308,9 @@ msgstr "%(start)s to %(end)s"
 #, python-format
 msgid "Gesamt: %(start)s bis %(end)s"
 msgstr "Overall: %(start)s to %(end)s"
+
+msgid "Bearbeiten"
+msgstr "Edit"
+
+msgid "Wird geladen …"
+msgstr "Loading…"

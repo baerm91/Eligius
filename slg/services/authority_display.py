@@ -14,7 +14,8 @@ from .authority_inventory import identify_authority
 
 REFERENCE_FIELDS = ('name_nom_id', 'DNB', 'WikiEn', 'WikiDe', 'uri_reference', 'nomisma_collection_uri')
 MODELS = ('Person', 'Nominal', 'Metall', 'Mzstaette', 'Region', 'Objekttyp',
-          'Herstellungsmerkmale', 'Sek_Merkmale', 'Schlagwort', 'OffizinSymbol', 'Slg')
+          'Herstellungsmerkmale', 'Sek_Merkmale', 'Schlagwort', 'OffizinSymbol', 'Slg',
+          'Herstellung', 'PersonFunktion')
 FACET_MODELS = {'Muenzstaette': 'Mzstaette', 'Nominal': 'Nominal', 'Nominal_id': 'Nominal',
     'material': 'Metall', 'region': 'Region', 'objekttyp': 'Objekttyp', 'obj_type': 'Objekttyp',
     'Praegeherren': 'Person', 'Person': 'Person', 'Dargestellte_AV': 'Person', 'Dargestellte_RV': 'Person',

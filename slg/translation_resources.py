@@ -9,7 +9,7 @@ from import_export import fields, resources
 from import_export.forms import ExportForm
 from import_export.instance_loaders import CachedInstanceLoader
 
-from slg.models import AvBildtyp, RvBildtyp
+from slg.models import AvBildtyp, Herstellung, Objekttyp, PersonFunktion, RvBildtyp, Schlagwort
 from slg.services.authority_display import clear_display_cache
 
 
@@ -19,8 +19,15 @@ class TranslationAdminMixin:
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         if db_field.name == 'name_en':
-            kwargs['widget'] = forms.Textarea(attrs={'rows': 3, 'cols': 45,
-                'style': 'width:100%;min-width:16em;box-sizing:border-box', 'lang': 'en'})
+            short_label = db_field.max_length <= 200
+            attrs = {
+                'rows': 3,
+                'cols': 24 if short_label else 45,
+                'lang': 'en',
+                'style': 'width:100%;box-sizing:border-box',
+            }
+            attrs['style'] += ';min-width:8em' if short_label else ';min-width:16em'
+            kwargs['widget'] = forms.Textarea(attrs=attrs)
         return super().formfield_for_dbfield(db_field, request, **kwargs)
 
     def has_import_permission(self, request):
@@ -84,8 +91,10 @@ class BildtypTranslationResource(resources.ModelResource):
         value = row.get('name_en')
         if value is None or value == '' or (isinstance(value, str) and not value.strip()):
             row['name_en'] = instance.name_en
-        elif not isinstance(value, str) or len(value) > 500:
-            raise ValueError('Englische Übersetzung darf maximal 500 Zeichen enthalten.')
+        else:
+            limit = instance._meta.get_field('name_en').max_length
+            if not isinstance(value, str) or len(value) > limit:
+                raise ValueError(f'Englische Übersetzung darf maximal {limit} Zeichen enthalten.')
 
     def get_bulk_update_fields(self):
         return ['name_en']
@@ -126,3 +135,18 @@ class AvBildtypTranslationResource(BildtypTranslationResource):
 class RvBildtypTranslationResource(BildtypTranslationResource):
     class Meta(BildtypTranslationResource.Meta):
         model = RvBildtyp
+
+
+def translation_resource(model_class):
+    """Translation-only resource for any model with name and name_en."""
+    meta = type('Meta', (BildtypTranslationResource.Meta,), {
+        'model': model_class,
+        'name': 'Englische Übersetzungen',
+    })
+    return type(f'{model_class.__name__}TranslationResource', (BildtypTranslationResource,), {'Meta': meta})
+
+
+ObjekttypTranslationResource = translation_resource(Objekttyp)
+HerstellungTranslationResource = translation_resource(Herstellung)
+PersonFunktionTranslationResource = translation_resource(PersonFunktion)
+SchlagwortTranslationResource = translation_resource(Schlagwort)

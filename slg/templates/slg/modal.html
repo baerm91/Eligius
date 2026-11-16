@@ -1,20 +1,50 @@
 {% load i18n %}
-<div class="modal fade" id="theModal" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-lg" role="document">
+<div class="modal fade" id="theModal" tabindex="-1" aria-labelledby="modal_title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
       <div class="modal-content">
           <div class="modal-header">
             <h4 id="modal_title" class="modal-title"></h4>
-            <button type="button" class="close" data-dismiss="modal">
-            <span aria-hidden="true">&times;</span>
-            </button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Schließen' %}"></button>
           </div>             
-          <div class="modal-body">
+          <div class="modal-body" aria-live="polite"
+               data-loading="{% translate 'Wird geladen …' %}"
+               data-error="{% translate 'Fehler beim Laden der Daten.' %}">
           </div>             
           <div class="modal-footer">
-            {% if request.user.is_authenticated %}<a href="" class="btn btn-primary active" role="button" aria-pressed="true" target="_blank">Edit</a>{%endif%}
-            <!-- <button type="button" class="btn btn-primary"><a href="#">Edit</a></button> -->
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            {% if request.user.is_authenticated %}<a class="btn btn-primary" target="_blank" rel="noopener" hidden>{% translate "Bearbeiten" %}</a>{%endif%}
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "Schließen" %}</button>
           </div>
       </div>
   </div>
 </div>
+<script>
+    (() => {
+        const modal = document.getElementById('theModal');
+        const body = modal.querySelector('.modal-body');
+        const editLink = modal.querySelector('.modal-footer a');
+        let request;
+
+        modal.addEventListener('show.bs.modal', async ({relatedTarget: trigger}) => {
+            if (!trigger?.dataset.remote) return;
+
+            request?.abort();
+            const controller = new AbortController();
+            request = controller;
+            modal.querySelector('.modal-title').textContent = trigger.dataset.title || trigger.textContent.trim();
+            body.textContent = body.dataset.loading;
+            if (editLink) {
+                editLink.hidden = !trigger.dataset.footer;
+                if (!editLink.hidden) editLink.href = trigger.dataset.footer;
+            }
+            try {
+                const response = await fetch(trigger.dataset.remote, {signal: controller.signal});
+                if (!response.ok) throw new Error(response.status);
+                const html = await response.text();
+                if (!controller.signal.aborted) body.innerHTML = html;
+            } catch {
+                if (!controller.signal.aborted) body.textContent = body.dataset.error;
+            }
+        });
+        modal.addEventListener('hide.bs.modal', () => request?.abort());
+    })();
+</script>

@@ -17,6 +17,7 @@
       {% include 'slg/styles.html' with active_block='cssnavbar' %}
       <link rel="preload" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
       <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" /></noscript>
+      <style>.cc-window.cc-invisible { visibility: hidden; }</style>
     {% endblock stylesheets %}
 
     <!-- Google Analytics wird nur geladen, wenn Cookies akzeptiert wurden -->

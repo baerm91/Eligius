@@ -16,7 +16,9 @@ from django.utils.http import urlencode
 from django.shortcuts import redirect
 # Register your models here.
 from .models import *
-from .translation_resources import AvBildtypTranslationResource, RvBildtypTranslationResource, TranslationStatusFilter, TranslationAdminMixin
+from .translation_resources import (AvBildtypTranslationResource, RvBildtypTranslationResource, TranslationStatusFilter, TranslationAdminMixin,
+    ObjekttypTranslationResource, HerstellungTranslationResource, PersonFunktionTranslationResource, SchlagwortTranslationResource)
+from import_export.resources import modelresource_factory
 # from .models import Slg, Obj, SlgTeil, Person, PersonFunktion, Herstellung, Ref, Nominal, Mzstaette, Obj_Person, Obj_Ref, Muenzstand, Variantenbeschr, AvBildtyp, RvBildtyp, AvBeizeichen, RvBeizeichen, AvBildrand, RvBildrand, Workflow, Obj_interne_Anmerkung, interneAnmerkung, Schlagwort, AvBildtyp_Schlagwort, RvBildtyp_Schlagwort, Muenztyp, Mztyp_Person, Faelschung
 from import_export.admin import ImportExportModelAdmin, ExportActionMixin, ImportExportActionModelAdmin
 from import_export import resources, fields, widgets
@@ -130,11 +132,16 @@ class ReichskreisView(ImportExportModelAdmin):
     ordering = ['name']
     pass
 
-class ObjekttypenView(ImportExportModelAdmin):
-    search_fields = ('name',)
-    list_display = ('id','name','name_nom_id')
+class ObjekttypenView(TranslationAdminMixin, ImportExportModelAdmin):
+    # Erste Ressource: reiner Übersetzungsaustausch; zweite: bisheriger Vollimport/-export.
+    resource_classes = [ObjekttypTranslationResource, modelresource_factory(Objekttyp)]
+    search_fields = ('name', 'name_en')
+    list_display = ('id', 'name', 'name_en', 'name_nom_id')
+    list_display_links = ('id', 'name')
+    list_editable = ('name_en',)
+    list_filter = (TranslationStatusFilter,)
+    fields = (('name', 'name_en'), 'name_nom_id')
     ordering = ['name']
-    pass
 
 class Sek_MerkmaleView(ImportExportModelAdmin):
     search_fields = ('name','name_nom_id')
@@ -643,9 +650,16 @@ class RegionAdmin(admin.ModelAdmin):
     ordering = ['name']
     search_fields = ['name']
     
-class SchlagwortAdmin(admin.ModelAdmin):
+class SchlagwortAdmin(TranslationAdminMixin, ImportExportActionModelAdmin, admin.ModelAdmin):
+    resource_classes = [SchlagwortTranslationResource]
     ordering = ['name']
-    search_fields = ['name']
+    search_fields = ['name', 'name_en']
+    list_display = ('id', 'name', 'name_en', 'name_nom_id')
+    list_display_links = ('id', 'name')
+    list_editable = ('name_en',)
+    list_filter = (TranslationStatusFilter,)
+    list_per_page = 50
+    fields = (('name', 'name_en'), 'name_nom_id')
     # autocomplete_fields=['name']
 
 class KatSchlagwortAdmin(admin.ModelAdmin):
@@ -2391,8 +2405,14 @@ class MyObjectsAdmin(admin.ModelAdmin,):
 class StaatAdmin(admin.ModelAdmin,):
     search_fields = ('name',)
 
-class PersonFunktionAdmin(ImportExportModelAdmin,):
-    search_fields = ('name',)
+class PersonFunktionAdmin(TranslationAdminMixin, ImportExportModelAdmin,):
+    resource_classes = [PersonFunktionTranslationResource, modelresource_factory(PersonFunktion)]
+    search_fields = ('name', 'name_en')
+    list_display = ('id', 'name', 'name_en')
+    list_display_links = ('id', 'name')
+    list_editable = ('name_en',)
+    list_filter = (TranslationStatusFilter,)
+    fields = (('name', 'name_en'),)
 
 class KatalogartAdmin(admin.ModelAdmin,):
     search_fields = ('name',)
@@ -2645,9 +2665,14 @@ class KatalogAdmin(admin.ModelAdmin):
         return super(KatalogAdmin,self).get_queryset(request).select_related('katalogart', 'monat','workflow',).prefetch_related('schlagworte',)
         # return super(KatalogAdmin,self).get_queryset(request).select_related('katalogart', 'monat',).prefetch_related('schlagworte',Prefetch('Ppl', queryset=KatalogPerson.objects.select_related('idfk_Person__name', 'idfk_PersonFunktion')))
 
-class HerstellungAdmin(admin.ModelAdmin):
-    search_fields = ['name']
-    list_display = ['name']
+class HerstellungAdmin(TranslationAdminMixin, ImportExportActionModelAdmin, admin.ModelAdmin):
+    resource_classes = [HerstellungTranslationResource]
+    search_fields = ['name', 'name_en']
+    list_display = ['id', 'name', 'name_en', 'name_nom_id']
+    list_display_links = ['id', 'name']
+    list_editable = ['name_en']
+    list_filter = (TranslationStatusFilter,)
+    fields = (('name', 'name_en'), 'name_nom_id')
 
 class MetallAdmin(admin.ModelAdmin):
     search_fields = ['name']

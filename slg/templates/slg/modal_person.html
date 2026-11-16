@@ -1,46 +1,71 @@
-{% load i18n %}
-{% load i18n %}
-<p class="text-center">
-  <table>
-    {% if Person.dat_verb %}<tr><td>{% translate "Lebensdaten:" %} </td><td>{{Person.dat_verb}}</td></tr>{% endif %}
-    {% if not Person.WikiDe and not Definition %}<tr><td>{% translate "Kurzbeschreibung:" %} </td><td>{{Person.beschreibung}}</td></tr>{% endif %}
-    {% if Person.zeichen %}<tr><td>{% translate "Zeichen/Signatur:" %} </td><td>{{Person.zeichen}}</td></tr>{% endif %}
-    {% if Person.dat_verb or not Person.WikiDe or Person.zeichen or not Definition%}<tr><td colspan="2"><hr width="80%"></td></tr>{% endif %}
-    {% if Person.name_nom_id %}
-    <tr><td><a href="{{Person.name_nom_id}}" class="badge badge-info">Nomisma:</a></td><td>{{Definition}}</td></tr>
-    {% endif %}
-    <tr><td>{% if Person.WikiDe %}<a href="{{Person.WikiDe}}" class="badge badge-info">Wikipedia:</a></td><td>{% elif Person.WikiEn%}<a href="{{Person.WikiEn}}" class="badge badge-info">Wikipedia:</a></td><td>{% endif %}{% if WikiBild %}<img src="{{WikiBild}}" alt="WikiBild" style="float:right">{% endif %}{% if Person.WikiEn or Person.WikiDe %}{{Wiki}}{% else %}{% endif %}</td></tr>
-    <tr><td>{% translate "Links:" %}</td><td>
-      {% if Person.Zisterzienserlexikon %}<a href="{{Person.Zisterzienserlexikon}}" class="badge badge-info">Zisterzienserlexikon</a>{% endif %}
-      {% if Person.Benediktinerlexikon %}<a href="{{Person.Benediktinerlexikon}}" class="badge badge-info">Benediktinerlexikon</a>{% endif %}
-      
-      {% if Person.WikiEn %}<a href="{{Person.WikiEn}}" class="badge badge-info">Wikipedia (En)</a>{% endif %}
-      {% if Person.GeschichteWikiWien %}<a href="{{Person.GeschichteWikiWien}}" class="badge badge-info">GeschichteWikiWien</a>{% endif %}
-      {% if Person.BiographiePortal %}<a href="{{Person.BiographiePortal}}" class="badge badge-info">BiographiePortal</a>{% endif %}
-      {% if Person.DeutscheDigitaleBib %}<a href="{{Person.DeutscheDigitaleBib}}" class="badge badge-info">DeutscheDigitaleBib</a>{% endif %}
-      {% if Person.DNB %}<a href="{{Person.DNB}}" class="badge badge-info">DNB</a>{% endif %}
-      {% if Person.VIAF %}<a href="{{Person.VIAF}}" class="badge badge-info">VIAF</a>{% endif %}
-      {% if Person.DB %}<a href="{{Person.DB}}" class="badge badge-info">DB</a>{% endif %}
+{% load i18n authority_labels %}
+{% if Person.dat_verb or Person.zeichen or Person.beschreibung and not Wiki and not Definition %}
+<dl class="row mb-3">
+  {% if Person.dat_verb %}
+    <dt class="col-sm-4">{% translate "Lebensdaten:" %}</dt><dd class="col-sm-8 text-break">{{ Person.dat_verb }}</dd>
+  {% endif %}
+  {% if Person.zeichen %}
+    <dt class="col-sm-4">{% translate "Zeichen/Signatur:" %}</dt><dd class="col-sm-8 text-break">{{ Person.zeichen }}</dd>
+  {% endif %}
+  {% if Person.beschreibung and not Wiki and not Definition %}
+    <dt class="col-sm-4">{% translate "Kurzbeschreibung:" %}</dt><dd class="col-sm-8 text-break">{{ Person.beschreibung }}</dd>
+  {% endif %}
+</dl>
+{% endif %}
+
+{% with nom_url=Person.name_nom_id|nomisma_url %}
+  {% if nom_url %}
+    <div class="mb-3">
+      <a href="{{ nom_url }}" class="badge text-bg-info mb-1" target="_blank" rel="noopener">Nomisma</a>
+      {% if Definition %}<p class="mb-0 text-break">{{ Definition }}</p>{% endif %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% if WikiUrl %}
+  <div class="mb-3 clearfix">
+    <a href="{{ WikiUrl }}" class="badge text-bg-info mb-1" target="_blank" rel="noopener">Wikipedia</a>
+    {% if WikiBild %}<img src="{{ WikiBild }}" alt="" class="img-fluid float-sm-end ms-sm-2 mb-2" style="max-width:min(100%, 150px)">{% endif %}
+    {% if Wiki %}<p class="mb-0 text-break">{{ Wiki }}</p>{% endif %}
+  </div>
+{% endif %}
+
+{% if Person.Zisterzienserlexikon or Person.Benediktinerlexikon or Person.WikiEn and Person.WikiEn != WikiUrl or Person.WikiDe and Person.WikiDe != WikiUrl or Person.GeschichteWikiWien or Person.BiographiePortal or Person.DeutscheDigitaleBib or Person.DNB or Person.VIAF or Person.DB or Exactmatch %}
+  <div class="mb-3">
+    <div class="fw-semibold mb-1">{% translate "Links:" %}</div>
+    <div class="d-flex flex-wrap gap-1">
+      {% if Person.Zisterzienserlexikon %}<a href="{{Person.Zisterzienserlexikon}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">Zisterzienserlexikon</a>{% endif %}
+      {% if Person.Benediktinerlexikon %}<a href="{{Person.Benediktinerlexikon}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">Benediktinerlexikon</a>{% endif %}
+      {% if Person.WikiEn and Person.WikiEn != WikiUrl %}<a href="{{Person.WikiEn}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">Wikipedia (En)</a>{% endif %}
+      {% if Person.WikiDe and Person.WikiDe != WikiUrl %}<a href="{{Person.WikiDe}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">Wikipedia (De)</a>{% endif %}
+      {% if Person.GeschichteWikiWien %}<a href="{{Person.GeschichteWikiWien}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">GeschichteWikiWien</a>{% endif %}
+      {% if Person.BiographiePortal %}<a href="{{Person.BiographiePortal}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">BiographiePortal</a>{% endif %}
+      {% if Person.DeutscheDigitaleBib %}<a href="{{Person.DeutscheDigitaleBib}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">DeutscheDigitaleBib</a>{% endif %}
+      {% if Person.DNB %}<a href="{{Person.DNB}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">DNB</a>{% endif %}
+      {% if Person.VIAF %}<a href="{{Person.VIAF}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">VIAF</a>{% endif %}
+      {% if Person.DB %}<a href="{{Person.DB}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">DB</a>{% endif %}
       {% for link in Exactmatch %}
-        <a href="{{link.link}}" class="badge badge-info">{{link.link}}</a>
+        <a href="{{link.link}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">{{link.link}}</a>
       {% endfor %}
-    </td></tr>
-    <tr><td colspan="2">{% translate "Weitere Quellen:" %}</td></tr>
-    {%for quelle in Person.person_ref_set.all%}
-    <tr>
-      <td>
-        -
-        </td>
-      <td>
+    </div>
+  </div>
+{% endif %}
+
+{% with references=Person.person_ref_set.all %}
+  {% if references %}
+    <div class="fw-semibold mb-1">{% translate "Weitere Quellen:" %}</div>
+    <ul class="mb-0">
+    {% for quelle in references %}
+      <li>
         {% if not quelle.link %}
         {{quelle.Ref}}, {{quelle.nummer}}
         {% elif quelle.nummer and quelle.link != "Webseite"%}
-        <a href="{{quelle.link}}" class="badge badge-info">{{quelle.Ref}}, {{quelle.nummer}}</a>
+        <a href="{{quelle.link}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">{{quelle.Ref}}, {{quelle.nummer}}</a>
         {% elif quelle.link %}
-        <a href="{{quelle.link}}" class="badge badge-info">{{quelle.link}}</a>
+        <a href="{{quelle.link}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">{{quelle.link}}</a>
         {% endif %}
-      </td>
-    </tr>
-    {%endfor%}
-  </table>
-</p>
+      </li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}

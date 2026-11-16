@@ -199,7 +199,7 @@
                             {% for gruppe in gruppierte_personen %}
                                 {% if gruppe.grouper.id != 2 %}
                                     <tr>
-                                        <td>{{ gruppe.grouper }}:</td>
+                                        <td>{{ gruppe.grouper|display_label }}:</td>
                                         <td>
                                             {% for person in gruppe.list %}
                                                 <a href="{% if gruppe.grouper.id == 1 or gruppe.grouper.id == 6 or gruppe.grouper.id == 7 %}/browse/?Praegeherren={{ person.idfk_Person.name }}{% else %}/browse/?Person={{ person.idfk_Person.name }}{% endif %}" title="{% if gruppe.grouper.id == 1 or gruppe.grouper.id == 6 or gruppe.grouper.id == 7 %}Prägeherr{% else %}Person{% endif %}">
@@ -207,10 +207,10 @@
                                                 </a>
                                                 <a href="#theModal" 
                                                 data-title="{{ person.idfk_Person.name }}" 
-                                                data-remote="{% url 'PersonModal' id=person.idfk_Person.id %}" 
+                                                data-remote="{% url 'PersonModal' id=person.idfk_Person.id %}"
                                                 data-footer="{% url 'admin:slg_person_change' person.idfk_Person.id %}" 
-                                                data-toggle="modal" 
-                                                data-target="#theModal" 
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#theModal"
                                                 title="{% translate 'Person' %}">
                                                     <i class="bi bi-box-arrow-up-right"></i>
                                                 </a>
@@ -225,14 +225,14 @@
                             <tr>
                                 <td>{% translate "Münzstätte:" %}</td>
                                 <td><a href="/browse/?Muenzstaette={{ Muenztyp.Mzstaette }}" title="Browse">{{ Muenztyp.Mzstaette|display_label }}</a></td>
-                                <td><a href="{{ Muenztyp.Mzstaette.name_nom_id }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a></td>
+                                <td>{% with nom_url=Muenztyp.Mzstaette.name_nom_id|nomisma_url %}{% if nom_url %}<a href="{{ nom_url }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a>{% endif %}{% endwith %}</td>
                             </tr>
                         {% endif %}
                         {% if Muenztyp.region %}
                             <tr>
                                 <td>{% translate "Region:" %}</td>
                                 <td><a href="/browse/?region={{ Muenztyp.region }}" title="Browse">{{ Muenztyp.region|display_label }}</a></td>
-                                <td><a href="{{ Muenztyp.region.name_nom_id }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a></td>
+                                <td>{% with nom_url=Muenztyp.region.name_nom_id|nomisma_url %}{% if nom_url %}<a href="{{ nom_url }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a>{% endif %}{% endwith %}</td>
                             </tr>
                         {% endif %}
                         {% if Muenztyp.auflage %}
@@ -252,7 +252,7 @@
                                 <td>{% translate "Nominal:" %}</td>
                                 <td><a href="/browse/?Nominal={{ Muenztyp.Nominal }}" title="Browse">{{ Muenztyp.Nominal|display_label }}</a></td>
                                 {% comment %} <td><a href="{{ Muenztyp.Nominal.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> {% endcomment %}
-                                <td><a href="#theModal" data-title="{{ Muenztyp.Nominal }}" data-footer="{% url 'admin:slg_nominal_change' Muenztyp.Nominal.id %}" data-remote="{% url 'NominalModal' id=Muenztyp.Nominal.id %}" data-toggle="modal" data-target="#theModal" title="{% translate 'Nominal' %}"><i class="bi bi-box-arrow-up-right"></i></small></a></td>
+                                <td><a href="#theModal" data-title="{{ Muenztyp.Nominal }}" data-footer="{% url 'admin:slg_nominal_change' Muenztyp.Nominal.id %}" data-remote="{% url 'NominalModal' id=Muenztyp.Nominal.id %}" data-bs-toggle="modal" data-bs-target="#theModal" title="{% translate 'Nominal' %}"><i class="bi bi-box-arrow-up-right"></i></small></a></td>
                                     
                             </tr>
                         {% endif %}
@@ -260,14 +260,14 @@
                             <tr>
                                 <td>{% translate "Material:" %}</td>
                                 <td><a href="/browse/?material={{ Muenztyp.Metall }}" title="Browse">{{ Muenztyp.Metall|display_label }}</a></td>
-                                <td><a href="{{ Muenztyp.Metall.name_nom_id }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a></td>
+                                <td>{% with nom_url=Muenztyp.Metall.name_nom_id|nomisma_url %}{% if nom_url %}<a href="{{ nom_url }}" title="Nomisma"><i class="bi bi-box-arrow-up-right"></i></a>{% endif %}{% endwith %}</td>
                             </tr>
                         {% endif %}
                         {% if Muenztyp.Herstellung %}
                             <tr>
                                 <td>{% translate "Herstellung:" %}</td>
                                 
-                                <td>{{ Muenztyp.Herstellung }}</td>
+                                <td>{{ Muenztyp.Herstellung|display_label }}</td>
                             </tr>
                         {% endif %}
                         {% if Muenztyp.anmerkung %}

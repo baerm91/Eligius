@@ -19,30 +19,6 @@
             preload: 2,
         });
     });
-    $('#theModal').on('show.bs.modal', function (e) {
-        var button = $(e.relatedTarget);
-        var modal = $(this);
-
-        modal.find('.modal-title').text(button.data("title"));
-        modal.find('.modal-body').load(button.data("remote"));
-        modal.find(".modal-footer a").attr("href", button.data("footer"));
-    });
-    function toggle_visibility(id) {
-        var e = document.getElementById(id);
-        e.style.visibility = ((e.style.visibility != 'hidden') ? 'hidden' : 'visible');
-    }
-</script>
-<script>
-    var infinite = new Waypoint.Infinite({
-        element: $('.infinite-container')[0],
-        onBeforePageLoad: function () {
-            $('.loading').show();
-        },
-        onAfterPageLoad: function ($items) {
-            $('.loading').hide();
-        }
-    });
-
     function toggle_visibility(id) {
         var e = document.getElementById(id);
         e.style.visibility = ((e.style.visibility != 'hidden') ? 'hidden' : 'visible');

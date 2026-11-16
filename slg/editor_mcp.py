@@ -20,13 +20,14 @@ from rest_framework.exceptions import APIException
 from rest_framework.request import Request
 from starlette.responses import JSONResponse
 
-from slg.services import editor_api, editor_persons, ui_translations, bildtyp_translations
+from slg.services import bildtyp_translations, editor_api, editor_persons, ui_translations, vocabulary_translations
 
 logger = logging.getLogger(__name__)
 _user_id = ContextVar('editor_mcp_user_id', default=None)
 ID = Annotated[int, Field(strict=True, ge=1)]
 IDs = Annotated[list[ID], Field(min_length=1, max_length=100)]
 Token = Annotated[str, Field(min_length=1, max_length=60000)]
+Vocabulary = Literal['objekttyp', 'herstellung', 'personfunktion', 'schlagwort']
 Changes = dict[str, str | int | float | bool | None]
 READ = ToolAnnotations(read_only_hint=True, destructive_hint=False, open_world_hint=False)
 WRITE = ToolAnnotations(read_only_hint=False, destructive_hint=True, open_world_hint=False)
@@ -84,6 +85,28 @@ async def draft_bildtyp_translations(side: Literal['av', 'rv'], translations: li
     Preserve names and revision tokens exactly. Review then import in Django admin.
     """
     return await _call(bildtyp_translations.draft_translations, side, translations)
+
+
+@mcp.tool(annotations=READ)
+async def get_translation_status() -> dict:
+    """Count total and missing English labels per vocabulary, including both image-description vocabularies."""
+    return await _call(vocabulary_translations.get_translation_status)
+
+
+@mcp.tool(annotations=READ)
+async def get_vocabulary_translation_batch(vocabulary: Vocabulary, after_id: int = 0,
+                                           missing_only: bool = True) -> dict:
+    """Read up to 50 vocabulary entries with original labels, English labels and revision tokens."""
+    return await _call(vocabulary_translations.get_vocabulary_translation_batch, vocabulary, after_id, missing_only)
+
+
+@mcp.tool(annotations=READ)
+async def draft_vocabulary_translations(vocabulary: Vocabulary, translations: list[dict]) -> dict:
+    """Validate drafts and return JSON for translation import in Django admin. Never saves.
+
+    Read get_vocabulary_translation_batch first and preserve each row's id, name and revision.
+    """
+    return await _call(vocabulary_translations.draft_vocabulary_translations, vocabulary, translations)
 
 
 @mcp.tool(annotations=READ)

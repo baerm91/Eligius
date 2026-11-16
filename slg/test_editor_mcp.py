@@ -323,6 +323,32 @@ class EditorTransportTests(TransactionTestCase):
             self.user.save()
             self.assertEqual(self.rpc(client, headers=headers).status_code, 401)
 
+    def test_vocabulary_tools_over_editor_transport(self):
+        from slg.models import Herstellung
+        from starlette.testclient import TestClient
+        from djangoproject.asgi import application
+
+        entry = Herstellung.objects.create(name='Prägung')
+        self.user.user_permissions.add(Permission.objects.get(
+            codename='change_herstellung', content_type__app_label='slg'))
+        headers = {'Authorization': 'Token ' + self.token}
+        with TestClient(application) as client:
+            def call(name, arguments):
+                response = self.rpc(client, 'tools/call', {'name': name, 'arguments': arguments}, headers)
+                result = response.json()['result']
+                self.assertFalse(result.get('isError'), result)
+                return result.get('structuredContent') or json.loads(result['content'][0]['text'])
+
+            status = call('get_translation_status', {})
+            self.assertEqual(status['vocabularies']['herstellung'], {'total': 1, 'missing': 1})
+            batch = call('get_vocabulary_translation_batch', {'vocabulary': 'herstellung'})
+            batch['rows'][0]['name_en'] = 'Struck'
+            draft = call('draft_vocabulary_translations', {
+                'vocabulary': 'herstellung', 'translations': batch['rows']})
+            self.assertFalse(draft['persisted'])
+        entry.refresh_from_db()
+        self.assertEqual(entry.name_en, '')
+
     @override_settings(ELIGIUS_MCP_ENABLED=False, ELIGIUS_EDITOR_MCP_ENABLED=True)
     def test_editor_enabled_independently_of_public(self):
         from starlette.testclient import TestClient

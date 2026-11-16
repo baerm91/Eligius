@@ -1,14 +1,18 @@
-{% load i18n %}
-{% load i18n %}
-<p class="text-center">
-  <table>
-    {% if Nominal.name_nom_id %}
-    <tr><td><a href="{{Nominal.name_nom_id}}" class="badge badge-info">Nomisma:</a></td><td>{{Definition}}</td></tr>
+{% load i18n authority_labels %}
+<div class="text-break">
+  <table class="w-100">
+    {% with nom_url=Nominal.name_nom_id|nomisma_url %}
+    {% if nom_url %}
+    <tr><td><a href="{{ nom_url }}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">Nomisma:</a></td><td>{{Definition}}</td></tr>
     {% endif %}
+    {% endwith %}
+    {% if Exactmatch %}
     <tr><td>{% translate "Links:" %}</td><td>
       {% for link in Exactmatch %}
-        <a href="{{link.link}}" class="badge badge-info">{{link.link}}</a>
+        <a href="{{link.link}}" class="badge text-bg-info text-wrap text-break" target="_blank" rel="noopener">{{link.link}}</a>
       {% endfor %}
     </td></tr>
+    {% endif %}
   </table>
-</p>
+  {% if not Nominal.name_nom_id|nomisma_url %}{{ Nominal }}{% endif %}
+</div>

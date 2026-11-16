@@ -332,14 +332,12 @@
 {% block scripts %}
   {{block.super}}
   <script type="text/javascript">
-    // Modal-Funktionalität
-    $('#theModal').on('show.bs.modal', function (e) {
-      var button = $(e.relatedTarget);
-      var modal = $(this);
-      modal.find('.modal-title').text(button.data("title"));
-      modal.find('.modal-body').load(button.data("remote"));
-      modal.find(".modal-footer a").attr("href", button.data("footer"));
-    });
+    function escapePersonName(name) {
+      const text = document.createElement('span');
+      text.textContent = name;
+      return text.innerHTML;
+    }
+
     
     function toggle_visibility(id) {
       var e = document.getElementById(id);
@@ -403,9 +401,9 @@
             let personenHtml = '';
             if (info.personen && info.personen.length > 0) {
               personenHtml = info.personen.map(person => 
-                `<a href="#theModal" data-title="${person.name}" data-remote="/slg/person/${person.id}/" 
-                 data-footer="/admin/slg/person/${person.id}/change/" data-toggle="modal" 
-                 data-target="#theModal" class="badge badge-info" title="Person">${person.name}</a>`
+                `<a href="#theModal" data-remote="${"{% url 'PersonModal' id=0 %}".replace('/0/', '/' + person.id + '/')}"
+                 data-footer="/admin/slg/person/${person.id}/change/" data-bs-toggle="modal"
+                 data-bs-target="#theModal" class="badge text-bg-info" title="Person">${escapePersonName(person.name)}</a>`
               ).join(' ');
             }
             
@@ -436,7 +434,6 @@
         timelineContent.innerHTML = timelineHTML;
         
         // Stelle sicher, dass die Modal-Funktionalität für die neuen Elemente funktioniert
-        setupModalListeners();
         
       } catch (error) {
         console.error('Fehler beim Laden der Zeitleisten-Daten:', error);
@@ -445,18 +442,6 @@
       }
     }
     
-    // Modal-Funktionalität für dynamisch hinzugefügte Elemente
-    function setupModalListeners() {
-      document.querySelectorAll('[data-target="#theModal"]').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-          var button = $(this);
-          var modal = $('#theModal');
-          modal.find('.modal-title').text(button.data("title"));
-          modal.find('.modal-body').load(button.data("remote"));
-          modal.find(".modal-footer a").attr("href", button.data("footer"));
-        });
-      });
-    }
     
     // Lade die Timeline-Daten, wenn die Seite geladen ist
     document.addEventListener('DOMContentLoaded', loadTimelineData);

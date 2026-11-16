@@ -228,7 +228,7 @@
                         {% for group in grouped_persons %}
                             {% if group.grouper.id != 2 %}
                                 <div class="detail-row">
-                                    <div class="detail-label">{{ group.grouper }}:</div>
+                                    <div class="detail-label">{{ group.grouper|display_label }}:</div>
                                     <div class="detail-value">
                                         {% for person in group.list %}
                                             {% if group.grouper.id == 1 or group.grouper.id == 6 or group.grouper.id == 7 %}
@@ -238,7 +238,7 @@
                                             {% endif %}
                                                 {{ person.idfk_Person|display_label }}{% if person.idfk_Person.zeichen %}, Zeichen: {{person.idfk_Person.zeichen}}{% endif %}
                                             </a>
-                                            <a href="#theModal" data-title="{{ person.idfk_Person.name }}" data-remote="{% url 'PersonModal' id=person.idfk_Person.id %}" data-footer="{% url 'admin:slg_person_change' person.idfk_Person.id %}" data-toggle="modal" data-target="#theModal" title="{% translate 'Person' %}">
+                                            <a href="#theModal" data-title="{{ person.idfk_Person.name }}" data-remote="{% url 'PersonModal' id=person.idfk_Person.id %}" data-footer="{% url 'admin:slg_person_change' person.idfk_Person.id %}" data-bs-toggle="modal" data-bs-target="#theModal" title="{% translate 'Person' %}">
                                                 <i class="bi bi-box-arrow-up-right"></i>
                                             </a>
                                             {% if not forloop.last %}<br>{% endif %}
@@ -272,9 +272,9 @@
                     {% if coin_data.mzstaette %}
                         <div class="detail-row">
                             <div class="detail-label">{% translate "Münzstätte:" %}</div>
-                            <div class="detail-value"><a href="/browse/?Muenzstaette={{ coin_data.mzstaette }}" title="{% translate 'Münzstätte' %}">{{ coin_data.mzstaette|display_label }}{% if coin_data.mzstaette.zeichen %}, Zeichen: {{coin_data.mzstaette.zeichen}}{% endif %}</a><a href="{{ coin_data.mzstaette.name_nom_id }}" title="Nomisma" target="_blank">
+                            <div class="detail-value"><a href="/browse/?Muenzstaette={{ coin_data.mzstaette }}" title="{% translate 'Münzstätte' %}">{{ coin_data.mzstaette|display_label }}{% if coin_data.mzstaette.zeichen %}, Zeichen: {{coin_data.mzstaette.zeichen}}{% endif %}</a>{% with nom_url=coin_data.mzstaette.name_nom_id|nomisma_url %}{% if nom_url %}<a href="{{ nom_url }}" title="Nomisma" target="_blank">
                                 <i class="bi bi-box-arrow-up-right"></i>
-                            </a></div>
+                            </a>{% endif %}{% endwith %}</div>
                             
                         </div>
                     {% endif %}
@@ -282,9 +282,9 @@
                         <div class="detail-row">
                             <div class="detail-label">{% translate "Region:" %}</div>
                             <div class="detail-value"><a href="/browse/?region={{ coin_data.region }}" title="{% translate 'Region' %}">{{ coin_data.region|display_label }}</a>
-                            <a href="{{ coin_data.region.name_nom_id }}" title="Nomisma" target="_blank">
+                            {% with nom_url=coin_data.region.name_nom_id|nomisma_url %}{% if nom_url %}<a href="{{ nom_url }}" title="Nomisma" target="_blank">
                                 <i class="bi bi-box-arrow-up-right"></i>
-                            </a></div>
+                            </a>{% endif %}{% endwith %}</div>
                         </div>
                     {% endif %}
 
@@ -293,9 +293,9 @@
                         <div class="detail-row">
                             <div class="detail-label">{% translate "Nominal:" %}</div>
                             <div class="detail-value"><a href="/browse/?Nominal={{ coin_data.nominal }}" title="{% translate 'Nominal' %}">{{ coin_data.nominal|display_label }}</a>
-                            <a href="{{ coin_data.nominal.name_nom_id }}" title="Nomisma" target="_blank">
+                            {% with nom_url=coin_data.nominal.name_nom_id|nomisma_url %}{% if nom_url %}<a href="{{ nom_url }}" title="Nomisma" target="_blank">
                                 <i class="bi bi-box-arrow-up-right"></i>
-                            </a></div>
+                            </a>{% endif %}{% endwith %}</div>
                         </div>
                     {% endif %}
 
@@ -303,16 +303,16 @@
                         <div class="detail-row">
                             <div class="detail-label">{% translate "Material:" %}</div>
                             <div class="detail-value"><a href="/browse/?material={{ coin_data.metall }}" title="{% translate 'Material' %}">{{ coin_data.metall|display_label }}</a>
-                            <a href="{{ coin_data.metall.name_nom_id }}" title="Nomisma" target="_blank">
+                            {% with nom_url=coin_data.metall.name_nom_id|nomisma_url %}{% if nom_url %}<a href="{{ nom_url }}" title="Nomisma" target="_blank">
                                 <i class="bi bi-box-arrow-up-right"></i>
-                            </a></div>
+                            </a>{% endif %}{% endwith %}</div>
                         </div>
                     {% endif %}
                     {% if coin_data.herstellung %}
                         <div class="detail-row">
                             <div class="detail-label">{% translate "Herstellung:" %}</div>
                             
-                            <div class="detail-value">{{ coin_data.herstellung }}</div>
+                            <div class="detail-value">{{ coin_data.herstellung|display_label }}</div>
                         </div>
                     {% endif %}
                     {% if coin_data.Herstellungsmerkmale or coin_data.sekundaere_Merkmale %}
@@ -659,19 +659,17 @@
 {% include "slg/modal.html" %}
 
 <!-- Floating feedback icon -->
-<button type="button" class="detail-feedback-btn" data-toggle="modal" data-target="#editModal" title="{% translate 'Änderung vorschlagen' %}">
+<button type="button" class="detail-feedback-btn" data-bs-toggle="modal" data-bs-target="#editModal" title="{% translate 'Änderung vorschlagen' %}">
     <i class="bi bi-pencil"></i>
 </button>
 
 <!-- Modal für Änderungsvorschläge -->
 <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editModalLabel">{% translate "Änderung vorschlagen" %}</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="{% translate 'Close' %}">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button>
             </div>
             <div class="modal-body">
                 <form id="editForm" method="POST" action="{% url 'objekt_aenderung' objekt_id=test.pk %}">
@@ -730,7 +728,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% translate "Abbrechen" %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "Abbrechen" %}</button>
                 <button type="button" class="btn btn-primary" id="manualSubmitBtn">{% translate "Änderung vorschlagen" %}</button>
             </div>
         </div>
@@ -2889,16 +2887,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 showThumbByDefault: false,
                 preload: 2,
             });
-        });
-        $('#theModal').on('show.bs.modal', function (e) {
-        var button = $(e.relatedTarget);
-        var modal = $(this);
-        modal.find('.modal-title').text(button.data("title"));
-        modal.find('.modal-body').load(button.data("remote"));
-        modal.find(".modal-footer a").attr("href", button.data("footer"));
-        });
-        $("#theModal").on('hidden', function () {
-            $(this).data('bs.modal', null);
         });
         function toggle_visibility(id) {
         var e = document.getElementById(id);

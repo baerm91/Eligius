@@ -166,6 +166,7 @@ class SlgTeil(models.Model):
 
 class Herstellung(models.Model):
 	name = models.CharField(max_length=200)
+	name_en = models.CharField(max_length=200, blank=True, default='', verbose_name='Englische Übersetzung')
 	name_nom_id = models.CharField(max_length=200, blank=True, verbose_name='Nomisma ID')
 	
 	def __str__(self):
@@ -316,6 +317,7 @@ class Person(models.Model):
 
 class PersonFunktion(models.Model):
 	name = models.CharField(max_length=200, verbose_name='Funktion')
+	name_en = models.CharField(max_length=200, blank=True, default='', verbose_name='Englische Übersetzung')
 	
 	def __str__(self):
 		return self.name
@@ -467,6 +469,7 @@ class Metall(models.Model):
 
 class Schlagwort(models.Model):
 	name = models.CharField(max_length=200, verbose_name='Schlagwort')
+	name_en = models.CharField(max_length=200, blank=True, default='', verbose_name='Englische Übersetzung')
 	name_nom_id = models.CharField(max_length=200, blank=True, verbose_name='Nomisma ID')
 	
 	def __str__(self):
@@ -500,6 +503,7 @@ class KatalogSchlagwort(models.Model):
 
 class Objekttyp(models.Model):
 	name = models.CharField(max_length=200, verbose_name='Name')
+	name_en = models.CharField(max_length=200, blank=True, default='', verbose_name='Englische Übersetzung')
 	name_nom_id = models.CharField(max_length=200, blank=True, verbose_name='Nomisma ID')
 	
 	def __str__(self):

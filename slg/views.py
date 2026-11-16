@@ -1,7 +1,8 @@
 import requests
 import csv
-import wikipedia
-import wikipediaapi
+import hashlib
+from requests.exceptions import RequestException
+from django.utils.translation import get_language
 import operator
 # import pandas as pd
 from typing import Iterable
@@ -32,7 +33,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from bootstrap_modal_forms.generic import BSModalCreateView, BSModalUpdateView
 
-from urllib.parse import quote_plus, unquote, unquote_plus
+from urllib.parse import quote, quote_plus, unquote, urlsplit
 from rdflib import Graph, Namespace, Literal
 from rdflib.namespace import RDF, FOAF, DCTERMS, URIRef
 
@@ -841,148 +842,102 @@ def sammlungen_api(request):
             status=500
         )
 
+def _nomisma_uri(value):
+   from slg.services.authority_inventory import identify_authority
+   ref = identify_authority(value, allow_nomisma_id=True)
+   return f'http://nomisma.org/id/{ref[1]}' if ref and ref[0] == 'nomisma' else ''
+
+
 def NomismaInfo(link):
-   url2 = "http://nomisma.org/query?query=PREFIX+skos%3A+%3Chttp%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23%3E%0D%0A%0D%0ASELECT+*+WHERE+%7B%0D%0A++OPTIONAL+%7B%3C"+link+"%3E+skos%3AexactMatch+%3Flink%7D%0D%0A++%3C"+link+"%3E+skos%3Adefinition+%3Fdef.%0D%0A++FILTER+langMatches+%28lang%28%3Fdef%29%2C+%27en%27%29%0D%0A%7D&output=csv"
-   print(url2)
-   with requests.Session() as s:
-      download = s.get(url2)
-      decoded_content = download.content.decode('utf-8')
-      exactmatch = csv.DictReader(decoded_content.splitlines(), delimiter=',')
-      try:
-         row2 = next(exactmatch)
-         definition = row2['def']
-      except:
-         definition = ""
-      return exactmatch, definition
+   """exactMatch-Links und englische Definition; leer statt Fehler, wenn Nomisma nicht antwortet."""
+   uri = _nomisma_uri(link)
+   if not uri:
+      return [], ""
+   query = ('PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n'
+            'SELECT * WHERE {\n'
+            f'  OPTIONAL {{ <{uri}> skos:exactMatch ?link }}\n'
+            f'  <{uri}> skos:definition ?def.\n'
+            "  FILTER langMatches(lang(?def), 'en')\n"
+            '}')
+   try:
+      response = requests.get('https://nomisma.org/query', params={'query': query, 'output': 'csv'}, timeout=5)
+      response.raise_for_status()
+      rows = list(csv.DictReader(response.content.decode('utf-8').splitlines(), delimiter=','))
+   except (RequestException, ValueError):
+      return [], ""
+   definition = rows[0].get('def', '') if rows else ""
+   return [row for row in rows if row.get('link')], definition
+
+
+WIKIPEDIA_USER_AGENT = 'Eligius/1.0 (https://eligius.at; numismatic catalogue)'
+
+
+def _wikipedia_summary(url):
+   """(Kurztext, Vorschaubild) über die Wikipedia-REST-API; bei Fehlern leer."""
+   if not url:
+      return "", ""
+   try:
+      parts = urlsplit(url)
+      if not parts.scheme:
+         parts = urlsplit(unquote(url))
+      host = parts.hostname or ''
+   except ValueError:
+      return "", ""
+   if not host.endswith('.wikipedia.org') or not parts.path.startswith('/wiki/'):
+      return "", ""
+   title = unquote(parts.path[len('/wiki/'):])
+   cache_key = 'wiki-summary:' + hashlib.sha256(f'{host}/{title}'.encode()).hexdigest()
+   cached = cache.get(cache_key)
+   if cached is not None:
+      return cached
+   try:
+      response = requests.get(f'https://{host}/api/rest_v1/page/summary/{quote(title, safe="")}',
+                              headers={'User-Agent': WIKIPEDIA_USER_AGENT}, timeout=5)
+      response.raise_for_status()
+      data = response.json()
+      result = (data.get('extract', ''), (data.get('thumbnail') or {}).get('source', ''))
+   except (RequestException, ValueError):
+      return "", ""
+   cache.set(cache_key, result, 60 * 60 * 24)
+   return result
+
 
 def PersonModalView(request, id):
    person = get_object_or_404(Person, id=id)
-   
-   if person.WikiDe:
-      link = unquote_plus(person.WikiDe)
-      print(link)
-      # encode(link, link)
-      # print(link.decode('utf8').title())
-      link = link.replace('https://de.wikipedia.org/wiki/', '')
-      # wikipedia.set_lang("de")
-      # wiki = wikipedia.summary(link)
-      wiki_wiki = wikipediaapi.Wikipedia('de')
-      page_py = wiki_wiki.page(link)
-      wiki = page_py.summary
-      #print(page_py.__dict__)
-      # print ("Nr. of images on page: %s" % len(page_py.image))
-      S = requests.Session()
-
-      URL = "https://de.wikipedia.org/w/api.php"
-
-      PARAMS = {
-         "action": "query",
-         "format": "json",
-         "titles": link,
-         "prop": "extracts",
-         "prop": "pageimages",
-         "pithumbsize": '300',
-      }
-
-      R = S.get(url=URL, params=PARAMS)
-      DATA = R.json()
-
-      PAGES = DATA['query']['pages']
-      print(PAGES)
-
-      for k, v in PAGES.items():
-         try:
-            thumbnail = str(v['thumbnail']['source'])
-         except:
-            thumbnail = ""
-         
-   elif person.WikiEn:
-      link = unquote_plus(person.WikiEn)
-      print(link)
-      # encode(link, link)
-      # print(link.decode('utf8').title())
-      link = link.replace('https://en.wikipedia.org/wiki/', '')
-      # wikipedia.set_lang("de")
-      # wiki = wikipedia.summary(link)
-      wiki_wiki = wikipediaapi.Wikipedia('en')
-      page_py = wiki_wiki.page(link)
-      wiki = page_py.summary
-      S = requests.Session()
-
-      URL = "https://en.wikipedia.org/w/api.php"
-
-      PARAMS = {
-         "action": "query",
-         "format": "json",
-         "titles": link,
-         "prop": "extracts",
-         "prop": "pageimages",
-         "pithumbsize": '300',
-      }
-
-      R = S.get(url=URL, params=PARAMS)
-      DATA = R.json()
-
-      PAGES = DATA['query']['pages']
-      print(PAGES)
-
-      for k, v in PAGES.items():
-         try:
-            thumbnail = str(v['thumbnail']['source'])
-         except:
-            thumbnail = ""
-   else:
-      wiki = ""
-      thumbnail = ""
+   english_ui = (get_language() or '').startswith('en')
+   # Bei englischer Oberfläche bevorzugt den englischen Artikel.
+   sources = [person.WikiEn, person.WikiDe] if english_ui else [person.WikiDe, person.WikiEn]
+   wiki, thumbnail = "", ""
+   wiki_url = next((source for source in sources if source), "")
+   for source in sources:
+      if source:
+         wiki, thumbnail = _wikipedia_summary(source)
+         if wiki:
+            wiki_url = source
+            break
 
    if person.name_nom_id:
       exactmatch, definition = NomismaInfo(person.name_nom_id)
    else:
-      exactmatch = ""
+      exactmatch = []
       definition = ""
-   # if person.VIAF:
-   #    from xml.dom import minidom
-   #    link = person.VIAF + "rdf.xml"
-   #    with requests.Session() as s:
-   #       download = s.get(link)
-   #       decoded_content = download.content.decode('utf-8')
-   #    xmldoc = minidom.parse(decoded_content)
-      
+
    context = {
       'Person': person,
       'Wiki': wiki,
       'WikiBild': thumbnail,
+      'WikiUrl': wiki_url,
       'Exactmatch': exactmatch,
       'Definition': definition,
    }
-   
+
    return render(request, 'slg/modal_person.html', context)
 
 def NominalModalView(request, id):
    nominal = get_object_or_404(Nominal, id=id)
-   # if nominal.WikiDe:
-   #    link = unquote_plus(nominal.WikiDe)
-      
-   #    # encode(link, link)
-   #    # print(link.decode('utf8').title())
-   #    link = link.replace('https://de.wikipedia.org/wiki/', '')
-   #    wikipedia.set_lang("de")
-   #    wiki = wikipedia.summary(link)
-   # else:
-   #    wiki = ""
-
+   exactmatch, definition = [], ""
    if nominal.name_nom_id:
-      # url2 = "http://nomisma.org/query?query=PREFIX+skos%3A+%3Chttp%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23%3E%0D%0A%0D%0ASELECT+*+WHERE+%7B%0D%0A++%3C"+nominal.name_nom_id+"%3E+skos%3AcloseMatch+%3Fo%0D%0A%7D&output=csv"
       exactmatch, definition = NomismaInfo(nominal.name_nom_id)
-         # for row in cr:
-         #    print(row['link'])
-         # definition = cr
-         # definition = list(definition)
-         # print(definition[1][1])
-         # definition = ""
-         # definition = closematch[1][1]
-         
-         # print(cr['link'])
    context = {
       'Nominal': nominal,
       'Exactmatch': exactmatch,
