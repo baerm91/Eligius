@@ -203,7 +203,7 @@
                                         <td>
                                             {% for person in gruppe.list %}
                                                 <a href="{% if gruppe.grouper.id == 1 or gruppe.grouper.id == 6 or gruppe.grouper.id == 7 %}/browse/?Praegeherren={{ person.idfk_Person.name }}{% else %}/browse/?Person={{ person.idfk_Person.name }}{% endif %}" title="{% if gruppe.grouper.id == 1 or gruppe.grouper.id == 6 or gruppe.grouper.id == 7 %}Prägeherr{% else %}Person{% endif %}">
-                                                    {{ person.idfk_Person|display_label }}{% if person.idfk_Person.zeichen %}, Zeichen: {{ person.idfk_Person.zeichen }}{% endif %}
+                                                    {{ person.idfk_Person|person_label }}{% if person.idfk_Person.zeichen %}, Zeichen: {{ person.idfk_Person.zeichen }}{% endif %}
                                                 </a>
                                                 <a href="#theModal" 
                                                 data-title="{{ person.idfk_Person.name }}" 
@@ -300,7 +300,7 @@
                                 <div class="tags">
                                     {% for i in MztypPersonen %}
                                             {% if i.appears_on_rev == 0 and i.idfk_PersonFunktion.id == 2 %}
-                                                <a href="/browse/?Dargestellte_AV={{ i.idfk_Person.name }}" title="Browse" rel="tag">{{ i.idfk_Person|display_label }}</a>
+                                                <a href="/browse/?Dargestellte_AV={{ i.idfk_Person.name }}" title="Browse" rel="tag">{{ i.idfk_Person|person_label }}</a>
                                             {% endif %}
                                     {% endfor %}
                                     {% for schlagwort in avschlagworte %}
@@ -334,7 +334,7 @@
                             
                                     {% for i in MztypPersonen %}
                                             {% if i.appears_on_rev == 1 and i.idfk_PersonFunktion.id == 2 %}
-                                                <a href="/browse/?Dargestellte_RV={{ i.idfk_Person.name }}" title="Browse" rel="tag">{{ i.idfk_Person|display_label }}</a>
+                                                <a href="/browse/?Dargestellte_RV={{ i.idfk_Person.name }}" title="Browse" rel="tag">{{ i.idfk_Person|person_label }}</a>
                                                 <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
                                                 
                                             {% endif %}

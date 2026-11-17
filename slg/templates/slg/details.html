@@ -236,7 +236,7 @@
                                             {% else %}
                                                 <a href="/browse/?Person={{ person.idfk_Person.name }}" title="{% translate 'Person' %}">
                                             {% endif %}
-                                                {{ person.idfk_Person|display_label }}{% if person.idfk_Person.zeichen %}, Zeichen: {{person.idfk_Person.zeichen}}{% endif %}
+                                                {{ person.idfk_Person|person_label }}{% if person.idfk_Person.zeichen %}, Zeichen: {{person.idfk_Person.zeichen}}{% endif %}
                                             </a>
                                             <a href="#theModal" data-title="{{ person.idfk_Person.name }}" data-remote="{% url 'PersonModal' id=person.idfk_Person.id %}" data-footer="{% url 'admin:slg_person_change' person.idfk_Person.id %}" data-bs-toggle="modal" data-bs-target="#theModal" title="{% translate 'Person' %}">
                                                 <i class="bi bi-box-arrow-up-right"></i>
@@ -591,7 +591,7 @@
                         
                         {% for i in coin_data.personen %}
                                 {% if i.appears_on_rev == 0 and i.idfk_PersonFunktion.id == 2 %}
-                                    <a href="/browse/?Dargestellte_AV={{ i.idfk_Person.name }}" title="{% translate 'Dargestellte/r' %}" rel="tag">{{ i.idfk_Person|display_label }}</a>
+                                    <a href="/browse/?Dargestellte_AV={{ i.idfk_Person.name }}" title="{% translate 'Dargestellte/r' %}" rel="tag">{{ i.idfk_Person|person_label }}</a>
                                     <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
                                     
                                 {% endif %}
@@ -637,7 +637,7 @@
                         {% endfor %}
                         {% for i in coin_data.personen %}
                                 {% if i.appears_on_rev == 1 and i.idfk_PersonFunktion.id == 2 %}
-                                    <a href="/browse/?Dargestellte_RV={{ i.idfk_Person.name }}" title="{% translate 'Dargestellte/r' %}" rel="tag">{{ i.idfk_Person|display_label }}</a>
+                                    <a href="/browse/?Dargestellte_RV={{ i.idfk_Person.name }}" title="{% translate 'Dargestellte/r' %}" rel="tag">{{ i.idfk_Person|person_label }}</a>
                                     <!-- <a href="{{ i.idfk_Person.name_nom_id }}" class="badge badge-warning" title="Nomisma">N</a></td> -->
                                     
                                 {% endif %}

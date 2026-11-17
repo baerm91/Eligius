@@ -1,9 +1,22 @@
 from django import template
-from slg.services.authority_display import display_label, display_text, FACET_MODELS
+from slg.services.authority_display import display_label, display_text, english, FACET_MODELS
 
 register = template.Library()
 register.filter('display_label', display_label)
 register.filter('authority_text', display_text)
+
+
+@register.filter
+def person_label(person):
+    """Name (with life dates) of a person, without the short description shown in admin selects."""
+    if person is None:
+        return ''
+    if english():
+        return display_label(person)  # English labels never include the description
+    label = person.name
+    if person.dat_verb:
+        label += f' [{person.dat_verb}]'
+    return label
 
 
 @register.filter
