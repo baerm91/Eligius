@@ -27,7 +27,7 @@ _user_id = ContextVar('editor_mcp_user_id', default=None)
 ID = Annotated[int, Field(strict=True, ge=1)]
 IDs = Annotated[list[ID], Field(min_length=1, max_length=100)]
 Token = Annotated[str, Field(min_length=1, max_length=60000)]
-Vocabulary = Literal['objekttyp', 'herstellung', 'personfunktion', 'schlagwort']
+Vocabulary = Literal['objekttyp', 'herstellung', 'personfunktion', 'schlagwort', 'metall', 'nominal', 'mzstaette']
 Changes = dict[str, str | int | float | bool | None]
 READ = ToolAnnotations(read_only_hint=True, destructive_hint=False, open_world_hint=False)
 WRITE = ToolAnnotations(read_only_hint=False, destructive_hint=True, open_world_hint=False)

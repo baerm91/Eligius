@@ -6,7 +6,8 @@ from xml.etree import ElementTree as ET
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
-from .identifiers import absolute_uri, object_uri
+from .identifiers import absolute_uri, image_redirect_uri, object_uri
+from .rights import image_rights_uri, metadata_rights_uri
 from .xml import clean_text, element, qname
 
 EDM_SCHEMA = 'https://www.europeana.eu/schemas/edm/EDM.xsd'
@@ -74,25 +75,65 @@ def has_descriptive_title(row):
                 or any(rel.funktion_id in (1, 6, 7) for rel in row.mtoaperson_set.all()))
 
 
-def images(row, request):
-    """Reuse MTOA's existing live-path/fallback resolver, no alternative guesses."""
+IMAGE_VARIANTS = (('av', 'av', 'Vorderseite'), ('rv', 'rv', 'Rückseite'))
+THUMBNAIL_VARIANTS = (('av-vorschau', 'thumbnail_av'), ('rv-vorschau', 'thumbnail_rv'))
+
+
+def source_images(row, request):
+    """Current absolute image URLs per stable variant.
+
+    Reuses MTOA's existing live-path/fallback resolver, no alternative guesses.
+    The reverse is omitted when it resolves to the same file as the obverse.
+    """
     urls = row.get_bild_urls or {}
-    result = []
-    for side, label in (('av', 'Vorderseite'), ('rv', 'Rückseite')):
-        if urls.get(side):
-            uri = quote(absolute_uri(request, urls[side]), safe=":/?#[]@!$&'()*+,;=%")
-            if valid_uri(uri) and uri not in [entry[0] for entry in result]:
-                result.append((uri, label))
+    result = {}
+    for variant, key in (*((v, k) for v, k, _ in IMAGE_VARIANTS), *THUMBNAIL_VARIANTS):
+        if urls.get(key):
+            uri = quote(absolute_uri(request, urls[key]), safe=":/?#[]@!$&'()*+,;=%")
+            if valid_uri(uri) and uri not in result.values():
+                result[variant] = uri
     return result
 
 
-def typology_uris(obj):
-    values = [obj.Typ.link] if obj.Typ else []
+def public_image_uri(request, row, variant, source):
+    """Stable Eligius redirect URI when a channel is configured, otherwise the file itself."""
+    return image_redirect_uri(request, row.obj_id, variant) or source
+
+
+def images(row, request):
+    sources = source_images(row, request)
+    return [(public_image_uri(request, row, variant, sources[variant]), label)
+            for variant, _, label in IMAGE_VARIANTS if variant in sources]
+
+
+def thumbnail(row, request):
+    sources = source_images(row, request)
+    for variant, _ in THUMBNAIL_VARIANTS:
+        if variant in sources:
+            return public_image_uri(request, row, variant, sources[variant])
+    return None
+
+
+def typology_entries(obj, row=None):
+    """(URI, citation label) for every published typology link, first label wins."""
+    values = []
     if obj.Typ:
+        values.append((obj.Typ.link, obj.Typ.muenztyptitel or (row.typ if row else '')))
         # Konkordanz conveys related types, never asserted semantic identity.
-        values += [typ.link for typ in obj.Typ.Konkordanz.all()]
-    values += [ref.link for ref in obj.obj_ref_set.all()]
-    return list(dict.fromkeys(uri for value in values if (uri := valid_uri(value))))
+        values += [(typ.link, typ.muenztyptitel) for typ in obj.Typ.Konkordanz.all()]
+    for ref in obj.obj_ref_set.all():
+        values.append((ref.link, ' '.join(clean_text(part) for part in (ref.idfk_Ref.abk, ref.nummer)
+                                          if clean_text(part))))
+    entries = {}
+    for value, label in values:
+        uri = valid_uri(value)
+        if uri and uri not in entries:
+            entries[uri] = clean_text(label)
+    return list(entries.items())
+
+
+def typology_uris(obj):
+    return [uri for uri, _ in typology_entries(obj)]
 
 
 def serialize_edm(row, obj, request):
@@ -103,19 +144,27 @@ def serialize_edm(row, obj, request):
     literal(cho, 'dc', 'title', record_title(row), 'de')
     literal(cho, 'dc', 'identifier', row.invnr)
     resource(cho, 'dcterms', 'isPartOf', absolute_uri(request, obj.Slg.get_absolute_url()))
+    # Contextual classes: URI -> (class, {language or None: prefLabel}).
+    contexts = {}
+    def context(uri, kind, de=None, en=None, neutral=None):
+        labels = {lang: clean_text(text) for lang, text in (('de', de), ('en', en), (None, neutral))
+                  if clean_text(text)}
+        if labels:
+            contexts[uri] = (kind, labels)
+
     collection_authority = valid_uri(obj.Slg.nomisma_collection_uri)
     if collection_authority:
         resource(cho, 'dcterms', 'isPartOf', collection_authority)
+        context(collection_authority, 'Concept', de=obj.Slg.name)
     literal(cho, 'dcterms', 'isPartOf', obj.Slg.name, 'de')
     literal(cho, 'dcterms', 'temporal', date_label(row), 'de')
 
-    contexts = {}
-    def controlled(prefix, name, text, model, context='Concept'):
+    def controlled(prefix, name, text, model, kind='Concept'):
         literal(cho, prefix, name, text, 'de')
         uri = authority_uri(model.name_nom_id) if model else None
         if uri:
             resource(cho, prefix, name, uri)
-            contexts[uri] = (context, clean_text(text or model.name))
+            context(uri, kind, de=text or model.name, en=getattr(model, 'name_en', ''))
 
     controlled('dc', 'type', row.objekttyp, row.objekttyp_fk)
     controlled('dc', 'type', row.nominal, row.nominal_fk)
@@ -132,11 +181,13 @@ def serialize_edm(row, obj, request):
                 uri = f'https://www.geonames.org/{value}'
             if uri:
                 resource(cho, 'dcterms', 'spatial', uri)
-                contexts[uri] = ('Place', clean_text(row.mzstaette))
+                context(uri, 'Place', de=row.mzstaette or mint.name, en=mint.name_en)
 
     literal(cho, 'dc', 'subject', row.typ, 'de')
-    for uri in typology_uris(obj):
+    for uri, label in typology_entries(obj, row):
         resource(cho, 'dc', 'subject', uri)
+        # Catalogue citations such as "RIC II.1 Domitian 78A" are language-neutral.
+        context(uri, 'Concept', neutral=label)
     for side, name in (('av', 'Vorderseite'), ('rv', 'Rückseite')):
         # MTOA already resolves object/type precedence and Offizin placeholders.
         description = getattr(row, side + '_bildtyp')
@@ -168,11 +219,11 @@ def serialize_edm(row, obj, request):
         uris += [valid_uri(getattr(person, field)) for field in PERSON_AUTHORITY_FIELDS]
         for uri in dict.fromkeys(uri for uri in uris if uri):
             resource(cho, 'dc', predicate, uri)
-            contexts[uri] = ('Agent', clean_text(person.name))
+            context(uri, 'Agent', de=person.name)
     element(cho, 'edm', 'type', 'IMAGE')
 
     views = images(row, request)
-    image_rights = valid_uri(obj.Slg.kulturpool_rights_uri) or valid_uri(obj.Slg.bildrechte_lizenz)
+    image_rights = image_rights_uri(obj.Slg)
     for uri, label in views:
         web = element(root, 'edm', 'WebResource', **{qname('rdf', 'about'): uri})
         literal(web, 'dc', 'description', label, 'de')
@@ -188,20 +239,18 @@ def serialize_edm(row, obj, request):
     resource(aggregation, 'edm', 'isShownAt', object_uri(request, row.obj_id))
     if views:
         resource(aggregation, 'edm', 'isShownBy', views[0][0])
-        urls = row.get_bild_urls or {}
-        thumbnail = urls.get('thumbnail_av') or urls.get('thumbnail_rv')
-        if thumbnail:
-            uri = quote(absolute_uri(request, thumbnail), safe=":/?#[]@!$&'()*+,;=%")
-            if valid_uri(uri):
-                resource(aggregation, 'edm', 'object', uri)
+        preview = thumbnail(row, request)
+        if preview:
+            resource(aggregation, 'edm', 'object', preview)
     element(aggregation, 'edm', 'provider', 'Eligius')
-    metadata_rights = valid_uri(obj.Slg.kulturpool_metadata_rights_uri)
+    metadata_rights = metadata_rights_uri(obj.Slg)
     if metadata_rights:
         # Rights on the metadata aggregation, never on the physical coin or images.
         resource(aggregation, 'dc', 'rights', metadata_rights)
     if image_rights:
         resource(aggregation, 'edm', 'rights', image_rights)
-    for uri, (kind, label) in contexts.items():
+    for uri, (kind, labels) in contexts.items():
         node = element(root, 'skos' if kind == 'Concept' else 'edm', kind, **{qname('rdf', 'about'): uri})
-        literal(node, 'skos', 'prefLabel', label, 'de')
+        for language, label in labels.items():
+            literal(node, 'skos', 'prefLabel', label, language)
     return root

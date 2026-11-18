@@ -2,7 +2,7 @@
 from django.db.models import Count, Q
 from tablib import Dataset
 
-from slg.models import AvBildtyp, Herstellung, Objekttyp, PersonFunktion, RvBildtyp, Schlagwort
+from slg.models import AvBildtyp, Herstellung, Metall, Mzstaette, Nominal, Objekttyp, PersonFunktion, RvBildtyp, Schlagwort
 from slg.services.editor_api import editor_user
 from slg.translation_resources import translation_revision
 
@@ -12,6 +12,9 @@ VOCABULARIES = {
     'herstellung': Herstellung,
     'personfunktion': PersonFunktion,
     'schlagwort': Schlagwort,
+    'metall': Metall,
+    'nominal': Nominal,
+    'mzstaette': Mzstaette,
 }
 
 

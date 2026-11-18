@@ -18,6 +18,16 @@ def object_uri(request, obj_id):
     return absolute_uri(request, reverse('Objekt', kwargs={'id': obj_id}))
 
 
+def image_redirect_uri(request, obj_id, variant):
+    """Stable, consumer-neutral image URI that redirects to the current file.
+
+    Returns None when redirects are disabled; the export then links files directly.
+    """
+    if not settings.ELIGIUS_OAI_IMAGE_REDIRECTS:
+        return None
+    return absolute_uri(request, reverse('bild_weiterleitung', kwargs={'obj_id': obj_id, 'ansicht': variant}))
+
+
 def identifier(obj_id):
     return f'oai:{settings.ELIGIUS_OAI_IDENTIFIER_NAMESPACE}:object:{obj_id}'
 

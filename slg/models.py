@@ -357,6 +357,7 @@ class Muenzstand(models.Model):
 
 class Nominal(models.Model):
 	name = models.CharField(max_length=200, verbose_name='Nominal')
+	name_en = models.CharField(max_length=200, blank=True, default='', verbose_name='Englische Übersetzung')
 	name_nom_id = models.CharField(max_length=200, blank=True, verbose_name='Nomisma ID')
 	material = models.ForeignKey('Metall', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Material')
 	
@@ -378,6 +379,7 @@ class Region(models.Model):
 
 class Mzstaette(models.Model):
 	name = models.CharField(max_length=200, verbose_name='Münzstätte', blank=True, null=True, unique=True)
+	name_en = models.CharField(max_length=200, blank=True, default='', verbose_name='Englische Übersetzung')
 	name_nom_id = models.CharField(max_length=200, blank=True, null=True, verbose_name='Nomisma ID')
 	ndpikmk = models.CharField(max_length=200, blank=True, null=True, verbose_name='NDP-IKMK')
 	geonames = models.CharField(max_length=200, blank=True, null=True, verbose_name='Geonames ID')
@@ -459,6 +461,7 @@ class Faelschung(models.Model):
 		
 class Metall(models.Model):
 	name = models.CharField(max_length=200, verbose_name='Metall')
+	name_en = models.CharField(max_length=200, blank=True, default='', verbose_name='Englische Übersetzung')
 	name_nom_id = models.CharField(max_length=200, blank=True, verbose_name='Nomisma ID')
 	
 	def __str__(self):
@@ -2082,3 +2085,35 @@ class Titel(models.Model):
 		verbose_name = "Titel"
 		verbose_name_plural = "Titel"
 		ordering = ['sortierung', 'name']
+
+
+class Bildabruf(models.Model):
+	"""Tageweise aggregierte Abrufe der Bild-Weiterleitung.
+
+	Herkunft ist nur der Domainname der einbettenden Seite (z. B. kulturpool.at,
+	europeana.eu). Keine IP-Adressen, User-Agents oder vollständigen Referer.
+	"""
+	ANSICHTEN = [
+		('av', 'Vorderseite'),
+		('rv', 'Rückseite'),
+		('av-vorschau', 'Vorschau Vorderseite'),
+		('rv-vorschau', 'Vorschau Rückseite'),
+	]
+	herkunft = models.CharField(max_length=100, blank=True, default='', verbose_name='Herkunft',
+		help_text='Domain der Seite, die das Bild angezeigt hat; leer = unbekannt/direkt')
+	obj = models.ForeignKey('Obj', on_delete=models.CASCADE, related_name='+', verbose_name='Objekt')
+	ansicht = models.CharField(max_length=20, choices=ANSICHTEN, verbose_name='Ansicht')
+	datum = models.DateField(verbose_name='Datum')
+	automatisiert = models.BooleanField(default=False, verbose_name='Automatisierter Abruf',
+		help_text='Harvester, Crawler und Bildverarbeitung (nach User-Agent erkannt)')
+	anzahl = models.PositiveIntegerField(default=0, verbose_name='Abrufe')
+
+	def __str__(self):
+		return f'{self.herkunft or "–"} {self.obj_id} {self.ansicht} {self.datum}: {self.anzahl}'
+
+	class Meta:
+		verbose_name = 'Bildabruf'
+		verbose_name_plural = 'Bildabrufe (Weiterleitung)'
+		constraints = [models.UniqueConstraint(
+			fields=['obj', 'ansicht', 'datum', 'herkunft', 'automatisiert'], name='bildabruf_tag_unique')]
+		indexes = [models.Index(fields=['datum', 'herkunft'], name='bildabruf_datum_herkunft')]

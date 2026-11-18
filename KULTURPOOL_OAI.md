@@ -251,6 +251,19 @@ Bekannte numerische `geonames`-IDs werden als Geonames-Ressourcen abgebildet;
 `ndpikmk` wird nur bei einer bereits vorhandenen absoluten URI übernommen.
 Fehlende oder syntaktisch ungültige URIs werden nicht erfunden.
 
+Kulturpool löst externe URIs für die Anzeige nicht auf (Rückmeldung November
+2026), deshalb trägt jede ausgegebene URI eine Kontextressource mit
+`skos:prefLabel`. Labels sind deutsch (`xml:lang="de"`); ist im Vokabular
+`name_en` gepflegt, folgt ein zweites Label mit `xml:lang="en"`. Das gilt für
+Material, Nominal, Münzstätte (Migration `0106_material_nominal_mint_english`),
+Objekttyp und Herstellung. Fehlende Übersetzungen erzeugen kein leeres Label.
+Auch die Nomisma-Sammlungs-URI in `dcterms:isPartOf` erhält ein Label.
+
+Hinweis: Übersetzungen werden mit `update_fields=['name_en']` gespeichert und
+lösen bewusst keine MTOA-Neusynchronisierung aus. Damit ändert sich der
+OAI-Datestamp nicht. Nach größeren Übersetzungsrunden `sync_mtoa --slg <ID>`
+ausführen oder Kulturpool um einen Vollharvest bitten.
+
 ### OCRE, CRRO, RPC und weitere Typologien
 
 Alle gültigen URLs aus `Muenztyp.link`, kontrollierten
@@ -261,7 +274,54 @@ Domain-Mappingblock, keine neue Typologietabelle und keine behaupteten
 `skos:exactMatch`-Beziehungen. Nicht kontrollierte Konkordanztypen werden
 nicht veröffentlicht.
 
+Jede Typologie-URI erhält ein `skos:Concept` mit der Katalogzitierung als
+sprachneutralem `skos:prefLabel` (ohne `xml:lang`): `Muenztyp.muenztyptitel`
+für Typ und Konkordanztypen, „Abkürzung Nummer“ (`Ref.abk` + `Obj_Ref.nummer`)
+für Objektverweise. Bei mehrfach vorkommender URI gilt das erste Label.
+
 ## Bilder und getrennte Rechte
+
+### Bild-Weiterleitung mit Abrufzählung
+
+Der Export verlinkt keine Bilddateien direkt, sondern stabile, abnehmerneutrale
+Eligius-URIs:
+
+```text
+/bild/<Obj.pk>/<ansicht>/      ansicht = av | rv | av-vorschau | rv-vorschau
+/bild/1234/av/
+```
+
+Die URIs nennen keinen Abnehmer: Kulturpool reicht die Daten an Europeana
+weiter, und spätere Abnehmer erhalten dieselben Adressen.
+`slg/oai/media.py` beantwortet jede Anfrage mit `302` auf die *aktuell*
+berechnete Bilddatei (gleicher Resolver wie unten). Ziehen die Bilder auf einen
+anderen Server um, genügt die Änderung von `bildurl` an Sammlung/Sammlungsteil;
+die bei Abnehmern gespeicherten URIs bleiben gültig. Die Weiterleitung gilt nur
+für Objekte, die die OAI-Freigaberegeln erfüllen; zurückgezogene Objekte und
+unbekannte Ansichten liefern `404`. `Cache-Control: no-store` sorgt dafür, dass
+jeder Abruf Eligius erreicht.
+
+GET-Abrufe werden in `Bildabruf` tageweise je Objekt, Ansicht, Herkunft und
+„automatisiert“ (Harvester/Crawler, erkannt am User-Agent) gezählt. Herkunft
+ist nur der Domainname der einbettenden Seite aus dem Referer (Browser senden
+bei fremden Seiten ohnehin nur den Ursprung), z. B. `kulturpool.at`,
+`europeana.eu`, `eligius` für die eigene Seite oder leer für direkte Abrufe.
+Es werden keine IP-Adressen, User-Agents oder vollständigen Referer
+gespeichert. HEAD wird nicht gezählt. Zählfehler werden protokolliert und
+verhindern nie die Weiterleitung. Auswertung im Admin unter **Bildabrufe
+(Weiterleitung)** oder per
+
+```powershell
+python manage.py bildabrufe --von 2026-12-01 --bis 2026-12-31 --slg 1 --herkunft kulturpool --top 20
+```
+
+Grenzen: Die Zahlen messen Abrufe der Bild-URL, keine Seitenaufrufe.
+Speichert ein Abnehmer Bilder oder Vorschaubilder zwischen, erreichen spätere
+Anzeigen Eligius nicht (mit Kulturpool/Europeana klären). Seiten mit
+`Referrer-Policy: no-referrer` erscheinen als „direkt/unbekannt“. Die Erkennung
+automatisierter Abrufe ist eine Heuristik; Zähler sind öffentlich auslösbar.
+`ELIGIUS_OAI_IMAGE_REDIRECTS=false` verlinkt im Export wieder die Dateien.
+Migration `0107_bildabruf`.
 
 Die vorhandene Eigenschaft `MTOA.get_bild_urls` verwendet
 `build_bild_urls_for_invnr()` mit Sammlung und Sammlungsteil und hat einen
@@ -271,24 +331,28 @@ Es werden keine alternativen Bildpfade oder Dateinamen geraten.
 Vorder- und Rückseite ergeben je ein `edm:WebResource`. Die erste verfügbare
 Ansicht steht in `edm:isShownBy`, weitere Ansichten in `edm:hasView`. Eine
 vorhandene Vorschau steht in `edm:object`. Identische Bild-URLs werden
-dedupliziert. Relative lokale Bildpfade werden mit der öffentlichen Basis
+dedupliziert (eine Rückseite mit derselben Datei wie die Vorderseite entfällt). Relative lokale Bildpfade werden mit der öffentlichen Basis
 absolut gemacht. Ob die konstruierten URLs tatsächlich erreichbar sind,
 wird beim Harvest nicht durch zusätzliche HTTP-Anfragen geprüft; das muss
 vor der produktiven Übernahme separat überprüft werden.
 
-`Slg.bildrechte_lizenz` ist bisher Freitext für die öffentliche Anzeige.
-Dieser Text wird nicht als maschinenlesbare Lizenz interpretiert. Dafür
-gibt es nun zwei bewusst getrennte, standardmäßig leere Felder:
+`Slg.bildrechte_lizenz` ist Freitext für die öffentliche Anzeige. Er wird nur
+dann als Bildlizenz verwendet, wenn der *gesamte* Text eine eindeutige
+Lizenzangabe ist (`slg/oai/rights.py`), z. B. „CC BY-NC 4.0“ →
+`http://creativecommons.org/licenses/by-nc/4.0/`, „CC0“ oder „Public Domain
+Mark 1.0“. Angaben ohne Version („CC BY“) oder mit Zusatztext werden nicht
+interpretiert. Creative-Commons- und RightsStatements-URIs werden in die von
+Europeana verlangte kanonische Form gebracht (`http://`, ohne `deed`/`legalcode`).
+Daneben gibt es zwei bewusst getrennte, standardmäßig leere Felder:
 
 | Feld | Verwendung |
 | --- | --- |
 | `kulturpool_rights_uri` | Bestätigte Rechte-URI der Bilddigitalisate; `edm:rights` an WebResources und Aggregation |
 | `kulturpool_metadata_rights_uri` | Separat vereinbarte Metadatenrechte; `dc:rights` an der Aggregation |
 
-Enthält `bildrechte_lizenz` bereits ausschließlich eine gültige HTTP(S)-URI,
-kann sie als Bildrechte-Fallback dienen. Ein vorrangig konfiguriertes
-`kulturpool_rights_uri` wird bevorzugt. Freitext oder ungültige Werte erzeugen
-keine `edm:rights`-Angabe. Bildrechte werden nicht als Metadatenrechte
+Reihenfolge: `kulturpool_rights_uri`, dann `bildrechte_lizenz` als URI oder
+eindeutiges Lizenzlabel. Anderer Freitext oder ungültige Werte erzeugen
+keine `edm:rights`-Angabe; der Bereitschaftsstatus nennt dann den Text. Bildrechte werden nicht als Metadatenrechte
 übernommen und Metadatenrechte nicht an Bilder geschrieben.
 
 Es gibt keine vorausgesetzte CC-, CC0-, Public-Domain- oder andere Lizenz.
@@ -399,6 +463,7 @@ sichtbar werden. Kein öffentliches Debug-Endpoint wird angelegt.
 | `ELIGIUS_OAI_ADMIN_EMAIL` | Vorhandener Kontakt aus dem Impressum, separat konfigurierbar |
 | `ELIGIUS_OAI_PAGE_SIZE` | `200`, Laufzeitbegrenzung auf 1–500 |
 | `ELIGIUS_OAI_TOKEN_MAX_AGE` | `86400` Sekunden |
+| `ELIGIUS_OAI_IMAGE_REDIRECTS` | `true`; Bild-URIs im OAI-Export über `/bild/…`, `false` = Dateien direkt verlinken |
 
 In Produktion die kanonische HTTPS-Basis und einen dauerhaften
 `DJANGO_SECRET_KEY` für Signaturen konfigurieren. Ein Wechsel des Secrets
@@ -444,6 +509,12 @@ Identifier, Set und Token im HTTP-Client als Parameter URL-kodieren.
 .\.venv\Scripts\python.exe manage.py test slg --settings=djangoproject.test_settings
 .\.venv\Scripts\python.exe manage.py check --settings=djangoproject.test_settings
 ```
+
+Am 18. November 2026 wurden 12 weitere Tests ergänzt (prefLabels de/en,
+Typologie-Concepts, Lizenzlabels, Bild-Weiterleitung und Zählung; insgesamt 58
+in `slg.test_oai`). Eine Beispielantwort mit Lizenzlabel, Typologie-Concepts
+und Weiterleitungs-URIs ist gegen die aktuelle Europeana-XSD
+(`europeana/metis-schema`) gültig.
 
 Am 5. Oktober 2026 wurden 46 neue Tests erfolgreich ausgeführt. Sie prüfen
 Protokollverben, GET/POST, Argumentfehler, alle fünf Freigabefälle, stabile

@@ -9,7 +9,7 @@ from import_export import fields, resources
 from import_export.forms import ExportForm
 from import_export.instance_loaders import CachedInstanceLoader
 
-from slg.models import AvBildtyp, Herstellung, Objekttyp, PersonFunktion, RvBildtyp, Schlagwort
+from slg.models import AvBildtyp, Herstellung, Metall, Mzstaette, Nominal, Objekttyp, PersonFunktion, RvBildtyp, Schlagwort
 from slg.services.authority_display import clear_display_cache
 from slg.templatetags.authority_labels import nomisma_url
 
@@ -159,6 +159,9 @@ def translation_resource(model_class):
 ObjekttypTranslationResource = translation_resource(Objekttyp)
 HerstellungTranslationResource = translation_resource(Herstellung)
 PersonFunktionTranslationResource = translation_resource(PersonFunktion)
+MetallTranslationResource = translation_resource(Metall)
+NominalTranslationResource = translation_resource(Nominal)
+MzstaetteTranslationResource = translation_resource(Mzstaette)
 
 
 class SchlagwortTranslationResource(BildtypTranslationResource):

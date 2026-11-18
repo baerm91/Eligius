@@ -298,8 +298,10 @@ class OAITests(OAIFixtures, TestCase):
         self.assertEqual(list(graph.subjects(RDF.type, EDM.ProvidedCHO)), [cho])
         self.assertIn((agg, RDF.type, ORE.Aggregation), graph)
         self.assertEqual(len(list(graph.subjects(RDF.type, EDM.WebResource))), 2)
-        self.assertIn((agg, EDM.isShownBy, URIRef('https://images.example.test/A1_a.jpg')), graph)
-        self.assertIn((agg, EDM.hasView, URIRef('https://images.example.test/A1_r.jpg')), graph)
+        # Stable redirect URIs instead of file locations (see BildWeiterleitungTests).
+        self.assertIn((agg, EDM.isShownBy, URIRef(f'{BASE}/bild/{obj.pk}/av/')), graph)
+        self.assertIn((agg, EDM.hasView, URIRef(f'{BASE}/bild/{obj.pk}/rv/')), graph)
+        self.assertIn((agg, EDM.object, URIRef(f'{BASE}/bild/{obj.pk}/av-vorschau/')), graph)
         self.assertIn((cho, DCTERMS.medium, URIRef('http://nomisma.org/id/ar')), graph)
         self.assertIn((cho, DC.type, URIRef('http://nomisma.org/id/denarius')), graph)
         self.assertIn((cho, DCTERMS.spatial, URIRef('http://nomisma.org/id/rome')), graph)
@@ -390,10 +392,11 @@ class OAITests(OAIFixtures, TestCase):
         self.collection.save()
         graph, _ = self.graph(obj)
         self.assertFalse(list(graph.triples((None, EDM.rights, None))))
-        image_uri = 'https://rightsstatements.org/vocab/InC/1.0/'
-        metadata_uri = 'https://creativecommons.org/publicdomain/zero/1.0/'
-        self.collection.kulturpool_rights_uri = image_uri
-        self.collection.kulturpool_metadata_rights_uri = metadata_uri
+        self.collection.kulturpool_rights_uri = 'https://rightsstatements.org/vocab/InC/1.0/'
+        self.collection.kulturpool_metadata_rights_uri = 'https://creativecommons.org/publicdomain/zero/1.0/deed.de'
+        # Europeana/Kulturpool canonical form: http, no deed page.
+        image_uri = 'http://rightsstatements.org/vocab/InC/1.0/'
+        metadata_uri = 'http://creativecommons.org/publicdomain/zero/1.0/'
         self.collection.save()
         graph, _ = self.graph(obj)
         agg = URIRef(BASE + obj.get_absolute_url() + '#aggregation')
@@ -408,7 +411,7 @@ class OAITests(OAIFixtures, TestCase):
         self.collection.bildrechte_lizenz = 'https://rightsstatements.org/vocab/InC/1.0/'
         self.collection.save()
         graph, _ = self.graph(obj)
-        self.assertTrue(list(graph.triples((None, EDM.rights, URIRef(self.collection.bildrechte_lizenz)))))
+        self.assertTrue(list(graph.triples((None, EDM.rights, URIRef('http://rightsstatements.org/vocab/InC/1.0/')))))
         self.collection.bildrechte_lizenz = 'javascript:alert(1)'
         self.collection.kulturpool_rights_uri = 'https://example.test/rights with spaces'
         self.collection.save()
@@ -417,6 +420,7 @@ class OAITests(OAIFixtures, TestCase):
         graph, _ = self.graph(obj)
         self.assertFalse(list(graph.triples((None, EDM.rights, None))))
 
+    @override_settings(ELIGIUS_OAI_IMAGE_REDIRECTS=False)
     def test_local_and_part_image_paths_reuse_existing_resolver(self):
         part = SlgTeil.objects.create(name='Teil', idfk_Slg_SlgTeil=self.collection, bildurl='https://part.example.test/',
                                      bild_endung_av='_obv', bild_endung_rv='_rev')
@@ -532,6 +536,171 @@ class OAITests(OAIFixtures, TestCase):
         self.collection.kulturpool_metadata_rights_uri = 'https://creativecommons.org/publicdomain/zero/1.0/'
         self.collection.save()
         call_command('validate_kulturpool_export', strict=True, stdout=StringIO())
+
+
+class KulturpoolLabelAndRightsTests(OAIFixtures, TestCase):
+    def test_preflabels_in_german_and_english_for_nomisma_and_places(self):
+        Metall.objects.filter(pk=self.material.pk).update(name_en='Silver')
+        Nominal.objects.filter(pk=self.nominal.pk).update(name_en='Denarius')
+        Mzstaette.objects.filter(pk=self.mint.pk).update(name_en='Rome')
+        Herstellung.objects.filter(pk=self.manufacture.pk).update(name_en='Struck')
+        graph, _ = self.graph(self.obj(Typ=self.typ))
+        silver = URIRef('http://nomisma.org/id/ar')
+        self.assertIn((silver, RDF.type, SKOS.Concept), graph)
+        self.assertIn((silver, SKOS.prefLabel, Literal('Silber', lang='de')), graph)
+        self.assertIn((silver, SKOS.prefLabel, Literal('Silver', lang='en')), graph)
+        self.assertIn((URIRef('http://nomisma.org/id/denarius'), SKOS.prefLabel, Literal('Denarius', lang='en')), graph)
+        self.assertIn((URIRef('http://nomisma.org/id/struck'), SKOS.prefLabel, Literal('Struck', lang='en')), graph)
+        for rome in (URIRef('http://nomisma.org/id/rome'), URIRef('https://www.geonames.org/3169070')):
+            self.assertIn((rome, RDF.type, EDM.Place), graph)
+            self.assertIn((rome, SKOS.prefLabel, Literal('Rom', lang='de')), graph)
+            self.assertIn((rome, SKOS.prefLabel, Literal('Rome', lang='en')), graph)
+        # Missing translations add no empty English label.
+        coin = URIRef('http://nomisma.org/id/coin')
+        self.assertEqual(list(graph.objects(coin, SKOS.prefLabel)), [Literal('Münze', lang='de')])
+
+    def test_typology_links_have_concepts_with_citation_labels(self):
+        obj = self.obj(Typ=self.typ)
+        crro = Muenztyp.objects.create(muenztyptitel='RRC 1/1', workflow=self.controlled, Objekttyp=self.kind,
+                                      Herstellung=self.manufacture, link='http://numismatics.org/crro/id/rrc-1.1')
+        self.typ.Konkordanz.add(crro)
+        rpc = 'https://rpc.ashmus.ox.ac.uk/coins/1/1'
+        Obj_Ref.objects.create(idfk_Obj=obj, idfk_Ref=Ref.objects.create(abk='RPC I'), nummer='1', nach=False, link=rpc)
+        graph, _ = self.graph(obj)
+        for uri, label in ((self.typ.link, 'RIC 1'), (crro.link, 'RRC 1/1'), (rpc, 'RPC I 1')):
+            self.assertIn((URIRef(uri), RDF.type, SKOS.Concept), graph)
+            self.assertEqual(list(graph.objects(URIRef(uri), SKOS.prefLabel)), [Literal(label)])
+
+    def test_collection_nomisma_uri_has_label(self):
+        self.collection.nomisma_collection_uri = 'http://nomisma.org/id/test_collection'
+        self.collection.save()
+        graph, _ = self.graph(self.obj())
+        self.assertIn((URIRef(self.collection.nomisma_collection_uri), SKOS.prefLabel,
+                       Literal('Testsammlung', lang='de')), graph)
+
+    def test_licence_labels_map_only_when_unambiguous(self):
+        from .oai.rights import canonical_rights_uri, licence_from_label
+        cases = {
+            'CC BY-NC 4.0': 'http://creativecommons.org/licenses/by-nc/4.0/',
+            'cc-by-nc-sa 4.0': 'http://creativecommons.org/licenses/by-nc-sa/4.0/',
+            'CC BY SA NC 3.0': 'http://creativecommons.org/licenses/by-nc-sa/3.0/',
+            'Creative Commons BY 4.0.': 'http://creativecommons.org/licenses/by/4.0/',
+            'CC0': 'http://creativecommons.org/publicdomain/zero/1.0/',
+            'CC0 1.0': 'http://creativecommons.org/publicdomain/zero/1.0/',
+            'Public Domain Mark 1.0': 'http://creativecommons.org/publicdomain/mark/1.0/',
+        }
+        for label, uri in cases.items():
+            with self.subTest(label=label):
+                self.assertEqual(licence_from_label(label), uri)
+        for label in ('CC BY', 'CC BY-NC', 'CC BY-SA-ND 4.0', 'CC BY-NC 4.0 – Stift', 'CC BY 5.0',
+                      'Copyright; CC BY nicht vereinbart', '', None):
+            with self.subTest(label=label):
+                self.assertIsNone(licence_from_label(label))
+        self.assertEqual(canonical_rights_uri('https://www.creativecommons.org/licenses/by-nc/4.0/legalcode.de'),
+                         'http://creativecommons.org/licenses/by-nc/4.0/')
+        self.assertEqual(canonical_rights_uri('https://example.test/rights'), 'https://example.test/rights')
+
+    def test_displayed_cc_licence_is_used_as_image_rights(self):
+        obj = self.obj()
+        self.collection.bildrechte_lizenz = 'CC BY-NC 4.0'
+        self.collection.save()
+        graph, _ = self.graph(obj)
+        licence = URIRef('http://creativecommons.org/licenses/by-nc/4.0/')
+        agg = URIRef(BASE + obj.get_absolute_url() + '#aggregation')
+        self.assertIn((agg, EDM.rights, licence), graph)
+        for web in graph.subjects(RDF.type, EDM.WebResource):
+            self.assertIn((web, EDM.rights, licence), graph)
+        collection_admin = admin.site._registry[Slg]
+        status = collection_admin.kulturpool_readiness(self.collection)
+        self.assertEqual(status, 'Metadatenrechte-URI fehlt oder ist ungültig')
+        self.collection.bildrechte_lizenz = 'Alle Rechte beim Stift'
+        self.collection.save()
+        self.assertIn('keine eindeutige Lizenzangabe', collection_admin.kulturpool_readiness(self.collection))
+
+
+class BildWeiterleitungTests(OAIFixtures, TestCase):
+    BROWSER = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36'
+
+    def url(self, obj, ansicht='av'):
+        return reverse('bild_weiterleitung', kwargs={'obj_id': obj.pk, 'ansicht': ansicht})
+
+    def counts(self, obj):
+        from .models import Bildabruf
+        return {(r.ansicht, r.herkunft, r.automatisiert): r.anzahl for r in Bildabruf.objects.filter(obj=obj)}
+
+    def test_exported_uri_is_consumer_neutral(self):
+        obj = self.obj()
+        self.assertEqual(self.url(obj), f'/bild/{obj.pk}/av/')
+        root = self.request('GetRecord', metadataPrefix='edm', identifier=identifier(obj.pk))
+        self.assertNotIn(b'kulturpool', ET.tostring(root).lower())
+
+    def test_redirects_to_current_file_and_counts_without_personal_data(self):
+        obj = self.obj()
+        kulturpool = dict(HTTP_USER_AGENT=self.BROWSER, HTTP_REFERER='https://www.kulturpool.at/')
+        europeana = dict(HTTP_USER_AGENT=self.BROWSER, HTTP_REFERER='https://www.europeana.eu/de/item/123')
+        response = self.client.get(self.url(obj), **kulturpool)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], 'https://images.example.test/A1_a.jpg')
+        self.assertEqual(response['Cache-Control'], 'no-store')
+        self.client.get(self.url(obj), **kulturpool)
+        self.client.get(self.url(obj, 'rv-vorschau'), **europeana)
+        self.client.get(self.url(obj), HTTP_USER_AGENT=self.BROWSER, HTTP_REFERER='https://testserver/objekt/1/')
+        self.client.get(self.url(obj), HTTP_USER_AGENT='Harvester/1.0 python-requests/2.32')
+        self.client.get(self.url(obj), HTTP_REFERER='not a url[')
+        self.client.head(self.url(obj), **kulturpool)
+        self.assertEqual(self.counts(obj), {
+            ('av', 'kulturpool.at', False): 2, ('rv-vorschau', 'europeana.eu', False): 1,
+            ('av', 'eligius', False): 1, ('av', '', True): 2})
+        from .models import Bildabruf
+        stored = {f.name for f in Bildabruf._meta.concrete_fields}
+        self.assertEqual(stored, {'id', 'herkunft', 'obj', 'ansicht', 'datum', 'automatisiert', 'anzahl'})
+
+    def test_moved_images_keep_exported_uri(self):
+        obj = self.obj()
+        graph, _ = self.graph(obj)
+        exported = URIRef(BASE + self.url(obj))
+        self.assertIn(exported, list(graph.subjects(RDF.type, EDM.WebResource)))
+        self.collection.bildurl = 'https://neuer-server.example.test/heiligenkreuz/'
+        self.collection.save()
+        graph, _ = self.graph(obj)
+        self.assertIn(exported, list(graph.subjects(RDF.type, EDM.WebResource)))
+        self.assertEqual(self.client.get(self.url(obj))['Location'],
+                         'https://neuer-server.example.test/heiligenkreuz/A1_a.jpg')
+
+    def test_unknown_channel_variant_or_withdrawn_object_is_404(self):
+        obj = self.obj()
+        self.assertEqual(self.client.get(self.url(obj, ansicht='innen')).status_code, 404)
+        private = self.obj('P1', Slg=self.private)
+        self.assertEqual(self.client.get(self.url(private)).status_code, 404)
+        obj.workflow = self.draft
+        obj.save()
+        self.assertEqual(self.client.get(self.url(obj)).status_code, 404)
+        self.assertEqual(self.client.post(self.url(private)).status_code, 405)
+        self.assertEqual(self.counts(obj), {})
+
+    def test_identical_reverse_file_is_not_exported_twice(self):
+        self.collection.bild_endung_rv = self.collection.bild_endung_av
+        self.collection.save()
+        obj = self.obj()
+        graph, _ = self.graph(obj)
+        self.assertEqual(len(list(graph.subjects(RDF.type, EDM.WebResource))), 1)
+        self.assertEqual(self.client.get(self.url(obj, 'rv')).status_code, 404)
+
+    @override_settings(ELIGIUS_OAI_IMAGE_REDIRECTS=False)
+    def test_redirects_can_be_disabled_for_the_export(self):
+        obj = self.obj()
+        graph, _ = self.graph(obj)
+        self.assertIn(URIRef('https://images.example.test/A1_a.jpg'), list(graph.subjects(RDF.type, EDM.WebResource)))
+
+    def test_report_command(self):
+        obj = self.obj()
+        self.client.get(self.url(obj), HTTP_USER_AGENT=self.BROWSER, HTTP_REFERER='https://kulturpool.at/x')
+        self.client.get(self.url(obj), HTTP_USER_AGENT='bingbot')
+        output = StringIO()
+        call_command('bildabrufe', stdout=output)
+        self.assertIn('kulturpool.at [Browser]: 1 Abrufe, 1 Objekte', output.getvalue())
+        self.assertIn('(direkt/unbekannt) [automatisiert]: 1 Abrufe, 1 Objekte', output.getvalue())
+        self.assertIn(f'/objekt/{obj.pk}/', output.getvalue())
 
 
 class OAISynchronizationTests(OAIFixtures, TestCase):

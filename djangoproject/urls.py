@@ -30,6 +30,7 @@ from slg.api_views import ExportObjLSNO
 from slg.lab_views import lab, health
 from slg import webmcp
 from slg.oai.views import oai_endpoint
+from slg.oai.media import bild_weiterleitung
 
 from slg.views import about, impressum, datenschutz, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, collection_nomisma_rdf, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa, sammlungen_uebersicht
 
@@ -40,6 +41,7 @@ urlpatterns = [
     path('i18n/setlang/', switch_language, name='set_language'),
     path('i18n/ui.js', JavaScriptCatalog.as_view(domain='django'), name='ui_javascript_catalog'),
     path('oai/', oai_endpoint, name='oai_endpoint'),
+    path('bild/<int:obj_id>/<slug:ansicht>/', bild_weiterleitung, name='bild_weiterleitung'),
     path('api/webmcp/manifest/', webmcp.manifest, name='webmcp_manifest'),
     path('api/webmcp/data/<str:tool_name>/', webmcp.data, name='webmcp_data'),
     path('api/webmcp/navigation/<str:tool_name>/', webmcp.navigation, name='webmcp_navigation'),

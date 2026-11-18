@@ -142,6 +142,10 @@ ELIGIUS_OAI_REPOSITORY_NAME = os.getenv('ELIGIUS_OAI_REPOSITORY_NAME', 'Eligius 
 ELIGIUS_OAI_ADMIN_EMAIL = os.getenv('ELIGIUS_OAI_ADMIN_EMAIL', 'martin.baer@donau-uni.ac.at')
 ELIGIUS_OAI_PAGE_SIZE = int(os.getenv('ELIGIUS_OAI_PAGE_SIZE', '200'))
 ELIGIUS_OAI_TOKEN_MAX_AGE = int(os.getenv('ELIGIUS_OAI_TOKEN_MAX_AGE', '86400'))
+# Bild-Weiterleitung: neutrale, stabile Eligius-Bild-URIs (/bild/<obj>/<ansicht>/),
+# die auf die jeweils aktuelle Bilddatei weiterleiten und Abrufe tageweise zählen.
+# False = Bilddateien im OAI-Export direkt verlinken.
+ELIGIUS_OAI_IMAGE_REDIRECTS = os.getenv('ELIGIUS_OAI_IMAGE_REDIRECTS', 'true').lower() in ('1', 'true', 'yes')
 ELIGIUS_MCP_ALLOWED_HOSTS = [v.strip() for v in os.getenv(
     'ELIGIUS_MCP_ALLOWED_HOSTS', 'localhost:*,127.0.0.1:*').split(',') if v.strip()]
 ELIGIUS_MCP_ALLOWED_ORIGINS = [v.strip() for v in os.getenv(

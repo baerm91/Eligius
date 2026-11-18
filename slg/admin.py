@@ -19,7 +19,8 @@ from django.shortcuts import redirect
 # Register your models here.
 from .models import *
 from .translation_resources import (AvBildtypTranslationResource, RvBildtypTranslationResource, TranslationStatusFilter, TranslationAdminMixin,
-    ObjekttypTranslationResource, HerstellungTranslationResource, PersonFunktionTranslationResource, SchlagwortTranslationResource)
+    ObjekttypTranslationResource, HerstellungTranslationResource, PersonFunktionTranslationResource, SchlagwortTranslationResource,
+    MetallTranslationResource, NominalTranslationResource, MzstaetteTranslationResource)
 from .services.schlagwort_merge import METADATA, lock_keyword_writes, merge_keywords, merge_preview
 from import_export.resources import modelresource_factory
 # from .models import Slg, Obj, SlgTeil, Person, PersonFunktion, Herstellung, Ref, Nominal, Mzstaette, Obj_Person, Obj_Ref, Muenzstand, Variantenbeschr, AvBildtyp, RvBildtyp, AvBeizeichen, RvBeizeichen, AvBildrand, RvBildrand, Workflow, Obj_interne_Anmerkung, interneAnmerkung, Schlagwort, AvBildtyp_Schlagwort, RvBildtyp_Schlagwort, Muenztyp, Mztyp_Person, Faelschung
@@ -167,10 +168,14 @@ class RefView(ImportExportModelAdmin):
     actions = [actions.merge, actions.export_as_xls]
     pass
 
-class NominalView(ImportExportModelAdmin):
-    search_fields = ('name','name_nom_id')
-    list_display = ('id','name','name_nom_id',)
-    pass
+class NominalView(TranslationAdminMixin, ImportExportModelAdmin):
+    # Erste Ressource: reiner Übersetzungsaustausch; zweite: bisheriger Vollimport/-export.
+    resource_classes = [NominalTranslationResource, modelresource_factory(Nominal)]
+    search_fields = ('name', 'name_en', 'name_nom_id')
+    list_display = ('id', 'name', 'name_en', 'name_nom_id',)
+    list_display_links = ('id', 'name')
+    list_editable = ('name_en',)
+    list_filter = (TranslationStatusFilter,)
 
 class MuenzstandView(ImportExportModelAdmin):
     search_fields = ('name',)
@@ -182,10 +187,13 @@ class RandView(admin.ModelAdmin):
     list_display = ('id','name',)
     pass
 
-class MzstaetteView(ImportExportModelAdmin):
-    search_fields = ('name','name_nom_id')
-    list_display = ('id','name','name_nom_id', 'ndpikmk', 'geonames', 'lat', 'long')
-    list_editable = ('ndpikmk', 'geonames','lat', 'long',)
+class MzstaetteView(TranslationAdminMixin, ImportExportModelAdmin):
+    resource_classes = [MzstaetteTranslationResource, modelresource_factory(Mzstaette)]
+    search_fields = ('name', 'name_en', 'name_nom_id')
+    list_display = ('id', 'name', 'name_en', 'name_nom_id', 'ndpikmk', 'geonames', 'lat', 'long')
+    list_display_links = ('id', 'name')
+    list_editable = ('name_en', 'ndpikmk', 'geonames', 'lat', 'long',)
+    list_filter = (TranslationStatusFilter,)
     actions = [actions.merge, actions.export_as_xls]
     pass
 
@@ -402,7 +410,10 @@ class SlgView(nested_admin.NestedModelAdmin):
             'fields': ('nomisma_export_erlaubt', 'nomisma_collection_uri',
                        'kulturpool_export_erlaubt', 'kulturpool_rights_uri',
                        'kulturpool_metadata_rights_uri', 'kulturpool_readiness'),
-            'description': 'Kulturpool nutzt /oai/. Vor produktiver Übernahme Rechte separat klären und validate_kulturpool_export --strict ausführen.'
+            'description': 'Kulturpool nutzt /oai/. Bildrechte: Ist „Copyrightlizenz der Bilder“ eine eindeutige Lizenz wie „CC BY-NC 4.0“, '
+                           'wird die passende Creative-Commons-URI automatisch verwendet; sonst die Kulturpool-Rechte-URI eintragen. '
+                           'Metadatenrechte (üblich: http://creativecommons.org/publicdomain/zero/1.0/) separat eintragen. '
+                           'Vor produktiver Übernahme validate_kulturpool_export --strict ausführen.'
         }),
         ('Bildeinstellungen', {
             'classes': ('collapse',),
@@ -419,8 +430,12 @@ class SlgView(nested_admin.NestedModelAdmin):
         from .oai.readiness import collection_readiness
         if not obj.kulturpool_export_erlaubt:
             return 'Export deaktiviert'
+        from .oai.rights import image_rights_uri, metadata_rights_uri
         issues = collection_readiness(obj)
-        return '; '.join(issues) if issues else 'Rechte konfiguriert; Objektqualität mit validate_kulturpool_export prüfen'
+        if issues:
+            return '; '.join(issues)
+        return (f'Bildrechte: {image_rights_uri(obj)}; Metadatenrechte: {metadata_rights_uri(obj)}. '
+                'Objektqualität mit validate_kulturpool_export prüfen')
     
     def get_queryset(self, request):
         """Optimiertes QuerySet ohne teure Nested-Inlines"""
@@ -2765,9 +2780,14 @@ class HerstellungAdmin(TranslationAdminMixin, ImportExportActionModelAdmin, admi
     list_filter = (TranslationStatusFilter,)
     fields = (('name', 'name_en'), 'name_nom_id')
 
-class MetallAdmin(admin.ModelAdmin):
-    search_fields = ['name']
-    list_display = ['name']
+class MetallAdmin(TranslationAdminMixin, ImportExportActionModelAdmin, admin.ModelAdmin):
+    resource_classes = [MetallTranslationResource]
+    search_fields = ['name', 'name_en', 'name_nom_id']
+    list_display = ['id', 'name', 'name_en', 'name_nom_id']
+    list_display_links = ['id', 'name']
+    list_editable = ['name_en']
+    list_filter = (TranslationStatusFilter,)
+    fields = (('name', 'name_en'), 'name_nom_id')
 
 class WorkflowAdmin(CachedAutocompleteAdminMixin, admin.ModelAdmin):
     search_fields = ['name']
@@ -3291,3 +3311,25 @@ class TitelAdmin(admin.ModelAdmin):
     ordering = ('sortierung', 'name')
 
 admin.site.register(Titel, TitelAdmin)
+
+
+@admin.register(Bildabruf)
+class BildabrufAdmin(admin.ModelAdmin):
+    """Read-only statistics of the image redirect service (/bild/<obj>/<ansicht>/)."""
+    list_display = ('datum', 'herkunft', 'objekt', 'ansicht', 'automatisiert', 'anzahl')
+    list_filter = ('herkunft', 'automatisiert', 'ansicht', 'obj__Slg')
+    date_hierarchy = 'datum'
+    search_fields = ('obj__invnr', '=obj__id', 'herkunft')
+    ordering = ('-datum', '-anzahl')
+    list_select_related = ('obj',)
+    show_full_result_count = False
+
+    @admin.display(description='Objekt', ordering='obj__invnr')
+    def objekt(self, obj):
+        return format_html('<a href="{}">{}</a>', obj.obj.get_absolute_url(), obj.obj.invnr or obj.obj_id)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

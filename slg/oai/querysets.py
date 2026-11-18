@@ -40,16 +40,17 @@ def with_metadata_relations(rows):
 
 def objects_for_rows(rows):
     """One page-local join, because MTOA.obj_id is an integer, not a ForeignKey."""
-    concordances = Muenztyp.objects.filter(workflow__name__iexact=CONTROLLED).only('pk', 'link')
+    concordances = Muenztyp.objects.filter(workflow__name__iexact=CONTROLLED).only('pk', 'link', 'muenztyptitel')
     objects = eligible_objects().filter(pk__in=[row.obj_id for row in rows]).select_related(
         'Slg', 'Typ',
     ).only(
         'pk', 'Slg', 'Typ',
         'Slg__name', 'Slg__bildrechte_lizenz', 'Slg__kulturpool_rights_uri',
         'Slg__kulturpool_metadata_rights_uri', 'Slg__nomisma_collection_uri',
-        'Typ__link',
+        'Typ__link', 'Typ__muenztyptitel',
     ).prefetch_related(
-        Prefetch('obj_ref_set', queryset=Obj_Ref.objects.only('pk', 'idfk_Obj_id', 'link')),
+        Prefetch('obj_ref_set', queryset=Obj_Ref.objects.select_related('idfk_Ref').only(
+            'pk', 'idfk_Obj_id', 'link', 'nummer', 'idfk_Ref__abk')),
         Prefetch('Typ__Konkordanz', queryset=concordances),
     )
     return {obj.pk: obj for obj in objects}
