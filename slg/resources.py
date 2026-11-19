@@ -284,3 +284,81 @@ class ObjLSNOResource(resources.ModelResource):
             return obj.Typ.Nominal.name
         return ''
  
+
+# ---------------------------------------------------------------------------
+# Fundinformationen: Export-Vorlage aus der Objektliste + Import in FundView
+# ---------------------------------------------------------------------------
+from import_export import widgets as ie_widgets
+
+
+class FundResource(resources.ModelResource):
+	"""Import/Export der Fundinformationen, zugeordnet über die Objekt-ID.
+
+	- Pro Objekt höchstens ein Fund-Datensatz (OneToOne): vorhandene werden
+	  aktualisiert, fehlende angelegt.
+	- Leere Zellen überschreiben keine vorhandenen Werte.
+	- Inv.-Nr., Sammlung und Sammlungsteil dienen nur zur Orientierung und
+	  werden beim Import ignoriert.
+	"""
+
+	objekt = Field(attribute='objekt', column_name='Objekt-ID',
+		widget=ie_widgets.ForeignKeyWidget(Obj, 'pk'))
+	invnr = Field(attribute='objekt__invnr', column_name='Inv.-Nr. (nur Info)', readonly=True)
+	sammlung = Field(attribute='objekt__Slg__name', column_name='Sammlung (nur Info)', readonly=True)
+	sammlungsteil = Field(attribute='objekt__SlgTeil__name', column_name='Sammlungsteil (nur Info)', readonly=True)
+	fundort = Field(attribute='fundort', column_name='fundort',
+		widget=ie_widgets.ForeignKeyWidget(Fundort, 'name'))
+
+	class Meta:
+		model = Fund
+		import_id_fields = ('objekt',)
+		exclude = ('id', 'zusammen_gefundene_muenzen')
+		fields = (
+			'objekt', 'invnr', 'sammlung', 'sammlungsteil',
+			'maßnahmennr', 'fundnummer', 'fundnummerzusatz', 'kistennr',
+			'fundort', 'parzelle', 'fundstelle', 'fundposition',
+			'lm_von', 'lm_bis', 'niveautiefe_in_m_von', 'niveautiefe_in_m_bis', 'niveau',
+			'vn', 'vno', 'vo', 'vso', 'vs', 'vsw', 'vw', 'vnw',
+			'schnitt', 'bereichsbezeichnung', 'sondage', 'quadrant', 'quadrantzusatz',
+			'flaeche', 'se', 'stratum', 'fundkontext', 'andere_materialien', 'anmerkung',
+			'funddatum', 'fundjahr', 'bearbeiter',
+		)
+		export_order = fields
+		skip_unchanged = True
+		report_skipped = True
+		use_transactions = True
+
+	@staticmethod
+	def _is_empty(value):
+		return value is None or (isinstance(value, str) and value.strip() == '')
+
+	def import_field(self, field, instance, row, is_m2m=False, **kwargs):
+		# Leere Zellen bei bestehenden Datensätzen nicht als "Feld leeren" werten
+		if field.column_name in row and self._is_empty(row.get(field.column_name)) and instance.pk:
+			return
+		super().import_field(field, instance, row, is_m2m=is_m2m, **kwargs)
+
+	def before_import_row(self, row, **kwargs):
+		obj_id = row.get('Objekt-ID')
+		if self._is_empty(obj_id):
+			raise ValueError('Spalte "Objekt-ID" ist leer.')
+		try:
+			obj_id = int(float(str(obj_id).strip()))
+		except ValueError:
+			raise ValueError(f'Ungültige Objekt-ID: {obj_id!r}')
+		if not Obj.objects.filter(pk=obj_id).exists():
+			raise ValueError(f'Objekt-ID {obj_id} existiert nicht.')
+		row['Objekt-ID'] = obj_id
+		fundort = row.get('fundort')
+		if not self._is_empty(fundort) and not Fundort.objects.filter(name=str(fundort).strip()).exists():
+			raise ValueError(f'Fundort "{fundort}" existiert nicht (bitte zuerst unter Fundorte anlegen).')
+
+	def export_template(self, objs):
+		"""Vorlage für ausgewählte Objekte – mit vorhandenen Fundinfos vorbefüllt."""
+		instances = []
+		for obj in objs:
+			try:
+				instances.append(obj.fund)
+			except Fund.DoesNotExist:
+				instances.append(Fund(objekt=obj))
+		return self.export(queryset=instances)

@@ -28,6 +28,7 @@ from import_export.admin import ImportExportModelAdmin, ExportActionMixin, Impor
 from import_export import resources, fields, widgets
 from import_export.fields import Field
 from import_export.widgets import ForeignKeyWidget
+from .resources import FundResource
 from django.db.models import Count, Exists, OuterRef
 from django.db.models.functions import Trim
 import urllib.request, json
@@ -491,7 +492,8 @@ class SlgView(nested_admin.NestedModelAdmin):
 class FundortAdmin(admin.ModelAdmin):
     list_display = ('name',)
 
-class FundView(admin.ModelAdmin):
+class FundView(ImportExportModelAdmin):
+    resource_classes = [FundResource]
     search_fields = ('objekt','maßnahmennr', 'fundnummer')
     list_display = ('objekt','maßnahmennr', 'fundnummer','parzelle','quadrant','quadrantzusatz','anmerkung','vn','vno','vo', 'vso', 'vs', 'vsw', 'vw', 'vnw','lm_von', 'lm_bis','niveautiefe_in_m_von', 'niveautiefe_in_m_bis', 'niveau')
     raw_id_fields = ('objekt',)
@@ -2148,7 +2150,7 @@ class ObjAdmin(ImportExportModelAdmin):
     # Jetzt ist raw_id_fields leer oder kann ganz entfernt werden
     # raw_id_fields = ()
     
-    actions = ['export_coins', 'create_coin_labels', 'create_catalog', material_von_nominal_uebernehmen, material_von_muenztyp_uebernehmen, 'sync_mtoa_selected']
+    actions = ['export_coins', 'export_fund_vorlage', 'create_coin_labels', 'create_catalog', material_von_nominal_uebernehmen, material_von_muenztyp_uebernehmen, 'sync_mtoa_selected']
     
     fieldsets = (
         (None, {
@@ -2345,6 +2347,20 @@ class ObjAdmin(ImportExportModelAdmin):
         return response  # Rückgabe der HttpResponse für den Datei-Download
     
     export_coins.short_description = "Münzliste exportieren"  # Beschreibung der Aktion
+
+    def export_fund_vorlage(self, request, queryset):
+        """Excel-Vorlage für den Fundinfo-Import (Fundinformationen → Importieren)."""
+        from .resources import FundResource
+        objs = Obj.objects.filter(pk__in=queryset.values('pk')).select_related('Slg', 'SlgTeil', 'fund', 'fund__fundort').order_by('invnr')
+        dataset = FundResource().export_template(objs)
+        response = HttpResponse(
+            dataset.export('xlsx'),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename="fundinfo_vorlage.xlsx"'
+        return response
+
+    export_fund_vorlage.short_description = "Fundinfo-Vorlage exportieren (für Import bei Fundinformationen)"
 
     def sync_mtoa_selected(self, request, queryset):
         """Admin-Aktion: Ausgewählte Objekte in MuenztypObjektAnzeige synchronisieren."""
