@@ -3004,215 +3004,129 @@ class ObjPaketZuweisungResource(resources.ModelResource):
         return cleaned if cleaned else None
 
     def import_data(self, dataset, dry_run=False, raise_errors=False, use_transactions=None, collect_failed_rows=False, **kwargs):
-        """KOMPLETT EIGENER IMPORT - umgeht django-import-export komplett"""
-        
-        if dry_run:
-            return self._validate_dataset(dataset)
-        
-        # ECHTER IMPORT: Eine einzige Bulk-Operation
-        return self._bulk_import(dataset)
-    
-    def _validate_dataset(self, dataset):
-        """Schnelle Validierung für Dry-Run"""
-        result = Result()
-        
-        for i, row in enumerate(dataset.dict):
-            invnr = self._clean_string(row.get('invnr', ''))
-            slg_name = self._clean_string(row.get('Sammlung', ''))
-            paket_name = self._clean_string(row.get('Paket', ''))
-            
-            if not invnr:
-                result.append_invalid_row(i + 1, {'invnr': 'Inventarnummer ist erforderlich'})
-            if not slg_name:
-                result.append_invalid_row(i + 1, {'Sammlung': 'Sammlung ist erforderlich'})
-            if not paket_name:
-                result.append_invalid_row(i + 1, {'Paket': 'Paket ist erforderlich'})
-        
-        # Simuliere Erfolg für gültige Zeilen
-        valid_rows = len(dataset) - len(result.invalid_rows)
-        result.totals[RowResult.IMPORT_TYPE_NEW] = valid_rows
-        
-        return result
+        """Eigener Bulk-Import. Der Dry-Run (Vorschau) führt dieselbe Zuordnung aus
+        und rollt anschließend zurück, damit Fehler bereits in der Vorschau sichtbar sind."""
+        return self._bulk_import(dataset, dry_run=dry_run)
 
-    def _bulk_import(self, dataset):
-        """OPTIMIERTER Bulk-Import mit Chunking für bessere Performance"""
+    @staticmethod
+    def _norm(value):
+        return (value or '').strip().casefold()
+
+    def _row_value(self, row, *keys):
+        for key in keys:
+            if key in row:
+                return self._clean_string(row.get(key))
+        return None
+
+    def _bulk_import(self, dataset, dry_run=False):
         from django.db import transaction
-        from slg.models import Paket, Slg, SlgTeil, Obj
-        
+        from slg.models import Paket, Obj
+
         result = Result()
-        CHUNK_SIZE = 1000  # Verarbeite in 1000er-Batches
-        
+        ThroughModel = Obj.pakete.through
+        MAX_FEHLER = 20
+
+        rows = []
+        fehler = []
+        for i, row in enumerate(dataset.dict, start=2):  # Zeile 1 = Kopfzeile
+            obj_id = self._row_value(row, 'Objekt-ID', 'objekt_id', 'id')
+            invnr = self._row_value(row, 'invnr', 'Inv.-Nr.')
+            slg_name = self._row_value(row, 'Sammlung')
+            slgteil_name = self._row_value(row, 'Sammlungsteil')
+            paket_name = self._row_value(row, 'Paket')
+            if not paket_name:
+                fehler.append(f"Zeile {i}: Paket fehlt")
+                continue
+            if obj_id:
+                try:
+                    obj_id = int(float(obj_id))
+                except ValueError:
+                    fehler.append(f"Zeile {i}: ungültige Objekt-ID '{obj_id}'")
+                    continue
+            elif not (invnr and slg_name):
+                fehler.append(f"Zeile {i}: Objekt-ID oder invnr + Sammlung erforderlich")
+                continue
+            rows.append((i, obj_id, invnr, slg_name, slgteil_name, paket_name))
+
+        if not rows and not fehler:
+            fehler.append("Keine Datenzeilen gefunden. Spalten prüfen: invnr, Sammlung, Sammlungsteil, Paket "
+                          "(bei CSV Komma als Trennzeichen).")
+
+        created = skipped = 0
+        neue_pakete = []
         try:
             with transaction.atomic():
-                # 1. SAMMLE UND VALIDIERE ALLE DATEN
-                import_rows = []
-                paket_namen = set()
-                slg_namen = set()
-                slgteil_namen = set()
-                
-                print("🔄 Verarbeite Import-Daten...")
-                
-                for i, row in enumerate(dataset.dict):
-                    invnr = self._clean_string(row.get('invnr', ''))
-                    slg_name = self._clean_string(row.get('Sammlung', ''))
-                    slgteil_name = self._clean_string(row.get('Sammlungsteil', ''))
-                    paket_name = self._clean_string(row.get('Paket', ''))
-                    
-                    if invnr and slg_name and paket_name:
-                        paket_namen.add(paket_name)
-                        slg_namen.add(slg_name)
-                        if slgteil_name:
-                            slgteil_namen.add(slgteil_name)
-                        import_rows.append((invnr, slg_name, slgteil_name, paket_name))
-                
-                print(f"📊 {len(import_rows)} gültige Zeilen zum Verarbeiten")
-                
-                # 2. LADE/ERSTELLE PAKETE (einmalig)
-                existing_pakete = {p.name: p for p in Paket.objects.filter(name__in=paket_namen)}
-                missing_pakete = paket_namen - set(existing_pakete.keys())
-                
-                if missing_pakete:
-                    print(f"📦 Erstelle {len(missing_pakete)} neue Pakete")
-                    neue_pakete = [Paket(name=name) for name in missing_pakete]
-                    Paket.objects.bulk_create(neue_pakete, batch_size=1000)
-                    for paket in Paket.objects.filter(name__in=missing_pakete):
-                        existing_pakete[paket.name] = paket
+                # Objekte laden: per ID oder per Inventarnummer (Namen werden am Objekt verglichen,
+                # nicht über Namens-Caches – so stören doppelte Sammlungs(teil)namen nicht).
+                ids = {r[1] for r in rows if r[1]}
+                invnrs = {r[2] for r in rows if not r[1]}
+                by_id = {o.id: o for o in Obj.objects.filter(pk__in=ids).select_related('Slg', 'SlgTeil')}
+                by_invnr = {}
+                for o in Obj.objects.filter(invnr__in=invnrs).select_related('Slg', 'SlgTeil'):
+                    by_invnr.setdefault(o.invnr.strip(), []).append(o)
 
-                # 3. LADE REFERENZ-DATEN (einmalig)
-                slg_cache = {s.name: s for s in Slg.objects.filter(name__in=slg_namen)}
-                slgteil_cache = {}
-                if slgteil_namen:
-                    slgteil_cache = {st.name: st for st in SlgTeil.objects.filter(name__in=slgteil_namen)}
+                paket_namen = {r[5] for r in rows}
+                pakete = {p.name: p for p in Paket.objects.filter(name__in=paket_namen)}
+                for name in sorted(paket_namen - set(pakete)):
+                    pakete[name] = Paket.objects.create(name=name)
+                    neue_pakete.append(name)
 
-                # 4. VERARBEITE IN CHUNKS für bessere Performance
-                total_created = 0
-                total_skipped = 0
-                total_errors = 0
-                alle_fehler = []
-                
-                ThroughModel = Obj.pakete.through
-                
-                for chunk_start in range(0, len(import_rows), CHUNK_SIZE):
-                    chunk_end = min(chunk_start + CHUNK_SIZE, len(import_rows))
-                    chunk = import_rows[chunk_start:chunk_end]
-                    
-                    print(f"🔄 Verarbeite Chunk {chunk_start//CHUNK_SIZE + 1}/{(len(import_rows)-1)//CHUNK_SIZE + 1} ({len(chunk)} Zeilen)")
-                    
-                    # SAMMLE OBJEKT-SUCHKRITERIEN FÜR DIESEN CHUNK
-                    invnr_slg_mapping = {}  # invnr -> [(slg_id, slgteil_id_or_none)]
-                    
-                    for invnr, slg_name, slgteil_name, _ in chunk:
-                        slg = slg_cache.get(slg_name)
-                        slgteil = slgteil_cache.get(slgteil_name) if slgteil_name else None
-                        
-                        if slg:
-                            if invnr not in invnr_slg_mapping:
-                                invnr_slg_mapping[invnr] = []
-                            invnr_slg_mapping[invnr].append((slg.id, slgteil.id if slgteil else None))
-                    
-                    # FINDE OBJEKTE FÜR DIESEN CHUNK (effizientere Query)
-                    chunk_obj_cache = {}
-                    
-                    if invnr_slg_mapping:
-                        # Alle Inventarnummern in diesem Chunk
-                        invnr_list = list(invnr_slg_mapping.keys())
-                        
-                        # Lade alle Objekte mit diesen Inventarnummern
-                        objekte_queryset = Obj.objects.filter(
-                            invnr__in=invnr_list
-                        ).select_related('Slg', 'SlgTeil')
-                        
-                        # Filtere die richtigen Objekte basierend auf Slg/SlgTeil
-                        for obj in objekte_queryset:
-                            obj_slg_id = obj.Slg.id if obj.Slg else None
-                            obj_slgteil_id = obj.SlgTeil.id if obj.SlgTeil else None
-                            
-                            # Prüfe ob dieses Objekt zu unseren Suchkriterien passt
-                            if obj.invnr in invnr_slg_mapping:
-                                for slg_id, slgteil_id in invnr_slg_mapping[obj.invnr]:
-                                    if obj_slg_id == slg_id and obj_slgteil_id == slgteil_id:
-                                        key = (obj.invnr, obj.Slg.name, obj.SlgTeil.name if obj.SlgTeil else None)
-                                        chunk_obj_cache[key] = obj
-                                        break
-                    
-                    # PRÜFE BESTEHENDE ZUWEISUNGEN FÜR DIESEN CHUNK
-                    chunk_obj_ids = [obj.id for obj in chunk_obj_cache.values()]
-                    chunk_paket_ids = [paket.id for paket in existing_pakete.values()]
-                    
-                    existing_relations = set()
-                    if chunk_obj_ids and chunk_paket_ids:
-                        existing_relations = set(
-                            ThroughModel.objects
-                            .filter(obj_id__in=chunk_obj_ids, paket_id__in=chunk_paket_ids)
-                            .values_list('obj_id', 'paket_id')
-                        )
-                    
-                    # VERARBEITE CHUNK-ZEILEN
-                    chunk_zuweisungen = []
-                    chunk_errors = 0
-                    chunk_skipped = 0
-                    
-                    for invnr, slg_name, slgteil_name, paket_name in chunk:
-                        obj_key = (invnr, slg_name, slgteil_name)
-                        obj = chunk_obj_cache.get(obj_key)
-                        
+                zuweisungen = []
+                for i, obj_id, invnr, slg_name, slgteil_name, paket_name in rows:
+                    if obj_id:
+                        obj = by_id.get(obj_id)
                         if not obj:
-                            alle_fehler.append(f"Objekt '{invnr}' in '{slg_name}'{f'/{slgteil_name}' if slgteil_name else ''} nicht gefunden")
-                            chunk_errors += 1
+                            fehler.append(f"Zeile {i}: Objekt-ID {obj_id} existiert nicht")
                             continue
-                        
-                        paket = existing_pakete.get(paket_name)
-                        if not paket:
-                            alle_fehler.append(f"Paket '{paket_name}' nicht gefunden")
-                            chunk_errors += 1
+                    else:
+                        kandidaten = by_invnr.get(invnr, [])
+                        if not kandidaten:
+                            fehler.append(f"Zeile {i}: Inv.-Nr. '{invnr}' existiert nicht")
                             continue
-                        
-                        relation_key = (obj.id, paket.id)
-                        if relation_key in existing_relations:
-                            chunk_skipped += 1
+                        passend = [
+                            o for o in kandidaten
+                            if self._norm(o.Slg.name if o.Slg else '') == self._norm(slg_name)
+                            and (not slgteil_name or self._norm(o.SlgTeil.name if o.SlgTeil else '') == self._norm(slgteil_name))
+                        ]
+                        if len(passend) != 1:
+                            vorhanden = '; '.join(
+                                f"{o.Slg.name if o.Slg else '–'} / {o.SlgTeil.name if o.SlgTeil else '–'}" for o in kandidaten
+                            )
+                            grund = 'mehrdeutig' if passend else 'Sammlung/Sammlungsteil passen nicht'
+                            fehler.append(f"Zeile {i}: '{invnr}' {grund} (in Eligius: {vorhanden})")
                             continue
-                        
-                        chunk_zuweisungen.append(ThroughModel(obj_id=obj.id, paket_id=paket.id))
-                    
-                    # ERSTELLE ZUWEISUNGEN FÜR DIESEN CHUNK
-                    chunk_created = 0
-                    if chunk_zuweisungen:
-                        try:
-                            ThroughModel.objects.bulk_create(chunk_zuweisungen, batch_size=1000, ignore_conflicts=True)
-                            chunk_created = len(chunk_zuweisungen)
-                            print(f"  ✅ {chunk_created} neue Zuweisungen erstellt")
-                        except Exception as e:
-                            print(f"  ❌ Fehler beim Erstellen der Zuweisungen: {e}")
-                            chunk_errors += len(chunk_zuweisungen)
-                    
-                    if chunk_skipped > 0:
-                        print(f"  ⏭️ {chunk_skipped} Zuweisungen übersprungen (bereits vorhanden)")
-                    
-                    # SUMMIERE CHUNK-ERGEBNISSE
-                    total_created += chunk_created
-                    total_skipped += chunk_skipped
-                    total_errors += chunk_errors
-                
-                print(f"🎯 GESAMT: {total_created} erstellt, {total_skipped} übersprungen, {total_errors} Fehler")
-                
-                # ERSTELLE FINAL RESULT
-                result.totals[RowResult.IMPORT_TYPE_NEW] = total_created
-                result.totals[RowResult.IMPORT_TYPE_SKIP] = total_skipped
-                result.totals[RowResult.IMPORT_TYPE_ERROR] = total_errors
-                
-                # Zeige erste 10 Fehler
-                for fehler_msg in alle_fehler[:10]:
-                    result.append_base_error(fehler_msg)
-                
-                if len(alle_fehler) > 10:
-                    result.append_base_error(f"... und {len(alle_fehler) - 10} weitere Fehler")
-                
+                        obj = passend[0]
+                    zuweisungen.append((obj.id, pakete[paket_name].id))
+
+                vorhanden = set(
+                    ThroughModel.objects.filter(
+                        obj_id__in={z[0] for z in zuweisungen},
+                        paket_id__in={z[1] for z in zuweisungen},
+                    ).values_list('obj_id', 'paket_id')
+                )
+                neu = sorted(set(zuweisungen) - vorhanden)
+                skipped = len(zuweisungen) - len(neu)
+                ThroughModel.objects.bulk_create(
+                    [ThroughModel(obj_id=o, paket_id=p) for o, p in neu], batch_size=1000, ignore_conflicts=True
+                )
+                created = len(neu)
+
+                if dry_run:
+                    transaction.set_rollback(True)
         except Exception as e:
-            print(f"❌ Schwerwiegender Fehler beim Import: {e}")
             import traceback
             traceback.print_exc()
-            result.append_base_error(f"Schwerwiegender Fehler: {str(e)}")
-        
+            fehler.append(f"Schwerwiegender Fehler: {e}")
+            created = skipped = 0
+
+        result.totals[RowResult.IMPORT_TYPE_NEW] = created
+        result.totals[RowResult.IMPORT_TYPE_SKIP] = skipped
+        result.totals[RowResult.IMPORT_TYPE_ERROR] = len(fehler)
+        from import_export.results import Error as ImportError_
+        for msg in fehler[:MAX_FEHLER]:
+            result.append_base_error(ImportError_(msg))
+        if len(fehler) > MAX_FEHLER:
+            result.append_base_error(ImportError_(f"... und {len(fehler) - MAX_FEHLER} weitere Fehler"))
         return result
 
     # WICHTIG: Alle anderen Methoden deaktivieren, damit nur import_data verwendet wird
