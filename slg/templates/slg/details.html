@@ -381,9 +381,9 @@
                                     =
                                     {% if Konkordanz.link %}
                                         {% if Konkordanz.Ref.zitat %}
-                                            <a href="{{ Konkordanz.get_absolute_url }}"><abbr title="{{ Konkordanz.Ref.zitat }}">{{ Konkordanz.Ref }}</abbr>, {{ Konkordanz.nummer }}</a>
+                                            <a href="/browse/?Ref={{ Konkordanz.Ref.abk|urlencode }}&coin_type={{ Konkordanz.id }}"><abbr title="{{ Konkordanz.Ref.zitat }}">{{ Konkordanz.Ref }}</abbr>, {{ Konkordanz.nummer }}</a>
                                         {% else %} 
-                                            <a href="{{ Konkordanz.get_absolute_url }}">{{ Konkordanz.Ref }}, {{ Konkordanz.nummer }}</a>
+                                            <a href="/browse/?Ref={{ Konkordanz.Ref.abk|urlencode }}&coin_type={{ Konkordanz.id }}">{{ Konkordanz.Ref }}, {{ Konkordanz.nummer }}</a>
                                         {% endif %}
                                         {% if Konkordanz.variante %}
                                             (Var.: {{ Konkordanz.variante.name }})
@@ -395,9 +395,9 @@
                                         {% endif %}
                                     {% else %}
                                         {% if Konkordanz.Ref.zitat %}
-                                            <a href="{{ Konkordanz.get_absolute_url }}"><abbr title="{{ Konkordanz.Ref.zitat }}">{{ Konkordanz.Ref }}</abbr>, {{ Konkordanz.nummer }}</a>
+                                            <a href="/browse/?Ref={{ Konkordanz.Ref.abk|urlencode }}&coin_type={{ Konkordanz.id }}"><abbr title="{{ Konkordanz.Ref.zitat }}">{{ Konkordanz.Ref }}</abbr>, {{ Konkordanz.nummer }}</a>
                                         {% else %} 
-                                            <a href="{{ Konkordanz.get_absolute_url }}">{{ Konkordanz.Ref }}, {{ Konkordanz.nummer }}</a>
+                                            <a href="/browse/?Ref={{ Konkordanz.Ref.abk|urlencode }}&coin_type={{ Konkordanz.id }}">{{ Konkordanz.Ref }}, {{ Konkordanz.nummer }}</a>
                                         {% endif %}
                                         {% if Konkordanz.variante %}
                                             (Var.: {{ Konkordanz.variante.name }})
@@ -860,26 +860,94 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     .matrix-header {
-      font-weight: bold;
+      font-weight: 600;
       text-align: center;
-      background-color: #f8f9fa;
-      padding: 0.5rem;
+      color: inherit;
+      background-color: rgba(128, 128, 128, 0.18);
+      padding: 0.5rem 0.75rem;
       border-radius: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.85rem;
     }
 
     .matrix-row-header {
-      font-weight: bold;
+      font-weight: 600;
       display: flex;
       align-items: center;
-      background-color: #f8f9fa;
-      padding: 0.5rem;
+      color: inherit;
+      background-color: rgba(128, 128, 128, 0.18);
+      padding: 0.5rem 0.75rem;
       border-radius: 0.25rem;
+      font-size: 1rem;
+      min-width: 110px;
     }
 
     .matrix-grid {
       display: grid;
       gap: 0.5rem;
       margin-bottom: 0.5rem;
+      align-items: stretch;
+    }
+
+    .matrix-grid .matrix-cell {
+      border-color: rgba(128, 128, 128, 0.35) !important;
+    }
+
+    .matrix-sum-cell {
+      font-size: 1.25rem;
+      font-weight: 600;
+      min-width: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .matrix-total-row {
+      background-color: rgba(128, 128, 128, 0.12);
+    }
+
+    .matrix-chart {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      height: auto;
+      min-height: 110px;
+    }
+
+    .matrix-chart svg {
+      flex: 0 0 auto;
+    }
+
+    .matrix-legend {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      min-width: 0;
+    }
+
+    .matrix-legend li {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .matrix-legend .legend-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .matrix-legend .legend-count {
+      opacity: 0.7;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .matrix-legend .color-dot {
+      flex: 0 0 auto;
     }
 
     .pie-tooltip {
@@ -2454,7 +2522,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Container für das Kreisdiagramm
         const chartContainer = document.createElement("div");
-        chartContainer.className = "chart-container";
+        chartContainer.className = "chart-container matrix-chart";
         cell.appendChild(chartContainer);
 
         // Füge die Zelle zum Grid hinzu
@@ -2470,7 +2538,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Füge die Summen-Zelle am Ende jeder Nominalzeile hinzu
       const nominalSumCell = document.createElement("div");
-      nominalSumCell.className = "matrix-cell border rounded p-2 d-flex align-items-center justify-content-center font-weight-bold";
+      nominalSumCell.className = "matrix-cell matrix-sum-cell border rounded p-2";
       nominalSumCell.textContent = nominalTotals[nominalId] || 0;
       gridContainer.appendChild(nominalSumCell);
     });
@@ -2484,7 +2552,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Füge die Gesamtsummen für jede Münzstätte hinzu
     Object.entries(mintTotals).forEach(([mintId, total]) => {
       const totalCell = document.createElement("div");
-      totalCell.className = "matrix-cell border rounded p-2 text-center font-weight-bold";
+      totalCell.className = "matrix-cell matrix-sum-cell matrix-total-row border rounded p-2";
       totalCell.textContent = total;
       gridContainer.appendChild(totalCell);
     });
@@ -2492,7 +2560,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Füge die Gesamtsumme aller Münzen hinzu
     const grandTotal = Object.values(mintTotals).reduce((sum, count) => sum + count, 0);
     const grandTotalCell = document.createElement("div");
-    grandTotalCell.className = "matrix-cell border rounded p-2 text-center font-weight-bold bg-light";
+    grandTotalCell.className = "matrix-cell matrix-sum-cell matrix-total-row border rounded p-2";
     grandTotalCell.textContent = grandTotal;
     gridContainer.appendChild(grandTotalCell);
 
@@ -2732,9 +2800,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }));
 
     // Dimensionen für kleine Diagramme
-    const width = 120;
-    const height = 120;
-    const radius = Math.min(width, height) / 2 - 8; // Mehr Platz für Pull-out
+    const width = 110;
+    const height = 110;
+    const radius = Math.min(width, height) / 2 - 6; // Mehr Platz für Pull-out
+    const innerRadius = radius * 0.55; // Donut: Platz für die Gesamtzahl in der Mitte
     const pullOutDistance = 3; // Kleinere Distanz für kleine Diagramme
 
     // Container leeren
@@ -2756,11 +2825,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Arc Generators
     const arcNormal = d3.arc()
-      .innerRadius(0)
+      .innerRadius(innerRadius)
       .outerRadius(radius);
 
     const arcHover = d3.arc()
-      .innerRadius(0)
+      .innerRadius(innerRadius)
       .outerRadius(radius + 3);
 
     // Berechne Gesamtanzahl
@@ -2805,7 +2874,7 @@ document.addEventListener('DOMContentLoaded', function() {
     arcs.append("path")
       .attr("d", arcNormal)
       .attr("fill", d => d.data.color)
-      .attr("stroke", "white")
+      .attr("stroke", "rgba(0,0,0,0.35)")
       .attr("stroke-width", 1)
       .attr("transform", getTransform)
       .style("cursor", "pointer")
@@ -2859,12 +2928,33 @@ document.addEventListener('DOMContentLoaded', function() {
     g.append("text")
       .attr("text-anchor", "middle")
       .attr("dy", ".35em")
-      .style("font-size", "14px")
+      .style("font-size", "18px")
       .style("font-weight", "bold")
-      .style("fill", "#333")
-      .style("text-shadow", "1px 1px 1px rgba(255,255,255,0.8)")
+      .style("fill", "currentColor")
       .style("pointer-events", "none")
       .text(total);
+
+    // Legende neben dem Diagramm (Motiv, Anzahl)
+    const legend = document.createElement("ul");
+    legend.className = "matrix-legend";
+    [...enhancedData]
+      .sort((a, b) => b.value - a.value)
+      .forEach(d => {
+        const li = document.createElement("li");
+        li.title = `${d.name}: ${d.value}`;
+        const dot = document.createElement("span");
+        dot.className = "color-dot";
+        dot.style.backgroundColor = d.color;
+        const name = document.createElement("span");
+        name.className = "legend-name";
+        name.textContent = (d.isCurrentCoin ? "★ " : "") + d.name;
+        const count = document.createElement("span");
+        count.className = "legend-count";
+        count.textContent = d.value;
+        li.append(dot, name, count);
+        legend.appendChild(li);
+      });
+    container.appendChild(legend);
 
     // SVG mouseleave Event hinzufügen - NEUE ZEILE
     svg.on("mouseleave", function() {
