@@ -13,6 +13,7 @@
     {% block canonical %}<link rel="canonical" href="{% canonical_url %}">{% endblock canonical %}
     {% robots_directive as site_robots_directive %}
     {% if site_robots_directive %}<meta name="robots" content="{{ site_robots_directive }}">{% endif %}
+    <meta name="google-site-verification" content="oYdAbFZ6iUo69SJ3vGqdn6vsOhhwPNozroctyevaO_Y">
     {% block meta_tags %}{% seo_meta %}{% endblock meta_tags %}
     {% block structured_data %}{% endblock structured_data %}
 
