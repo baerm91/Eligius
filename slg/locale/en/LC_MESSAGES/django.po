@@ -1424,3 +1424,7 @@ msgstr "Numismatics"
 #. SEO-Metadaten
 msgid "Stempelstellung"
 msgstr "Die axis"
+
+#. SEO-Metadaten
+msgid "Münze %(invnr)s aus der Sammlung %(collection)s: %(title)s."
+msgstr "Coin %(invnr)s from the %(collection)s collection: %(title)s."

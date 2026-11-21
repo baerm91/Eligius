@@ -1,28 +1,11 @@
 {% extends "slg/navbar.html" %}
 {% load authority_labels %}
 {% load i18n seo_tags %}
-{% block title %}{{ coin_data.slg|display_label }}: {{ coin_data.invnr }} - {{ coin_data.titel }}{% endblock title %}
+{% block title %}{{ seo.page_title }}{% endblock title %}
 
 {% block meta_tags %}
-    <meta name="description" content="Details zur Münze {{ coin_data.invnr }} aus der Sammlung {{ coin_data.slg }}: {{ coin_data.titel }}. {% if coin_data.personen %}{% for person in coin_data.personen.all %}{% if person.idfk_PersonFunktion.id == 1 %}{{ person.idfk_Person.name }}{% endif %}{% endfor %}. {% endif %}{% if coin_data.mzstaette %}{{ coin_data.mzstaette }}. {% endif %}{% if coin_data.nominal %}{{ coin_data.nominal }}. {% endif %}{% if coin_data.dat_verb %}{{ coin_data.dat_verb }}.{% endif %}">
-    {# Add more specific keywords if desired #}
+    {% seo_meta title=seo.page_title description=seo.meta_description image=coin_data.bild_urls.av type="article" %}
     <meta name="keywords" content="Münze, Numismatik, {{ coin_data.slg }}, {{ coin_data.invnr }}{% if coin_data.titel %}, {{ coin_data.titel }}{% endif %}{% if coin_data.personen %}{% for person in coin_data.personen.all %}{% if person.idfk_PersonFunktion.id == 1 %}, {{ person.idfk_Person.name }}{% endif %}{% endfor %}{% endif %}{% if coin_data.mzstaette %}, {{ coin_data.mzstaette }}{% endif %}{% if coin_data.nominal %}, {{ coin_data.nominal }}{% endif %}{% if coin_data.metall %}, {{ coin_data.metall }}{% endif %}{% if coin_data.dat_verb %}, {{ coin_data.dat_verb }}{% endif %}">
-    
-    {# Open Graph tags for social media sharing #}
-    <meta property="og:title" content="{{ coin_data.slg }}: {{ coin_data.invnr }} - {{ coin_data.titel }}" />
-    <meta property="og:description" content="Details zur Münze {{ coin_data.invnr }} aus der Sammlung {{ coin_data.slg }}: {{ coin_data.titel }}. Weitere Informationen und Bilder auf Eligius." />
-    {% with bild_urls=coin_data.bild_urls %}
-        {% if bild_urls.av %}
-            <meta property="og:image" content="{{ bild_urls.av }}" />
-        {% endif %}
-        {% if bild_urls.rv %}
-            <meta property="og:image" content="{{ bild_urls.rv }}" />
-        {% endif %}
-    {% endwith %}
-    <meta property="og:url" content="{% canonical_url %}" />
-    <meta property="og:type" content="article" /> 
-    <meta property="og:site_name" content="Eligius" />
-    <meta name="twitter:card" content="summary_large_image" />
 {% endblock meta_tags %}
 {% block structured_data %}{% json_ld structured_data %}{% endblock structured_data %}
 
@@ -534,12 +517,12 @@
                     {% if bild_urls %}
                         <div class="coin-image-col">
                             <div class="item coin-image-stage" data-src="{{ bild_urls.av }}">
-                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.av }}" data-fallback-src="{{ bild_urls.av_alt|default:'' }}" alt="{% translate 'Avers' %}" class="lazyload img-fluid" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
+                                <a href="{{ coin_data.get_absolute_url }}"><img src="{{ bild_urls.av }}" data-fallback-src="{{ bild_urls.av_alt|default:'' }}" alt="{{ seo.alt.av }}" class="img-fluid" loading="eager" fetchpriority="high" decoding="async" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
                             </div>
                         </div>
                         <div class="coin-image-col">
                             <div class="item coin-image-stage" data-src="{{ bild_urls.rv }}">
-                                <a href="{{ coin_data.get_absolute_url }}"><img data-src="{{ bild_urls.rv }}" data-fallback-src="{{ bild_urls.rv_alt|default:'' }}" alt="{% translate 'Revers' %}" class="lazyload img-fluid" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
+                                <a href="{{ coin_data.get_absolute_url }}"><img src="{{ bild_urls.rv }}" data-fallback-src="{{ bild_urls.rv_alt|default:'' }}" alt="{{ seo.alt.rv }}" class="img-fluid" loading="eager" decoding="async" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
                             </div>
                         </div>
                     {% endif %}

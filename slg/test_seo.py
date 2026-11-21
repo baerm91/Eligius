@@ -6,7 +6,7 @@ from xml.etree import ElementTree as ET
 from django.core.cache import cache
 from django.test import RequestFactory, TestCase, override_settings
 
-from .models import (Herstellung, Metall, Muenztyp, Mztyp_Person, Mzstaette, Nominal, Obj, Objekttyp, Paket,
+from .models import (AvBildtyp, Herstellung, Metall, Muenztyp, Mztyp_Person, Mzstaette, Nominal, Obj, Objekttyp, Paket,
                      Person, PersonFunktion, Slg, Workflow)
 from .seo import canonical_url, clean_text, muenztyp_meta
 from .signals import disable_mtoa_sync, enable_mtoa_sync
@@ -28,6 +28,8 @@ class SeoTests(TestCase):
             cls.slg = Slg.objects.create(name='Testsammlung')
             cls.typ = Muenztyp.objects.create(muenztyptitel='T1', titel='Typ mit Objekt', workflow=cls.controlled)
             cls.empty_typ = Muenztyp.objects.create(muenztyptitel='T2', titel='Leerer Typ', workflow=cls.controlled)
+            cls.draft_only_typ = Muenztyp.objects.create(muenztyptitel='T3', titel='Nur Entwürfe', workflow=cls.controlled)
+            Obj.objects.create(invnr='A3', Slg=cls.slg, Typ=cls.draft_only_typ, workflow=cls.draft)
             cls.ok = Obj.objects.create(invnr='A1', Slg=cls.slg, Typ=cls.typ, workflow=cls.controlled)
             cls.open = Obj.objects.create(invnr='A2', Slg=cls.slg, Typ=cls.typ, workflow=cls.draft)
             cls.paket = Paket.objects.create(name='Öffentliches Paket', online_freigegeben=True)
@@ -258,7 +260,8 @@ class StructuredDataTests(TestCase):
                 Nominal=Nominal.objects.create(name='Denar', name_nom_id='denarius'),
                 Metall=Metall.objects.create(name='Silber', name_nom_id='ar'),
                 Mzstaette=Mzstaette.objects.create(name='Rom', name_nom_id='rome', geonames='3169070'),
-                dat_verb='82 n. Chr.', avleg='IMP CAES DOMITIANVS AVG P M')
+                dat_verb='82 n. Chr.', avleg='IMP CAES DOMITIANVS AVG P M',
+                av_bildtyp=AvBildtyp.objects.create(name='Kopf des Domitianus nach rechts'))
             Mztyp_Person.objects.create(
                 Mztyp=cls.typ, idfk_PersonFunktion=ruler_role, appears_on_rev=False,
                 idfk_Person=Person.objects.create(name='Domitianus', name_nom_id='domitian',
@@ -324,6 +327,30 @@ class StructuredDataTests(TestCase):
         ])
         # Breadcrumbs nur als Markup, nicht sichtbar.
         self.assertNotIn('breadcrumb', re.sub(r'<script type="application/ld\+json">.*?</script>', '', html, flags=re.S).lower())
+
+    def test_object_page_meta_images_and_alt(self):
+        response = self.client.get(f'/objekt/{self.obj.id}/')
+        html = response.content.decode()
+        self.assertContains(response, '<title>Stift Heiligenkreuz: H1 - Domitianus</title>')
+        description = re.search(r'<meta name="description" content="([^"]*)"', html).group(1)
+        self.assertEqual(description, 'Münze H1 aus der Sammlung Stift Heiligenkreuz: Domitianus. '
+                                      'Domitianus, Denar, Rom, 82 n. Chr.')
+        self.assertEqual(html.count('name="description"'), 1)
+        for tag in ('og:locale', 'og:image', 'twitter:title', 'twitter:description', 'twitter:image'):
+            self.assertIn(f'"{tag}"', html, tag)
+        # Hauptbilder: echtes src (kein JS-Lazyloading) und sprechender Alt-Text mit Bildbeschreibung
+        self.assertIn('<img src="https://images.example.test/H1_a.jpg"', html)
+        self.assertNotIn('data-src="https://images.example.test/H1_a.jpg" data-fallback', html)
+        self.assertIn('alt="Avers: Kopf des Domitianus nach rechts – Domitianus (H1, Stift Heiligenkreuz)"', html)
+        self.assertIn('alt="Revers: Domitianus (H1, Stift Heiligenkreuz)"', html)
+        nodes, _ = self.graph(f'/objekt/{self.obj.id}/')
+        self.assertEqual(nodes['VisualArtwork']['image'][0]['description'],
+                         'Avers: Kopf des Domitianus nach rechts – Domitianus (H1, Stift Heiligenkreuz)')
+
+    def test_graphs_contain_referenced_organization(self):
+        for url in (f'/objekt/{self.obj.id}/', f'/slg/{self.slg.id}/'):
+            nodes, _ = self.graph(url)
+            self.assertEqual(nodes['Organization']['@id'], f'{BASE}/#organization', url)
 
     def test_object_english_labels(self):
         nodes, _ = self.graph(f'/objekt/{self.obj.id}/', HTTP_ACCEPT_LANGUAGE='en')

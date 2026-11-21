@@ -248,7 +248,7 @@ class PaketSitemap(EligiusSitemap):
 
 
 class MuenztypSitemap(EligiusSitemap):
-    """Münztypen mit mindestens einem zugeordneten Objekt (keine leeren Typseiten)."""
+    """Münztypen mit mindestens einem kontrollierten Objekt (wie ObjektSitemap)."""
 
     changefreq = 'monthly'
     priority = 0.7
@@ -256,7 +256,7 @@ class MuenztypSitemap(EligiusSitemap):
     def items(self):
         return (
             Muenztyp.objects
-            .filter(Exists(Obj.objects.filter(Typ=OuterRef('pk'))))
+            .filter(Exists(Obj.objects.filter(Typ=OuterRef('pk'), workflow__name__iexact=KONTROLLIERT)))
             .only('id', 'modified_at')
             .order_by('id')
         )

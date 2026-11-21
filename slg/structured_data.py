@@ -204,13 +204,13 @@ def collection_graph(request, slg, name, description, object_count, image=''):
     }
     trail = breadcrumbs(request, (_('Sammlungen'), reverse('sammlungen_uebersicht')),
                         (name, slg.get_absolute_url()))
-    return graph(dataset, trail)
+    return graph(dataset, trail, organization(request))
 
 
 # ---------------------------------------------------------------------------
 # Objekt
 
-def _image(request, url, thumbnail, label, licence, credit):
+def _image(request, url, thumbnail, label, licence, credit, description=''):
     url = absolute_url(url, request)
     if not url:
         return None
@@ -219,6 +219,7 @@ def _image(request, url, thumbnail, label, licence, credit):
         'contentUrl': url,
         'thumbnailUrl': absolute_url(thumbnail, request),
         'name': label,
+        'description': description,
         'license': licence,
         'creditText': credit,
         'copyrightNotice': credit,
@@ -247,8 +248,10 @@ def object_graph(request, obj, coin_data, labels):
     credit = clean_text(collection_name, limit=0)
     bild_urls = coin_data.get('bild_urls') or {}
     images = [
-        _image(request, bild_urls.get('av'), bild_urls.get('thumbnail_av'), _('Vorderseite'), licence, credit),
-        _image(request, bild_urls.get('rv'), bild_urls.get('thumbnail_rv'), _('Rückseite'), licence, credit),
+        _image(request, bild_urls.get('av'), bild_urls.get('thumbnail_av'), _('Vorderseite'), licence, credit,
+               labels.get('alt', {}).get('av')),
+        _image(request, bild_urls.get('rv'), bild_urls.get('thumbnail_rv'), _('Rückseite'), licence, credit,
+               labels.get('alt', {}).get('rv')),
     ]
 
     creators, depicted = [], []
@@ -321,7 +324,7 @@ def object_graph(request, obj, coin_data, labels):
     title = labels.get('title')
     current = f'{obj.invnr} – {title}' if title and title != obj.invnr else obj.invnr
     trail = breadcrumbs(request, *crumbs, (current, obj.get_absolute_url()))
-    return graph(artwork, trail)
+    return graph(artwork, trail, organization(request))
 
 
 # ---------------------------------------------------------------------------

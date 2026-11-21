@@ -2,7 +2,7 @@ import requests
 import csv
 import hashlib
 from requests.exceptions import RequestException
-from django.utils.translation import get_language, ngettext
+from django.utils.translation import get_language, gettext, ngettext
 import operator
 # import pandas as pd
 from typing import Iterable
@@ -1602,10 +1602,37 @@ def _object_labels(obj, coin_data):
                     for rel in coin_data['personen'] if getattr(rel, 'idfk_Person', None)},
     }
     labels['title'] = clean_text(coin_data['titel'], limit=0) or obj.invnr
-    facts = [labels['nominal'], labels['mint'], clean_text(coin_data['dat_verb'], limit=0)]
+    rulers = list(dict.fromkeys(
+        labels['persons'][rel.idfk_Person.pk] for rel in coin_data['personen']
+        if getattr(rel, 'idfk_Person', None) and getattr(rel, 'idfk_PersonFunktion_id', None) in sd.RULER_ROLES))
+    dating = clean_text(coin_data['dat_verb'], limit=0)
+    facts = [labels['nominal'], labels['mint'], dating]
     labels['description'] = clean_text(' – '.join(
         part for part in (f"{labels['collection']} {obj.invnr}".strip(), labels['title'],
                           ', '.join(f for f in facts if f)) if part), limit=300)
+
+    # Seitentitel, Meta-Description und Social Preview
+    labels['page_title'] = f"{labels['collection']}: {obj.invnr} - {labels['title']}" if labels['collection'] \
+        else f"{obj.invnr} - {labels['title']}"
+    summary = ', '.join(f for f in (' / '.join(rulers), labels['nominal'], labels['mint'], dating) if f)
+    labels['meta_description'] = clean_text(
+        (gettext('Münze %(invnr)s aus der Sammlung %(collection)s: %(title)s.') % {
+            'invnr': obj.invnr, 'collection': labels['collection'], 'title': labels['title']}
+         if labels['collection'] else f"{obj.invnr}: {labels['title']}.")
+        + (f" {summary.rstrip('.')}." if summary else ''))
+
+    # Alt-Texte der Hauptbilder: Seite, Bildbeschreibung, Münze, Inventarnummer, Sammlung
+    origin = ', '.join(p for p in (obj.invnr, labels['collection']) if p)
+    labels['alt'] = {}
+    for side, side_label in (('av', gettext('Avers')), ('rv', gettext('Revers'))):
+        motif = coin_data.get(f'{side}_bildtyp')
+        motif_text = clean_text(getattr(motif, 'display_name', '') or '', limit=0) if motif else ''
+        if not motif_text:
+            source = getattr(obj, f'{side}beschr', None) or (getattr(coin_data['Typ'], f'{side}beschr', None)
+                                                             if coin_data['Typ'] else None)
+            motif_text = clean_text(source, limit=0)
+        text = f'{side_label}: {motif_text} – {labels["title"]}' if motif_text else f'{side_label}: {labels["title"]}'
+        labels['alt'][side] = clean_text(f'{text} ({origin})', limit=250)
     return labels
 
 
@@ -1836,11 +1863,13 @@ def ObjektView(request, id):
     obj = get_object_or_404(obj_queryset, id=id)
     
     coin_data = prepare_coin_data(obj)
+    labels = _object_labels(obj, coin_data)
     
     context = {
         'coin_data': coin_data,
         'test': obj,
-        'structured_data': sd.object_graph(request, obj, coin_data, _object_labels(obj, coin_data)),
+        'structured_data': sd.object_graph(request, obj, coin_data, labels),
+        'seo': labels,
     }
     
     return render(request, 'slg/details.html', context)
