@@ -3,7 +3,7 @@ from datetime import datetime, timezone as datetime_timezone
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
-from .models import Metall, Muenztyp, MuenztypObjektAnzeige, Nominal, Obj, Obj_Ref, Ref, Slg, Workflow
+from .models import Metall, Muenztyp, MuenztypObjektAnzeige, Nominal, Obj, Objekttyp, Slg, Workflow
 from .signals import disable_mtoa_sync, enable_mtoa_sync
 from .views import _clean_export_invnrs, _export_datetime
 
@@ -23,6 +23,12 @@ class ExportCoinStateHelperTests(SimpleTestCase):
 
 
 class ObjSaveTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        # Obj.workflow und Obj.Objekttyp haben default=1; diese Datensätze existieren auch produktiv.
+        Workflow.objects.create(id=1, name="Neu", reihenfolge=1)
+        Objekttyp.objects.create(id=1, name="Münze")
+
     def test_save_uses_nominal_material_when_object_material_is_empty(self):
         material = Metall.objects.create(name="Kupfer")
         nominal = Nominal.objects.create(name="Nummus", material=material)
