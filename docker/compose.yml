@@ -26,6 +26,7 @@ services:
       ELIGIUS_MCP_ENABLED: 0
       ELIGIUS_EDITOR_MCP_ENABLED: 0
       ELIGIUS_WEBMCP_ENABLED: 0
+      ELIGIUS_SEO_INDEXING: "1"
       ELIGIUS_PUBLIC_BASE_URL: https://eligius.donau-uni.ac.at
       ELIGIUS_MCP_ALLOWED_HOSTS: eligius.donau-uni.ac.at
       ELIGIUS_MCP_ALLOWED_ORIGINS: https://eligius.donau-uni.ac.at

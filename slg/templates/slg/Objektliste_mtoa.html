@@ -4,7 +4,7 @@
 {% block meta_tags %}
 {% translate "Münzen & Objekte durchsuchen" as share_title %}{% translate "Alle Münzen und numismatischen Objekte in Eligius durchsuchen und filtern – nach Prägeherr, Nominal, Münzstätte, Datierung, Sammlung und Bildmotiv." as share_description %}{% seo_meta title=share_title description=share_description %}
 {# SEO: Gefilterte/paginierte Listen nicht indexieren, Links aber folgen (Objekte kommen über die Sitemap). #}
-{% if request.GET %}<meta name="robots" content="noindex, follow">{% endif %}
+{% if request.GET and not site_robots_directive %}<meta name="robots" content="noindex, follow">{% endif %}
 {% endblock meta_tags %}
 {% load static %}
 {% block stylesheets %}

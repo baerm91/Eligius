@@ -84,6 +84,7 @@ REST_FRAMEWORK = {
     ]
 }
 MIDDLEWARE = [
+    'djangoproject.middleware.RobotsTagMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.gzip.GZipMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -131,6 +132,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'djangoproject.wsgi.application'
 ASGI_APPLICATION = 'djangoproject.asgi.application'
+
+# Indexing is opt-in for public deployments.
+ELIGIUS_SEO_INDEXING = os.getenv('ELIGIUS_SEO_INDEXING', '0').lower() in ('1', 'true', 'yes')
 
 # Public read-only MCP. No deployment-specific hosts in application code.
 ELIGIUS_MCP_ENABLED = os.getenv('ELIGIUS_MCP_ENABLED', '0').lower() in ('1', 'true', 'yes')

@@ -14,6 +14,7 @@ BASE = 'https://example.test'
 SM = '{http://www.sitemaps.org/schemas/sitemap/0.9}'
 
 
+@override_settings(ELIGIUS_SEO_INDEXING=True)
 class SeoTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -45,6 +46,7 @@ class SeoTests(TestCase):
         response = self.client.get('/robots.txt')
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response['Content-Type'].startswith('text/plain'))
+        self.assertNotIn('X-Robots-Tag', response)
         body = response.content.decode()
         self.assertIn(f'Sitemap: {BASE}/sitemap.xml', body)
         for path in ('/admin/', '/api/', '/ajax/', '/export_xlsx/', '/objekt_detail_partial/', '/select2/', '/browse/*&'):
@@ -64,6 +66,32 @@ class SeoTests(TestCase):
         self.assertEqual(self.locs('/sitemap-pakete.xml'), [f'{BASE}/pakete/{self.paket.slug}/'])
         self.assertEqual(self.locs('/sitemap-typen.xml'), [f'{BASE}/typ/{self.typ.id}/'])
         self.assertEqual(self.locs('/sitemap-objekte.xml'), [f'{BASE}/objekt/{self.ok.id}/'])
+
+    def test_disabled_indexing_rejects_cached_sitemaps(self):
+        sitemap_urls = ('/sitemap.xml', '/sitemap-objekte.xml')
+        for url in sitemap_urls:
+            self.locs(url)
+
+        with override_settings(ELIGIUS_SEO_INDEXING=False):
+            self.assertEqual(self.client.get('/robots.txt').content, b'User-agent: *\nDisallow: /\n')
+            for url in sitemap_urls:
+                with self.subTest(url=url):
+                    response = self.client.get(url)
+                    self.assertEqual(response.status_code, 404)
+                    self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
+
+    @override_settings(ELIGIUS_SEO_INDEXING=False)
+    def test_disabled_indexing_marks_html_json_and_redirects(self):
+        html = self.client.get('/impressum/')
+        self.assertContains(html, '<meta name="robots" content="noindex, nofollow">')
+        self.assertContains(html, f'<link rel="canonical" href="{BASE}/impressum/">')
+        self.assertEqual(html['X-Robots-Tag'], 'noindex, nofollow')
+
+        for url, status in (('/health', 200), ('/impressum', 301)):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, status)
+                self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
 
     def test_reverse_uses_public_paths(self):
         from django.urls import reverse
@@ -98,6 +126,8 @@ class SeoTests(TestCase):
 
     def test_canonical_tag_rendered(self):
         response = self.client.get('/impressum/?utm_source=x')
+        self.assertNotIn('X-Robots-Tag', response)
+        self.assertNotContains(response, '<meta name="robots"')
         self.assertContains(response, f'<link rel="canonical" href="{BASE}/impressum/">', html=False)
 
 

@@ -8,13 +8,14 @@ Domain in der Datenbank nicht zuverlässig gepflegt ist.
 """
 import html
 import re
+from functools import wraps
 from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.contrib.sitemaps import Sitemap
 from django.contrib.sitemaps import views as sitemap_views
 from django.db.models import Exists, OuterRef
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.template.response import TemplateResponse
 from django.templatetags.static import static
 from django.urls import Resolver404, resolve, reverse
@@ -293,6 +294,17 @@ SITEMAPS = {
 SITEMAP_CACHE_SECONDS = 60 * 60
 
 
+def indexing_required(view):
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        if not settings.ELIGIUS_SEO_INDEXING:
+            raise Http404
+        return view(request, *args, **kwargs)
+
+    return wrapped
+
+
+@indexing_required
 @require_GET
 @cache_page(SITEMAP_CACHE_SECONDS)
 def sitemap_index(request):
@@ -320,6 +332,7 @@ def sitemap_index(request):
     )
 
 
+@indexing_required
 @require_GET
 @cache_page(SITEMAP_CACHE_SECONDS)
 def sitemap_section(request, section):
@@ -388,6 +401,9 @@ ROBOTS_DISALLOW = [
 
 @require_GET
 def robots_txt(request):
+    if not settings.ELIGIUS_SEO_INDEXING:
+        return HttpResponse('User-agent: *\nDisallow: /\n', content_type='text/plain; charset=utf-8')
+
     lines = ['User-agent: *']
     lines += [f'Disallow: {path}' for path in ROBOTS_DISALLOW]
     lines += ['', f'Sitemap: {public_base_url(request)}{reverse("sitemap_index")}', '']

@@ -1,6 +1,8 @@
 from django import template
+from django.conf import settings
 from django.utils.translation import get_language, gettext as _
 
+from djangoproject.middleware import ROBOTS_NOINDEX
 from slg.seo import absolute_url, canonical_url as _canonical_url, clean_text, default_share_image
 
 register = template.Library()
@@ -13,6 +15,11 @@ def canonical_url(context):
     if request is None:
         return ''
     return _canonical_url(request)
+
+
+@register.simple_tag
+def robots_directive():
+    return '' if settings.ELIGIUS_SEO_INDEXING else ROBOTS_NOINDEX
 
 
 def default_description():
