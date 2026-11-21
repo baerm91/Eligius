@@ -1,6 +1,6 @@
 {% extends "slg/navbar.html" %}
 {% load authority_labels %}
-{% load i18n %}
+{% load i18n seo_tags %}
 {% block title %}{{ coin_data.slg|display_label }}: {{ coin_data.invnr }} - {{ coin_data.titel }}{% endblock title %}
 
 {% block meta_tags %}
@@ -19,7 +19,7 @@
             <meta property="og:image" content="{{ bild_urls.rv }}" />
         {% endif %}
     {% endwith %}
-    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
+    <meta property="og:url" content="{% canonical_url %}" />
     <meta property="og:type" content="article" /> 
 {% endblock meta_tags %}
 

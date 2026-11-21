@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n seo_tags %}
 {% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
@@ -10,6 +10,7 @@
     {% load static %}
     <script src="{% url 'ui_javascript_catalog' %}"></script>
     <script src="{% static 'js/eligius-i18n.js' %}"></script>
+    {% block canonical %}<link rel="canonical" href="{% canonical_url %}">{% endblock canonical %}
     {% block meta_tags %}{% endblock meta_tags %}
 
     {% block stylesheets %}

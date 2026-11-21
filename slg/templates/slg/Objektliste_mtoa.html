@@ -1,6 +1,10 @@
 {% extends 'slg/navbar.html' %}
 {% load i18n %}
 {% block title %}{% translate "Eligius - Objekte" %}{% endblock title %}
+{% block meta_tags %}
+{# SEO: Gefilterte/paginierte Listen nicht indexieren, Links aber folgen (Objekte kommen über die Sitemap). #}
+{% if request.GET %}<meta name="robots" content="noindex, follow">{% endif %}
+{% endblock meta_tags %}
 {% load static %}
 {% block stylesheets %}
 {{ block.super }}

@@ -29,6 +29,7 @@ from rest_framework import routers, serializers, viewsets
 from slg.api_views import ExportObjLSNO
 from slg.lab_views import lab, health
 from slg import webmcp
+from slg import seo
 from slg.oai.views import oai_endpoint
 from slg.oai.media import bild_weiterleitung
 
@@ -37,6 +38,10 @@ from slg.views import about, impressum, datenschutz, objekt_detail_partial, expo
 browse_view = objekt_list_view_mtoa if settings.DEBUG else cache_page(60 * 5)(objekt_list_view_mtoa)
 
 urlpatterns = [
+    # Technische SEO: robots.txt und Sitemap-Index mit Teil-Sitemaps
+    path('robots.txt', seo.robots_txt, name='robots_txt'),
+    path('sitemap.xml', seo.sitemap_index, name='sitemap_index'),
+    path('sitemap-<section>.xml', seo.sitemap_section, name='sitemap_section'),
     # Language is a cookie preference, never part of resource URLs/URIs.
     path('i18n/setlang/', switch_language, name='set_language'),
     path('i18n/ui.js', JavaScriptCatalog.as_view(domain='django'), name='ui_javascript_catalog'),
@@ -81,7 +86,9 @@ urlpatterns = [
     # Die Reihenfolge ist kritisch: Django prüft URLs von oben nach unten.
     # Wenn 'api/' include zuerst kommt, wird 'api/objekt/<invnr>/' nie erreicht.
     path('api/objekt/<str:invnr>/', ObjektDetail.as_view(), name='api-objekt-detail'),
-    path('api/', include('slg.urls')),  # Allgemeine API-Routen (muss NACH spezifischen Routen stehen!)
+    # Eigener Namespace, damit {% url %}/reverse() die öffentlichen Pfade ohne /api/-Präfix liefern
+    # (sonst gewinnt dieser zweite Include und alle Links zeigen auf /api/...; SEO: Duplicate Content).
+    path('api/', include(('slg.urls', 'slg'), namespace='slg_api')),  # Allgemeine API-Routen (muss NACH spezifischen Routen stehen!)
     path('select2/', include('django_select2.urls')),
     path('adminactions/', include('adminactions.urls')),
     #path('api/postings/', include('slg.api.urls', 'slg', namespace='api-postings'))
