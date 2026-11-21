@@ -15,7 +15,7 @@ from django.core import serializers
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import connection, transaction, IntegrityError
 from django.db.models import Prefetch, Q, Count, Max, Min, Avg, F, Exists, OuterRef, Subquery, Case, When, Value, IntegerField
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect, StreamingHttpResponse
+from django.http import FileResponse, HttpResponse, JsonResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.forms import inlineformset_factory, modelformset_factory
 from django.shortcuts import render , get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
@@ -69,7 +69,7 @@ from .helpers import get_matrix_from_muenztypen
 from django.http import JsonResponse
 from django.shortcuts import render
 from .helpers import get_timeline_data
-from .nomisma_rdf import serialize_collection_nomisma_rdf
+from .nomisma_rdf import cached_dump as nomisma_cached_dump, serialize_collection_nomisma_rdf, serialize_collection_void
 
 logger = logging.getLogger(__name__)
 
@@ -2258,12 +2258,22 @@ def rdfliboutput(request, id):
    return HttpResponse(content_type="text/turtle; charset=utf-8", content=turt)
 
 def collection_nomisma_rdf(request, id):
+   """Nomisma-Datendump einer Sammlung (nur mit gesetztem Nomisma-Häkchen)."""
    slg = get_object_or_404(Slg, pk=id, nomisma_export_erlaubt=True)
-   rdf_xml = serialize_collection_nomisma_rdf(slg, request)
-   return HttpResponse(
-      content=rdf_xml,
-      content_type="application/rdf+xml; charset=utf-8",
-   )
+   content_type = "application/rdf+xml; charset=utf-8"
+   path = nomisma_cached_dump(slg, request)
+   if path is not None:
+      response = FileResponse(open(path, 'rb'), content_type=content_type)
+   else:
+      response = HttpResponse(serialize_collection_nomisma_rdf(slg, request), content_type=content_type)
+   response['Content-Disposition'] = f'inline; filename="eligius-collection-{slg.id}-nomisma.rdf"'
+   return response
+
+
+def collection_nomisma_void(request, id):
+   """VoID-Beschreibung des Datensatzes – diese URL wird bei Nomisma registriert."""
+   slg = get_object_or_404(Slg, pk=id, nomisma_export_erlaubt=True)
+   return HttpResponse(serialize_collection_void(slg, request), content_type="application/rdf+xml; charset=utf-8")
 
 @api_view(['POST'])
 def login(request):

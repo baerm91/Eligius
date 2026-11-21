@@ -401,19 +401,20 @@ class SlgView(nested_admin.NestedModelAdmin):
     list_filter = ('kategorie', 'nomisma_export_erlaubt', 'kulturpool_export_erlaubt')
     search_fields = ('name',)
     show_full_result_count = False  # Reduziert COUNT-Queries für bessere Performance
-    readonly_fields = ('ereignisse_link', 'kulturpool_readiness')
+    readonly_fields = ('ereignisse_link', 'kulturpool_readiness', 'nomisma_readiness')
     
     fieldsets = (
         (None, {
             'fields': ('name', 'kategorie', 'beschreibung', 'bildrechte_lizenz', 'cover')
         }),
         ('Datenweitergabe / Nomisma und Kulturpool', {
-            'fields': ('nomisma_export_erlaubt', 'nomisma_collection_uri',
+            'fields': ('nomisma_export_erlaubt', 'nomisma_collection_uri', 'nomisma_readiness',
                        'kulturpool_export_erlaubt', 'kulturpool_rights_uri',
                        'kulturpool_metadata_rights_uri', 'kulturpool_readiness'),
             'description': 'Kulturpool nutzt /oai/. Bildrechte: Ist „Copyrightlizenz der Bilder“ eine eindeutige Lizenz wie „CC BY-NC 4.0“, '
                            'wird die passende Creative-Commons-URI automatisch verwendet; sonst die Kulturpool-Rechte-URI eintragen. '
-                           'Metadatenrechte (üblich: http://creativecommons.org/publicdomain/zero/1.0/) separat eintragen. '
+                           'Metadatenrechte (üblich: http://creativecommons.org/publicdomain/zero/1.0/) separat eintragen – sie gelten auch für Nomisma. '
+                           'Nomisma nutzt /slg/<id>/nomisma.rdf; registriert wird /slg/<id>/void.rdf. '
                            'Vor produktiver Übernahme validate_kulturpool_export --strict ausführen.'
         }),
         ('Bildeinstellungen', {
@@ -425,6 +426,18 @@ class SlgView(nested_admin.NestedModelAdmin):
             'description': 'Ereignisse werden für bessere Performance separat verwaltet.'
         }),
     )
+
+    @admin.display(description='Nomisma-Bereitschaft')
+    def nomisma_readiness(self, obj):
+        if not obj.pk or not obj.nomisma_export_erlaubt:
+            return 'Export deaktiviert'
+        from django.urls import reverse
+        from .nomisma_rdf import count_exportable, nomisma_readiness
+        issues = nomisma_readiness(obj)
+        if issues:
+            return '; '.join(issues)
+        return (f'Bereit: ca. {count_exportable(obj)} Münzen mit Typ-Link. Bei Nomisma registrieren: '
+                f'{reverse("collection_nomisma_void", kwargs={"id": obj.pk})}')
 
     @admin.display(description='Kulturpool-Bereitschaft')
     def kulturpool_readiness(self, obj):

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import tempfile
 from pathlib import Path
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -132,6 +133,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'djangoproject.wsgi.application'
 ASGI_APPLICATION = 'djangoproject.asgi.application'
+
+# Nomisma-Datendumps werden als Datei zwischengespeichert (große Sammlungen).
+# Standard: temporäres Verzeichnis (im Container für den Benutzer webapp beschreibbar).
+ELIGIUS_NOMISMA_CACHE_DIR = Path(os.getenv('ELIGIUS_NOMISMA_CACHE_DIR', str(Path(tempfile.gettempdir()) / 'eligius-nomisma')))
+ELIGIUS_NOMISMA_CACHE_SECONDS = int(os.getenv('ELIGIUS_NOMISMA_CACHE_SECONDS', str(6 * 3600)))
 
 # Indexing is opt-in for public deployments.
 ELIGIUS_SEO_INDEXING = os.getenv('ELIGIUS_SEO_INDEXING', '0').lower() in ('1', 'true', 'yes')

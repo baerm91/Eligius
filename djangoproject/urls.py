@@ -33,7 +33,7 @@ from slg import seo
 from slg.oai.views import oai_endpoint
 from slg.oai.media import bild_weiterleitung
 
-from slg.views import about, impressum, datenschutz, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, collection_nomisma_rdf, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa, sammlungen_uebersicht
+from slg.views import about, impressum, datenschutz, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, collection_nomisma_rdf, collection_nomisma_void, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa, sammlungen_uebersicht
 
 browse_view = objekt_list_view_mtoa if settings.DEBUG else cache_page(60 * 5)(objekt_list_view_mtoa)
 
@@ -62,6 +62,7 @@ urlpatterns = [
     #path('slg/', include('slg.urls')),
     path('slg/<int:id>/', SammlungView, name='Sammlung'),
     path('slg/<int:id>/nomisma.rdf', collection_nomisma_rdf, name='collection_nomisma_rdf'),
+    path('slg/<int:id>/void.rdf', collection_nomisma_void, name='collection_nomisma_void'),
     path('objekt/<int:id>/', ObjektView, name='Objekt'),
     path('typ/<int:id>/', TypView, name='Typ'),
     path('av_schlagwort/<int:id>/', AvSchlagwortView, name='AvSchlagwort'),

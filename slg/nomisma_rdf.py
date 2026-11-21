@@ -1,145 +1,376 @@
-from urllib.parse import urlparse
+"""Nomisma.org-Export (RDF/XML) pro Sammlung.
 
-from rdflib import Graph, Literal, Namespace, URIRef
-from rdflib.namespace import DCTERMS, FOAF, RDF, XSD
+Aufbau nach https://nomisma.org/documentation/contribute:
 
-from .models import Obj, Obj_Ref
+* ``void:Dataset`` mit Titel, Beschreibung, Herausgeber, Lizenz, ``void:uriSpace``
+  und ``void:dataDump`` (auch einzeln unter ``/slg/<id>/void.rdf``),
+* je Münze ein ``nmo:NumismaticObject`` mit Titel, Inventarnummer, Sammlung,
+  ``nmo:hasTypeSeriesItem`` (Pflicht), Maßen, Vorder-/Rückseitenbildern und
+  ``void:inDataset``,
+* Fundkontexte und Hortfunde aus freigegebenen Paketen als ``nmo:hasFindspot``
+  bzw. ``nmo:Hoard``.
+
+Wie beim Kulturpool-Export gilt: nur kontrollierte Objekte und Typen, stabile
+URIs aus ``ELIGIUS_PUBLIC_BASE_URL``, Lizenz nur wenn eindeutig hinterlegt, Bilder
+über den Weiterleitungsdienst wenn aktiviert. Anders als bei Kulturpool werden
+nur Münzen exportiert, die einem Online-Typenkorpus zugeordnet werden können –
+ohne Typ-URI kann Nomisma ein Objekt nicht verwenden.
+"""
+import os
+import tempfile
+import time
+from datetime import date
+from pathlib import Path
+from urllib.parse import urlsplit
+from xml.sax.saxutils import escape, quoteattr
+
+from django.conf import settings
+from django.db.models import Prefetch, Q
+from django.urls import reverse
+
+from .models import MtoaPerson, MuenztypObjektAnzeige, Obj, Obj_Ref, Paket
+from .oai.edm import record_title, valid_uri
+from .oai.identifiers import absolute_uri, image_redirect_uri
+from .oai.rights import metadata_rights_uri
+from .oai.xml import clean_text
+
+CONTROLLED_WORKFLOW_NAME = 'kontrolliert'
+CHUNK_SIZE = 1000
+
+NAMESPACES = {
+    'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+    'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+    'dcterms': 'http://purl.org/dc/terms/',
+    'void': 'http://rdfs.org/ns/void#',
+    'nmo': 'http://nomisma.org/ontology#',
+    'foaf': 'http://xmlns.com/foaf/0.1/',
+    'crm': 'http://www.cidoc-crm.org/cidoc-crm/',
+    'geo': 'http://www.w3.org/2003/01/geo/wgs84_pos#',
+}
+XSD = 'http://www.w3.org/2001/XMLSchema#'
+
+# Online-Typenkorpora, zu denen Sammlungen ihre Münzen über Nomisma beitragen.
+# RPC Online gehört bewusst nicht dazu: RPC sammelt Exemplare direkt bei den Sammlungen.
+# (Host, Pfadpräfix) – Pfadpräfix None bedeutet: jeder Pfad.
+TYPE_SERIES_PREFIXES = (
+    ('numismatics.org', None),            # OCRE, CRRO, PELLA, SCO, PCO, HRC, AGCO, BIGR …
+    ('iacb.arch.ox.ac.uk', '/id/'),       # Ancient British/Celtic Coins
+    ('www.corpus-nummorum.eu', '/types/'),
+    ('corpus-nummorum.eu', '/types/'),
+)
 
 
-NMO = Namespace("http://nomisma.org/ontology#")
-VOID = Namespace("http://rdfs.org/ns/void#")
-NUMISMATICS_DOMAIN = "numismatics.org"
-CONTROLLED_WORKFLOW_NAME = "kontrolliert"
+# ---------------------------------------------------------------------------
+# Auswahl
+
+def is_type_series_uri(uri):
+    uri = valid_uri(uri)
+    if not uri:
+        return False
+    parsed = urlsplit(uri)
+    host = (parsed.hostname or '').lower()
+    for allowed_host, prefix in TYPE_SERIES_PREFIXES:
+        if host == allowed_host or (prefix is None and host.endswith('.' + allowed_host)):
+            if prefix is None or parsed.path.startswith(prefix):
+                return True
+    return False
 
 
 def get_nomisma_export_queryset(slg):
+    """Kontrollierte, als echt geltende Objekte mit sicherer Typzuordnung."""
     return (
-        Obj.objects.filter(
-            Slg=slg,
-            workflow__name__iexact=CONTROLLED_WORKFLOW_NAME,
-            Typ__workflow__name__iexact=CONTROLLED_WORKFLOW_NAME,
+        Obj.objects.filter(Slg=slg, workflow__name__iexact=CONTROLLED_WORKFLOW_NAME, faelschung__isnull=True)
+        .filter(Q(Typ__isnull=True) | Q(Typ__workflow__name__iexact=CONTROLLED_WORKFLOW_NAME))
+        .exclude(Typ_unsicher=True)
+        # „nach“/Variante: das Objekt entspricht dem zitierten Typ nicht genau.
+        .exclude(obj_ref__nach=True)
+        .select_related('Slg', 'SlgTeil', 'SlgTeil__idfk_Slg_SlgTeil', 'Typ')
+        .prefetch_related(
+            Prefetch('obj_ref_set', queryset=Obj_Ref.objects.only('id', 'idfk_Obj_id', 'link', 'nach').order_by('id')),
+            Prefetch('pakete', queryset=Paket.objects.filter(online_freigegeben=True).exclude(slug__isnull=True)
+                     .exclude(slug='').filter(kontexttyp__in=(Paket.KONTEXTTYP_HORTFUND, Paket.KONTEXTTYP_FUNDKONTEXT))),
         )
-        .exclude(obj_ref_set__nach=True)
-        .select_related("Slg", "SlgTeil", "Typ", "workflow", "Typ__workflow")
-        .prefetch_related("obj_ref_set")
-        .distinct()
-        .order_by("invnr", "id")
+        .order_by('id')
     )
 
 
-def serialize_collection_nomisma_rdf(slg, request):
-    graph = Graph()
-    graph.bind("rdf", RDF)
-    graph.bind("dcterms", DCTERMS)
-    graph.bind("void", VOID)
-    graph.bind("nmo", NMO)
-    graph.bind("foaf", FOAF)
-    graph.bind("xsd", XSD)
-
-    dataset_uri = URIRef(request.build_absolute_uri(slg.get_absolute_url()))
-
-    for obj in get_nomisma_export_queryset(slg):
-        _add_object(graph, obj, slg, request, dataset_uri)
-
-    return graph.serialize(format="xml")
-
-
-def _add_object(graph, obj, slg, request, dataset_uri):
-    object_uri = URIRef(request.build_absolute_uri(obj.get_absolute_url()))
-    obverse_uri = URIRef(f"{object_uri}#obverse")
-    reverse_uri = URIRef(f"{object_uri}#reverse")
-
-    graph.add((object_uri, RDF.type, NMO.NumismaticObject))
-
-    title = _object_title(obj)
-    if title:
-        graph.add((object_uri, DCTERMS.title, Literal(title)))
-
-    if obj.invnr:
-        graph.add((object_uri, DCTERMS.identifier, Literal(obj.invnr)))
-
-    if slg.nomisma_collection_uri:
-        graph.add((object_uri, NMO.hasCollection, URIRef(slg.nomisma_collection_uri)))
-
-    type_series_item = _type_series_item_uri(obj)
-    if type_series_item:
-        graph.add((object_uri, NMO.hasTypeSeriesItem, URIRef(type_series_item)))
-
-    _add_typed_literal(graph, object_uri, NMO.hasAxis, obj.stempelstellung, XSD.integer)
-    _add_typed_literal(graph, object_uri, NMO.hasDiameter, obj.durchmesser, XSD.decimal)
-    _add_typed_literal(graph, object_uri, NMO.hasWeight, obj.gewicht, XSD.decimal)
-
-    graph.add((object_uri, NMO.hasObverse, obverse_uri))
-    graph.add((object_uri, NMO.hasReverse, reverse_uri))
-    graph.add((object_uri, VOID.inDataset, dataset_uri))
-
-    _add_image_resources(graph, obj, request, obverse_uri, reverse_uri)
-
-
-def _object_title(obj):
-    if obj.Typ and obj.Typ.titel:
-        return obj.Typ.titel
-    return obj.titel
-
-
-def _type_series_item_uri(obj):
-    if obj.Typ and _is_numismatics_uri(obj.Typ.link):
+def type_series_item_uri(obj):
+    """Typ-Link des Münztyps; bei Typ-Varianten nur exakte Objektzitate."""
+    if obj.Typ and not obj.Typ.nach and is_type_series_uri(obj.Typ.link):
         return obj.Typ.link
-
-    for obj_ref in _obj_refs(obj):
-        if _is_numismatics_uri(obj_ref.link):
-            return obj_ref.link
-
+    for ref in obj.obj_ref_set.all():
+        if not ref.nach and is_type_series_uri(ref.link):
+            return ref.link
     return None
 
 
-def _obj_refs(obj):
-    if hasattr(obj, "_prefetched_objects_cache") and "obj_ref_set" in obj._prefetched_objects_cache:
-        return obj._prefetched_objects_cache["obj_ref_set"]
-    return Obj_Ref.objects.filter(idfk_Obj=obj)
+def _type_series_filter():
+    query = Q()
+    for host, prefix in TYPE_SERIES_PREFIXES:
+        needle = f'://{host}{prefix or "/"}'
+        query |= Q(Typ__link__icontains=needle, Typ__nach__isnull=True) | Q(Typ__link__icontains=needle, Typ__nach=False)
+        query |= Q(obj_ref__link__icontains=needle, obj_ref__nach=False)
+    return query
 
 
-def _is_numismatics_uri(uri):
-    if not uri:
-        return False
-    parsed = urlparse(uri)
-    return parsed.scheme in {"http", "https"} and NUMISMATICS_DOMAIN in parsed.netloc
+def count_exportable(slg):
+    """Schätzung für die Admin-Anzeige (Datenbankfilter, ohne URI-Validierung)."""
+    return get_nomisma_export_queryset(slg).filter(_type_series_filter()).values('pk').distinct().count()
 
 
-def _add_typed_literal(graph, subject, predicate, value, datatype):
-    if value is None:
-        return
-    graph.add((subject, predicate, Literal(value, datatype=datatype)))
+def nomisma_readiness(slg):
+    issues = []
+    if not valid_uri(slg.nomisma_collection_uri):
+        issues.append('Nomisma-Collection-URI fehlt (bei Nomisma beantragen, z. B. http://nomisma.org/id/…)')
+    if not metadata_rights_uri(slg):
+        issues.append('Metadatenrechte-URI fehlt – Nomisma verlangt eine Lizenz (üblich: CC0)')
+    if not count_exportable(slg):
+        issues.append('Keine exportierbaren Münzen (kontrolliert, mit Link auf OCRE/CRRO-Typ o. Ä.)')
+    return issues
 
 
-def _add_image_resources(graph, obj, request, obverse_uri, reverse_uri):
-    bild_urls = obj.get_bild_urls() or {}
+# ---------------------------------------------------------------------------
+# URIs
 
-    _add_image_resource(
-        graph,
-        request,
-        obverse_uri,
-        depiction=bild_urls.get("av"),
-        thumbnail=bild_urls.get("thumbnail_av"),
+def dataset_uri(request, slg):
+    return absolute_uri(request, slg.get_absolute_url())
+
+
+def dump_uri(request, slg):
+    return absolute_uri(request, reverse('collection_nomisma_rdf', kwargs={'id': slg.id}))
+
+
+def void_uri(request, slg):
+    return absolute_uri(request, reverse('collection_nomisma_void', kwargs={'id': slg.id}))
+
+
+def _paket_uri(request, paket):
+    return absolute_uri(request, reverse('paket_detail', kwargs={'slug': paket.slug}))
+
+
+# ---------------------------------------------------------------------------
+# RDF/XML-Schreiber (gestreamt, damit auch große Sammlungen wenig Speicher brauchen)
+
+def _text(value):
+    return escape(clean_text(value))
+
+
+def _literal(prop, value, lang=None, datatype=None):
+    text = clean_text(value)
+    if not text:
+        return ''
+    attrs = (f' xml:lang={quoteattr(lang)}' if lang else '') + (f' rdf:datatype={quoteattr(XSD + datatype)}' if datatype else '')
+    return f'<{prop}{attrs}>{escape(text)}</{prop}>'
+
+
+def _resource(prop, uri):
+    return f'<{prop} rdf:resource={quoteattr(uri)}/>' if uri else ''
+
+
+def _node(kind, uri, *properties):
+    body = ''.join(p for p in properties if p)
+    return f'<{kind} rdf:about={quoteattr(uri)}>{body}</{kind}>\n'
+
+
+def _header():
+    declarations = ' '.join(f'xmlns:{prefix}={quoteattr(uri)}' for prefix, uri in NAMESPACES.items())
+    return f'<?xml version="1.0" encoding="UTF-8"?>\n<rdf:RDF {declarations}>\n'
+
+
+FOOTER = '</rdf:RDF>\n'
+
+
+def collection_title(slg):
+    return f'Eligius – {slg.name}'
+
+
+def collection_description(slg):
+    text = clean_text(slg.beschreibung)
+    if len(text) > 2000:
+        text = text[:1999].rsplit(' ', 1)[0] + '…'
+    return text or f'Münzen der Sammlung {slg.name}, digital erschlossen in Eligius.'
+
+
+def void_dataset(request, slg, entities=None):
+    licence = metadata_rights_uri(slg)
+    return _node(
+        'void:Dataset', dataset_uri(request, slg),
+        _literal('dcterms:title', collection_title(slg), 'de'),
+        _literal('dcterms:description', collection_description(slg), 'de'),
+        _literal('dcterms:publisher', slg.name),
+        _resource('dcterms:license', licence),
+        _resource('foaf:homepage', dataset_uri(request, slg)),
+        _literal('void:uriSpace', absolute_uri(request, '/objekt/')),
+        _resource('void:dataDump', dump_uri(request, slg)),
+        _literal('dcterms:modified', date.today().isoformat(), datatype='date'),
+        _literal('void:entities', entities, datatype='integer') if entities is not None else '',
     )
-    _add_image_resource(
-        graph,
-        request,
-        reverse_uri,
-        depiction=bild_urls.get("rv"),
-        thumbnail=bild_urls.get("thumbnail_rv"),
+
+
+def serialize_collection_void(slg, request):
+    return _header() + void_dataset(request, slg) + FOOTER
+
+
+def _image_uri(obj, request, variant, source):
+    if not source:
+        return None
+    return image_redirect_uri(request, obj.id, variant) or valid_uri(absolute_uri(request, source))
+
+
+def _side(obj, request, uri, urls, side):
+    depiction = _image_uri(obj, request, side, urls.get(side))
+    thumbnail = _image_uri(obj, request, f'{side}-vorschau', urls.get(f'thumbnail_{side}'))
+    if not (depiction or thumbnail):
+        return None, ''
+    return uri, _node('rdf:Description', uri, _resource('foaf:thumbnail', thumbnail),
+                      _resource('foaf:depiction', depiction))
+
+
+def _findspot(request, paket):
+    """nmo:Find mit Ort (Paket-Titel, optional Koordinaten) – ein Knoten je Paket."""
+    base = _paket_uri(request, paket)
+    label = paket.titel_oeffentlich or paket.name
+    place = ''
+    if paket.fund_lat is not None and paket.fund_lng is not None:
+        lat, lng = f'{paket.fund_lat:f}', f'{paket.fund_lng:f}'
+        place = (
+            f'<geo:location><geo:SpatialThing>{_literal("geo:lat", lat, datatype="decimal")}'
+            f'{_literal("geo:long", lng, datatype="decimal")}</geo:SpatialThing></geo:location>'
+        )
+    return _node(
+        'nmo:Find', base + '#find',
+        _literal('rdfs:label', label, 'de'),
+        f'<crm:P7_took_place_at><crm:E53_Place rdf:about={quoteattr(base + "#place")}>'
+        f'{_literal("rdfs:label", label, "de")}{place}</crm:E53_Place></crm:P7_took_place_at>',
     )
 
 
-def _add_image_resource(graph, request, image_uri, depiction=None, thumbnail=None):
-    if depiction:
-        graph.add((image_uri, FOAF.depiction, URIRef(_absolute_uri(request, depiction))))
-    if thumbnail:
-        graph.add((image_uri, FOAF.thumbnail, URIRef(_absolute_uri(request, thumbnail))))
+def _hoard(request, paket, dataset):
+    base = _paket_uri(request, paket)
+    return _node(
+        'nmo:Hoard', base + '#hoard',
+        _literal('dcterms:title', paket.titel_oeffentlich or paket.name, 'de'),
+        _literal('dcterms:identifier', paket.slug),
+        _resource('nmo:hasFindspot', base + '#find'),
+        _resource('void:inDataset', dataset),
+    )
 
 
-def _absolute_uri(request, uri):
-    parsed = urlparse(uri)
-    if parsed.scheme and parsed.netloc:
-        return uri
-    return request.build_absolute_uri(uri)
+def _titles(objects):
+    """Titel wie im Kulturpool-Export (MTOA-Projektion), seitenweise geladen."""
+    rows = (MuenztypObjektAnzeige.objects.filter(obj_id__in=[o.id for o in objects])
+            .select_related('nominal_fk', 'objekttyp_fk')
+            .prefetch_related(Prefetch('mtoaperson_set', queryset=MtoaPerson.objects.select_related('person')))
+            .order_by('obj_id', '-pk'))
+    titles = {}
+    for row in rows:
+        titles.setdefault(row.obj_id, record_title(row))
+    return titles
+
+
+def iter_collection_rdf(slg, request):
+    """RDF/XML als Folge von Textstücken; ``stats`` wird am Ende befüllt."""
+    dataset = dataset_uri(request, slg)
+    collection = valid_uri(slg.nomisma_collection_uri)
+    yield _header()
+    yield void_dataset(request, slg)
+    seen_pakete = set()
+    chunk = []
+
+    def render(objects):
+        titles = _titles(objects)
+        parts = []
+        for obj in objects:
+            type_uri = type_series_item_uri(obj)
+            if not type_uri:
+                continue
+            uri = absolute_uri(request, obj.get_absolute_url())
+            urls = obj.get_bild_urls() or {}
+            obverse, obverse_node = _side(obj, request, uri + '#obverse', urls, 'av')
+            reverse_, reverse_node = _side(obj, request, uri + '#reverse', urls, 'rv')
+            context = []
+            for paket in obj.pakete.all():
+                paket_base = _paket_uri(request, paket)
+                if paket.kontexttyp == Paket.KONTEXTTYP_HORTFUND:
+                    context.append(_resource('dcterms:isPartOf', paket_base + '#hoard'))
+                else:
+                    context.append(_resource('nmo:hasFindspot', paket_base + '#find'))
+                if paket.pk not in seen_pakete:
+                    seen_pakete.add(paket.pk)
+                    parts.append(_findspot(request, paket))
+                    if paket.kontexttyp == Paket.KONTEXTTYP_HORTFUND:
+                        parts.append(_hoard(request, paket, dataset))
+            axis = obj.stempelstellung if obj.stempelstellung in range(1, 13) else None
+            parts.append(_node(
+                'nmo:NumismaticObject', uri,
+                _literal('dcterms:title', titles.get(obj.id) or obj.titel or (obj.Typ.titel if obj.Typ else '')
+                         or f'{slg.name} {obj.invnr}', 'de'),
+                _literal('dcterms:identifier', obj.invnr),
+                _literal('dcterms:publisher', slg.name),
+                _resource('nmo:hasCollection', collection),
+                _resource('nmo:hasTypeSeriesItem', type_uri),
+                _literal('nmo:hasAxis', axis, datatype='integer'),
+                _literal('nmo:hasDiameter', obj.durchmesser, datatype='decimal'),
+                _literal('nmo:hasWeight', obj.gewicht, datatype='decimal'),
+                *context,
+                _resource('nmo:hasObverse', obverse),
+                _resource('nmo:hasReverse', reverse_),
+                _resource('void:inDataset', dataset),
+            ))
+            parts.append(obverse_node)
+            parts.append(reverse_node)
+        return ''.join(parts)
+
+    for obj in get_nomisma_export_queryset(slg).iterator(chunk_size=CHUNK_SIZE):
+        chunk.append(obj)
+        if len(chunk) >= CHUNK_SIZE:
+            yield render(chunk)
+            chunk = []
+    if chunk:
+        yield render(chunk)
+    yield FOOTER
+
+
+def serialize_collection_nomisma_rdf(slg, request):
+    return ''.join(iter_collection_rdf(slg, request))
+
+
+# ---------------------------------------------------------------------------
+# Dateicache: Große Sammlungen nicht bei jedem Abruf neu erzeugen
+
+def cache_path(slg):
+    if not getattr(settings, 'ELIGIUS_PUBLIC_BASE_URL', ''):
+        return None  # Ohne feste Basis-URL hinge der Inhalt vom Host des Requests ab.
+    directory = Path(getattr(settings, 'ELIGIUS_NOMISMA_CACHE_DIR', Path(tempfile.gettempdir()) / 'eligius-nomisma'))
+    return directory / f'collection-{slg.id}.rdf'
+
+
+def cached_dump(slg, request, max_age=None, force=False):
+    """Pfad zu einer aktuellen Dump-Datei; erzeugt sie bei Bedarf atomar neu.
+
+    Gibt ``None`` zurück, wenn kein Cache möglich ist (keine Basis-URL oder
+    Verzeichnis nicht beschreibbar) – dann direkt ausliefern.
+    """
+    path = cache_path(slg)
+    if path is None:
+        return None
+    max_age = getattr(settings, 'ELIGIUS_NOMISMA_CACHE_SECONDS', 6 * 3600) if max_age is None else max_age
+    try:
+        if not force and path.exists() and time.time() - path.stat().st_mtime < max_age:
+            return path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=path.name, suffix='.tmp')
+    except OSError:
+        return None
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as handle:
+            for part in iter_collection_rdf(slg, request):
+                handle.write(part)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+    return path
