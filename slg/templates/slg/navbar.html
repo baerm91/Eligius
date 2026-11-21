@@ -14,6 +14,7 @@
     {% robots_directive as site_robots_directive %}
     {% if site_robots_directive %}<meta name="robots" content="{{ site_robots_directive }}">{% endif %}
     {% block meta_tags %}{% seo_meta %}{% endblock meta_tags %}
+    {% block structured_data %}{% endblock structured_data %}
 
     {% block stylesheets %}
       {% load static %}

@@ -1,5 +1,9 @@
+import json
+
 from django import template
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.safestring import mark_safe
 from django.utils.translation import get_language, gettext as _
 
 from djangoproject.middleware import ROBOTS_NOINDEX
@@ -45,3 +49,27 @@ def seo_meta(context, title='', description='', image='', type='website'):
         'url': _canonical_url(request) if request is not None else '',
         'locale': 'en_GB' if (get_language() or '').startswith('en') else 'de_AT',
     }
+
+
+JSON_LD_ESCAPES = {ord('<'): '\\u003c', ord('>'): '\\u003e', ord('&'): '\\u0026'}
+
+
+@register.simple_tag
+def json_ld(data):
+    """Gibt schema.org-Daten als ``<script type="application/ld+json">`` aus.
+
+    ``<``, ``>`` und ``&`` werden als Unicode-Escapes geschrieben, damit Texte aus
+    der Datenbank den Script-Block nicht beenden können.
+    """
+    if not data:
+        return ''
+    payload = json.dumps(data, ensure_ascii=False, separators=(',', ':'),
+                         cls=DjangoJSONEncoder).translate(JSON_LD_ESCAPES)
+    return mark_safe(f'<script type="application/ld+json">{payload}</script>')
+
+
+@register.simple_tag(takes_context=True)
+def home_json_ld(context):
+    from slg.structured_data import home_graph
+    request = context.get('request')
+    return json_ld(home_graph(request)) if request is not None else ''

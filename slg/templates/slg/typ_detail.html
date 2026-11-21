@@ -4,6 +4,7 @@
 {% load seo_tags %}
 {% block title %}{{ seo.title }} | Eligius{% endblock title %}
 {% block meta_tags %}{% seo_meta title=seo.title description=seo.description image=seo.image type="article" %}{% endblock meta_tags %}
+{% block structured_data %}{% json_ld structured_data %}{% endblock structured_data %}
 {% load static %}
 
 {% block content %}

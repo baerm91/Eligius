@@ -1408,3 +1408,19 @@ msgid "%(counter)s Münze im Paket „%(name)s“ – digital erschlossen und fr
 msgid_plural "%(counter)s Münzen im Paket „%(name)s“ – digital erschlossen und frei recherchierbar in Eligius."
 msgstr[0] "%(counter)s coin in the package “%(name)s” – digitally catalogued and freely searchable in Eligius."
 msgstr[1] "%(counter)s coins in the package “%(name)s” – digitally catalogued and freely searchable in Eligius."
+
+#. SEO-Metadaten
+msgid "Digitales Münzkabinett für klösterliche und öffentliche Sammlungen in Österreich."
+msgstr "Digital coin cabinet for monastic and public collections in Austria."
+
+#. SEO-Metadaten
+msgid "Startseite"
+msgstr "Home"
+
+#. SEO-Metadaten
+msgid "Numismatik"
+msgstr "Numismatics"
+
+#. SEO-Metadaten
+msgid "Stempelstellung"
+msgstr "Die axis"

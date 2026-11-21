@@ -1,4 +1,5 @@
-"""robots.txt, Sitemaps, Canonical-URLs, Titel und Social-Preview-Tags."""
+"""robots.txt, Sitemaps, Canonical-URLs, Titel, Social-Preview-Tags und JSON-LD."""
+import json
 import re
 from xml.etree import ElementTree as ET
 
@@ -233,3 +234,121 @@ class SeoMetaTests(TestCase):
         self.assertIn('Münzsammlungen', self.meta(response, 'name', 'description'))
         response = self.client.get('/impressum/')
         self.assertIn('digitale Münzkabinett', self.meta(response, 'name', 'description'))
+
+
+class StructuredDataTests(TestCase):
+    """schema.org/JSON-LD auf Start-, Objekt-, Sammlungs-, Typ- und Paketseiten."""
+
+    @classmethod
+    def setUpTestData(cls):
+        disable_mtoa_sync()
+        try:
+            controlled = Workflow.objects.create(name='kontrolliert', reihenfolge=1)
+            Herstellung.objects.create(id=1, name='Geprägt')
+            Objekttyp.objects.create(id=1, name='Münze')
+            ruler_role = PersonFunktion.objects.create(id=1, name='Prägeherr')
+            depicted = PersonFunktion.objects.create(id=2, name='Dargestellte Person')
+            cls.slg = Slg.objects.create(
+                name='Stift Heiligenkreuz', beschreibung='Kurz.', bildrechte_lizenz='CC BY-NC 4.0',
+                bildurl='https://images.example.test/', bild_endung_av='_a', bild_endung_rv='_r',
+                nomisma_export_erlaubt=True, nomisma_collection_uri='http://nomisma.org/id/heiligenkreuz')
+            cls.typ = Muenztyp.objects.create(
+                muenztyptitel='RIC II.1 Domitian 101', titel='Domitianus', workflow=controlled,
+                link='http://numismatics.org/ocre/id/ric.2_1(2).dom.101',
+                Nominal=Nominal.objects.create(name='Denar', name_nom_id='denarius'),
+                Metall=Metall.objects.create(name='Silber', name_nom_id='ar'),
+                Mzstaette=Mzstaette.objects.create(name='Rom', name_nom_id='rome', geonames='3169070'),
+                dat_verb='82 n. Chr.', avleg='IMP CAES DOMITIANVS AVG P M')
+            Mztyp_Person.objects.create(
+                Mztyp=cls.typ, idfk_PersonFunktion=ruler_role, appears_on_rev=False,
+                idfk_Person=Person.objects.create(name='Domitianus', name_nom_id='domitian',
+                                                  VIAF='https://viaf.org/viaf/12345'))
+            Mztyp_Person.objects.create(Mztyp=cls.typ, idfk_Person=Person.objects.create(name='Minerva'),
+                                        idfk_PersonFunktion=depicted, appears_on_rev=True)
+            cls.obj = Obj.objects.create(invnr='H1', Slg=cls.slg, Typ=cls.typ, workflow=controlled,
+                                         gewicht=3.2, durchmesser=19)
+            cls.paket = Paket.objects.create(name='Fund Carnuntum', online_freigegeben=True)
+        finally:
+            enable_mtoa_sync()
+
+    def setUp(self):
+        cache.clear()
+
+    def graph(self, url, **extra):
+        response = self.client.get(url, **extra)
+        self.assertEqual(response.status_code, 200, url)
+        html = response.content.decode()
+        blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)
+        self.assertEqual(len(blocks), 1, url)
+        data = json.loads(blocks[0])
+        self.assertEqual(data['@context'], 'https://schema.org')
+        return {(n['@type'] if isinstance(n['@type'], str) else n['@type'][0]): n for n in data['@graph']}, html
+
+    def crumbs(self, nodes):
+        return [(item['name'], item['item']) for item in nodes['BreadcrumbList']['itemListElement']]
+
+    def test_home(self):
+        nodes, _ = self.graph('/')
+        self.assertEqual(nodes['WebSite']['potentialAction']['target']['urlTemplate'],
+                         f'{BASE}/browse/?q={{search_term_string}}')
+        self.assertEqual(nodes['WebSite']['publisher'], {'@id': f'{BASE}/#organization'})
+        self.assertEqual(nodes['Organization']['parentOrganization']['name'], 'Universität für Weiterbildung Krems')
+
+    def test_object(self):
+        nodes, html = self.graph(f'/objekt/{self.obj.id}/')
+        art = nodes['VisualArtwork']
+        self.assertEqual(art['@id'], f'{BASE}/objekt/{self.obj.id}/#object')
+        self.assertEqual(art['identifier']['value'], 'H1')
+        self.assertEqual(art['artMedium'], 'Silber')
+        self.assertEqual(art['temporalCoverage'], '82 n. Chr.')
+        self.assertEqual(art['locationCreated']['sameAs'],
+                         ['http://nomisma.org/id/rome', 'https://www.geonames.org/3169070'])
+        self.assertEqual(art['creator'][0]['name'], 'Domitianus')
+        self.assertEqual(art['creator'][0]['sameAs'], ['http://nomisma.org/id/domitian', 'https://viaf.org/viaf/12345'])
+        self.assertEqual(art['about'][0]['name'], 'Minerva')
+        self.assertEqual(art['exampleOfWork']['sameAs'], ['http://numismatics.org/ocre/id/ric.2_1(2).dom.101'])
+        self.assertEqual(art['isPartOf']['@id'], f'{BASE}/slg/{self.slg.id}/#collection')
+        self.assertEqual(art['isPartOf']['sameAs'], ['http://nomisma.org/id/heiligenkreuz'])
+        nominal = next(p for p in art['additionalProperty'] if p['name'] == 'Nominal')
+        self.assertEqual(nominal['valueReference']['sameAs'], ['http://nomisma.org/id/denarius'])
+        weight = next(p for p in art['additionalProperty'] if p['name'] == 'Gewicht')
+        self.assertEqual((weight['value'], weight['unitCode']), (3.2, 'GRM'))
+        self.assertEqual(len(art['image']), 2)
+        self.assertTrue(art['image'][0]['contentUrl'].startswith('https://images.example.test/'))
+        self.assertEqual(art['image'][0]['license'], 'http://creativecommons.org/licenses/by-nc/4.0/')
+        self.assertEqual(art['image'][0]['creditText'], 'Stift Heiligenkreuz')
+        self.assertEqual(self.crumbs(nodes), [
+            ('Startseite', f'{BASE}/'),
+            ('Stift Heiligenkreuz', f'{BASE}/slg/{self.slg.id}/'),
+            ('H1 – Domitianus', f'{BASE}/objekt/{self.obj.id}/'),
+        ])
+        # Breadcrumbs nur als Markup, nicht sichtbar.
+        self.assertNotIn('breadcrumb', re.sub(r'<script type="application/ld\+json">.*?</script>', '', html, flags=re.S).lower())
+
+    def test_object_english_labels(self):
+        nodes, _ = self.graph(f'/objekt/{self.obj.id}/', HTTP_ACCEPT_LANGUAGE='en')
+        self.assertEqual(nodes['BreadcrumbList']['itemListElement'][0]['name'], 'Home')
+        self.assertEqual(nodes['VisualArtwork']['image'][0]['name'], 'Obverse')
+
+    def test_collection_dataset(self):
+        nodes, _ = self.graph(f'/slg/{self.slg.id}/')
+        dataset = nodes['Dataset']
+        self.assertEqual(dataset['@type'], ['Dataset', 'Collection'])
+        self.assertGreaterEqual(len(dataset['description']), 50)
+        self.assertEqual(dataset['collectionSize'], 1)
+        self.assertEqual(dataset['distribution'][0]['contentUrl'], f'{BASE}/slg/{self.slg.id}/nomisma.rdf')
+        self.assertEqual(dataset['includedInDataCatalog']['name'], 'Eligius')
+        self.assertEqual([name for name, _ in self.crumbs(nodes)], ['Startseite', 'Sammlungen', 'Stift Heiligenkreuz'])
+
+    def test_type_and_package_breadcrumbs(self):
+        nodes, _ = self.graph(f'/typ/{self.typ.id}/')
+        self.assertEqual(self.crumbs(nodes)[-1],
+                         ('Domitianus, Denar, Rom – RIC II.1 Domitian 101', f'{BASE}/typ/{self.typ.id}/'))
+        nodes, _ = self.graph(f'/pakete/{self.paket.slug}/')
+        self.assertEqual(self.crumbs(nodes)[-1], ('Fund Carnuntum', f'{BASE}/pakete/{self.paket.slug}/'))
+
+    def test_script_breakout_is_escaped(self):
+        Slg.objects.filter(pk=self.slg.pk).update(name='</script><script>alert(1)</script>')
+        nodes, html = self.graph(f'/slg/{self.slg.id}/')
+        self.assertNotIn('<script>alert(1)', html.split('application/ld+json">', 1)[1].split('</script>', 1)[0])
+        self.assertEqual(nodes['Dataset']['name'], '</script><script>alert(1)</script>')

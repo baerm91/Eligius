@@ -2,7 +2,7 @@ import requests
 import csv
 import hashlib
 from requests.exceptions import RequestException
-from django.utils.translation import get_language
+from django.utils.translation import get_language, ngettext
 import operator
 # import pandas as pd
 from typing import Iterable
@@ -21,7 +21,9 @@ from django.shortcuts import render , get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import UpdateView
 from .models import *
-from .seo import muenztyp_meta
+from .seo import clean_text, muenztyp_meta
+from . import structured_data as sd
+from .services.authority_display import display_label as authority_label, display_text as authority_text
 from .admin import process_download_infos
 from .serializers import *
 from .forms import *
@@ -725,6 +727,7 @@ def paket_detail(request, slug):
     context = {
         'paket': paket,
         'objektanzahl_db': objektanzahl_db,
+        'structured_data': sd.paket_graph(request, paket, paket.titel_oeffentlich or paket.name),
         'package_workflow_progress': {
             'added': objektanzahl_db,
             'controlled': kontrollierte_objektanzahl,
@@ -1033,6 +1036,7 @@ def TypView(request, id):
         "avschlagworte": av_schlagworte,
         "rvschlagworte": rv_schlagworte,
         "seo": seo,
+        "structured_data": sd.typ_graph(request, obj, seo['title']),
     }
 
     return render(request, "slg/typ_detail.html", context)
@@ -1045,9 +1049,20 @@ def SammlungView(request, id):
    # rvbildtypen = typen.values_list('rv_bildtyp__name', 'rv_bildtyp__id',).exclude(rv_bildtyp__name=None).distinct()
    # print(rvbildtypen.muenztyp.all())
    
+   objektanzahl = Obj.objects.filter(Slg=sammlung).count()
+   name = authority_label(sammlung)
+   description = clean_text(sammlung.beschreibung, limit=0)
+   if len(description) < 50:
+      # Google Dataset Search verlangt mindestens 50 Zeichen Beschreibung.
+      description = ngettext(
+         '%(counter)s Münze und numismatisches Objekt der Sammlung „%(name)s“ – digital erschlossen und frei recherchierbar in Eligius.',
+         '%(counter)s Münzen und numismatische Objekte der Sammlung „%(name)s“ – digital erschlossen und frei recherchierbar in Eligius.',
+         objektanzahl,
+      ) % {'counter': objektanzahl, 'name': name}
    context = {
       'Sammlung': sammlung,
-      'objektanzahl': Obj.objects.filter(Slg=sammlung).count(),
+      'objektanzahl': objektanzahl,
+      'structured_data': sd.collection_graph(request, sammlung, name, description, objektanzahl, sammlung.cover),
    }
    
    return render(request, 'slg/Sammlung.html', context)
@@ -1575,6 +1590,25 @@ def prepare_coin_data_export(queryset):
     response['Content-Disposition'] = 'attachment; filename="exported_coins.csv"'
     return response
 
+def _object_labels(obj, coin_data):
+    """Lokalisierte Anzeigenamen für die strukturierten Daten einer Objektseite."""
+    labels = {
+        'collection': authority_label(coin_data['slg']) if coin_data['slg'] else '',
+        'nominal': authority_label(coin_data['nominal']) if coin_data['nominal'] else '',
+        'metal': authority_label(coin_data['metall']) if coin_data['metall'] else '',
+        'mint': authority_label(coin_data['mzstaette']) if coin_data['mzstaette'] else '',
+        'object_type': authority_label(coin_data['objekttyp']) if coin_data['objekttyp'] else '',
+        'persons': {rel.idfk_Person.pk: authority_text(rel.idfk_Person.name, 'Person')
+                    for rel in coin_data['personen'] if getattr(rel, 'idfk_Person', None)},
+    }
+    labels['title'] = clean_text(coin_data['titel'], limit=0) or obj.invnr
+    facts = [labels['nominal'], labels['mint'], clean_text(coin_data['dat_verb'], limit=0)]
+    labels['description'] = clean_text(' – '.join(
+        part for part in (f"{labels['collection']} {obj.invnr}".strip(), labels['title'],
+                          ', '.join(f for f in facts if f)) if part), limit=300)
+    return labels
+
+
 def prepare_coin_data(obj):
     mztyp = obj.Typ
     
@@ -1806,6 +1840,7 @@ def ObjektView(request, id):
     context = {
         'coin_data': coin_data,
         'test': obj,
+        'structured_data': sd.object_graph(request, obj, coin_data, _object_labels(obj, coin_data)),
     }
     
     return render(request, 'slg/details.html', context)

@@ -24,6 +24,7 @@
     <meta property="og:site_name" content="Eligius" />
     <meta name="twitter:card" content="summary_large_image" />
 {% endblock meta_tags %}
+{% block structured_data %}{% json_ld structured_data %}{% endblock structured_data %}
 
 {% load static %}
 {% block stylesheets %}
