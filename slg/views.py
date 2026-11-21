@@ -21,6 +21,7 @@ from django.shortcuts import render , get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import UpdateView
 from .models import *
+from .seo import muenztyp_meta
 from .admin import process_download_infos
 from .serializers import *
 from .forms import *
@@ -1004,6 +1005,7 @@ def TypView(request, id):
                 "id", "obj_id", "Slg", "objekttitel",
                 "datierung_verbale",
                 "thumbnail_av_url", "thumbnail_rv_url",
+                "av_url", "rv_url",
             )
             .order_by("obj_id")
     )
@@ -1019,12 +1021,18 @@ def TypView(request, id):
     # ---------------------------------------------------------------
     # 4. Template Kontext
     # ---------------------------------------------------------------
+    seo = muenztyp_meta(obj, personen, paginator.count)
+    first_with_image = next((o for o in objekte_page if o.av_url or o.thumbnail_av_url), None)
+    if first_with_image:
+        seo['image'] = first_with_image.av_url or first_with_image.thumbnail_av_url
+
     context = {
         "Muenztyp": obj,
         "objekte_page": objekte_page,
         "MztypPersonen": personen,
         "avschlagworte": av_schlagworte,
         "rvschlagworte": rv_schlagworte,
+        "seo": seo,
     }
 
     return render(request, "slg/typ_detail.html", context)
@@ -1039,6 +1047,7 @@ def SammlungView(request, id):
    
    context = {
       'Sammlung': sammlung,
+      'objektanzahl': Obj.objects.filter(Slg=sammlung).count(),
    }
    
    return render(request, 'slg/Sammlung.html', context)

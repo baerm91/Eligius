@@ -6,6 +6,8 @@ wird auf Schema und Host des Requests zurückgegriffen. Der ``Site``-Eintrag
 aus ``django.contrib.sites`` wird bewusst NICHT verwendet, weil dessen
 Domain in der Datenbank nicht zuverlässig gepflegt ist.
 """
+import html
+import re
 from urllib.parse import urlsplit
 
 from django.conf import settings
@@ -14,11 +16,15 @@ from django.contrib.sitemaps import views as sitemap_views
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
+from django.templatetags.static import static
 from django.urls import Resolver404, resolve, reverse
+from django.utils.html import strip_tags
+from django.utils.translation import gettext as _, ngettext
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_GET
 
 from .models import Muenztyp, Obj, Paket, Slg
+from .services.authority_display import display_label, display_text
 
 KONTROLLIERT = 'kontrolliert'
 
@@ -58,6 +64,113 @@ def canonical_path(path):
 def canonical_url(request):
     """Absolute kanonische URL der aktuellen Seite – ohne Query-Parameter."""
     return public_base_url(request) + canonical_path(request.path)
+
+
+def absolute_url(url, request=None):
+    """Macht relative Bild-/Seiten-URLs absolut (für og:image, og:url)."""
+    url = (url or '').strip()
+    if not url or url.startswith(('http://', 'https://')):
+        return url
+    if url.startswith('//'):
+        return 'https:' + url
+    return public_base_url(request) + ('' if url.startswith('/') else '/') + url
+
+
+def default_share_image(request=None):
+    return absolute_url(static('img/hero_coin.png'), request)
+
+
+# ---------------------------------------------------------------------------
+# Titel & Meta-Descriptions
+
+DESCRIPTION_LIMIT = 160
+
+
+def clean_text(text, limit=DESCRIPTION_LIMIT):
+    """HTML entfernen, Whitespace normalisieren, an Wortgrenze kürzen."""
+    text = strip_tags(str(text or ''))
+    # Bis zu zwei Ebenen: HTML-Entities aus dem Datenbanktext plus Template-Escaping.
+    for _round in range(2):
+        unescaped = html.unescape(text)
+        if unescaped == text:
+            break
+        text = unescaped
+    text = re.sub(r'\s+', ' ', text).strip()
+    if limit and len(text) > limit:
+        cut = text[:limit - 1]
+        if ' ' in cut:
+            cut = cut[:cut.rfind(' ')]
+        text = cut.rstrip(' ,;:–-') + '…'
+    return text
+
+
+def _ruler_names(personen):
+    """Prägeherren (PersonFunktion 1) eines Münztyps, lokalisiert."""
+    names = []
+    for entry in personen:
+        person = getattr(entry, 'idfk_Person', None)
+        if getattr(entry, 'idfk_PersonFunktion_id', None) == 1 and person and person.name:
+            label = display_text(person.name, 'Person')
+            if label not in names:
+                names.append(label)
+    return names
+
+
+def muenztyp_citation(typ):
+    citation = (typ.muenztyptitel or '').strip()
+    return '' if citation.lower() in ('', 'unbestimmt') else citation
+
+
+def muenztyp_meta(typ, personen=(), object_count=None):
+    """Titel und Description einer Münztyp-Seite.
+
+    Die wichtigsten Suchbegriffe stehen vorne: Prägeherr, Nominal, Münzstätte
+    und das Zitierwerk (RIC, Crawford, RPC, SNG …).
+    """
+    citation = muenztyp_citation(typ)
+    rulers = _ruler_names(personen)
+    ruler = ' / '.join(rulers) or clean_text(typ.titel, limit=0)
+    nominal = display_label(typ.Nominal) if typ.Nominal_id else ''
+    mint = display_label(typ.Mzstaette) if typ.Mzstaette_id else ''
+    metal = display_label(typ.Metall) if typ.Metall_id else ''
+
+    head = ', '.join(part for part in (ruler, nominal, mint) if part)
+    if head and citation:
+        title = f'{head} – {citation}'
+    else:
+        title = head or citation or _('Münztyp %(id)s') % {'id': typ.id}
+
+    facts = []
+    facts.append(_('Münztyp %(citation)s') % {'citation': citation} if citation else _('Münztyp'))
+    if ruler:
+        facts.append(ruler)
+    if nominal:
+        facts.append(f'{nominal} ({metal})' if metal else nominal)
+    elif metal:
+        facts.append(metal)
+    if mint:
+        facts.append(_('Münzstätte %(mint)s') % {'mint': mint})
+    if typ.dat_verb:
+        facts.append(typ.dat_verb.strip())
+    concordances = [muenztyp_citation(other) for other in typ.Konkordanz.all()]
+    concordances = [c for c in concordances if c and c != citation]
+    if concordances:
+        facts.append(_('Konkordanz: %(refs)s') % {'refs': '; '.join(concordances[:3])})
+    description = ', '.join(facts).rstrip('.') + '.'
+    if object_count:
+        description += ' ' + ngettext(
+            '%(count)s Objekt im digitalen Münzkabinett Eligius.',
+            '%(count)s Objekte im digitalen Münzkabinett Eligius.',
+            object_count,
+        ) % {'count': object_count}
+    legends = [
+        f"{label}: {clean_text(value, limit=0)}"
+        for label, value in ((_('Vs.'), typ.avleg), (_('Rs.'), typ.rvleg))
+        if value and value.strip()
+    ]
+    if legends:
+        description += ' ' + ' '.join(legends)
+    return {'title': title, 'description': clean_text(description)}
 
 
 # ---------------------------------------------------------------------------

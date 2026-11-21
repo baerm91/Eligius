@@ -1,6 +1,8 @@
 {% extends 'slg/navbar.html' %}
 {% load i18n %}
-{% block title %}{% translate "Eligius – Sammlungen" %}{% endblock title %}
+{% load seo_tags %}
+{% block title %}{% translate "Numismatische Sammlungen" %} | Eligius{% endblock title %}
+{% block meta_tags %}{% translate "Numismatische Sammlungen" as share_title %}{% translate "Übersicht der klösterlichen und öffentlichen Münzsammlungen in Eligius mit ihren digital erschlossenen Beständen." as share_description %}{% seo_meta title=share_title description=share_description %}{% endblock meta_tags %}
 {% load static %}
 
 {% block stylesheets %}

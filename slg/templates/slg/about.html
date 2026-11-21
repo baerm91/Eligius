@@ -1,5 +1,7 @@
 {% extends 'slg/navbar.html' %}
-{% block title %}Eligius – Projekt{% endblock title %}
+{% load i18n seo_tags %}
+{% block title %}{% translate "Über das Projekt" %} | Eligius{% endblock title %}
+{% block meta_tags %}{% translate "Über das Projekt Eligius" as share_title %}{% translate "Eligius macht numismatische Bestände österreichischer Klöster, Museen und öffentlicher Einrichtungen digital zugänglich – Entstehung, Vision und Partner des Projekts." as share_description %}{% seo_meta title=share_title description=share_description %}{% endblock meta_tags %}
 {% load static %}
 
 {% block stylesheets %}

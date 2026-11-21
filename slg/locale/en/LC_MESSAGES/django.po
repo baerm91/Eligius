@@ -1314,3 +1314,97 @@ msgstr "Edit"
 
 msgid "Wird geladen …"
 msgstr "Loading…"
+
+#. SEO-Metadaten
+msgid "Münztyp %(id)s"
+msgstr "Coin type %(id)s"
+
+#. SEO-Metadaten
+msgid "Münztyp %(citation)s"
+msgstr "Coin type %(citation)s"
+
+#. SEO-Metadaten
+msgid "Münzstätte %(mint)s"
+msgstr "Mint %(mint)s"
+
+#. SEO-Metadaten
+msgid "Konkordanz: %(refs)s"
+msgstr "Concordance: %(refs)s"
+
+#. SEO-Metadaten
+msgid "Vs."
+msgstr "Obv."
+
+#. SEO-Metadaten
+msgid "Rs."
+msgstr "Rev."
+
+#. SEO-Metadaten
+msgid "Eligius ist das digitale Münzkabinett für klösterliche und öffentliche Sammlungen in Österreich: Münzen, Münztypen, Prägeherren und Münzstätten frei recherchieren."
+msgstr "Eligius is the digital coin cabinet for monastic and public collections in Austria: freely search coins, coin types, rulers and mints."
+
+#. SEO-Metadaten
+msgid "Eligius – Digitales Münzkabinett & numismatische Sammlungsplattform (Universität für Weiterbildung Krems)"
+msgstr "Eligius – Digital Coin Cabinet & Numismatic Collection Platform (University for Continuing Education Krems)"
+
+#. SEO-Metadaten
+msgid "Eligius – Digitales Münzkabinett"
+msgstr "Eligius – Digital Coin Cabinet"
+
+#. SEO-Metadaten
+msgid "Münzen & Objekte durchsuchen"
+msgstr "Browse coins & objects"
+
+#. SEO-Metadaten
+msgid "Alle Münzen und numismatischen Objekte in Eligius durchsuchen und filtern – nach Prägeherr, Nominal, Münzstätte, Datierung, Sammlung und Bildmotiv."
+msgstr "Search and filter all coins and numismatic objects in Eligius by ruler, denomination, mint, date, collection and iconography."
+
+#. SEO-Metadaten
+msgid "Über das Projekt"
+msgstr "About the project"
+
+#. SEO-Metadaten
+msgid "Über das Projekt Eligius"
+msgstr "About the Eligius project"
+
+#. SEO-Metadaten
+msgid "Eligius macht numismatische Bestände österreichischer Klöster, Museen und öffentlicher Einrichtungen digital zugänglich – Entstehung, Vision und Partner des Projekts."
+msgstr "Eligius makes the numismatic holdings of Austrian monasteries, museums and public institutions digitally accessible – origins, vision and partners of the project."
+
+#. SEO-Metadaten
+msgid "%(name)s – Münzsammlung"
+msgstr "%(name)s – coin collection"
+
+#. SEO-Metadaten
+msgid "Numismatische Sammlungen"
+msgstr "Numismatic collections"
+
+#. SEO-Metadaten
+msgid "Übersicht der klösterlichen und öffentlichen Münzsammlungen in Eligius mit ihren digital erschlossenen Beständen."
+msgstr "Overview of the monastic and public coin collections in Eligius and their digitised holdings."
+
+#. SEO-Metadaten
+msgid "Neuerschließungen in Eligius"
+msgstr "New in Eligius"
+
+#. SEO-Metadaten
+msgid "Neu erschlossene Bestände in Eligius: zuletzt bearbeitete Pakete, Fundkomplexe und Münzen aus österreichischen Sammlungen."
+msgstr "Newly catalogued holdings in Eligius: recently processed packages, find complexes and coins from Austrian collections."
+
+#. SEO-Metadaten
+msgid "%(count)s Objekt im digitalen Münzkabinett Eligius."
+msgid_plural "%(count)s Objekte im digitalen Münzkabinett Eligius."
+msgstr[0] "%(count)s object in the Eligius digital coin cabinet."
+msgstr[1] "%(count)s objects in the Eligius digital coin cabinet."
+
+#. SEO-Metadaten
+msgid "%(counter)s Münze und numismatisches Objekt der Sammlung „%(name)s“ – digital erschlossen und frei recherchierbar in Eligius."
+msgid_plural "%(counter)s Münzen und numismatische Objekte der Sammlung „%(name)s“ – digital erschlossen und frei recherchierbar in Eligius."
+msgstr[0] "%(counter)s coin or numismatic object from the “%(name)s” collection – digitally catalogued and freely searchable in Eligius."
+msgstr[1] "%(counter)s coins and numismatic objects from the “%(name)s” collection – digitally catalogued and freely searchable in Eligius."
+
+#. SEO-Metadaten
+msgid "%(counter)s Münze im Paket „%(name)s“ – digital erschlossen und frei recherchierbar in Eligius."
+msgid_plural "%(counter)s Münzen im Paket „%(name)s“ – digital erschlossen und frei recherchierbar in Eligius."
+msgstr[0] "%(counter)s coin in the package “%(name)s” – digitally catalogued and freely searchable in Eligius."
+msgstr[1] "%(counter)s coins in the package “%(name)s” – digitally catalogued and freely searchable in Eligius."

@@ -1,6 +1,8 @@
 {% extends 'slg/navbar.html' %}
 {% load i18n %}
-{% block title %}Eligius – {{Sammlung.name}}{% endblock title %}
+{% load authority_labels seo_tags %}
+{% block title %}{% with name=Sammlung|display_label %}{% blocktranslate %}{{ name }} – Münzsammlung{% endblocktranslate %}{% endwith %} | Eligius{% endblock title %}
+{% block meta_tags %}{% with name=Sammlung|display_label %}{% blocktranslate asvar share_title %}{{ name }} – Münzsammlung{% endblocktranslate %}{% blocktranslate count counter=objektanzahl asvar fallback_description %}{{ counter }} Münze und numismatisches Objekt der Sammlung „{{ name }}“ – digital erschlossen und frei recherchierbar in Eligius.{% plural %}{{ counter }} Münzen und numismatische Objekte der Sammlung „{{ name }}“ – digital erschlossen und frei recherchierbar in Eligius.{% endblocktranslate %}{% firstof Sammlung.beschreibung|striptags|default:fallback_description as share_description %}{% seo_meta title=share_title description=share_description image=Sammlung.cover %}{% endwith %}{% endblock meta_tags %}
 {% load static %}
 {% block stylesheets %}
     {{ block.super }}

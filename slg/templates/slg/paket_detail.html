@@ -2,7 +2,9 @@
 {% load i18n %}
 {% load static %}
 
+{% load seo_tags %}
 {% block title %}{% firstof paket.titel_oeffentlich paket.name %} | Eligius{% endblock title %}
+{% block meta_tags %}{% firstof paket.titel_oeffentlich paket.name as name %}{% blocktranslate count counter=objektanzahl_db asvar fallback_description %}{{ counter }} Münze im Paket „{{ name }}“ – digital erschlossen und frei recherchierbar in Eligius.{% plural %}{{ counter }} Münzen im Paket „{{ name }}“ – digital erschlossen und frei recherchierbar in Eligius.{% endblocktranslate %}{% firstof paket.beschreibung|striptags|default:fallback_description as share_description %}{% with first=teaser_entries.0 %}{% firstof first.av_url first.thumbnail_av_url "" as share_image %}{% endwith %}{% seo_meta title=name description=share_description image=share_image type="article" %}{% endblock meta_tags %}
 
 {% block stylesheets %}
 {{ block.super }}

@@ -11,7 +11,7 @@
     <script src="{% url 'ui_javascript_catalog' %}"></script>
     <script src="{% static 'js/eligius-i18n.js' %}"></script>
     {% block canonical %}<link rel="canonical" href="{% canonical_url %}">{% endblock canonical %}
-    {% block meta_tags %}{% endblock meta_tags %}
+    {% block meta_tags %}{% seo_meta %}{% endblock meta_tags %}
 
     {% block stylesheets %}
       {% load static %}

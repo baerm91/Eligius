@@ -1,7 +1,9 @@
 {% extends 'slg/navbar.html' %}
 {% load i18n %}
 {% load static %}
+{% load seo_tags %}
 {% block title %}{% translate "Eligius – Neuerschließungen" %}{% endblock title %}
+{% block meta_tags %}{% translate "Neuerschließungen in Eligius" as share_title %}{% translate "Neu erschlossene Bestände in Eligius: zuletzt bearbeitete Pakete, Fundkomplexe und Münzen aus österreichischen Sammlungen." as share_description %}{% seo_meta title=share_title description=share_description %}{% endblock meta_tags %}
 
 {% block stylesheets %}
 {{ block.super }}

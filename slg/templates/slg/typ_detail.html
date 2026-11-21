@@ -1,7 +1,9 @@
 {% extends 'slg/navbar.html' %}
 {% load authority_labels %}
 {% load i18n %}
-{% block title %}{% translate "Eligius - Typ" %}{% endblock title %}
+{% load seo_tags %}
+{% block title %}{{ seo.title }} | Eligius{% endblock title %}
+{% block meta_tags %}{% seo_meta title=seo.title description=seo.description image=seo.image type="article" %}{% endblock meta_tags %}
 {% load static %}
 
 {% block content %}
