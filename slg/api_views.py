@@ -19,7 +19,8 @@ class ExportObjLSNO(APIView):
         dataset = ObjLSNOResource().export()
         export_format = XLSX()
         
-        response = HttpResponse(dataset.export(export_format), content_type=export_format.CONTENT_TYPE)
+        # tablib erwartet bei Dataset.export() einen Formatnamen; das Format-Objekt exportiert selbst.
+        response = HttpResponse(export_format.export_data(dataset), content_type=export_format.get_content_type())
         response['Content-Disposition'] = 'attachment; filename="exported_data.xlsx"'
         
         return response

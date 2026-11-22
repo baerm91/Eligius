@@ -5,10 +5,10 @@
         <h4>{{ Obj.titel }}{% if Obj.dat_verb %}, {{ Obj.dat_verb }}{% endif %}</h4>
     {% endif %}
 
-    {% if Obj.slg %}
+    {% if Obj.Slg %}
         <div class="detail-row">
             <div class="detail-label">{% translate "Sammlung:" %}</div>
-            <div class="detail-value"><a href="/browse/?Slg={{ Obj.slg.id }}" title="{% translate 'Durchsuchen' %}">{{ Obj.slg }}</a></div>
+            <div class="detail-value"><a href="/browse/?Slg={{ Obj.Slg.id }}" title="{% translate 'Durchsuchen' %}">{{ Obj.Slg }}</a></div>
         </div>
     {% endif %}
     <div class="detail-row">

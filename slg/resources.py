@@ -191,8 +191,8 @@ class ObjLSNOResource(resources.ModelResource):
         return ''
 
     def dehydrate_Muenzstand(self, obj):
-        if obj.Typ and hasattr(obj.Typ, 'Muenzstand__name'):
-            return obj.Typ.Muenzstand__name
+        if obj.Typ and obj.Typ.Muenzstand:
+            return obj.Typ.Muenzstand.name
         else:
             # Wenn das obj selbst ein Attribut 'Muenzstand' hat
             return obj.idfk_Muenzstand.name if obj.idfk_Muenzstand else ''
@@ -204,7 +204,7 @@ class ObjLSNOResource(resources.ModelResource):
             if obj.Typ.Metall:
                 metall = obj.Typ.Metall.name
         else:
-            metall = obj.Beschreibung if hasattr(obj, 'Beschreibung') else ''
+            metall = obj.Metall.name if obj.Metall else ''
 
         if metall == 'Gold':
             return 'RA-Münzen-Gold'
@@ -265,7 +265,7 @@ class ObjLSNOResource(resources.ModelResource):
 
     def dehydrate_Typ__Herstellung__name(self, obj):
         if hasattr(obj, 'idfk_Herstellung') and obj.idfk_Herstellung:
-            return obj.idfk_Herstellung
+            return obj.idfk_Herstellung.name
         elif hasattr(obj.Typ, 'Herstellung') and obj.Typ.Herstellung:
             return obj.Typ.Herstellung.name
         return ''

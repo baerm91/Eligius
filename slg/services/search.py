@@ -8,7 +8,7 @@ from operator import and_, or_
 
 from django.db.models import Q, Case, When, Value, IntegerField, Count, F
 from slg.models import MuenztypObjektAnzeige, Obj, Paket
-from slg.filters import is_valid_qparam
+from slg.filters import field_needs_int, is_int_qparam, is_valid_qparam
 from slg.filter_config import FILTER_PARAMETERS
 
 
@@ -87,6 +87,9 @@ def _get_filtered_mtoa_queryset(request, exclude_field=None):
         if param == exclude_field:
             continue
         values = [v for v in request.GET.getlist(param) if is_valid_qparam(v)]
+        if any(field_needs_int(field) for field in config['fields']):
+            # ?Slg=abc o.ä.: ungültige IDs ignorieren statt ValueError (HTTP 500)
+            values = [v.strip() for v in values if is_int_qparam(v)]
         if not values:
             continue
 
@@ -103,9 +106,10 @@ def _get_filtered_mtoa_queryset(request, exclude_field=None):
     date_from = request.GET.get('dat_von')
     date_to = request.GET.get('dat_bis')
     if exclude_field not in ('date', 'dat_von', 'dat_bis'):
-        if is_valid_qparam(date_to):
+        # Nur ganze Jahreszahlen; z.B. ?dat_von=None wird ignoriert.
+        if is_int_qparam(date_to):
             general_filters.append(Q(datierung_von__lte=date_to))
-        if is_valid_qparam(date_from):
+        if is_int_qparam(date_from):
             general_filters.append(Q(datierung_bis__gte=date_from))
 
     if general_filters:

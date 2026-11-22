@@ -18,6 +18,7 @@ from slg.models import (
     Schlagwort,
 )
 from slg.mtoa_sync import _build_schlagwort_maps_for_ids
+from slg.signals import mtoa_sync_paused
 
 RELATIONS = (
     (AvBildtyp_Schlagwort, 'avbildtyp_id'),
@@ -125,12 +126,16 @@ def merge_keywords(ids, target_id, choices, expected_revision):
             raise ValueError(f'Wählen Sie einen gültigen Wert für {METADATA[field]}.')
         setattr(target, field, value)
 
-    affected = [
-        _move_links(model, owner_field, rows, target.pk)
-        for (model, owner_field), rows in zip(RELATIONS, links)
-    ]
-    target.save(update_fields=list(METADATA))
-    Schlagwort.objects.filter(pk__in=ids).exclude(pk=target.pk).delete()
+    # Der Merge aktualisiert die MTOA-Schlagworte gezielt selbst
+    # (_update_search_keywords); die allgemeinen Schlagwort-Signale würden
+    # sonst für jede Verknüpfung einen vollen Objekt-Sync auslösen.
+    with mtoa_sync_paused():
+        affected = [
+            _move_links(model, owner_field, rows, target.pk)
+            for (model, owner_field), rows in zip(RELATIONS, links)
+        ]
+        target.save(update_fields=list(METADATA))
+        Schlagwort.objects.filter(pk__in=ids).exclude(pk=target.pk).delete()
     _update_search_keywords(*affected[:2])
     snapshot['ziel'] = {'id': target.pk, **{field: getattr(target, field) for field in METADATA}}
     return target, snapshot

@@ -22,6 +22,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.decorators.cache import cache_page
+from django.views.decorators.csrf import csrf_protect
 from slg.language_views import switch_language
 from django.views.i18n import JavaScriptCatalog
 from rest_framework import routers, serializers, viewsets
@@ -35,7 +36,9 @@ from slg.oai.media import bild_weiterleitung
 
 from slg.views import about, impressum, datenschutz, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, collection_nomisma_rdf, collection_nomisma_void, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa, sammlungen_uebersicht
 
-browse_view = objekt_list_view_mtoa if settings.DEBUG else cache_page(60 * 5)(objekt_list_view_mtoa)
+# csrf_protect innerhalb von cache_page, damit gecachte Antworten nie ein fremdes
+# CSRF-Token ohne passendes Cookie ausliefern (Sprachumschalter in der Navbar).
+browse_view = objekt_list_view_mtoa if settings.DEBUG else cache_page(60 * 5)(csrf_protect(objekt_list_view_mtoa))
 
 urlpatterns = [
     # Technische SEO: robots.txt und Sitemap-Index mit Teil-Sitemaps

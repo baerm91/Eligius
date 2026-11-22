@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -191,8 +192,12 @@ def apply(user_id, action, preview_token, confirmed=False):
                     'source': 'editor_mcp', 'action': action, 'old': entry['old'], 'new': entry['new']}],
                     ensure_ascii=False))
         from slg.mtoa_sync import sync_objs_to_mtoa
+        # Bei Münztypen wie sync_muenztyp_on_save: alle Objekte der Typen und
+        # alle Objekte, deren Typ einen dieser Typen als Konkordanz führt.
+        typ_ids = [row.pk for row in rows]
         affected = (current['ids'] if model is Obj else list(
-            Obj.objects.filter(Typ_id=rows[0].pk).values_list('pk', flat=True)))
+            Obj.objects.filter(Q(Typ_id__in=typ_ids) | Q(Typ__Konkordanz__in=typ_ids))
+            .order_by('pk').values_list('pk', flat=True).distinct()))
         # Existing projection, no Obj writes; errors roll back the entire operation.
         for offset in range(0, len(affected), MAX_BULK):
             sync_objs_to_mtoa(affected[offset:offset + MAX_BULK])

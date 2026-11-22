@@ -77,6 +77,11 @@ def bild_weiterleitung(request, obj_id, ansicht):
         'slg_fk', 'slgteil_fk', 'slgteil_fk__idfk_Slg_SlgTeil').first()
     target = source_images(row, request).get(ansicht) if row else None
     if not target:
+        # Nomisma-RDF verlinkt dieselben URIs, auch für Sammlungen ohne
+        # Kulturpool-Freigabe und für Rückseiten, die source_images() dedupliziert.
+        from slg.nomisma_rdf import nomisma_image_target
+        target = nomisma_image_target(obj_id, ansicht, request)
+    if not target:
         raise Http404
     if request.method == 'GET':
         count(obj_id, ansicht, origin_host(request), is_automated(request))

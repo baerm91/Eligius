@@ -8,7 +8,7 @@ from django.core import signing
 from django.contrib import admin
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.db import connection
+from django.db import IntegrityError, connection, transaction
 from django.test import Client, TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
@@ -461,7 +461,9 @@ class OAITests(OAIFixtures, TestCase):
         obj = self.obj()
         row = MuenztypObjektAnzeige.objects.get(obj_id=obj.pk)
         row.pk = None
-        row.save()
+        # obj_id ist inzwischen eindeutig: Doppelte Projektionen verhindert die Datenbank.
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            row.save()
         root = self.request('ListIdentifiers', metadataPrefix='edm')
         self.assertEqual([node.text for node in root.findall('.//oai:identifier', NS)], [identifier(obj.pk)])
 

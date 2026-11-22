@@ -1,3 +1,5 @@
+import re
+
 from django.db.models import Q, F
 from functools import reduce
 from operator import or_, and_
@@ -7,6 +9,19 @@ from .filter_config import FILTER_PARAMETERS # Make sure this path is correct
 
 def is_valid_qparam(param):
    return param != '' and param is not None
+
+
+_INT_QPARAM = re.compile(r'^\s*-?\d+\s*$')
+
+
+def is_int_qparam(param):
+    """Ganzzahl-Parameter (IDs, Jahre). 'None', 'abc' usw. werden ignoriert statt 500."""
+    return param is not None and bool(_INT_QPARAM.match(str(param)))
+
+
+def field_needs_int(field):
+    last = field.split('__')[-1]
+    return last == 'id' or last.endswith('_id')
 
 # ... (Copy build_filters function here) ...
 def build_filters(request, exclude_field=None):
@@ -64,8 +79,9 @@ def build_filters(request, exclude_field=None):
             param_values_from_request = request.GET.getlist(param)
             if param_values_from_request: # Check if there are values for this param in request
                 current_param_filters = []
+                int_only = any(field_needs_int(field) for field in config_values['fields'])
                 for value in param_values_from_request:
-                    if is_valid_qparam(value):
+                    if is_valid_qparam(value) and (not int_only or is_int_qparam(value)):
                         # config_values here is the dictionary for the current param from FILTER_PARAMETERS
                         # e.g., {'fields': ['Typ__Nominal__name', 'idfk_Nominal__name'], 'filter': 'exact', ...}
                         field_q_objects = [
@@ -82,7 +98,7 @@ def build_filters(request, exclude_field=None):
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
 
-    if exclude_field != 'date' and is_valid_qparam(date_from) and is_valid_qparam(date_to):
+    if exclude_field != 'date' and is_int_qparam(date_from) and is_int_qparam(date_to):
         if context_key == 'default': # Assuming 'default' means Typ is not null
             general_filters.append(
                 Q(Typ__dat_von__lte=date_to) &

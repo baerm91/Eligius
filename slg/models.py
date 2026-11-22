@@ -1043,19 +1043,19 @@ class OffizinSymbol(models.Model):
 		ordering = ['name']
 
 class Muenztyp(CloneMixin, models.Model):
-	Nominal = models.ForeignKey('Nominal', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Nominal')
+	Nominal = models.ForeignKey('Nominal', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Nominal')
 	Ppl = models.ManyToManyField('Person', through='Mztyp_Person', verbose_name = ("Person"))
-	Mzstaette = models.ForeignKey('Mzstaette', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Münzstätte')
-	rv_bildtyp = models.ForeignKey('RvBildtyp', on_delete=models.CASCADE, blank=True, null=True, verbose_name='RvBildtyp', related_name='rvmztypen')
+	Mzstaette = models.ForeignKey('Mzstaette', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Münzstätte')
+	rv_bildtyp = models.ForeignKey('RvBildtyp', on_delete=models.PROTECT, blank=True, null=True, verbose_name='RvBildtyp', related_name='rvmztypen')
 	
 	muenztyptitel = models.CharField(max_length=250, blank=True, null=True, unique=True, verbose_name='Titel des Münztyps', help_text="optional (Zitat + Zitatnr. + Variante)")
 	titel = models.CharField(max_length=200, blank=True, null=True, verbose_name='Titel der Münze', help_text="optional (Münzstand + Münzstätte + Münzherr/-en)")
-	Objekttyp = models.ForeignKey('Objekttyp', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Objekttyp', default=1)
-	Herstellung = models.ForeignKey('Herstellung', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Herstellung', default=1)
-	Reichskreis = models.ForeignKey('Reichskreis', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Reichskreis')
-	Muenzstand = models.ForeignKey('Muenzstand', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Münzstand')
-	Metall = models.ForeignKey('Metall', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Material', help_text="optional")
-	region = models.ForeignKey('Region', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Region', help_text="optional")
+	Objekttyp = models.ForeignKey('Objekttyp', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Objekttyp', default=1)
+	Herstellung = models.ForeignKey('Herstellung', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Herstellung', default=1)
+	Reichskreis = models.ForeignKey('Reichskreis', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Reichskreis')
+	Muenzstand = models.ForeignKey('Muenzstand', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Münzstand')
+	Metall = models.ForeignKey('Metall', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Material', help_text="optional")
+	region = models.ForeignKey('Region', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Region', help_text="optional")
 
 	dat_von = models.IntegerField(blank=True, null=True, verbose_name='Datierung von')
 	dat_bis = models.IntegerField(blank=True, null=True, verbose_name='Datierung bis')
@@ -1063,30 +1063,30 @@ class Muenztyp(CloneMixin, models.Model):
 
 	avleg = models.TextField(blank=True, null=True, verbose_name='Av.-Legende')
 	avbeschr = models.TextField(blank=True, null=True, verbose_name='Av.-Beschreibung')
-	av_bildtyp = models.ForeignKey('AvBildtyp', on_delete=models.CASCADE, blank=True, null=True, verbose_name='AvBildtyp', related_name='avmztypen')
-	av_beizeichen = models.ForeignKey('AvBeizeichen', on_delete=models.CASCADE, blank=True, null=True, verbose_name='AvBeizeichen')
+	av_bildtyp = models.ForeignKey('AvBildtyp', on_delete=models.PROTECT, blank=True, null=True, verbose_name='AvBildtyp', related_name='avmztypen')
+	av_beizeichen = models.ForeignKey('AvBeizeichen', on_delete=models.PROTECT, blank=True, null=True, verbose_name='AvBeizeichen')
 	#av_offizin = models.ForeignKey('AvOffizin', on_delete=models.CASCADE, blank=True, null=True, verbose_name='AvOffizin')
-	av_offizin_symbol = models.ForeignKey('OffizinSymbol', on_delete=models.CASCADE, blank=True, null=True, 
+	av_offizin_symbol = models.ForeignKey('OffizinSymbol', on_delete=models.PROTECT, blank=True, null=True, 
 										  verbose_name='AvOffizinsymbol', related_name='av_muenztypen')
-	av_bildrand = models.ForeignKey('AvBildrand', on_delete=models.CASCADE, blank=True, null=True, verbose_name='AvBildrand')
+	av_bildrand = models.ForeignKey('AvBildrand', on_delete=models.PROTECT, blank=True, null=True, verbose_name='AvBildrand')
 	
 	rvleg = models.TextField(blank=True, null=True, verbose_name='Rv.-Legende')
 	rvbeschr = models.TextField(blank=True, null=True, verbose_name='Rv.-Beschreibung')
-	rv_beizeichen = models.ForeignKey('RvBeizeichen', on_delete=models.CASCADE, blank=True, null=True, verbose_name='RvBeizeichen', related_name='rvbeizeichen')
+	rv_beizeichen = models.ForeignKey('RvBeizeichen', on_delete=models.PROTECT, blank=True, null=True, verbose_name='RvBeizeichen', related_name='rvbeizeichen')
 	#rv_offizin = models.ForeignKey('RvOffizin', on_delete=models.CASCADE, blank=True, null=True, verbose_name='RvOffizin')
-	rv_offizin_symbol = models.ForeignKey('OffizinSymbol', on_delete=models.CASCADE, blank=True, null=True, 
+	rv_offizin_symbol = models.ForeignKey('OffizinSymbol', on_delete=models.PROTECT, blank=True, null=True, 
 										  verbose_name='RvOffizinsymbol', related_name='rv_muenztypen')
-	rv_bildrand = models.ForeignKey('RvBildrand', on_delete=models.CASCADE, blank=True, null=True, verbose_name='RvBildrand')
+	rv_bildrand = models.ForeignKey('RvBildrand', on_delete=models.PROTECT, blank=True, null=True, verbose_name='RvBildrand')
 	
-	rand = models.ForeignKey('Rand', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Rand')
+	rand = models.ForeignKey('Rand', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Rand')
 
 
 	anmerkung = models.TextField(blank=True, null=True, verbose_name='Anmerkungen')
-	workflow = models.ForeignKey('Workflow', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Workflow', default=2)
-	Ref = models.ForeignKey('Ref', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Zitat')
+	workflow = models.ForeignKey('Workflow', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Workflow', default=2)
+	Ref = models.ForeignKey('Ref', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Zitat')
 	nummer = models.CharField(blank=True, null=True, max_length=100, verbose_name='Nummer')
 	nach = models.BooleanField(blank=True, null=True, verbose_name='Variante')
-	variante = models.ForeignKey('Variantenbeschr', on_delete=models.CASCADE, verbose_name='Variante', blank=True, null=True)
+	variante = models.ForeignKey('Variantenbeschr', on_delete=models.PROTECT, verbose_name='Variante', blank=True, null=True)
 	link = models.URLField(blank=True, null=True, verbose_name='Link zum Online-Typ')
 	Konkordanz = models.ManyToManyField('self', symmetrical=True, blank=True, verbose_name = ("Konkordanz"))
 	Literatur = models.ManyToManyField('Ref', through='Typ_Ref', related_name='Erweiterte_Literatur', verbose_name = ("Weitere Literatur"))
@@ -1102,7 +1102,7 @@ class Muenztyp(CloneMixin, models.Model):
 	# für den Button "Duplicate"
 	_clone_m2m_fields = ['Literatur', 'Ppl', 'schlagworte']
 
-	auflage = models.ForeignKey('Auflage', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Auflage')
+	auflage = models.ForeignKey('Auflage', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Auflage')
 	ausgabedatum = models.DateField(blank=True, null=True, verbose_name='Ausgabedatum')
 	beschlussdatum = models.DateField(blank=True, null=True, verbose_name='Beschlussdatum')
 
@@ -1167,7 +1167,7 @@ class Muenztyp(CloneMixin, models.Model):
 		if self.muenztyptitel is None:
 			self.muenztyptitel = str(self.Ref) + ", " + str(self.nummer)
 			if self.variante:
-				self.muenztyptitel = self.muenztyptitel + "var." + self.variante
+				self.muenztyptitel = self.muenztyptitel + "var." + str(self.variante)  # variante ist ein FK-Objekt
 		if self.titel is None:
 			# Titel soll sich zusammensetzen aus Münzstand + Stadt + Münzherr
 			
@@ -1314,32 +1314,32 @@ class Fund(models.Model):
 		super().save(*args, **kwargs)
 
 class Obj(models.Model):
-	Typ = models.ForeignKey('Muenztyp', related_name='objekte', on_delete=models.CASCADE, 
+	Typ = models.ForeignKey('Muenztyp', related_name='objekte', on_delete=models.PROTECT, 
 						   blank=True, null=True, verbose_name='Typ', db_index=True)  # db_index hinzugefügt
 	invnr = models.CharField(max_length=20, verbose_name='Inv.-Nr.')
 	fmid = models.CharField(max_length=20, blank=True, null=True, verbose_name='Alte Filemaker-ID')
 	#slug = models.SlugField(max_length=48, blank=True, null=True,)
 	freigabe = models.BooleanField(blank=True, null=True, verbose_name='Freigabe')
 	#faelschung = models.BooleanField(verbose_name='Fälschung')
-	Objekttyp = models.ForeignKey('Objekttyp', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Objekttyp', default=1)
-	idfk_Muenzstand = models.ForeignKey('Muenzstand', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Münzstand', db_index=True)
-	idfk_Herstellung = models.ForeignKey('Herstellung', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Herstellung', db_index=True)
+	Objekttyp = models.ForeignKey('Objekttyp', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Objekttyp', default=1)
+	idfk_Muenzstand = models.ForeignKey('Muenzstand', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Münzstand', db_index=True)
+	idfk_Herstellung = models.ForeignKey('Herstellung', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Herstellung', db_index=True)
 	Herstellungsmerkmale = models.ManyToManyField('Herstellungsmerkmale', blank=True, verbose_name = 'Herstellungsmerkmal',)
 	sekundaere_Merkmale = models.ManyToManyField('Sek_Merkmale', blank=True, verbose_name = 'Sekundäres Merkmal',)
 	#idfk_Mint = models.ForeignKey(Mint, on_delete=models.CASCADE, blank=True, null=True, verbose_name='Münzstätte')
 	titel = models.CharField(max_length=200, blank=True, null=True, verbose_name='Titel')
 	SlgTeil = models.ForeignKey('SlgTeil', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Sammlungsteil', db_index=True)
 	Slg = models.ForeignKey('Slg', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Sammlung', db_index=True)
-	idfk_Nominal = models.ForeignKey('Nominal', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Nominal', db_index=True)
-	Metall = models.ForeignKey('Metall', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Material', db_index=True)
-	faelschung = models.ForeignKey('Faelschung', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Fälschung', db_index=True)
-	idfk_Mzstaette = models.ForeignKey('Mzstaette', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Münzstätte', db_index=True)
-	region = models.ForeignKey('Region', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Region', db_index=True)
+	idfk_Nominal = models.ForeignKey('Nominal', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Nominal', db_index=True)
+	Metall = models.ForeignKey('Metall', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Material', db_index=True)
+	faelschung = models.ForeignKey('Faelschung', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Fälschung', db_index=True)
+	idfk_Mzstaette = models.ForeignKey('Mzstaette', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Münzstätte', db_index=True)
+	region = models.ForeignKey('Region', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Region', db_index=True)
 	Ppl = models.ManyToManyField('Person', through='Obj_Person', verbose_name = ("Person"))
 	idfk_Ref = models.ManyToManyField('Ref', through='Obj_Ref', verbose_name = ("Referenz"))
 	Typ_unsicher = models.BooleanField(blank=True, null=True, default=0, verbose_name='Typ ist unsicher')
 	TempTyp = models.TextField(blank=True, null=True, verbose_name='TempTyp')
-	Untertyp = models.ForeignKey('Muenztyp', related_name='OUntertyp', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Untertyp')
+	Untertyp = models.ForeignKey('Muenztyp', related_name='OUntertyp', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Untertyp')
 	Untertyp_unsicher = models.BooleanField(blank=True, null=True, default=0, verbose_name='Typ ist unsicher')
 
 	dat_von = models.IntegerField(blank=True, null=True, verbose_name='Datierung von')
@@ -1353,29 +1353,29 @@ class Obj(models.Model):
 
 	avleg = models.TextField(blank=True, null=True, verbose_name='Av.-Legende')
 	avbeschr = models.TextField(blank=True, null=True, verbose_name='Av.-Beschreibung')
-	av_bildtyp = models.ForeignKey('AvBildtyp', on_delete=models.CASCADE, blank=True, null=True, verbose_name='AvBildtyp', db_index=True)
-	av_beizeichen = models.ForeignKey('AvBeizeichen', on_delete=models.CASCADE, blank=True, null=True, verbose_name='AvBeizeichen', db_index=True)
-	av_offizin = models.ForeignKey('AvOffizin', on_delete=models.CASCADE, blank=True, null=True, verbose_name='AvOffizin', db_index=True)
-	av_offizin_symbol = models.ForeignKey('OffizinSymbol', on_delete=models.CASCADE, blank=True, null=True, 
+	av_bildtyp = models.ForeignKey('AvBildtyp', on_delete=models.PROTECT, blank=True, null=True, verbose_name='AvBildtyp', db_index=True)
+	av_beizeichen = models.ForeignKey('AvBeizeichen', on_delete=models.PROTECT, blank=True, null=True, verbose_name='AvBeizeichen', db_index=True)
+	av_offizin = models.ForeignKey('AvOffizin', on_delete=models.PROTECT, blank=True, null=True, verbose_name='AvOffizin', db_index=True)
+	av_offizin_symbol = models.ForeignKey('OffizinSymbol', on_delete=models.PROTECT, blank=True, null=True, 
 										  verbose_name='AvOffizinMonogrammSymbol', related_name='av_objekte', db_index=True)
-	av_bildrand = models.ForeignKey('AvBildrand', on_delete=models.CASCADE, blank=True, null=True, verbose_name='AvBildrand', db_index=True)
+	av_bildrand = models.ForeignKey('AvBildrand', on_delete=models.PROTECT, blank=True, null=True, verbose_name='AvBildrand', db_index=True)
 
 	#av_img = models.ImageField(upload_to='slgmz_based_upload_to', height_field=None, width_field=None, max_length=None, blank=True)
 	rvleg = models.TextField(blank=True, null=True, verbose_name='Rv.-Legende')
 	rvbeschr = models.TextField(blank=True, null=True, verbose_name='Rv.-Beschreibung')
-	rv_bildtyp = models.ForeignKey('RvBildtyp', on_delete=models.CASCADE, blank=True, null=True, verbose_name='RvBildtyp', db_index=True)
-	rv_beizeichen = models.ForeignKey('RvBeizeichen', on_delete=models.CASCADE, blank=True, null=True, verbose_name='RvBeizeichen', db_index=True)
-	rv_offizin = models.ForeignKey('RvOffizin', on_delete=models.CASCADE, blank=True, null=True, verbose_name='RvOffizin', db_index=True)
-	rv_offizin_symbol = models.ForeignKey('OffizinSymbol', on_delete=models.CASCADE, blank=True, null=True, 
+	rv_bildtyp = models.ForeignKey('RvBildtyp', on_delete=models.PROTECT, blank=True, null=True, verbose_name='RvBildtyp', db_index=True)
+	rv_beizeichen = models.ForeignKey('RvBeizeichen', on_delete=models.PROTECT, blank=True, null=True, verbose_name='RvBeizeichen', db_index=True)
+	rv_offizin = models.ForeignKey('RvOffizin', on_delete=models.PROTECT, blank=True, null=True, verbose_name='RvOffizin', db_index=True)
+	rv_offizin_symbol = models.ForeignKey('OffizinSymbol', on_delete=models.PROTECT, blank=True, null=True, 
 										  verbose_name='RvOffizinMonogrammSymbol', related_name='rv_objekte', db_index=True)
-	rv_bildrand = models.ForeignKey('RvBildrand', on_delete=models.CASCADE, blank=True, null=True, verbose_name='RvBildrand', db_index=True)
+	rv_bildrand = models.ForeignKey('RvBildrand', on_delete=models.PROTECT, blank=True, null=True, verbose_name='RvBildrand', db_index=True)
 	
-	rand = models.ForeignKey('Rand', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Rand', db_index=True)
+	rand = models.ForeignKey('Rand', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Rand', db_index=True)
 
 	anmerkung = models.TextField(blank=True, null=True, verbose_name='Anmerkungen')
 	interne_anmerkungen = models.ManyToManyField('interneAnmerkung', through='Obj_interne_Anmerkung', verbose_name = ("interne Anmerkungen"), default=0)
 	pakete = models.ManyToManyField('Paket', blank=True, verbose_name='Pakete')
-	workflow = models.ForeignKey('Workflow', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Workflow', default=1, db_index=True)
+	workflow = models.ForeignKey('Workflow', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Workflow', default=1, db_index=True)
 
 	created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 	modified_at = models.DateTimeField(auto_now=True, null=True, blank=True)
@@ -1742,23 +1742,23 @@ class MuenztypObjektAnzeige(models.Model):
 		indexes = [models.Index(fields=['last_modified', 'obj_id'], name='mtoa_oai_modified_obj_idx')]
 
 	obj_id = models.PositiveIntegerField(
-		db_index=True,
+		unique=True,  # eine Projektion je Objekt (verhindert Duplikate bei parallelen Saves)
 		null=True,      # für das Daten-Backfill
 		blank=True,
 		verbose_name='Objekt-ID'
 	)
 	invnr = models.CharField(max_length=20, verbose_name='Inventarnummer')
-	SlgTeil = models.CharField(max_length=100, null=True, blank=True, verbose_name='SlgTeil')
-	Slg = models.CharField(max_length=100, null=True, blank=True, verbose_name='Slg')
+	SlgTeil = models.CharField(max_length=200, null=True, blank=True, verbose_name='SlgTeil')
+	Slg = models.CharField(max_length=200, null=True, blank=True, verbose_name='Slg')
 	objekttitel = models.CharField(max_length=200, null=True, blank=True,verbose_name='Titel des Objekts')
-	objekttyp = models.CharField(max_length=100, null=True, blank=True,verbose_name='Objekttyp')
-	herstellung = models.CharField(max_length=100, null=True, blank=True,verbose_name='Herstellung')
-	reichskreis = models.CharField(max_length=100, null=True, blank=True,verbose_name='Reichskreis')
-	muenzstand = models.CharField(max_length=100, null=True, blank=True,verbose_name='Münzstand')
-	nominal = models.CharField(max_length=100, null=True, blank=True, db_index=True, verbose_name='Nominal')
-	metall = models.CharField(max_length=100, null=True, blank=True,verbose_name='Material')
-	mzstaette = models.CharField(max_length=100, null=True, blank=True,verbose_name='Münzstätte')
-	region = models.CharField(max_length=100, null=True, blank=True,verbose_name='Region')
+	objekttyp = models.CharField(max_length=200, null=True, blank=True,verbose_name='Objekttyp')
+	herstellung = models.CharField(max_length=200, null=True, blank=True,verbose_name='Herstellung')
+	reichskreis = models.CharField(max_length=250, null=True, blank=True,verbose_name='Reichskreis')
+	muenzstand = models.CharField(max_length=200, null=True, blank=True,verbose_name='Münzstand')
+	nominal = models.CharField(max_length=200, null=True, blank=True, db_index=True, verbose_name='Nominal')
+	metall = models.CharField(max_length=200, null=True, blank=True,verbose_name='Material')
+	mzstaette = models.CharField(max_length=200, null=True, blank=True,verbose_name='Münzstätte')
+	region = models.CharField(max_length=200, null=True, blank=True,verbose_name='Region')
 	datierung_von = models.IntegerField(null=True, blank=True, verbose_name='Datierung von')
 	datierung_bis = models.IntegerField(null=True, blank=True, verbose_name='Datierung bis')
 	datierung_verbale = models.CharField(max_length=100, null=True, blank=True, verbose_name='Datierung verbale')
@@ -1768,17 +1768,17 @@ class MuenztypObjektAnzeige(models.Model):
 	abnutzung = models.CharField(max_length=100, null=True, blank=True, verbose_name='Abnutzung')
 	av_legende = models.TextField(null=True, blank=True, verbose_name='Av.-Legende')
 	av_bildtyp = models.CharField(max_length=255, null=True, blank=True, verbose_name='AvBildtyp')
-	av_beizeichen = models.CharField(max_length=100, null=True, blank=True, verbose_name='AvBeizeichen')
-	av_bildrand = models.CharField(max_length=100, null=True, blank=True, verbose_name='AvBildrand')
+	av_beizeichen = models.CharField(max_length=255, null=True, blank=True, verbose_name='AvBeizeichen')
+	av_bildrand = models.CharField(max_length=250, null=True, blank=True, verbose_name='AvBildrand')
 	av_schlagworte = models.TextField(null=True, blank=True, verbose_name='Av.-Schlagworte')
 	rv_legende = models.TextField(null=True, blank=True, verbose_name='Rv.-Legende')
 	rv_bildtyp = models.CharField(max_length=255, null=True, blank=True, verbose_name='RvBildtyp')
-	rv_beizeichen = models.CharField(max_length=100, null=True, blank=True, verbose_name='RvBeizeichen')
-	rv_bildrand = models.CharField(max_length=100, null=True, blank=True, verbose_name='RvBildrand')
+	rv_beizeichen = models.CharField(max_length=255, null=True, blank=True, verbose_name='RvBeizeichen')
+	rv_bildrand = models.CharField(max_length=250, null=True, blank=True, verbose_name='RvBildrand')
 	rv_schlagworte = models.TextField(null=True, blank=True, verbose_name='Rv.-Schlagworte')
-	rand = models.CharField(max_length=100, null=True, blank=True, verbose_name='Rand')
+	rand = models.CharField(max_length=250, null=True, blank=True, verbose_name='Rand')
 	anmerkungen = models.TextField(null=True, blank=True, verbose_name='Anmerkungen')
-	typ = models.CharField(max_length=100, null=True, blank=True, verbose_name='Typ')
+	typ = models.CharField(max_length=250, null=True, blank=True, verbose_name='Typ')
 	typlink = models.URLField(null=True, blank=True, verbose_name='Link zum Online-Typ')
 	konkordanz = models.TextField(blank=True, null=True, verbose_name='Konkordanz')
 	personen_av = models.TextField(blank=True, null=True, verbose_name='Personen Av')

@@ -4,6 +4,7 @@ import json
 
 from django.contrib import admin
 from django import forms
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from import_export import fields, resources
 from import_export.forms import ExportForm
@@ -68,6 +69,15 @@ class TranslationStatusFilter(admin.SimpleListFilter):
 
 
 class LockedTranslationLoader(CachedInstanceLoader):
+    def __init__(self, *args, **kwargs):
+        # django-import-export baut den Loader außerhalb seiner Fehlerbehandlung;
+        # eine nicht-numerische ID (decimal.InvalidOperation) wäre sonst ein 500.
+        # before_import meldet die ungültige Zeile bereits als Importfehler.
+        try:
+            super().__init__(*args, **kwargs)
+        except (ArithmeticError, ValueError, TypeError, ValidationError):
+            self.all_instances = {}
+
     def get_queryset(self):
         return super().get_queryset().using(
             self.resource.get_db_connection_name(),
@@ -89,7 +99,12 @@ class BildtypTranslationResource(resources.ModelResource):
             raise ValueError('Erforderliche Spalten: id, name, name_en, revision. Bitte Übersetzungsexport verwenden.')
         id_column = dataset.headers.index('id')
         id_field = self.fields['id']
-        ids = [id_field.clean({'id': row[id_column]}) for row in dataset]
+        ids = []
+        for number, row in enumerate(dataset, 1):
+            try:
+                ids.append(id_field.clean({'id': row[id_column]}))
+            except (ArithmeticError, ValueError, TypeError, ValidationError):
+                raise ValueError(f'Ungültige ID in Zeile {number}: {row[id_column]!r}') from None
         if len(ids) != len(set(ids)):
             raise ValueError('Doppelte IDs sind nicht zulässig.')
 

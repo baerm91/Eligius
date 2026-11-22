@@ -163,6 +163,22 @@ class Sek_MerkmaleSerializer(DisplayLabelSerializer):
         model = Sek_Merkmale
         fields = ['id', 'name']
 
+def _typ_personen(obj):
+    """Personen des Münztyps; typ_personen_mit_funktion ist eine Property (Liste).
+
+    Früher als Methode aufgerufen: der TypeError wurde von einem bare except
+    verschluckt und die API lieferte immer [].
+    """
+    result = []
+    for person, funktion, appears_on_rev in (getattr(obj, 'typ_personen_mit_funktion', None) or []):
+        result.append({
+            'person': {'id': getattr(person, 'id', None), 'name': person.name},
+            'funktion': {'id': funktion.id, 'name': funktion.name},
+            'appears_on_rev': appears_on_rev,
+        })
+    return result
+
+
 class ObjDetailSerializer(serializers.ModelSerializer):
     """Erweiterter Serializer für Objekt-Details mit allen gewünschten Feldern"""
     idfk_Muenzstand = MuenzstandSerializer(read_only=True)
@@ -191,18 +207,7 @@ class ObjDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_typ_personen_mit_funktion(self, obj):
-        result = []
-        if hasattr(obj, 'typ_personen_mit_funktion'):
-            try:
-                for person, funktion, appears_on_rev in obj.typ_personen_mit_funktion():
-                    result.append({
-                        'person': {'id': person.id, 'name': person.name},
-                        'funktion': {'id': funktion.id, 'name': funktion.name},
-                        'appears_on_rev': appears_on_rev
-                    })
-            except:
-                pass
-        return result
+        return _typ_personen(obj)
 
 class ObjDetailUpdateSerializer(serializers.ModelSerializer):
     """Update-Serializer für Objekt-Bearbeitung.
@@ -283,42 +288,17 @@ class LatestObjSerializer(serializers.ModelSerializer):
         return obj.get_absolute_url()
 
     def get_get_bild_urls(self, obj):
-        if hasattr(obj, 'get_bild_urls'):
-            try:
-                return obj.get_bild_urls()
-            except:
-                return {'thumbnail_av': '', 'thumbnail_rv': ''}
-        return {'thumbnail_av': '', 'thumbnail_rv': ''}
+        return obj.get_bild_urls() or {'thumbnail_av': '', 'thumbnail_rv': ''}
 
     def get_typ_personen_mit_funktion(self, obj):
-        result = []
-        if hasattr(obj, 'typ_personen_mit_funktion'):
-            try:
-                for person, funktion, appears_on_rev in obj.typ_personen_mit_funktion():
-                    result.append({
-                        'person': {'id': person.id, 'name': person.name},
-                        'funktion': {'id': funktion.id, 'name': funktion.name},
-                        'appears_on_rev': appears_on_rev
-                    })
-            except:
-                pass
-        return result
+        return _typ_personen(obj)
 
     def get_av_schlagworte(self, obj):
-        if hasattr(obj, 'av_schlagworte'):
-            try:
-                return [{'id': s.id, 'name': s.name} for s in obj.av_schlagworte()]
-            except:
-                return []
-        return []
+        # Property, keine Methode (früher obj.av_schlagworte() -> TypeError -> stets [])
+        return [{'id': s.id, 'name': s.name} for s in (obj.av_schlagworte or [])]
 
     def get_rv_schlagworte(self, obj):
-        if hasattr(obj, 'rv_schlagworte'):
-            try:
-                return [{'id': s.id, 'name': s.name} for s in obj.rv_schlagworte()]
-            except:
-                return []
-        return []
+        return [{'id': s.id, 'name': s.name} for s in (obj.rv_schlagworte or [])]
 
 class MuenztypSerializer(serializers.ModelSerializer):
     av_bildtyp = AvBildtypSerializer(read_only=True)
@@ -380,21 +360,24 @@ class MuenztypFilterSerializer(serializers.ModelSerializer):
         return ''
 
 class CoinImageSerializer(serializers.ModelSerializer):
+    IMAGE_KEYS = ('av', 'rv', 'thumbnail_av', 'thumbnail_rv')
+    images = serializers.SerializerMethodField()
+
     class Meta:
         model = Obj
-        fields = ['id']
+        fields = ['id', 'images']
 
     def get_images(self, obj):
         request = self.context.get('request')
-        if not request:
-            return {}
-        
-        av = request.query_params.get('av', 'false').lower() == 'true'
-        rv = request.query_params.get('rv', 'false').lower() == 'true'
-        thumbnail_av = request.query_params.get('thumbnail_av', 'false').lower() == 'true'
-        thumbnail_rv = request.query_params.get('thumbnail_rv', 'false').lower() == 'true'
+        params = getattr(request, 'query_params', {}) if request else {}
+        # Ohne Auswahl (?av=true usw.) alle Varianten liefern.
+        if not any(key in params for key in self.IMAGE_KEYS):
+            av = rv = thumbnail_av = thumbnail_rv = True
+        else:
+            av, rv, thumbnail_av, thumbnail_rv = (
+                str(params.get(key, 'false')).lower() == 'true' for key in self.IMAGE_KEYS)
 
-        images = obj.get_bild_urls()
+        images = obj.get_bild_urls() or {}
         
         result = {}
         if av and 'av' in images:
@@ -416,12 +399,11 @@ class PersonCoinImageSerializer(serializers.ModelSerializer):
         fields = ['name', 'coins']
 
     def get_coins(self, person):
-        mztyps_with_funktion_2 = Mztyp_Person.objects.filter(
-            idfk_Person=person,
-            idfk_PersonFunktion=2
-        ).values_list('Mztyp', flat=True)
-
-        objs = Obj.objects.filter(Typ__in=mztyps_with_funktion_2).distinct()
+        # Eine Abfrage pro Person; Slg/SlgTeil für get_bild_urls() gleich mitladen.
+        objs = Obj.objects.filter(
+            Typ__mztyp_person__idfk_Person=person,
+            Typ__mztyp_person__idfk_PersonFunktion_id=2,
+        ).select_related('Slg', 'SlgTeil').distinct().order_by('pk')
         return CoinImageSerializer(objs, many=True, context=self.context).data
 
 class AvBildtypSerializer(DisplayLabelSerializer):

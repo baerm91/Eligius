@@ -9,9 +9,13 @@ Verwendung:
     python manage.py sync_mtoa --slg 5            # Nur Sammlung mit ID 5
     python manage.py sync_mtoa --since 2025-01-01 # Nur seit einem Datum geänderte
     python manage.py sync_mtoa --force             # Alle vorhandenen MTOA-Einträge löschen & neu erstellen
+    (--force mit --slg/--since löscht nur die Einträge der ausgewählten Objekte.)
 """
 
+from contextlib import nullcontext
+
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.db.models import Prefetch
 from django.utils import timezone
 from datetime import datetime
@@ -20,6 +24,7 @@ from slg.models import (
     Obj, MuenztypObjektAnzeige, MtoaPerson, Obj_Person,
     Mztyp_Person, AvBildtyp_Schlagwort, RvBildtyp_Schlagwort,
 )
+from slg.mtoa_sync import fit_lengths, replace_projection_persons, save_projections
 
 
 BATCH_SIZE = 500
@@ -74,18 +79,19 @@ def generate_mtoa_from_obj(obj, av_sw_map=None, rv_sw_map=None):
     """
     urls = obj.get_bild_urls() or {}
 
-    # Personen aus den vorgefetchten relations
-    if obj.Typ:
-        try:
-            all_persons = list(obj.Typ.mztyp_person_set.all())
-        except AttributeError:
-            all_persons = []
-    else:
-        try:
-            all_persons = list(obj.obj_person_set.all())
-        except AttributeError:
-            all_persons = []
-            
+    # Personen aus den vorgefetchten Relationen: Münztyp- UND Objektpersonen,
+    # wie in Detailansicht und public_api (früher fielen Obj_Person bei
+    # typisierten Objekten weg). Gleiche Person/Funktion/Seite nur einmal.
+    all_persons = []
+    seen_persons = set()
+    candidates = list(obj.Typ.mztyp_person_set.all()) if obj.Typ else []
+    candidates += list(obj.obj_person_set.all())
+    for mp in candidates:
+        key = (mp.idfk_Person_id, mp.idfk_PersonFunktion_id, bool(mp.appears_on_rev))
+        if key not in seen_persons:
+            seen_persons.add(key)
+            all_persons.append(mp)
+
     persons_to_link = []
     for mp in all_persons:
         persons_to_link.append({
@@ -201,8 +207,8 @@ def generate_mtoa_from_obj(obj, av_sw_map=None, rv_sw_map=None):
         'slgteil_fk_id': obj.SlgTeil_id,
         'typ_fk_id': obj.Typ_id,
     }
-    
-    return data, persons_to_link
+
+    return fit_lengths(data), persons_to_link
 
 
 def build_schlagwort_maps():
@@ -245,6 +251,7 @@ class Command(BaseCommand):
         since = options['since']
         force = options['force']
         verbosity = options['verbosity']
+        filtered = bool(slg_id or since)
 
         # 1. Schlagwort-Maps vorladen (2 Queries statt N)
         if verbosity >= 1:
@@ -270,108 +277,81 @@ class Command(BaseCommand):
         if verbosity >= 1:
             self.stdout.write(f'Zu synchronisierende Objekte: {total}')
 
-        if total == 0:
-            self.stdout.write(self.style.SUCCESS('Keine Objekte zu synchronisieren.'))
-            return
+        # --force löscht und baut neu auf: nur atomar, sonst bleibt bei einem
+        # Abbruch eine leere bzw. halbe Tabelle zurück.
+        with (transaction.atomic() if force else nullcontext()):
+            # 3. Verwaiste Projektionen (gelöschte Objekte) nur beim vollen Lauf entfernen
+            if not filtered:
+                orphans, _ = MuenztypObjektAnzeige.objects.filter(obj_id__isnull=False).exclude(
+                    obj_id__in=Obj.objects.values('pk')).delete()
+                if orphans and verbosity >= 1:
+                    self.stdout.write(f'  {orphans} verwaiste MTOA-Einträge (gelöschte Objekte) entfernt.')
 
-        # 3. Bei --force: Alle bestehenden MTOA-Einträge löschen
-        if force:
-            if slg_id:
-                deleted, _ = MuenztypObjektAnzeige.objects.filter(
-                    obj_id__in=base_qs.values_list('id', flat=True)
-                ).delete()
-            else:
-                deleted, _ = MuenztypObjektAnzeige.objects.all().delete()
-            if verbosity >= 1:
-                self.stdout.write(f'  {deleted} bestehende MTOA-Einträge gelöscht.')
+            if total == 0:
+                self.stdout.write(self.style.SUCCESS('Keine Objekte zu synchronisieren.'))
+                return
 
-        # 4. Vorhandene MTOA-Einträge laden (obj_id → mtoa.id Mapping)
-        existing_map = {}
-        if not force:
-            existing_map = dict(
-                MuenztypObjektAnzeige.objects
-                .filter(obj_id__isnull=False)
-                .values_list('obj_id', 'id')
-            )
-            if verbosity >= 2:
-                self.stdout.write(f'  {len(existing_map)} bestehende MTOA-Einträge gefunden.')
+            # 4. Bei --force: nur die MTOA-Einträge der ausgewählten Objekte löschen.
+            #    Die ganze Tabelle wird nur ohne --slg/--since geleert.
+            if force:
+                if filtered:
+                    deleted, _ = MuenztypObjektAnzeige.objects.filter(
+                        obj_id__in=base_qs.values_list('id', flat=True)
+                    ).delete()
+                else:
+                    deleted, _ = MuenztypObjektAnzeige.objects.all().delete()
+                if verbosity >= 1:
+                    self.stdout.write(f'  {deleted} bestehende MTOA-Einträge gelöscht.')
 
-        # 5. Optimiertes Queryset aufbauen
-        optimized_qs = build_optimized_queryset(base_qs)
+            # 5. Vorhandene MTOA-Einträge laden (obj_id → mtoa.id Mapping)
+            existing_map = {}
+            if not force:
+                existing_map = dict(
+                    MuenztypObjektAnzeige.objects
+                    .filter(obj_id__isnull=False)
+                    .values_list('obj_id', 'id')
+                )
+                if verbosity >= 2:
+                    self.stdout.write(f'  {len(existing_map)} bestehende MTOA-Einträge gefunden.')
 
-        # 6. Batch-Verarbeitung
-        to_create = []
-        to_update = []
-        obj_to_persons = {}
-        processed = 0
+            # 6. Batch-Verarbeitung
+            optimized_qs = build_optimized_queryset(base_qs)
+            to_create = []
+            to_update = []
+            obj_to_persons = {}
+            processed = created_count = updated_count = 0
 
-        for obj in optimized_qs.iterator(chunk_size=BATCH_SIZE):
-            data, persons = generate_mtoa_from_obj(obj, av_sw_map, rv_sw_map)
-            obj_to_persons[obj.id] = persons
+            for obj in optimized_qs.iterator(chunk_size=BATCH_SIZE):
+                data, persons = generate_mtoa_from_obj(obj, av_sw_map, rv_sw_map)
+                obj_to_persons[obj.id] = persons
+                if obj.id in existing_map:
+                    to_update.append(MuenztypObjektAnzeige(id=existing_map[obj.id], **data))
+                else:
+                    to_create.append(MuenztypObjektAnzeige(**data))
+                processed += 1
 
-            if obj.id in existing_map:
-                # Update: Bestehendes MTOA-Objekt modifizieren
-                mtoa = MuenztypObjektAnzeige(id=existing_map[obj.id], **data)
-                to_update.append(mtoa)
-            else:
-                # Create: Neues MTOA-Objekt
-                to_create.append(MuenztypObjektAnzeige(**data))
+                if (len(to_create) + len(to_update)) >= BATCH_SIZE:
+                    created, updated = self._flush_batch(to_create, to_update, obj_to_persons)
+                    created_count += created
+                    updated_count += updated
+                    to_create, to_update, obj_to_persons = [], [], {}
 
-            processed += 1
-            
-            # Wenn Batch voll ist
-            if (len(to_create) + len(to_update)) >= BATCH_SIZE:
-                self._flush_batch(to_create, to_update, obj_to_persons, existing_map)
-                to_create = []
-                to_update = []
-                obj_to_persons = {}
+                if verbosity >= 1 and processed % 1000 == 0:
+                    self.stdout.write(f'  {processed}/{total} verarbeitet...')
 
-            if verbosity >= 1 and processed % 1000 == 0:
-                self.stdout.write(f'  {processed}/{total} verarbeitet...')
-
-        # Restliche Batches schreiben
-        if to_create or to_update:
-            self._flush_batch(to_create, to_update, obj_to_persons, existing_map)
-
-        created_count = processed - len(existing_map) if not force else processed
-        updated_count = len(existing_map) if not force else 0
+            if to_create or to_update:
+                created, updated = self._flush_batch(to_create, to_update, obj_to_persons)
+                created_count += created
+                updated_count += updated
 
         self.stdout.write(self.style.SUCCESS(
             f'Fertig! {processed} Objekte verarbeitet '
             f'({created_count} neu erstellt, {updated_count} aktualisiert).'
         ))
 
-    def _flush_batch(self, to_create, to_update, obj_to_persons, existing_map):
-        from slg.models import MuenztypObjektAnzeige, MtoaPerson
-        
-        # 1. MTOA Objekte speichern
-        if to_create:
-            MuenztypObjektAnzeige.objects.bulk_create(to_create)
-        if to_update:
-            update_fields = [f.name for f in MuenztypObjektAnzeige._meta.get_fields()
-                             if hasattr(f, 'column') and f.name != 'id']
-            MuenztypObjektAnzeige.objects.bulk_update(to_update, update_fields, batch_size=BATCH_SIZE)
-            
-        # 2. MTOA IDs abrufen
-        batch_obj_ids = list(obj_to_persons.keys())
-        mtoa_qs = MuenztypObjektAnzeige.objects.filter(obj_id__in=batch_obj_ids)
-        mtoa_map = {mtoa.obj_id: mtoa.id for mtoa in mtoa_qs}
-        
-        # 3. MtoaPerson Bridging Tabelle leeren (für Updates)
-        MtoaPerson.objects.filter(mtoa_id__in=mtoa_map.values()).delete()
-        
-        # 4. Neue MtoaPerson Relationen aufbauen
-        mtoa_persons_to_create = []
-        for obj_id, persons in obj_to_persons.items():
-            mtoa_id = mtoa_map.get(obj_id)
-            if mtoa_id:
-                for p in persons:
-                    mtoa_persons_to_create.append(MtoaPerson(
-                        mtoa_id=mtoa_id,
-                        person_id=p['person_id'],
-                        funktion_id=p['funktion_id'],
-                        appears_on_rev=p['appears_on_rev']
-                    ))
-        
-        if mtoa_persons_to_create:
-            MtoaPerson.objects.bulk_create(mtoa_persons_to_create, batch_size=2000)
+    def _flush_batch(self, to_create, to_update, obj_to_persons):
+        """Speichert einen Batch atomar; liefert (neu, aktualisiert)."""
+        with transaction.atomic():
+            save_projections(to_create, to_update, batch_size=BATCH_SIZE)
+            replace_projection_persons(obj_to_persons)
+        return len(to_create), len(to_update)

@@ -21,7 +21,7 @@ import tempfile
 import time
 from datetime import date
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 from xml.sax.saxutils import escape, quoteattr
 
 from django.conf import settings
@@ -211,10 +211,43 @@ def serialize_collection_void(slg, request):
     return _header() + void_dataset(request, slg) + FOOTER
 
 
-def _image_uri(obj, request, variant, source):
+# Stabile Ansicht der Bild-Weiterleitung -> Schlüssel aus Obj.get_bild_urls().
+IMAGE_KEYS = {'av': 'av', 'rv': 'rv', 'av-vorschau': 'thumbnail_av', 'rv-vorschau': 'thumbnail_rv'}
+# Wie slg.oai.edm.source_images: Leerzeichen etc. in Inventarnummern kodieren,
+# bereits kodierte Zeichen (%) unverändert lassen.
+URI_SAFE = ":/?#[]@!$&'()*+,;=%"
+
+
+def _file_uri(request, source):
     if not source:
         return None
-    return image_redirect_uri(request, obj.id, variant) or valid_uri(absolute_uri(request, source))
+    return valid_uri(quote(absolute_uri(request, source), safe=URI_SAFE))
+
+
+def _image_uri(obj, request, variant, source):
+    file_uri = _file_uri(request, source)
+    if not file_uri:
+        return None
+    return image_redirect_uri(request, obj.id, variant) or file_uri
+
+
+def nomisma_image_target(obj_id, variant, request):
+    """Bilddatei für /bild/<id>/<ansicht>/, sofern das Objekt im Nomisma-Export steht.
+
+    Die Bild-Weiterleitung prüft sonst nur die Kulturpool-Freigabe; Sammlungen
+    mit Nomisma- aber ohne Kulturpool-Freigabe hätten dann nur 404-Bildlinks.
+    Gleiche Kriterien wie iter_collection_rdf, Rückseite ohne Deduplizierung.
+    """
+    key = IMAGE_KEYS.get(variant)
+    if not key:
+        return None
+    slg_id = Obj.objects.filter(pk=obj_id, Slg__nomisma_export_erlaubt=True).values_list('Slg_id', flat=True).first()
+    if slg_id is None:
+        return None
+    obj = get_nomisma_export_queryset(slg_id).filter(pk=obj_id).first()
+    if obj is None or not type_series_item_uri(obj):
+        return None
+    return _file_uri(request, (obj.get_bild_urls() or {}).get(key))
 
 
 def _side(obj, request, uri, urls, side):

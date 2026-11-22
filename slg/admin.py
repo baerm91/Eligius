@@ -5,7 +5,7 @@ from django.db import IntegrityError, transaction, models
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.admin.options import csrf_protect_m
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.contrib.admin.models import LogEntry, DELETION
 from django.contrib.admin.utils import quote
 from django.db.models.query import Prefetch, Q
@@ -49,6 +49,7 @@ import nested_admin
 import adminactions.actions as actions
 from django.contrib.admin import site
 from urllib.parse import urlencode, urlparse, urlunparse, urljoin
+import logging
 import traceback
 from rdflib import Graph, Namespace, URIRef, XSD, Literal
 from django.core import signing
@@ -66,7 +67,27 @@ from bs4 import BeautifulSoup
 
 #from core.models import Person
 
-from import_export.results import Result, RowResult
+from import_export.results import Error, Result, RowResult
+
+
+def _set_widget_style(form, field_name, style):
+    """Breite setzen, ohne für View-only-Nutzer (leere base_fields) zu crashen."""
+    field = form.base_fields.get(field_name)
+    if field is not None:
+        field.widget.attrs['style'] = style
+
+
+def _sync_objekte_mtoa(obj_ids):
+    """MTOA nach .update()/.bulk_update() nachziehen (diese lösen keine Signals aus)."""
+    from .signals import sync_queryset_to_mtoa
+    sync_queryset_to_mtoa(Obj.objects.filter(pk__in=list(obj_ids)))
+
+
+def _sync_typen_mtoa(typ_ids):
+    """Wie _sync_objekte_mtoa, für alle Objekte (und Konkordanzen) der Münztypen."""
+    from .signals import sync_queryset_to_mtoa
+    typ_ids = list(typ_ids)
+    sync_queryset_to_mtoa(Obj.objects.filter(Q(Typ_id__in=typ_ids) | Q(Typ__Konkordanz__in=typ_ids)))
 
 
 def _is_admin_autocomplete_request(request):
@@ -509,7 +530,7 @@ class FundortAdmin(admin.ModelAdmin):
 
 class FundView(ImportExportModelAdmin):
     resource_classes = [FundResource]
-    search_fields = ('objekt','maßnahmennr', 'fundnummer')
+    search_fields = ('objekt__invnr','maßnahmennr', 'fundnummer')  # objekt ist OneToOne: über invnr suchen
     list_display = ('objekt','maßnahmennr', 'fundnummer','parzelle','quadrant','quadrantzusatz','anmerkung','vn','vno','vo', 'vso', 'vs', 'vsw', 'vw', 'vnw','lm_von', 'lm_bis','niveautiefe_in_m_von', 'niveautiefe_in_m_bis', 'niveau')
     raw_id_fields = ('objekt',)
     list_editable = ('parzelle','quadrant','quadrantzusatz','anmerkung','vn','vno','vo', 'vso', 'vs', 'vsw', 'vw', 'vnw','lm_von', 'lm_bis','niveautiefe_in_m_von', 'niveautiefe_in_m_bis', 'niveau')
@@ -586,8 +607,8 @@ class PersonView(ImportExportModelAdmin,):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(PersonView, self).get_form(request, obj, **kwargs)
-        form.base_fields['name'].widget.attrs['style'] = 'width: 60em;'
-        form.base_fields['beschreibung'].widget.attrs['style'] = 'width: 60em;'
+        _set_widget_style(form, 'name', 'width: 60em;')
+        _set_widget_style(form, 'beschreibung', 'width: 60em;')
         return form
 
     def Link(self, obj):
@@ -1307,8 +1328,12 @@ def process_download_infos(obj):
 
     # Code zur Verarbeitung des Links und der Daten
     try:
+        # Alle Ergebniswerte vorbelegen: Jeder Zweig/Abbruch darf sie leer lassen,
+        # ohne dass später ein UnboundLocalError entsteht.
         obverse_uri = None
         reverse_uri = None
+        praegeherr_list, avpor_list, rvpor_list = [], [], []
+        dat_von = dat_bis = nom = mint = avleg = rvleg = ""
         # Beispiel: Setzen von Feldern basierend auf geparsten Daten
         if link_kind == 'numismatics':
             # Normalize link - SPARQL database typically uses HTTP URIs
@@ -1519,13 +1544,14 @@ def process_download_infos(obj):
                     obverse_uri = o
 
                 # Now find the legend for that obverse
+                # (Subjekt None würde in rdflib auf ALLE Knoten passen.)
                 avleg = ""
-                for s, p, o in g.triples((obverse_uri, nmo.hasLegend, None)):
-                    avleg = str(o)
-
                 avpor_list = []
-                for s, p, o in g.triples((obverse_uri, nmo.hasPortrait, None)):
-                    avpor_list.append(str(o))
+                if obverse_uri is not None:
+                    for s, p, o in g.triples((obverse_uri, nmo.hasLegend, None)):
+                        avleg = str(o)
+                    for s, p, o in g.triples((obverse_uri, nmo.hasPortrait, None)):
+                        avpor_list.append(str(o))
 
                 # Find the reverse for that TypeSeriesItem
                 for s, p, o in g.triples((type_series_item_uri, nmo.hasReverse, None)):
@@ -1533,12 +1559,12 @@ def process_download_infos(obj):
 
                 # Now find the legend for that reverse
                 rvleg = ""
-                for s, p, o in g.triples((reverse_uri, nmo.hasLegend, None)):
-                    rvleg = str(o)
-
                 rvpor_list = []
-                for s, p, o in g.triples((reverse_uri, nmo.hasPortrait, None)):
-                    rvpor_list.append(str(o))
+                if reverse_uri is not None:
+                    for s, p, o in g.triples((reverse_uri, nmo.hasLegend, None)):
+                        rvleg = str(o)
+                    for s, p, o in g.triples((reverse_uri, nmo.hasPortrait, None)):
+                        rvpor_list.append(str(o))
             else:
                 return False, "RDF-Link nicht gefunden"
 
@@ -1554,19 +1580,15 @@ def process_download_infos(obj):
             obj.avleg = avleg
         if not obj.rvleg:
             obj.rvleg = rvleg
-        if obj.Nominal is None:
-            try:
-                nom_get = Nominal.objects.get(name_nom_id=nom)
+        if obj.Nominal is None and nom:
+            nom_get = Nominal.objects.filter(name_nom_id=nom).first()
+            if nom_get:
                 obj.Nominal = nom_get
-            except ObjectDoesNotExist:
-                pass
 
-        if not obj.Mzstaette:
-            try:
-                mint_get = Mzstaette.objects.get(name_nom_id=mint)
+        if not obj.Mzstaette and mint:
+            mint_get = Mzstaette.objects.filter(name_nom_id=mint).first()
+            if mint_get:
                 obj.Mzstaette = mint_get
-            except ObjectDoesNotExist:
-                pass
 
         if link_kind == 'numismatics':
             obj.Muenzstand = Muenzstand.objects.get(id=424)
@@ -1606,9 +1628,9 @@ def process_download_infos(obj):
             obj.save()
             return True, "Daten erfolgreich verarbeitet"
         except Exception as e:
-            traceback_message = traceback.format_exc()
-            message_user(request, f"Error saving object: {e}\nTraceback:\n{traceback_message}")
-            return False, f"Fehler bei der Verarbeitung: {e}"
+            # Hier gibt es weder request noch message_user; der Aufrufer zeigt die Meldung an.
+            logging.getLogger(__name__).exception('Münztyp %s konnte nach dem Typdaten-Abruf nicht gespeichert werden', obj.pk)
+            return False, f"Fehler beim Speichern: {e}"
 
     except Exception as e:
         print(f"Fehler bei der Verarbeitung: {e}")
@@ -1699,18 +1721,24 @@ class MuenztypAdmin(ImportExportModelAdmin, CloneModelAdmin,):
             del actions['delete_selected']
         return actions
 
+    def _bulk_update_typen(self, queryset, **values):
+        # .update() löst keine Signals aus -> MTOA der betroffenen Objekte explizit nachziehen.
+        ids = list(queryset.values_list('pk', flat=True))
+        Muenztyp.objects.filter(pk__in=ids).update(**values)
+        _sync_typen_mtoa(ids)
+
     def verkupfern(self, request, queryset):
-        queryset.update(Metall="9")
+        self._bulk_update_typen(queryset, Metall="9")
     verkupfern.short_description = "zu Kupfer machen"
     verkupfern.allowed_permissions = ('change',)
     
     def nummisieren(self, request, queryset):
-        queryset.update(Nominal="492")
+        self._bulk_update_typen(queryset, Nominal="492")
     nummisieren.short_description = "zu Nummus machen"
     nummisieren.allowed_permissions = ('change',)
 
     def vermessingere(self, request, queryset):
-        queryset.update(Metall="5")
+        self._bulk_update_typen(queryset, Metall="5")
     vermessingere.short_description = "zu Messing machen"
     vermessingere.allowed_permissions = ('change',)
     
@@ -1728,6 +1756,7 @@ class MuenztypAdmin(ImportExportModelAdmin, CloneModelAdmin,):
 
         if zu_aktualisieren:
             Muenztyp.objects.bulk_update(zu_aktualisieren, ['Metall'], batch_size=500)
+            _sync_typen_mtoa([mt.pk for mt in zu_aktualisieren])
 
         anzahl = len(zu_aktualisieren)
         if anzahl:
@@ -1743,7 +1772,7 @@ class MuenztypAdmin(ImportExportModelAdmin, CloneModelAdmin,):
     material_vom_nominal.allowed_permissions = ('change',)
 
     def transpadana(self, request, queryset):
-        queryset.update(region="210")
+        self._bulk_update_typen(queryset, region="210")
     transpadana.short_description = "nach Transpadana"
     transpadana.allowed_permissions = ('change',)
 
@@ -1814,14 +1843,15 @@ class MuenztypAdmin(ImportExportModelAdmin, CloneModelAdmin,):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(MuenztypAdmin, self).get_form(request, obj, **kwargs)
-        form.base_fields['muenztyptitel'].widget.attrs['style'] = 'width: 60em;'
-        form.base_fields['Konkordanz'].widget.attrs['style'] = 'width: 80em;'
+        _set_widget_style(form, 'muenztyptitel', 'width: 60em;')
+        _set_widget_style(form, 'Konkordanz', 'width: 80em;')
         konkordanz_initial = self._get_konkordanz_initial_from_request(request, obj)
         if konkordanz_initial:
-            form.base_fields['Konkordanz'].initial = konkordanz_initial
-        form.base_fields['titel'].widget.attrs['style'] = 'width: 60em;'
-        form.base_fields['av_bildtyp'].widget.attrs['style'] = 'width: 80em;'
-        form.base_fields['rv_bildtyp'].widget.attrs['style'] = 'width: 80em;'
+            if 'Konkordanz' in form.base_fields:
+                form.base_fields['Konkordanz'].initial = konkordanz_initial
+        _set_widget_style(form, 'titel', 'width: 60em;')
+        _set_widget_style(form, 'av_bildtyp', 'width: 80em;')
+        _set_widget_style(form, 'rv_bildtyp', 'width: 80em;')
         
         
         return form
@@ -1946,6 +1976,10 @@ class CachedForeignKeyWidget(ForeignKeyWidget):
         return self._cache[value]
    
 class ObjImport(resources.ModelResource):
+    # Objekte werden über (invnr, Sammlung[, Sammlungsteil]) gefunden. Die id wird
+    # nur exportiert; eine leere id-Spalte würde sonst beim Update pk=None setzen.
+    id = fields.Field(attribute='id', column_name='id', readonly=True)
+
     Slg = fields.Field(
         column_name='Sammlung',
         attribute='Slg',
@@ -1961,10 +1995,26 @@ class ObjImport(resources.ModelResource):
         attribute='Typ',
         widget=CachedForeignKeyWidget(Muenztyp, field='muenztyptitel'))
 
-    def before_import(self, dataset, using_transactions, dry_run, **kwargs):
-        from slg.signals import disable_mtoa_sync
-        disable_mtoa_sync()
+    # Defaults, falls before_import nicht (vollständig) läuft
+    _instance_cache = None
+    _import_invnr_values = frozenset()
+    _import_slg_names = frozenset()
+    _dry_run = True
 
+    def import_data(self, dataset, dry_run=False, raise_errors=False, use_transactions=None, collect_failed_rows=False, **kwargs):
+        # django-import-export 4.x übergibt dry_run nicht mehr an before_import.
+        # Auto-Sync für die Dauer des Imports pausieren und in jedem Fall wieder
+        # einschalten; danach einmal gebündelt synchronisieren (after_import).
+        from slg.signals import mtoa_sync_paused
+        self._dry_run = dry_run
+        with mtoa_sync_paused():
+            result = super().import_data(dataset, dry_run=dry_run, raise_errors=raise_errors,
+                                         use_transactions=use_transactions,
+                                         collect_failed_rows=collect_failed_rows, **kwargs)
+        self._sync_imported_objects()
+        return result
+
+    def before_import(self, dataset, **kwargs):
         self._instance_cache = None
         self._import_invnr_values = set()
         self._import_slg_names = set()
@@ -2002,13 +2052,10 @@ class ObjImport(resources.ModelResource):
             )
             self._instance_cache = None
 
-        super().before_import(dataset, using_transactions, dry_run, **kwargs)
+        super().before_import(dataset, **kwargs)
 
-    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
-        from slg.signals import enable_mtoa_sync
-        enable_mtoa_sync()
-
-        if not dry_run and self._import_slg_names and self._import_invnr_values:
+    def _sync_imported_objects(self):
+        if not self._dry_run and self._import_slg_names and self._import_invnr_values:
             try:
                 slg_ids = list(
                     Slg.objects.filter(name__in=self._import_slg_names)
@@ -2030,8 +2077,6 @@ class ObjImport(resources.ModelResource):
                 logging.getLogger(__name__).exception(
                     "MTOA Batch-Sync nach Import fehlgeschlagen"
                 )
-
-        super().after_import(dataset, result, using_transactions, dry_run, **kwargs)
 
     class Meta:
         model = Obj
@@ -2169,6 +2214,7 @@ def material_von_nominal_uebernehmen(modeladmin, request, queryset):
     
     if zu_aktualisieren:
         Obj.objects.bulk_update(zu_aktualisieren, ['Metall'], batch_size=500)
+        _sync_objekte_mtoa([obj.pk for obj in zu_aktualisieren])
     anzahl = len(zu_aktualisieren)
     
     if anzahl:
@@ -2205,6 +2251,7 @@ def material_von_muenztyp_uebernehmen(modeladmin, request, queryset):
 
     if zu_aktualisieren:
         Obj.objects.bulk_update(zu_aktualisieren, ['Metall'], batch_size=500)
+        _sync_objekte_mtoa([obj.pk for obj in zu_aktualisieren])
     anzahl = len(zu_aktualisieren)
 
     if anzahl:
@@ -2413,9 +2460,9 @@ class ObjAdmin(ImportExportModelAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(ObjAdmin, self).get_form(request, obj, **kwargs)
-        form.base_fields['Typ'].widget.attrs['style'] = 'width: 45em;'
-        form.base_fields['av_bildtyp'].widget.attrs['style'] = 'width: 80em;'
-        form.base_fields['rv_bildtyp'].widget.attrs['style'] = 'width: 80em;'
+        _set_widget_style(form, 'Typ', 'width: 45em;')
+        _set_widget_style(form, 'av_bildtyp', 'width: 80em;')
+        _set_widget_style(form, 'rv_bildtyp', 'width: 80em;')
         return form
 
     def formfield_for_dbfield(self, db_field, **kwargs):
@@ -2435,7 +2482,7 @@ class ObjAdmin(ImportExportModelAdmin):
         SlgFilter,
         ('SlgTeil', RelatedDropdownFilter),
         ('pakete', RelatedDropdownFilter),
-        ('Typ', admin.BooleanFieldListFilter),
+        ('Typ', admin.EmptyFieldListFilter),  # Typ ist ein FK: IS NULL / IS NOT NULL statt Typ_id = 0/1
         MetallVorhandenFilter,
         ('workflow', RelatedDropdownFilter),
         )
@@ -2651,7 +2698,9 @@ class MyObjectsAdmin(admin.ModelAdmin,):
     #entfernt den Löschenbutton
 
     def SlgHlHaupt(self, request, queryset):
-        queryset.update(Slg="1", SlgTeil="2")
+        ids = list(queryset.values_list('pk', flat=True))
+        Obj.objects.filter(pk__in=ids).update(Slg="1", SlgTeil="2")
+        _sync_objekte_mtoa(ids)
     SlgHlHaupt.short_description = "Objekte zu Hl gesellen"
     SlgHlHaupt.allowed_permissions = ('change',)
 
@@ -2734,7 +2783,7 @@ class MonatAdmin(admin.ModelAdmin):
 
         #('sammler__idfk_Person', RelatedDropdownFilter),
 class MuenztypObjektAnzeigeAdmin(admin.ModelAdmin):
-    search_fields = ('titel',)
+    search_fields = ('objekttitel', 'invnr')
     
 
 
@@ -2913,7 +2962,7 @@ class KatalogAdmin(admin.ModelAdmin):
     
     def get_form(self, request, obj=None, **kwargs):
         form = super(KatalogAdmin, self).get_form(request, obj, **kwargs)
-        form.base_fields['titel'].widget.attrs['style'] = 'width: 60em;'
+        _set_widget_style(form, 'titel', 'width: 60em;')
         #form.base_fields['firmen'].widget.attrs['style'] = 'width: 60em;'
         return form
 
@@ -3040,18 +3089,9 @@ class EreignisSchlagwortAdmin(admin.ModelAdmin):
     ordering = ['kategorie__name', 'name']
     autocomplete_fields = ['kategorie']
 
-class SlgInformation_SchlagwortInline(admin.TabularInline):
-    model = SlgInformationSchlagwort
-    extra = 1
-    autocomplete_fields = ['ereignisschlagwort']
-
-# Erweitern Sie Ihre bestehende SlgInformationAdmin Klasse
-class SlgInformationAdmin(admin.ModelAdmin):
-    # ... existing configuration ...
-    inlines = [SlgInformation_SchlagwortInline]  # Fügen Sie diese Zeile hinzu
-    
-    def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related('schlagworte__kategorie')
+# Hinweis: SlgInformationAdmin ist weiter oben vollständig definiert. Ein früher
+# hier stehender Stub hat die Klasse überschrieben (Import/Export, Suche, Filter,
+# list_display und raw_id_fields gingen verloren) und wurde entfernt.
 
 admin.site.site_header = 'Verwaltung'
 
@@ -3138,245 +3178,137 @@ class ObjPaketZuweisungResource(resources.ModelResource):
         return cleaned if cleaned else None
 
     def import_data(self, dataset, dry_run=False, raise_errors=False, use_transactions=None, collect_failed_rows=False, **kwargs):
-        """KOMPLETT EIGENER IMPORT - umgeht django-import-export komplett"""
-        
-        if dry_run:
-            return self._validate_dataset(dataset)
-        
-        # ECHTER IMPORT: Eine einzige Bulk-Operation
-        return self._bulk_import(dataset)
-    
-    def _validate_dataset(self, dataset):
-        """Schnelle Validierung für Dry-Run"""
-        result = Result()
-        
-        for i, row in enumerate(dataset.dict):
-            invnr = self._clean_string(row.get('invnr', ''))
-            slg_name = self._clean_string(row.get('Sammlung', ''))
-            paket_name = self._clean_string(row.get('Paket', ''))
-            
-            if not invnr:
-                result.append_invalid_row(i + 1, {'invnr': 'Inventarnummer ist erforderlich'})
-            if not slg_name:
-                result.append_invalid_row(i + 1, {'Sammlung': 'Sammlung ist erforderlich'})
-            if not paket_name:
-                result.append_invalid_row(i + 1, {'Paket': 'Paket ist erforderlich'})
-        
-        # Simuliere Erfolg für gültige Zeilen
-        valid_rows = len(dataset) - len(result.invalid_rows)
-        result.totals[RowResult.IMPORT_TYPE_NEW] = valid_rows
-        
-        return result
+        """Eigener Bulk-Import; der Dry-Run läuft dieselbe Logik in einer zurückgerollten Transaktion.
 
-    def _bulk_import(self, dataset):
-        """OPTIMIERTER Bulk-Import mit Chunking für bessere Performance"""
+        So zeigt die Admin-Vorschau bereits alle fehlenden Objekte/Pflichtfelder
+        als ungültige Zeilen an (nach der Bestätigung zeigt django-import-export
+        keine Fehler mehr an).
+        """
+        return self._bulk_import(dataset, dry_run=dry_run)
+
+    def _row_error(self, result, number, row, message, dry_run):
+        if dry_run:
+            result.append_invalid_row(number, row, ValidationError(message))
+        else:
+            result.append_base_error(Error(ValueError(f'Zeile {number}: {message}'), number=number))
+
+    def _bulk_import(self, dataset, dry_run=False):
+        """Bulk-Import mit Chunking; Fehler werden als Error/InvalidRow-Objekte gemeldet."""
         from django.db import transaction
         from slg.models import Paket, Slg, SlgTeil, Obj
-        
+
         result = Result()
-        CHUNK_SIZE = 1000  # Verarbeite in 1000er-Batches
-        
+        result.diff_headers = list(dataset.headers or [])
+        CHUNK_SIZE = 1000
+
         try:
             with transaction.atomic():
-                # 1. SAMMLE UND VALIDIERE ALLE DATEN
-                import_rows = []
-                paket_namen = set()
-                slg_namen = set()
-                slgteil_namen = set()
-                
-                print("🔄 Verarbeite Import-Daten...")
-                
-                for i, row in enumerate(dataset.dict):
+                # 1. Zeilen einlesen und Pflichtfelder prüfen
+                import_rows = []  # (zeilennummer, row, invnr, slg_name, slgteil_name, paket_name)
+                paket_namen, slg_namen, slgteil_namen = set(), set(), set()
+                for number, row in enumerate(dataset.dict, 1):
                     invnr = self._clean_string(row.get('invnr', ''))
                     slg_name = self._clean_string(row.get('Sammlung', ''))
                     slgteil_name = self._clean_string(row.get('Sammlungsteil', ''))
                     paket_name = self._clean_string(row.get('Paket', ''))
-                    
-                    if invnr and slg_name and paket_name:
-                        paket_namen.add(paket_name)
-                        slg_namen.add(slg_name)
-                        if slgteil_name:
-                            slgteil_namen.add(slgteil_name)
-                        import_rows.append((invnr, slg_name, slgteil_name, paket_name))
-                
-                print(f"📊 {len(import_rows)} gültige Zeilen zum Verarbeiten")
-                
-                # 2. LADE/ERSTELLE PAKETE (einmalig)
-                existing_pakete = {p.name: p for p in Paket.objects.filter(name__in=paket_namen)}
-                missing_pakete = paket_namen - set(existing_pakete.keys())
-                
-                if missing_pakete:
-                    print(f"📦 Erstelle {len(missing_pakete)} neue Pakete")
-                    neue_pakete = [Paket(name=name) for name in missing_pakete]
-                    Paket.objects.bulk_create(neue_pakete, batch_size=1000)
-                    for paket in Paket.objects.filter(name__in=missing_pakete):
-                        existing_pakete[paket.name] = paket
+                    missing = [label for label, value in (('invnr', invnr), ('Sammlung', slg_name), ('Paket', paket_name)) if not value]
+                    if missing:
+                        self._row_error(result, number, row, f"Pflichtfeld fehlt: {', '.join(missing)}", dry_run)
+                        continue
+                    paket_namen.add(paket_name)
+                    slg_namen.add(slg_name)
+                    if slgteil_name:
+                        slgteil_namen.add(slgteil_name)
+                    import_rows.append((number, row, invnr, slg_name, slgteil_name, paket_name))
 
-                # 3. LADE REFERENZ-DATEN (einmalig)
+                # 2. Pakete laden; fehlende einzeln über save() anlegen, damit der Slug entsteht
+                existing_pakete = {p.name: p for p in Paket.objects.filter(name__in=paket_namen)}
+                neue_pakete = sorted(paket_namen - set(existing_pakete))
+                for name in neue_pakete:
+                    paket = Paket(name=name)
+                    paket.save()
+                    existing_pakete[name] = paket
+
+                # 3. Referenzdaten; SlgTeil-Namen sind nur innerhalb einer Sammlung eindeutig
                 slg_cache = {s.name: s for s in Slg.objects.filter(name__in=slg_namen)}
                 slgteil_cache = {}
                 if slgteil_namen:
-                    slgteil_cache = {st.name: st for st in SlgTeil.objects.filter(name__in=slgteil_namen)}
+                    for st in SlgTeil.objects.filter(name__in=slgteil_namen, idfk_Slg_SlgTeil__in=list(slg_cache.values())):
+                        slgteil_cache[(st.idfk_Slg_SlgTeil_id, st.name)] = st
 
-                # 4. VERARBEITE IN CHUNKS für bessere Performance
-                total_created = 0
-                total_skipped = 0
-                total_errors = 0
-                alle_fehler = []
-                
+                total_created = total_skipped = total_errors = 0
                 ThroughModel = Obj.pakete.through
-                
+
                 for chunk_start in range(0, len(import_rows), CHUNK_SIZE):
-                    chunk_end = min(chunk_start + CHUNK_SIZE, len(import_rows))
-                    chunk = import_rows[chunk_start:chunk_end]
-                    
-                    print(f"🔄 Verarbeite Chunk {chunk_start//CHUNK_SIZE + 1}/{(len(import_rows)-1)//CHUNK_SIZE + 1} ({len(chunk)} Zeilen)")
-                    
-                    # SAMMLE OBJEKT-SUCHKRITERIEN FÜR DIESEN CHUNK
-                    invnr_slg_mapping = {}  # invnr -> [(slg_id, slgteil_id_or_none)]
-                    
-                    for invnr, slg_name, slgteil_name, _ in chunk:
+                    chunk = import_rows[chunk_start:chunk_start + CHUNK_SIZE]
+
+                    # Ziel (slg_id, slgteil_id) je Zeile auflösen
+                    resolved = []
+                    for number, row, invnr, slg_name, slgteil_name, paket_name in chunk:
                         slg = slg_cache.get(slg_name)
-                        slgteil = slgteil_cache.get(slgteil_name) if slgteil_name else None
-                        
-                        if slg:
-                            if invnr not in invnr_slg_mapping:
-                                invnr_slg_mapping[invnr] = []
-                            invnr_slg_mapping[invnr].append((slg.id, slgteil.id if slgteil else None))
-                    
-                    # FINDE OBJEKTE FÜR DIESEN CHUNK (effizientere Query)
+                        if not slg:
+                            self._row_error(result, number, row, f"Sammlung '{slg_name}' nicht gefunden", dry_run)
+                            total_errors += 1
+                            continue
+                        slgteil_id = None
+                        if slgteil_name:
+                            slgteil = slgteil_cache.get((slg.id, slgteil_name))
+                            if not slgteil:
+                                self._row_error(result, number, row, f"Sammlungsteil '{slgteil_name}' in '{slg_name}' nicht gefunden", dry_run)
+                                total_errors += 1
+                                continue
+                            slgteil_id = slgteil.id
+                        resolved.append((number, row, invnr, slg.id, slgteil_id, slg_name, slgteil_name, paket_name))
+
                     chunk_obj_cache = {}
-                    
-                    if invnr_slg_mapping:
-                        # Alle Inventarnummern in diesem Chunk
-                        invnr_list = list(invnr_slg_mapping.keys())
-                        
-                        # Lade alle Objekte mit diesen Inventarnummern
-                        objekte_queryset = Obj.objects.filter(
-                            invnr__in=invnr_list
-                        ).select_related('Slg', 'SlgTeil')
-                        
-                        # Filtere die richtigen Objekte basierend auf Slg/SlgTeil
-                        for obj in objekte_queryset:
-                            obj_slg_id = obj.Slg.id if obj.Slg else None
-                            obj_slgteil_id = obj.SlgTeil.id if obj.SlgTeil else None
-                            
-                            # Prüfe ob dieses Objekt zu unseren Suchkriterien passt
-                            if obj.invnr in invnr_slg_mapping:
-                                for slg_id, slgteil_id in invnr_slg_mapping[obj.invnr]:
-                                    if obj_slg_id == slg_id and obj_slgteil_id == slgteil_id:
-                                        key = (obj.invnr, obj.Slg.name, obj.SlgTeil.name if obj.SlgTeil else None)
-                                        chunk_obj_cache[key] = obj
-                                        break
-                    
-                    # PRÜFE BESTEHENDE ZUWEISUNGEN FÜR DIESEN CHUNK
-                    chunk_obj_ids = [obj.id for obj in chunk_obj_cache.values()]
-                    chunk_paket_ids = [paket.id for paket in existing_pakete.values()]
-                    
+                    invnr_list = list({item[2] for item in resolved})
+                    slg_ids = list({item[3] for item in resolved})
+                    if invnr_list:
+                        for obj_id, obj_invnr, obj_slg_id, obj_slgteil_id in Obj.objects.filter(
+                            invnr__in=invnr_list, Slg_id__in=slg_ids
+                        ).values_list('id', 'invnr', 'Slg_id', 'SlgTeil_id'):
+                            chunk_obj_cache[(obj_invnr, obj_slg_id, obj_slgteil_id)] = obj_id
+
+                    chunk_obj_ids = list(chunk_obj_cache.values())
+                    chunk_paket_ids = [p.id for p in existing_pakete.values()]
                     existing_relations = set()
                     if chunk_obj_ids and chunk_paket_ids:
                         existing_relations = set(
-                            ThroughModel.objects
-                            .filter(obj_id__in=chunk_obj_ids, paket_id__in=chunk_paket_ids)
+                            ThroughModel.objects.filter(obj_id__in=chunk_obj_ids, paket_id__in=chunk_paket_ids)
                             .values_list('obj_id', 'paket_id')
                         )
-                    
-                    # VERARBEITE CHUNK-ZEILEN
-                    chunk_zuweisungen = []
-                    chunk_errors = 0
-                    chunk_skipped = 0
-                    
-                    for invnr, slg_name, slgteil_name, paket_name in chunk:
-                        obj_key = (invnr, slg_name, slgteil_name)
-                        obj = chunk_obj_cache.get(obj_key)
-                        
-                        if not obj:
-                            alle_fehler.append(f"Objekt '{invnr}' in '{slg_name}'{f'/{slgteil_name}' if slgteil_name else ''} nicht gefunden")
-                            chunk_errors += 1
+
+                    chunk_zuweisungen = {}
+                    for number, row, invnr, slg_id, slgteil_id, slg_name, slgteil_name, paket_name in resolved:
+                        obj_id = chunk_obj_cache.get((invnr, slg_id, slgteil_id))
+                        if not obj_id:
+                            ort = f'{slg_name}/{slgteil_name}' if slgteil_name else slg_name
+                            self._row_error(result, number, row, f"Objekt '{invnr}' in '{ort}' nicht gefunden", dry_run)
+                            total_errors += 1
                             continue
-                        
-                        paket = existing_pakete.get(paket_name)
-                        if not paket:
-                            alle_fehler.append(f"Paket '{paket_name}' nicht gefunden")
-                            chunk_errors += 1
+                        relation_key = (obj_id, existing_pakete[paket_name].id)
+                        if relation_key in existing_relations or relation_key in chunk_zuweisungen:
+                            total_skipped += 1
                             continue
-                        
-                        relation_key = (obj.id, paket.id)
-                        if relation_key in existing_relations:
-                            chunk_skipped += 1
-                            continue
-                        
-                        chunk_zuweisungen.append(ThroughModel(obj_id=obj.id, paket_id=paket.id))
-                    
-                    # ERSTELLE ZUWEISUNGEN FÜR DIESEN CHUNK
-                    chunk_created = 0
+                        chunk_zuweisungen[relation_key] = ThroughModel(obj_id=relation_key[0], paket_id=relation_key[1])
+
                     if chunk_zuweisungen:
-                        try:
-                            ThroughModel.objects.bulk_create(chunk_zuweisungen, batch_size=1000, ignore_conflicts=True)
-                            chunk_created = len(chunk_zuweisungen)
-                            print(f"  ✅ {chunk_created} neue Zuweisungen erstellt")
-                        except Exception as e:
-                            print(f"  ❌ Fehler beim Erstellen der Zuweisungen: {e}")
-                            chunk_errors += len(chunk_zuweisungen)
-                    
-                    if chunk_skipped > 0:
-                        print(f"  ⏭️ {chunk_skipped} Zuweisungen übersprungen (bereits vorhanden)")
-                    
-                    # SUMMIERE CHUNK-ERGEBNISSE
-                    total_created += chunk_created
-                    total_skipped += chunk_skipped
-                    total_errors += chunk_errors
-                
-                print(f"🎯 GESAMT: {total_created} erstellt, {total_skipped} übersprungen, {total_errors} Fehler")
-                
-                # ERSTELLE FINAL RESULT
+                        ThroughModel.objects.bulk_create(list(chunk_zuweisungen.values()), batch_size=1000, ignore_conflicts=True)
+                        total_created += len(chunk_zuweisungen)
+
                 result.totals[RowResult.IMPORT_TYPE_NEW] = total_created
                 result.totals[RowResult.IMPORT_TYPE_SKIP] = total_skipped
                 result.totals[RowResult.IMPORT_TYPE_ERROR] = total_errors
-                
-                # Zeige erste 10 Fehler
-                for fehler_msg in alle_fehler[:10]:
-                    result.append_base_error(fehler_msg)
-                
-                if len(alle_fehler) > 10:
-                    result.append_base_error(f"... und {len(alle_fehler) - 10} weitere Fehler")
-                
-        except Exception as e:
-            print(f"❌ Schwerwiegender Fehler beim Import: {e}")
-            import traceback
-            traceback.print_exc()
-            result.append_base_error(f"Schwerwiegender Fehler: {str(e)}")
-        
-        return result
 
-    # WICHTIG: Alle anderen Methoden deaktivieren, damit nur import_data verwendet wird
-    def before_import(self, dataset, using_transactions, dry_run, **kwargs):
-        return dataset
-    
-    def before_import_row(self, row, **kwargs):
-        return
-    
-    def get_or_init_instance(self, instance_loader, row):
-        # DUMMY - wird nicht verwendet da import_data überschrieben ist
-        return Obj(), False
-    
-    def after_import_instance(self, instance, new, row_number=None, **kwargs):
-        return
-    
-    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
-        return
-    
-    def import_obj(self, obj, data, dry_run):
-        # DUMMY - wird nicht verwendet
-        return
-    
-    def save_instance(self, instance, using_transactions=True, dry_run=False):
-        # DUMMY - wird nicht verwendet  
-        return
-    
-    def delete_instance(self, instance, using_transactions=True, dry_run=False):
-        # DUMMY - wird nicht verwendet
-        return
+                if dry_run:
+                    # Vorschau: nichts dauerhaft speichern (auch keine neuen Pakete)
+                    transaction.set_rollback(True)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).exception('Paket-Zuweisungsimport fehlgeschlagen')
+            result.append_base_error(Error(e))
+
+        return result
 
 # Optimierte Admin-Klasse für bessere Performance
 class ObjPaketZuweisungAdmin(ImportExportModelAdmin):

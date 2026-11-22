@@ -3,15 +3,16 @@ from django.forms import ModelForm, widgets
 from .models import *
 from django_select2.forms import Select2MultipleWidget, Select2Widget, ModelSelect2Widget
 from crispy_forms.helper import FormHelper
-from bootstrap_modal_forms.forms import BSModalForm
+from bootstrap_modal_forms.forms import BSModalForm, BSModalModelForm
 
 
-class ObjForm(BSModalForm):
+# BSModalModelForm: Create-/UpdateView brauchen ein ModelForm (instance=...).
+class ObjForm(BSModalModelForm):
     class Meta:
         model = Obj
         fields = ['invnr', 'titel', 'idfk_Muenzstand', 'idfk_Herstellung', 'Slg', 'idfk_Nominal', 'Metall', 'idfk_Mzstaette', 'region', 'dat_von', 'dat_bis', 'dat_verb', 'durchmesser', 'gewicht', 'stempelstellung', 'anmerkung']
 
-class ObjUpdateForm(BSModalForm):
+class ObjUpdateForm(BSModalModelForm):
     class Meta:
         model = Obj
         fields = ['invnr', 'titel', 'idfk_Muenzstand', 'idfk_Herstellung', 'Slg', 'idfk_Nominal', 'Metall', 'idfk_Mzstaette', 'region', 'dat_von', 'dat_bis', 'dat_verb', 'durchmesser', 'gewicht', 'stempelstellung', 'anmerkung']

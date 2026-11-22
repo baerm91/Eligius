@@ -101,43 +101,31 @@ def get_matrix_from_muenztypen(request, obj_pk): # Added obj_pk
         .filter(dat_von=dat_von, dat_bis=dat_bis)
         .filter(mztyp_person__idfk_Person_id__in=current_obj_rulers,
                 mztyp_person__idfk_PersonFunktion_id__in=PH_FUNCS)
+    )
+
+    # --- Filter aus der URL gelten für OBJEKTE ---
+    # apply_filters kennt nur Obj-Felder (Typ__..., Slg, ...); auf ein
+    # Muenztyp-QuerySet angewendet ergab jeder Parameter einen FieldError.
+    context_objects = apply_filters(
+        request, Obj.objects.filter(Typ_id__in=base_typ_qs.values('pk'))
+    )
+    # Pro Typ: Anzahl passender Objekte und ein Beispielobjekt (kleinste ID) –
+    # eine gruppierte Abfrage statt aller Objekte im Speicher.
+    type_stats = {
+        row['Typ_id']: (row['anzahl'], row['beispiel'])
+        for row in context_objects.order_by().values('Typ_id')
+        .annotate(anzahl=Count('pk', distinct=True), beispiel=Min('pk'))
+        if row['Typ_id']
+    }
+    typ_qs = (
+        Muenztyp.objects.filter(pk__in=list(type_stats))
         .select_related('Mzstaette', 'Nominal', 'rv_bildtyp', 'av_bildtyp')
-        .distinct() # Ensure distinct types if multiple persons match
     )
-
-    # --- Apply additional filters from request URL parameters ---
-    # The `apply_filters` function from views.py is used here.
-    # Ensure it's compatible with being called with a pre-filtered queryset.
-    typ_qs = apply_filters(request, base_typ_qs) # apply_filters now comes from .filters
-
-    # --- Pro Typ EIN Beispiel‑Objekt holen (Subquery) ---
-    sample_obj_qs = Obj.objects.select_related(
-        'Slg', 'SlgTeil', 'Typ', 'av_bildtyp', 'rv_bildtyp'
-    ).only(
-        'pk', 'invnr', # Required by get_bild_urls implicitly through self.invnr
-        # Fields needed by get_bild_urls via self.Slg, self.SlgTeil
-        'Slg__bildurl', 'Slg__bild_endung_av', 'Slg__bild_endung_rv', 'Slg__entferne_zeichen',
-        'SlgTeil__bildurl', 'SlgTeil__bild_endung_av', 'SlgTeil__bild_endung_rv', 'SlgTeil__entferne_zeichen',
-        # get_absolute_url needs self.id, which is obj.pk
-        # Timeline tooltip fields
-        'avleg', 'rvleg', 'av_bildtyp__name', 'rv_bildtyp__name',
-        # Typ relation fields needed for fallback values
-        'Typ__avleg', 'Typ__rvleg', 'Typ__av_bildtyp', 'Typ__rv_bildtyp'
-    )
-    
-    # Annotate with object count and filter out types with no objects *after* context and request filters
-    typ_qs = typ_qs.annotate(obj_count_in_context=Count('objekte')).filter(obj_count_in_context__gt=0)
-
-
-    sample_sub = (
-        sample_obj_qs.filter(Typ_id=OuterRef('pk'))
-        .order_by('pk') 
-        .values('pk')[:1]
-    )
-    typ_qs = typ_qs.annotate(sample_obj_id=Subquery(sample_sub))
-    typ_qs = typ_qs.prefetch_related(
-        Prefetch('objekte', queryset=sample_obj_qs) 
-    )
+    samples = {
+        obj.pk: obj for obj in Obj.objects.filter(pk__in=[sample for _, sample in type_stats.values()])
+        .select_related('Slg', 'SlgTeil', 'Typ', 'av_bildtyp', 'rv_bildtyp',
+                        'Typ__av_bildtyp', 'Typ__rv_bildtyp')
+    }
 
     # --- Strukturen vorbereiten ---
     staetten, nominale, rv_typen = OrderedDict(), OrderedDict(), OrderedDict()
@@ -158,13 +146,8 @@ def get_matrix_from_muenztypen(request, obj_pk): # Added obj_pk
         nominale.setdefault(nom.id, nom_name_attr)
         rv_typen.setdefault(rv.id, rv_name_attr)
 
-        ex_obj = None
-        if t.sample_obj_id: 
-            for o in t.objekte.all(): 
-                if o.pk == t.sample_obj_id:
-                    ex_obj = o
-                    break
-        matrix_tmp[mz.id][rv.id][nom.id] = serializable_obj(ex_obj, t.obj_count_in_context)
+        anzahl, sample_id = type_stats[t.pk]
+        matrix_tmp[mz.id][rv.id][nom.id] = serializable_obj(samples.get(sample_id), anzahl)
 
     # --- In template‑freundliche Struktur umwandeln ---
     matrix_data = OrderedDict() 
@@ -189,32 +172,33 @@ def get_matrix_from_muenztypen(request, obj_pk): # Added obj_pk
                     rv_count += cell['count']
         rv_counts[rv_id] = {"name": rv_name, "count": rv_count}
     
-    # --- Get overall frequency of motifs for the rulers, regardless of dating/mint/nominal ---
-    ruler_motif_stats = OrderedDict()
-
-    # A simpler approach: first get the distinct objects related to these rulers
-    matching_objects = (
+    # --- Häufigkeit der Motive für die Prägeherren (unabhängig von Datierung/Münzstätte/Nominal) ---
+    # Gruppiert in der Datenbank statt alle Objekte zu laden und pro Motiv 2 Abfragen.
+    ruler_filter = dict(mztyp_person__idfk_Person_id__in=current_obj_rulers,
+                        mztyp_person__idfk_PersonFunktion_id__in=PH_FUNCS)
+    motif_rows = list(
         Obj.objects
         .filter(Typ__mztyp_person__idfk_Person_id__in=current_obj_rulers,
-                Typ__mztyp_person__idfk_PersonFunktion_id__in=PH_FUNCS)
-        .filter(Typ__rv_bildtyp__isnull=False)
-        .select_related('Typ__rv_bildtyp')
-        .distinct()  # This ensures we have distinct objects
+                Typ__mztyp_person__idfk_PersonFunktion_id__in=PH_FUNCS,
+                Typ__rv_bildtyp__isnull=False)
+        .order_by()
+        .values('Typ__rv_bildtyp_id', 'Typ__rv_bildtyp__name')
+        .annotate(anzahl=Count('pk', distinct=True))
     )
+    sorted_motifs = sorted(motif_rows, key=lambda row: (-row['anzahl'], row['Typ__rv_bildtyp__name'] or ''))
+    motif_ids = [row['Typ__rv_bildtyp_id'] for row in sorted_motifs]
+    total_coins = sum(row['anzahl'] for row in sorted_motifs)
+    ruler_dates = {
+        row['rv_bildtyp_id']: row for row in
+        Muenztyp.objects.filter(rv_bildtyp_id__in=motif_ids, **ruler_filter).order_by()
+        .values('rv_bildtyp_id').annotate(first_date=Min('dat_von'), last_date=Max('dat_bis'))
+    }
+    full_dates = {
+        row['rv_bildtyp_id']: row for row in
+        Muenztyp.objects.filter(rv_bildtyp_id__in=motif_ids).order_by()
+        .values('rv_bildtyp_id').annotate(first_used=Min('dat_von'), last_used=Max('dat_bis'))
+    }
 
-    # Now count the objects by motif (manually, not in database)
-    motif_counts = defaultdict(int)
-    motif_names = {}
-    for obj in matching_objects:
-        rv_bildtyp = obj.Typ.rv_bildtyp
-        motif_counts[rv_bildtyp.id] += 1
-        motif_names[rv_bildtyp.id] = rv_bildtyp.name
-
-    # Sort by frequency
-    sorted_motifs = sorted(motif_counts.items(), key=lambda x: x[1], reverse=True)
-    total_coins = len(matching_objects)
-
-    # Now reconstruct the data structure we need for the rest of the code
     motif_list = []
     current_motif_rank = 0
     current_motif_frequency = 0
@@ -223,53 +207,30 @@ def get_matrix_from_muenztypen(request, obj_pk): # Added obj_pk
     current_motif_last_date = None
     current_motif_id = current_obj.Typ.rv_bildtyp_id if current_obj.Typ and current_obj.Typ.rv_bildtyp else None
 
-    for rank, (motif_id, motif_count) in enumerate(sorted_motifs, 1):
-        motif_name = motif_names[motif_id]
+    for rank, row in enumerate(sorted_motifs, 1):
+        motif_id, motif_count = row['Typ__rv_bildtyp_id'], row['anzahl']
         percentage = (motif_count / total_coins * 100) if total_coins > 0 else 0
-        
-        # Get date range for this motif
-        motif_dates = (
-            Muenztyp.objects
-            .filter(rv_bildtyp_id=motif_id, 
-                    mztyp_person__idfk_Person_id__in=current_obj_rulers,
-                    mztyp_person__idfk_PersonFunktion_id__in=PH_FUNCS)
-            .aggregate(
-                first_date=Min('dat_von'),
-                last_date=Max('dat_bis')
-            )
-        )
-        
-        # Also get the absolute first and last usage of this motif across ALL coins
-        motif_full_date_range = (
-            Muenztyp.objects
-            .filter(rv_bildtyp_id=motif_id)
-            .aggregate(
-                first_used=Min('dat_von'),
-                last_used=Max('dat_bis')
-            )
-        )
-        
-        motif_entry = {
+        motif_dates = ruler_dates.get(motif_id, {})
+        motif_full_date_range = full_dates.get(motif_id, {})
+        motif_list.append({
             "id": motif_id,
-            "name": motif_name,
+            "name": row['Typ__rv_bildtyp__name'],
             "count": motif_count,
             "percentage": round(percentage, 1),
             "rank": rank,
-            "first_date": motif_dates['first_date'],
-            "last_date": motif_dates['last_date'],
-            "first_used": motif_full_date_range['first_used'],
-            "last_used": motif_full_date_range['last_used']
-        }
-        
-        motif_list.append(motif_entry)
-        
+            "first_date": motif_dates.get('first_date'),
+            "last_date": motif_dates.get('last_date'),
+            "first_used": motif_full_date_range.get('first_used'),
+            "last_used": motif_full_date_range.get('last_used'),
+        })
+
         # Check if this is the current coin's motif
         if motif_id == current_motif_id:
             current_motif_rank = rank
             current_motif_frequency = motif_count
-            current_motif_percentage = round(percentage, 1) 
-            current_motif_first_date = motif_dates['first_date']
-            current_motif_last_date = motif_dates['last_date']
+            current_motif_percentage = round(percentage, 1)
+            current_motif_first_date = motif_dates.get('first_date')
+            current_motif_last_date = motif_dates.get('last_date')
 
     ruler_name_str = None
     if current_obj_rulers:
@@ -302,7 +263,7 @@ def get_matrix_from_muenztypen(request, obj_pk): # Added obj_pk
         }
     }
 
-    if not nominale and not staetten and not typ_qs.exists():
+    if not nominale and not staetten and not type_stats:
          return {
              "nominale": nominale, 
              "staetten": matrix_data, 

@@ -8,10 +8,68 @@ Wird verwendet von:
 """
 
 import logging
-from django.db import transaction
+from django.db import connection, models, transaction
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
+
+
+def _mtoa_model():
+    from .models import MuenztypObjektAnzeige
+    return MuenztypObjektAnzeige
+
+
+def update_fields():
+    return [f.name for f in _mtoa_model()._meta.concrete_fields if f.name != 'id']
+
+
+def fit_lengths(data):
+    """Kürzt Texte auf die Spaltenlänge der MTOA.
+
+    Ein einziger zu langer Wert (MySQL DataError 1406) würde sonst den ganzen
+    500er-Batch abbrechen. Die Quellfelder sind lesbar im Objekt; die MTOA ist
+    nur eine Anzeigeprojektion.
+    """
+    model = _mtoa_model()
+    for name, value in data.items():
+        if isinstance(value, str):
+            try:
+                field = model._meta.get_field(name)
+            except Exception:
+                continue
+            if isinstance(field, models.CharField) and field.max_length and len(value) > field.max_length:
+                logger.warning('MTOA-Feld %s für Obj %s auf %d Zeichen gekürzt', name, data.get('obj_id'), field.max_length)
+                data[name] = value[:field.max_length]
+    return data
+
+
+def save_projections(to_create, to_update, batch_size=500):
+    """Schreibt MTOA-Zeilen; obj_id ist eindeutig, parallele Erstanlagen werden zu Updates."""
+    model = _mtoa_model()
+    fields = update_fields()
+    if to_create:
+        kwargs = {'update_conflicts': True, 'update_fields': [f for f in fields if f != 'obj_id']}
+        if connection.features.supports_update_conflicts_with_target:
+            kwargs['unique_fields'] = ['obj_id']
+        model.objects.bulk_create(to_create, batch_size=batch_size, **kwargs)
+    if to_update:
+        model.objects.bulk_update(to_update, fields, batch_size=batch_size)
+
+
+def replace_projection_persons(obj_to_persons):
+    """Ersetzt die MtoaPerson-Zeilen der gegebenen Objekte."""
+    from .models import MtoaPerson
+    mtoa_map = dict(_mtoa_model().objects.filter(obj_id__in=list(obj_to_persons)).values_list('obj_id', 'id'))
+    MtoaPerson.objects.filter(mtoa_id__in=list(mtoa_map.values())).delete()
+    rows = [
+        MtoaPerson(mtoa_id=mtoa_map[obj_id], person_id=p['person_id'], funktion_id=p['funktion_id'],
+                   appears_on_rev=p['appears_on_rev'])
+        for obj_id, persons in obj_to_persons.items() if obj_id in mtoa_map
+        for p in persons
+    ]
+    if rows:
+        MtoaPerson.objects.bulk_create(rows, batch_size=2000)
+    return len(rows)
 
 
 def _build_schlagwort_maps_for_ids(av_bt_ids, rv_bt_ids):
@@ -46,7 +104,7 @@ def sync_objs_to_mtoa(obj_ids):
     Synchronisiert eine Liste von Obj-IDs in die MuenztypObjektAnzeige-Tabelle.
     Effizient für einzelne Objekte und kleine Batches.
     """
-    from .models import Obj, MuenztypObjektAnzeige, MtoaPerson
+    from .models import Obj, MuenztypObjektAnzeige
     from .management.commands.sync_mtoa import (
         build_optimized_queryset, generate_mtoa_from_obj, build_schlagwort_maps
     )
@@ -101,37 +159,15 @@ def sync_objs_to_mtoa(obj_ids):
         else:
             to_create.append(MuenztypObjektAnzeige(**data))
 
-    if to_create:
-        MuenztypObjektAnzeige.objects.bulk_create(to_create)
-    if to_update:
-        update_fields = [
-            f.name for f in MuenztypObjektAnzeige._meta.get_fields()
-            if hasattr(f, 'column') and f.name != 'id'
-        ]
-        MuenztypObjektAnzeige.objects.bulk_update(to_update, update_fields, batch_size=500)
+    save_projections(to_create, to_update)
+    person_links = replace_projection_persons(obj_to_persons)
 
-    mtoa_qs = MuenztypObjektAnzeige.objects.filter(obj_id__in=obj_ids)
-    mtoa_map = {mtoa.obj_id: mtoa.id for mtoa in mtoa_qs}
-
-    MtoaPerson.objects.filter(mtoa_id__in=mtoa_map.values()).delete()
-
-    mtoa_persons_to_create = []
-    for obj_id, persons in obj_to_persons.items():
-        mtoa_id = mtoa_map.get(obj_id)
-        if mtoa_id:
-            for p in persons:
-                mtoa_persons_to_create.append(MtoaPerson(
-                    mtoa_id=mtoa_id,
-                    person_id=p['person_id'],
-                    funktion_id=p['funktion_id'],
-                    appears_on_rev=p['appears_on_rev']
-                ))
-
-    if mtoa_persons_to_create:
-        MtoaPerson.objects.bulk_create(mtoa_persons_to_create, batch_size=2000)
+    # Gelöschte Objekte: Projektion entfernen, sonst bleiben 404-Geister in /browse/.
+    removed, _ = MuenztypObjektAnzeige.objects.filter(obj_id__in=obj_ids).exclude(
+        obj_id__in=list(obj_to_persons)).delete()
 
     logger.info(
-        "MTOA-Sync: %d Objekte verarbeitet (%d neu, %d aktualisiert, %d Personen-Links)",
-        len(obj_ids), len(to_create), len(to_update), len(mtoa_persons_to_create)
+        "MTOA-Sync: %d Objekte verarbeitet (%d neu, %d aktualisiert, %d entfernt, %d Personen-Links)",
+        len(obj_ids), len(to_create), len(to_update), removed, person_links
     )
     return len(to_create), len(to_update)

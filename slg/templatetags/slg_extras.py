@@ -52,6 +52,9 @@ def add_filter_param(context, **new_params_kwargs):
     single_value_params = ['dat_von', 'dat_bis']
 
     for param_name, param_value in new_params_kwargs.items():
+        if param_value is None or param_value == '':
+            # z.B. datierung_von=None: keinen Parameter "dat_von=None" erzeugen
+            continue
         new_value_str = str(param_value)
         
         if param_name in single_value_params:

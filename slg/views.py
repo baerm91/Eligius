@@ -17,7 +17,9 @@ from django.core import serializers
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import connection, transaction, IntegrityError
 from django.db.models import Prefetch, Q, Count, Max, Min, Avg, F, Exists, OuterRef, Subquery, Case, When, Value, IntegerField
-from django.http import FileResponse, HttpResponse, JsonResponse, HttpResponseRedirect, StreamingHttpResponse
+from rest_framework.pagination import PageNumberPagination
+from slg.filters import is_int_qparam
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.forms import inlineformset_factory, modelformset_factory
 from django.shortcuts import render , get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
@@ -1123,8 +1125,16 @@ def AvSchlagwortView(request, id):
    
    return render(request, 'slg/avschlagwort_detail.html', context)
 
+class _AvSchlagwortPagination(PageNumberPagination):
+    page_size = 200
+    max_page_size = 1000
+    page_size_query_param = 'page_size'
+
+
 class AvSchlagwortList(generics.ListAPIView):
     serializer_class = AvSchlagwortSerializer
+    queryset = AvBildtyp_Schlagwort.objects.select_related('schlagwort').order_by('pk')
+    pagination_class = _AvSchlagwortPagination
 
 class AvBildtypSchlagwortList(generics.ListAPIView):
     serializer_class = AvBildtypSerializer
@@ -1918,9 +1928,13 @@ def ObjektView(request, id):
     return render(request, 'slg/details.html', context)
 
 
-def objekt_detail_partial(request, id):
-    obj = get_object_or_404(Objekt, id=id)
-    return render(request, 'objekt_detail_partial.html', {'Obj': obj})
+def objekt_detail_partial(request, id=None):
+    # Die Route /objekt_detail_partial/ übergibt keine ID; sie kommt als ?id=.
+    obj_id = id if id is not None else request.GET.get('id', '')
+    if not str(obj_id).isdigit():
+        raise Http404('Objekt-ID fehlt oder ist ungültig.')
+    obj = get_object_or_404(Obj.objects.select_related('Slg'), id=int(obj_id))
+    return render(request, 'slg/objekt_detail_partial.html', {'Obj': obj})
 
 
 def kontakt(request):
@@ -2944,6 +2958,35 @@ class ObjektDetail(generics.RetrieveUpdateAPIView):
     lookup_field = 'invnr'
     lookup_url_kwarg = 'invnr'
 
+    def get_object(self):
+        """invnr ist nur je Sammlung(-steil) eindeutig.
+
+        Optional mit ?slg=<id>&slgteil=<id> eingrenzen; bleibt die Nummer
+        mehrdeutig, antwortet die API mit 409 und den Kandidaten statt mit
+        einem MultipleObjectsReturned (HTTP 500).
+        """
+        from rest_framework.exceptions import APIException, NotFound, ValidationError as DRFValidationError
+        queryset = self.filter_queryset(self.get_queryset()).filter(invnr=self.kwargs[self.lookup_url_kwarg])
+        for param, field in (('slg', 'Slg_id'), ('slgteil', 'SlgTeil_id')):
+            value = self.request.query_params.get(param)
+            if value not in (None, ''):
+                if not is_int_qparam(value):
+                    raise DRFValidationError({param: 'Ganzzahlige ID erwartet.'})
+                queryset = queryset.filter(**{field: int(value)})
+        matches = list(queryset.order_by('pk')[:21])
+        if not matches:
+            raise NotFound()
+        if len(matches) > 1:
+            conflict = APIException({
+                'detail': 'Inventarnummer ist mehrdeutig. Mit ?slg=<id> (und ggf. &slgteil=<id>) eingrenzen.',
+                'kandidaten': [{'id': o.pk, 'slg': o.Slg_id, 'slgteil': o.SlgTeil_id} for o in matches[:20]],
+            })
+            conflict.status_code = 409
+            raise conflict
+        obj = matches[0]
+        self.check_object_permissions(self.request, obj)
+        return obj
+
     def get_queryset(self):
         return Obj.objects.select_related(
             'Typ', 'Typ__workflow', 'workflow',
@@ -3312,18 +3355,24 @@ class PersonList(generics.ListCreateAPIView):
 
         return queryset.distinct()
 
+class _PersonCoinImagesPagination(PageNumberPagination):
+    page_size = 20
+    max_page_size = 100
+    page_size_query_param = 'page_size'
+
+
 class PersonCoinImagesView(generics.ListAPIView):
     serializer_class = PersonCoinImageSerializer
+    # Früher unpaginiert über ALLE Personen (2N+1 Queries)
+    pagination_class = _PersonCoinImagesPagination
 
     def get_queryset(self):
         name = self.request.query_params.get('name', None)
-        queryset = Person.objects.all()
+        # Nur Personen, die als Dargestellte (Funktion 2) auf Münztypen vorkommen
+        queryset = Person.objects.filter(mztyp_person__idfk_PersonFunktion=2)
         if name:
-            queryset = queryset.filter(
-                name__icontains=name,
-                mztyp_person__idfk_PersonFunktion=2  # Hardcoded function or adjust as needed
-            ).distinct()
-        return queryset
+            queryset = queryset.filter(name__icontains=name)
+        return queryset.distinct().order_by('name', 'pk')
 
 class MuenzstandList(generics.ListCreateAPIView):
     serializer_class = MuenzstandSerializer
@@ -3544,6 +3593,8 @@ def cycle_coin(request):
 
     if not (mt_id and current_id):
         return Response({"detail": "type_id oder current_obj_id fehlt"}, status=400)
+    if not (is_int_qparam(mt_id) and is_int_qparam(current_id)):
+        return Response({"detail": "type_id und current_obj_id müssen ganze Zahlen sein"}, status=400)
 
     objs = list(
         Obj.objects
@@ -3577,6 +3628,11 @@ def ereignisse_api(request):
 
     Parameter werden über die GET-Parameter übergeben.
     """
+    # Jahre müssen ganzzahlig sein (?von=abc war ein ValueError/HTTP 500)
+    invalid = [name for name in ('von', 'bis')
+               if request.GET.get(name) not in (None, '') and not is_int_qparam(request.GET.get(name))]
+    if invalid:
+        return JsonResponse({'error': f"Ungültiger Jahreswert für: {', '.join(invalid)}"}, status=400)
     cache_key = f"timeline_api:{request.get_full_path()}"
     data = cache.get(cache_key)
     if data is None:

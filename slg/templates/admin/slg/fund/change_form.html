@@ -1,12 +1,21 @@
 {% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
 
 {% block submit_buttons_bottom %}
 <div class="submit-row">
-    <input type="submit" value="Save" class="default" name="_save">
-    <input type="submit" value="Save and add another" name="_addanother">
-    <input type="submit" value="Save as new" name="_saveasnew">
-    {% if original %}
-        <input type="submit" value="Delete" class="deletelink" name="_delete">
+    {% if add or has_change_permission %}
+        <input type="submit" value="{% translate 'Save' %}" class="default" name="_save">
+        {% if has_add_permission %}
+            <input type="submit" value="{% translate 'Save and add another' %}" name="_addanother">
+            {% if original %}
+                <input type="submit" value="{% translate 'Save as new' %}" name="_saveasnew">
+            {% endif %}
+        {% endif %}
+    {% endif %}
+    {% if original and has_delete_permission %}
+        {# Löschen ist ein Link auf die Bestätigungsseite; ein Submit mit name="_delete" würde nur speichern. #}
+        {% url opts|admin_urlname:'delete' original.pk|admin_urlquote as delete_url %}
+        <a href="{% add_preserved_filters delete_url %}" class="deletelink">{% translate "Delete" %}</a>
     {% endif %}
 </div>
 {% endblock %}
