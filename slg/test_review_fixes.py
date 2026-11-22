@@ -193,3 +193,72 @@ class TemplateAndSettingsTests(Fixtures, TestCase):
     def test_cors_middleware_runs_early(self):
         self.assertLess(settings.MIDDLEWARE.index('corsheaders.middleware.CorsMiddleware'),
                         settings.MIDDLEWARE.index('django.middleware.common.CommonMiddleware'))
+
+
+class MinorBugTests(Fixtures, TestCase):
+    """Niedrigere / kleinere Bugs: Header-Injection, Import, Models, Admin."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.base_data()
+        cls.obj = Obj.objects.create(invnr='M1', Slg=cls.slg, Typ=cls.typ, workflow=cls.controlled)
+        cls.admin_user = User.objects.create_superuser('admin2', 'a@example.test', 'pw')
+
+    def test_switch_language_rejects_header_injection(self):
+        response = self.client.post(reverse('set_language'),
+                                    {'language': 'en', 'next': '/about/\r\nSet-Cookie: x=1'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/')
+
+    def test_catalog_sort_titles_redirect_uses_clean_ids(self):
+        self.client.force_login(self.admin_user)
+        url = reverse('catalog_sort_titles') + f'?obj_ids={self.obj.pk}%0D%0A'
+        response = self.client.post(url, {'action': 'save_order'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], f'/catalog/generate/?obj_ids={self.obj.pk}')
+
+    def test_fund_import_trims_fundort_and_keeps_zero(self):
+        from decimal import Decimal
+        from .models import Fund, Fundort
+        from .resources import FundResource
+        Fundort.objects.create(name='Parkplatz')
+        row = {'Objekt-ID': str(self.obj.pk), 'fundort': '  Parkplatz '}
+        FundResource().before_import_row(row)
+        self.assertEqual(row['fundort'], 'Parkplatz')
+        fund = Fund.objects.create(objekt=self.obj, lm_von=Decimal('0.00'), lm_bis=Decimal('3.00'),
+                                   niveautiefe_in_m_von=Decimal('0.00'))
+        fund.refresh_from_db()
+        self.assertEqual(fund.lm_bis, Decimal('3.00'))
+        self.assertEqual(fund.niveautiefe_in_m_bis, Decimal('0.00'))
+
+    def test_mtoa_get_absolute_url_is_method(self):
+        sync_objs_to_mtoa([self.obj.pk])
+        row = MuenztypObjektAnzeige.objects.get(obj_id=self.obj.pk)
+        self.assertEqual(row.get_absolute_url(), f'/objekt/{self.obj.pk}/')
+
+    def test_admin_details(self):
+        from django.contrib import admin as django_admin
+        from django.contrib.admin.models import ADDITION, LogEntry
+        from django.contrib.contenttypes.models import ContentType
+        from django.contrib.sessions.models import Session
+        from .admin import LogEntryAdmin
+        from .models import ObjektAenderung
+        entry = LogEntry(action_flag=ADDITION, object_id='x', object_repr='<Sitzung>',
+                         content_type=ContentType.objects.get_for_model(Session))
+        self.assertEqual(LogEntryAdmin(LogEntry, django_admin.site).object_link(entry), '&lt;Sitzung&gt;')
+        request = RequestFactory().get('/')
+        request.user = self.admin_user
+        self.assertFalse(django_admin.site._registry[ObjektAenderung].has_add_permission(request))
+
+    def test_str_never_none_and_img_for_neukloster(self):
+        from .models import Muenztyp, Mzstaette, SlgTeil
+        self.assertIsInstance(str(Muenztyp(muenztyptitel=None, titel=None, pk=5)), str)
+        self.assertIsInstance(str(Mzstaette(name=None, pk=3)), str)
+        teil = SlgTeil.objects.create(name='Slg. Neukloster')
+        self.assertEqual(Obj(invnr='S1/2', SlgTeil=teil).img, 'S1-2')
+        self.assertEqual(Obj(invnr='S1/2').img, '1-2')
+
+    def test_created_at_defaults_are_aware(self):
+        from django.utils import timezone
+        from .models import Slg
+        self.assertTrue(timezone.is_aware(Slg(name='x').created_at))

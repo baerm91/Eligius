@@ -124,7 +124,7 @@ class Slg(models.Model):
 	kulturpool_export_erlaubt = models.BooleanField(default=False, verbose_name='Kulturpool-Export erlauben')
 	kulturpool_rights_uri = models.URLField(max_length=500, blank=True, verbose_name='Kulturpool: Rechte-URI der Bilder', help_text='Nur eine bestätigte HTTP(S)-Rechte-URI eintragen. Keine Lizenz wird vorausgesetzt.')
 	kulturpool_metadata_rights_uri = models.URLField(max_length=500, blank=True, verbose_name='Kulturpool: Rechte-URI der Metadaten', help_text='Separat von den Bildrechten; nur nach Vereinbarung ausfüllen.')
-	created_at = models.DateTimeField(default=datetime.now, blank=True, null=True)
+	created_at = models.DateTimeField(default=timezone.now, blank=True, null=True)
 	bildurl = models.CharField(max_length=250, blank=True, null=True, verbose_name='Url zum Bilderverzeichnis')
 	cover = models.CharField(max_length=250, verbose_name='Coverbild-Url', blank=True)
 	bild_endung_av = models.CharField(max_length=10, default='a00', verbose_name='Endung Vorderseite')
@@ -391,7 +391,7 @@ class Mzstaette(models.Model):
 	
 	
 	def __str__(self):
-		return self.name
+		return self.name or f'Münzstätte {self.pk}'
 	class Meta:
 		verbose_name_plural = "Münzstätten"
 		ordering = ('name',)
@@ -1127,7 +1127,8 @@ class Muenztyp(CloneMixin, models.Model):
 	beschlussdatum = models.DateField(blank=True, null=True, verbose_name='Beschlussdatum')
 
 	def __str__(self):
-		return self.muenztyptitel
+		# muenztyptitel ist optional; __str__ darf nie None liefern (TypeError)
+		return self.muenztyptitel or self.titel or f'Münztyp {self.pk}'
 	
 	def _hlink(self):
 		ocre = "http://numismatics.org/ocre/id/"
@@ -1327,9 +1328,11 @@ class Fund(models.Model):
 	def save(self, *args, **kwargs):
 		if self.funddatum and not self.fundjahr:
 			self.fundjahr = self.funddatum.year
-		if self.lm_von and not self.lm_bis:
+		# None-Prüfung statt Truthiness: Decimal('0.00') ist ein gültiger Wert
+		# und darf weder übersprungen noch überschrieben werden.
+		if self.lm_von is not None and self.lm_bis is None:
 			self.lm_bis = self.lm_von
-		if self.niveautiefe_in_m_von and not self.niveautiefe_in_m_bis:
+		if self.niveautiefe_in_m_von is not None and self.niveautiefe_in_m_bis is None:
 			self.niveautiefe_in_m_bis = self.niveautiefe_in_m_von
 		super().save(*args, **kwargs)
 
@@ -1615,8 +1618,8 @@ class Obj(models.Model):
 	# image_tag.allow_tags = True
 	def _get_img(self):
 		#"Returns the person's full name."
-		if self.SlgTeil == "Slg. Neukloster":
-			print("genau 1")
+		# SlgTeil ist eine Instanz; der frühere Vergleich mit dem String war nie wahr.
+		if self.SlgTeil_id and self.SlgTeil.name == "Slg. Neukloster":
 			return '%s' % (self.invnr.replace('/','-'))
 		else:
 			return '%s' % (self.invnr.replace('S','').replace('/','-'))
@@ -1659,11 +1662,11 @@ class MyObjects(Obj):
 
 class Staat(models.Model):
 	name = models.CharField(max_length=200, verbose_name='Name')
-	created_at = models.DateTimeField(default=datetime.now, null=True,blank=True)
+	created_at = models.DateTimeField(default=timezone.now, null=True,blank=True)
 
 class Katalogart(models.Model):
 	name = models.CharField(max_length=200, verbose_name='Name')
-	created_at = models.DateTimeField(default=datetime.now, null=True,blank=True)
+	created_at = models.DateTimeField(default=timezone.now, null=True,blank=True)
 	class Meta:
 		verbose_name = "Katalogart"
 		verbose_name_plural = "Katalogarten"
@@ -1674,7 +1677,7 @@ class Katalogart(models.Model):
 class Firma(models.Model):
 	name = models.CharField(max_length=200, verbose_name='Name')
 	beschreibung = models.TextField(verbose_name='Beschreibung', blank=True)
-	created_at = models.DateTimeField(default=datetime.now, null=True, blank=True)
+	created_at = models.DateTimeField(default=timezone.now, null=True, blank=True)
 
 	class Meta:
 		verbose_name = "Firma"
@@ -1687,7 +1690,7 @@ class Firma(models.Model):
 class Monat(models.Model):
 	name = models.CharField(max_length=200, verbose_name='Name')
 	sortierung = models.PositiveSmallIntegerField(blank=True, null=True,)
-	created_at = models.DateTimeField(default=datetime.now, null=True,blank=True)
+	created_at = models.DateTimeField(default=timezone.now, null=True,blank=True)
 	class Meta:
 		verbose_name = "Monat"
 		verbose_name_plural = "Monate"
@@ -1726,7 +1729,7 @@ class Katalog(models.Model):
 	workflow = models.ForeignKey('Workflow', on_delete=models.CASCADE, blank=True, null=True, verbose_name='Workflow', default=2)
 	schlagworte = models.ManyToManyField('KatSchlagwort', through="KatalogSchlagwort", verbose_name = ("Schlagwort"))
 	anmerkung = models.TextField(verbose_name='Anmerkung', blank=True)
-	#created_at = models.DateTimeField(default=datetime.now, null=True, blank=True)
+	#created_at = models.DateTimeField(default=timezone.now, null=True, blank=True)
 
 	class Meta:
 		verbose_name = "Katalog"
@@ -1938,9 +1941,12 @@ class MuenztypObjektAnzeige(models.Model):
 				self.Nominal = type('Nominal', (), {'name': parent.nominal})() if parent.nominal else None
 		return DummyTyp(self)
 
-	@property
 	def get_absolute_url(self):
-		"""Link auf das ursprüngliche Objekt (keine Inventarnr. mehr)."""
+		"""Link auf das ursprüngliche Objekt (keine Inventarnr. mehr).
+
+		Methode, kein @property: Django-Admin ("Auf der Website anzeigen") und
+		Templates rufen get_absolute_url() auf.
+		"""
 		if self.obj_id:
 			# reverse vermeidet harte URL-Strings und folgt Ihren URL-Patterns
 			return reverse('Objekt', kwargs={'id': self.obj_id})

@@ -11,7 +11,9 @@ def switch_language(request):
     if request.POST.get('language') not in dict(settings.LANGUAGES):
         return HttpResponseBadRequest('Unsupported language')
     target = request.POST.get('next') or request.headers.get('Referer') or '/'
-    if not url_has_allowed_host_and_scheme(
+    # Steuerzeichen (\r\n …) würden im Location-Header einen BadHeaderError (500)
+    # bzw. Header-Injection auslösen; url_has_allowed_host_and_scheme prüft das nicht.
+    if any(ord(char) < 32 or ord(char) == 127 for char in target) or not url_has_allowed_host_and_scheme(
         target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
     ):
         target = '/'

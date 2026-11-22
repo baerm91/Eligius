@@ -350,8 +350,13 @@ class FundResource(resources.ModelResource):
 			raise ValueError(f'Objekt-ID {obj_id} existiert nicht.')
 		row['Objekt-ID'] = obj_id
 		fundort = row.get('fundort')
-		if not self._is_empty(fundort) and not Fundort.objects.filter(name=str(fundort).strip()).exists():
-			raise ValueError(f'Fundort "{fundort}" existiert nicht (bitte zuerst unter Fundorte anlegen).')
+		if not self._is_empty(fundort):
+			# Getrimmten Wert zurückschreiben, sonst sucht der ForeignKeyWidget mit
+			# Leerzeichen und wirft DoesNotExist, obwohl die Prüfung bestanden hat.
+			fundort = str(fundort).strip()
+			if not Fundort.objects.filter(name=fundort).exists():
+				raise ValueError(f'Fundort "{fundort}" existiert nicht (bitte zuerst unter Fundorte anlegen).')
+			row['fundort'] = fundort
 
 	def export_template(self, objs):
 		"""Vorlage für ausgewählte Objekte – mit vorhandenen Fundinfos vorbefüllt."""

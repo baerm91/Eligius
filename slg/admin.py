@@ -14,7 +14,7 @@ from django.http.response import HttpResponseRedirect
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.template.response import TemplateResponse
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.utils.http import urlencode
 from django.shortcuts import redirect
@@ -2636,17 +2636,15 @@ class LogEntryAdmin(admin.ModelAdmin):
         return request.user.is_superuser
 
     def object_link(self, obj):
-        if obj.action_flag == DELETION:
-            link = escape(obj.object_repr)
-        else:
-            ct = obj.content_type
-    #date_hierarchy = ['history__history_date']
-            link = '<a href="%s">%s</a>' % (
-    #list_display = ('invnr', 'titel','durchmesser', 'gewicht', 'stempelstellung','get_mzstaette','freigabe',)
-                reverse('admin:%s_%s_change' % (ct.app_label, ct.model), args=[obj.object_id]),
-                escape(obj.object_repr),
-            )
-        return mark_safe(link)
+        if obj.action_flag == DELETION or obj.content_type_id is None:
+            return escape(obj.object_repr)
+        ct = obj.content_type
+        try:
+            url = reverse('admin:%s_%s_change' % (ct.app_label, ct.model), args=[obj.object_id])
+        except NoReverseMatch:
+            # Model ohne Admin-Registrierung (oder entfernte App): nur Text anzeigen
+            return escape(obj.object_repr)
+        return mark_safe('<a href="%s">%s</a>' % (escape(url), escape(obj.object_repr)))
     object_link.admin_order_field = "object_repr"
     #inlines = (Obj_PersonInline,)
     # inlines = (Obj_PersonInline, Obj_RefInline,Obj_interneAnmerkungInline,)
@@ -2877,8 +2875,7 @@ class KatalogAdmin(admin.ModelAdmin):
         
         
         if "_verschlagwortung" in request.POST:
-            anmerkung = obj.anmerkung
-            anmerkung = anmerkung.lower()
+            anmerkung = (obj.anmerkung or '').lower()
             #woerter = anmerkung.split()
             # initializing test list
             test_list = list(KatSchlagwort.objects.values('name', 'id', 'synonyme'))
@@ -2888,7 +2885,8 @@ class KatalogAdmin(admin.ModelAdmin):
             # for split in woerter:
             woerter=[]
             for id_dict in test_list:
-                if id_dict['name'].lower() in anmerkung:
+                name = (id_dict['name'] or '').strip()
+                if name and name.lower() in anmerkung:
                     wort = id_dict['name']
                     woerter.append(wort)
                     try:
@@ -2903,7 +2901,10 @@ class KatalogAdmin(admin.ModelAdmin):
                 #print("Kommt NICHT vor: " + id_dict['name'])
                 if id_dict['synonyme'] is not None:
                     for syn in id_dict['synonyme'].splitlines():
-                        if syn.lower() in anmerkung:
+                        # Leere Synonym-Zeilen ('' in text ist immer True) hätten
+                        # das Schlagwort jedem Katalog zugeordnet.
+                        syn = syn.strip()
+                        if syn and syn.lower() in anmerkung:
                             wort = syn
                             woerter.append(wort)
                             try:
@@ -3032,6 +3033,12 @@ class ObjektAenderungAdmin(admin.ModelAdmin):
         }),
     )
     
+    def has_add_permission(self, request):
+        # Vorschläge entstehen nur über das öffentliche Formular; im Admin sind
+        # die Pflichtfelder (objekt, feld, neuer_wert …) schreibgeschützt, ein
+        # "Hinzufügen" würde beim Speichern scheitern.
+        return False
+
     def objekt_link(self, obj):
         """Erstellt einen Link zum Objekt in der Admin-Oberfläche"""
         if obj.objekt:

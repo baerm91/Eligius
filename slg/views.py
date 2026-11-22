@@ -40,7 +40,8 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from bootstrap_modal_forms.generic import BSModalCreateView, BSModalUpdateView
 
-from urllib.parse import quote, quote_plus, unquote, urlsplit
+from urllib.parse import quote, quote_plus, unquote, urlencode, urlsplit
+from django.utils.http import content_disposition_header
 from rdflib import Graph, Namespace, Literal
 from rdflib.namespace import RDF, FOAF, DCTERMS, URIRef
 
@@ -3923,8 +3924,9 @@ def catalog_sort_titles(request):
                 continue
         
         messages.success(request, 'Titel-Reihenfolge gespeichert.')
-        # Weiterleitung zur Katalog-Generierung
-        return redirect(f"/catalog/generate/?obj_ids={obj_ids}")
+        # Weiterleitung zur Katalog-Generierung; nur die geprüften IDs übernehmen,
+        # der Rohwert kann \r\n enthalten (BadHeaderError im Location-Header).
+        return redirect('/catalog/generate/?' + urlencode({'obj_ids': ','.join(map(str, obj_id_list))}))
     
     context = {
         'titel_objects': titel_objects,
@@ -4379,9 +4381,11 @@ def excel_ocre_enrich(request):
                 output.read(), 
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
-            original_name = excel_file.name
+            # Hochgeladener Dateiname ist Nutzereingabe: Steuerzeichen, Anführungs-
+            # zeichen und Pfadtrenner entfernen (Header-Injection/BadHeaderError).
+            original_name = re.sub(r'[\x00-\x1f\x7f"\\/]', '_', excel_file.name or '').strip() or 'datei.xlsx'
             new_name = original_name.replace('.xlsx', '_angereichert.xlsx') if '.xlsx' in original_name else f'{original_name}_angereichert.xlsx'
-            response['Content-Disposition'] = f'attachment; filename="{new_name}"'
+            response['Content-Disposition'] = content_disposition_header(True, new_name)
             return response
 
         except Exception as e:
