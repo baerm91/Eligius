@@ -827,6 +827,26 @@ STPL = (
 	(12, '12'),
 	(13, 'nicht feststellbar')
 )
+# Stempelstellungen ohne Uhrzeit-Bedeutung (0 = unbekannt, 13 = nicht feststellbar)
+STPL_NO_HOURS = {0: 'unbekannt', 13: 'nicht feststellbar'}
+
+
+def stempelstellung_parts(value):
+	"""(stunden, text) für Exporte: (6, None) bzw. (None, 'unbekannt').
+
+	0 und 13 sind keine Uhrzeiten und dürfen nicht als '0 h'/'13 h' erscheinen.
+	"""
+	if value in (None, ''):
+		return None, None
+	try:
+		number = int(str(value).strip())
+	except (TypeError, ValueError):
+		return None, str(value)
+	if number in STPL_NO_HOURS:
+		return None, STPL_NO_HOURS[number]
+	if 1 <= number <= 12:
+		return number, None
+	return None, None
 
 Abnutzung = (
 	(1, '1 - nicht bis kaum abgenutzt'),

@@ -129,6 +129,9 @@ ELIGIUS_ALLOW_QUERY_PARAM_TOKEN_AUTH = os.getenv(
     'ELIGIUS_ALLOW_QUERY_PARAM_TOKEN_AUTH', 'False').lower() in ('1', 'true', 'yes', 'on')
 MIDDLEWARE = [
     'djangoproject.middleware.RobotsTagMiddleware',
+    # django-cors-headers: so weit oben wie möglich, vor allem vor Common-/GZip-
+    # Middleware, damit auch deren Antworten (Redirects, 304) CORS-Header tragen.
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.gzip.GZipMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -138,7 +141,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 if DEBUG:
@@ -152,7 +154,30 @@ if cors_origins_list:
     CORS_ALLOWED_ORIGINS = cors_origins_list
     CORS_ALLOW_ALL_ORIGINS = False
 else:
-    CORS_ALLOW_ALL_ORIGINS = True
+    # Ohne explizite Liste nur lokal offen; in Produktion (DEBUG=False) keine
+    # Cross-Origin-Freigabe statt "alle Origins".
+    CORS_ALLOWED_ORIGINS = []
+    CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+
+def _env_flag(name, default):
+    value = os.getenv(name)
+    if value is None or value.strip() == '':
+        return default
+    return value.strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+# HTTPS-Härtung. Produktion läuft hinter nginx mit TLS (siehe docker/compose.yml);
+# alles per Umgebungsvariable übersteuerbar, z.B. für reine HTTP-Testserver.
+SESSION_COOKIE_SECURE = _env_flag('DJANGO_SESSION_COOKIE_SECURE', not DEBUG)
+CSRF_COOKIE_SECURE = _env_flag('DJANGO_CSRF_COOKIE_SECURE', not DEBUG)
+if _env_flag('DJANGO_BEHIND_TLS_PROXY', not DEBUG):
+    # nginx muss "proxy_set_header X-Forwarded-Proto $scheme;" setzen.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '0' if DEBUG else '31536000'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_flag('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', False)
+SECURE_HSTS_PRELOAD = _env_flag('DJANGO_SECURE_HSTS_PRELOAD', False)
+SECURE_SSL_REDIRECT = _env_flag('DJANGO_SECURE_SSL_REDIRECT', False)
 
 
 ROOT_URLCONF = 'djangoproject.urls'

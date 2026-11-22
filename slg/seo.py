@@ -105,12 +105,16 @@ def clean_text(text, limit=DESCRIPTION_LIMIT):
     return text
 
 
+# Prägeherr, Münzherr u.ä.; dieselben IDs wie in oai/edm.py (creator)
+RULER_FUNCTION_IDS = (1, 6, 7)
+
+
 def _ruler_names(personen):
-    """Prägeherren (PersonFunktion 1) eines Münztyps, lokalisiert."""
+    """Prägeherren (PersonFunktion 1, 6, 7 – wie MTOA/EDM) eines Münztyps, lokalisiert."""
     names = []
     for entry in personen:
         person = getattr(entry, 'idfk_Person', None)
-        if getattr(entry, 'idfk_PersonFunktion_id', None) == 1 and person and person.name:
+        if getattr(entry, 'idfk_PersonFunktion_id', None) in RULER_FUNCTION_IDS and person and person.name:
             label = display_text(person.name, 'Person')
             if label not in names:
                 names.append(label)
@@ -318,9 +322,11 @@ def sitemap_index(request):
     for section, sitemap_cls in SITEMAPS.items():
         sitemap = sitemap_cls(base)
         url = base + reverse('sitemap_section', kwargs={'section': section})
-        num_pages = sitemap.paginator.num_pages
-        if num_pages == 0:
+        # Paginator.num_pages ist bei allow_empty_first_page nie 0, sondern 1;
+        # leere Abschnitte (<urlset/>) gehören nicht in den Index.
+        if sitemap.paginator.count == 0:
             continue
+        num_pages = sitemap.paginator.num_pages
         entries.append({'location': url, 'last_mod': None})
         for page in range(2, num_pages + 1):
             entries.append({'location': f'{url}?p={page}', 'last_mod': None})

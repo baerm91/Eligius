@@ -71,8 +71,14 @@ def validate_changes(row, action, changes):
     if not isinstance(changes, dict) or not changes or set(changes) - set(fields):
         raise ValueError('Nur die ausdrücklich erlaubten Felder dieser Aktion sind zulässig: ' + ', '.join(fields))
     if action.startswith('update_unidentified') and row.Typ_id is not None:
-        raise ValueError('Die typbezogenen Angaben dieses Objekts werden über den Münztyp definiert. '
-                         'Typzuweisung oder separate Münztypänderung verwenden.')
+        # Bei bestimmten Objekten haben gespeicherte Obj-Altangaben in Browse,
+        # Detail und OAI Vorrang vor dem Münztyp (MTOA-Projektion: Obj → Typ).
+        # Neue Werte sind hier tabu, das Bereinigen (Leeren) muss aber möglich
+        # sein, sonst verdecken Altangaben dauerhaft die Typangaben.
+        if any(value not in (None, '') for value in changes.values()):
+            raise ValueError('Die typbezogenen Angaben dieses Objekts werden über den Münztyp definiert. '
+                             'Bei bestimmten Objekten können direkte Angaben nur geleert werden '
+                             '(null/""); sonst Typzuweisung oder separate Münztypänderung verwenden.')
     if action == 'assign_coin_type' and changes.get('Typ') is None:
         raise ValueError('Eine existierende Münztyp-ID ist erforderlich.')
     if action == 'remove_coin_type' and changes != {'Typ': None}:
@@ -125,8 +131,9 @@ def _prepare(user_id, action, ids, changes, lock=False):
                       for key in UNIDENTIFIED_FIELDS
                       if getattr(row, Obj._meta.get_field(key).attname) not in (None, '')}
             if direct:
-                warnings.append(f'Objekt {row.pk}: direkte Angaben bleiben erhalten; '
-                                'die Typangaben bestimmen künftig die typbezogene Darstellung.')
+                warnings.append(f'Objekt {row.pk}: direkte Angaben bleiben erhalten und haben in '
+                                'Browse/Detail/OAI weiterhin Vorrang vor den Typangaben. Zum Bereinigen '
+                                'danach update_unidentified_object_data mit null-Werten verwenden.')
                 entries[-1]['preserved_direct_data'] = direct
     impact = None
     target = None

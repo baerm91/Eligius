@@ -38,7 +38,7 @@
                 id:{{forloop.counter}},
                 start:'{{Typ.dat_von}}',
                 row:{{forloop.parentloop.counter}},
-                content:'{{Typ.titel}}',
+                content:'{{Typ.titel|escapejs}}',
                 size:'large',
                 {% for mz in Typ.objekte.all|slice:"0:1" %}
                 {% comment %} image:'https://upload.wikimedia.org/wikipedia/en/7/70/Ironmanposter.JPG', {% endcomment %}
@@ -47,7 +47,7 @@
                 {% elif mz.Slg_id == 2 %}
                 image:'{{mz.Slg.bildurl}}/thumbnails/{{mz.invnr}}r00.webp',
                 {% else %}
-                image:'https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{mz.img}}Rv.webp'
+                image:'https://www.univie.ac.at/stiftheiligenkreuz/Neukloster/thumbails/{{mz.img}}Rv.webp',
                 {% endif %}
                 {% endfor %}
                 extend:{

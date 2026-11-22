@@ -130,78 +130,50 @@ def replace_monogram_references(text):
 @api_view(['GET'])
 @permission_classes([AllowAny])  # Diese Zeile hinzufügen
 def get_adjacent_invnrs(request):
+    """Nachbarn einer Inventarnummer (±2) innerhalb einer Sammlung.
+
+    Früher wurden alle Obj-Instanzen der Sammlung in den RAM geladen; jetzt
+    holen je zwei sortierte, begrenzte Abfragen nur die benötigten Nachbarn.
+    """
     current_invnr = request.GET.get('invnr')
     slg_id = request.GET.get('slg_id')
     slgteil_id = request.GET.get('slgteil_id')
-    
-    # Log the received parameters for debugging
-    print(f"Parameters received: invnr='{current_invnr}', slg_id='{slg_id}', slgteil_id='{slgteil_id}'")
-    
+
     if not current_invnr or not slg_id:
         return Response({'error': 'Inventarnummer und Sammlungs-ID sind erforderlich'}, status=400)
-    
-    try:
-        # Ensure we're using valid IDs for slg and slgteil
-        slg_id_int = int(slg_id)
-        slgteil_id_int = int(slgteil_id) if slgteil_id else None
-        
-        # Query logic
-        filter_kwargs = {'Slg_id': slg_id_int}
-        if slgteil_id_int:
-            filter_kwargs['SlgTeil_id'] = slgteil_id_int
-            
-        objects = Obj.objects.filter(**filter_kwargs).order_by('invnr')
-        
-        # Get all inventory numbers as they are (as strings)
-        invnr_list = list(objects.values_list('invnr', flat=True))
-        
-        # Debug information
-        print(f"Found {len(invnr_list)} objects with these filters")
-        print(f"First 5 inventory numbers: {invnr_list[:5] if len(invnr_list) >= 5 else invnr_list}")
-        print(f"Looking for inventory number: '{current_invnr}'")
-        
-        # Check if invnr exists in the list
-        if current_invnr not in invnr_list:
-            return Response({
-                'error': f"Inventarnummer '{current_invnr}' nicht gefunden in der gefilterten Liste.",
-                'available_invnrs': invnr_list[:10]  # Show first 10 as hint
-            }, status=404)
-        
-        # Find the index while keeping invnr as string
-        current_index = invnr_list.index(current_invnr)
-        print(f"Found at index {current_index}")
-        
-        # Get object IDs that match these inventory numbers
-        obj_map = {obj.invnr: obj.id for obj in objects}
-        
-        # Return result with proper bounds checking
-        result = {
-            'prev2': invnr_list[current_index - 2] if current_index >= 2 else None,
-            'prev2_id': obj_map.get(invnr_list[current_index - 2]) if current_index >= 2 else None,
-            'prev1': invnr_list[current_index - 1] if current_index >= 1 else None,
-            'prev1_id': obj_map.get(invnr_list[current_index - 1]) if current_index >= 1 else None,
-            'current': current_invnr,
-            'current_id': obj_map.get(current_invnr),
-            'next1': invnr_list[current_index + 1] if current_index < len(invnr_list) - 1 else None,
-            'next1_id': obj_map.get(invnr_list[current_index + 1]) if current_index < len(invnr_list) - 1 else None,
-            'next2': invnr_list[current_index + 2] if current_index < len(invnr_list) - 2 else None,
-            'next2_id': obj_map.get(invnr_list[current_index + 2]) if current_index < len(invnr_list) - 2 else None,
-        }
-        
-        return Response(result)
-        
-    except ValueError as e:
-        # More detailed error message for debugging
-        return Response({
-            'error': f"ValueError: {str(e)}. Parameter types: invnr={type(current_invnr).__name__}, "
-                     f"slg_id={type(slg_id).__name__}, slgteil_id={type(slgteil_id).__name__}"
-        }, status=400)
-    
-    except Exception as e:
-        # Catch any other errors
-        return Response({
-            'error': f"Unexpected error: {str(e)}"
-        }, status=500)
+    if not is_int_qparam(slg_id) or (slgteil_id and not is_int_qparam(slgteil_id)):
+        return Response({'error': 'Sammlungs-ID und Sammlungsteil-ID müssen ganze Zahlen sein.'}, status=400)
+
+    filter_kwargs = {'Slg_id': int(slg_id)}
+    if slgteil_id and int(slgteil_id):
+        filter_kwargs['SlgTeil_id'] = int(slgteil_id)
+    objects = Obj.objects.filter(**filter_kwargs)
+
+    current_id = (objects.filter(invnr=current_invnr).order_by('pk')
+                  .values_list('id', flat=True).first())
+    if current_id is None:
+        return Response({'error': f"Inventarnummer '{current_invnr}' nicht gefunden in der gefilterten Liste."},
+                        status=404)
+
+    previous = list(objects.filter(invnr__lt=current_invnr).order_by('-invnr', '-pk')
+                    .values_list('invnr', 'id')[:2])
+    following = list(objects.filter(invnr__gt=current_invnr).order_by('invnr', 'pk')
+                     .values_list('invnr', 'id')[:2])
+
+    def neighbour(rows, index):
+        return rows[index] if len(rows) > index else (None, None)
+
+    prev1, prev1_id = neighbour(previous, 0)
+    prev2, prev2_id = neighbour(previous, 1)
+    next1, next1_id = neighbour(following, 0)
+    next2, next2_id = neighbour(following, 1)
+    return Response({
+        'prev2': prev2, 'prev2_id': prev2_id,
+        'prev1': prev1, 'prev1_id': prev1_id,
+        'current': current_invnr, 'current_id': current_id,
+        'next1': next1, 'next1_id': next1_id,
+        'next2': next2, 'next2_id': next2_id,
+    })
 
 class SlgTeilListAPIView(generics.ListAPIView):
     serializer_class = SlgTeilSerializer
@@ -585,6 +557,9 @@ def _get_package_comparison_packages(paket):
     for comparison_package in chain(paket.vergleichspakete.all(), paket.vergleichende_pakete.all()):
         if comparison_package.id in seen_package_ids:
             continue
+        # Unveröffentlichte Pakete dürfen auch als Vergleich nicht öffentlich erscheinen.
+        if not comparison_package.online_freigegeben:
+            continue
         seen_package_ids.add(comparison_package.id)
         comparison_packages.append(comparison_package)
 
@@ -906,14 +881,24 @@ def NomismaInfo(link):
             f'  <{uri}> skos:definition ?def.\n'
             "  FILTER langMatches(lang(?def), 'en')\n"
             '}')
+   # Ohne Cache blockierte jeder Modal-Aufruf einen Worker bis zu 5 s auf Nomisma.
+   cache_key = 'nomisma-info:' + hashlib.sha256(uri.encode()).hexdigest()
+   cached = cache.get(cache_key)
+   if cached is not None:
+      return cached
    try:
       response = requests.get('https://nomisma.org/query', params={'query': query, 'output': 'csv'}, timeout=5)
       response.raise_for_status()
       rows = list(csv.DictReader(response.content.decode('utf-8').splitlines(), delimiter=','))
    except (RequestException, ValueError):
+      # Fehlschläge kurz merken, damit ein hängender Endpunkt nicht jeden
+      # Aufruf erneut ausbremst.
+      cache.set(cache_key, ([], ""), 60 * 5)
       return [], ""
    definition = rows[0].get('def', '') if rows else ""
-   return [row for row in rows if row.get('link')], definition
+   result = ([row for row in rows if row.get('link')], definition)
+   cache.set(cache_key, result, 60 * 60 * 24)
+   return result
 
 
 WIKIPEDIA_USER_AGENT = 'Eligius/1.0 (https://eligius.at; numismatic catalogue)'
@@ -1110,6 +1095,15 @@ def SammlungView(request, id):
    
    return render(request, 'slg/Sammlung.html', context)
 
+def _schlagwort_nav(current_id):
+   """Blätter-Navigation (±1, ±2, ±10) für die Schlagwort-Detailseiten."""
+   items = [{'id': max(1, current_id - 10), 'symbol': '&laquo;', 'label': 'Previous'}]
+   items += [{'id': current_id + offset, 'current': offset == 0}
+             for offset in (-2, -1, 0, 1, 2) if current_id + offset >= 1]
+   items.append({'id': current_id + 10, 'symbol': '&raquo;', 'label': 'Next'})
+   return items
+
+
 def AvSchlagwortView(request, id):
    
    # obj = Muenztyp.objects.select_related('Muenzstand', 'Herstellung', 'Nominal', 'Mzstaette', 'Metall', 'region', 'av_bildtyp', 'rv_bildtyp', 'av_beizeichen', 'rv_beizeichen', 'Objekttyp',).prefetch_related('obj_set', 'mztyp_person_set', 'typ_ref_set',).get(id=id)
@@ -1121,6 +1115,7 @@ def AvSchlagwortView(request, id):
 
    context = {
       'avbildtypen': avbildtypen,
+      'schlagwort_nav': _schlagwort_nav(id),
    }
    
    return render(request, 'slg/avschlagwort_detail.html', context)
@@ -1164,6 +1159,7 @@ def RvSchlagwortView(request, id):
    # print(rvbildtypen.muenztyp.all())
    context = {
       'rvbildtypen': rvbildtypen,
+      'schlagwort_nav': _schlagwort_nav(id),
    }
    
    return render(request, 'slg/rvschlagwort_detail.html', context)
@@ -1187,13 +1183,16 @@ def RvSchlagwortTimelineView(request, id):
 
 def PraegeherrTimelineView(request, id):
    
+   typen = Muenztyp.objects.filter(mztyp_person__idfk_Person=id).distinct()
+   # Nur die Typen dieses Prägeherrn vorladen; ein ungefiltertes
+   # prefetch('rvmztypen') holte alle Typen anderer Prägeherren mit.
    rvbildtypen = RvBildtyp.objects.prefetch_related(
-      'rvmztypen', 'rvmztypen__objekte', 'rvmztypen__objekte__SlgTeil'
+      Prefetch('rvmztypen',
+               queryset=Muenztyp.objects.filter(pk__in=typen.values('pk'))
+               .prefetch_related('objekte', 'objekte__SlgTeil'))
    ).filter(rvmztypen__mztyp_person__idfk_Person=id).distinct()
 
-   startandenddate = rvbildtypen.aggregate(start=Min('rvmztypen__dat_von'), end=Max('rvmztypen__dat_bis'))
-
-   typen = Muenztyp.objects.filter(mztyp_person__idfk_Person=id).distinct()
+   startandenddate = typen.aggregate(start=Min('dat_von'), end=Max('dat_bis'))
    datierungen = typen.values('dat_von')
 
    context = {
@@ -1403,11 +1402,17 @@ def prepare_coin_data_export(queryset):
         processed_count = 0
         seen_pks = set()
         
-        for batch_start in range(0, queryset.count(), BATCH_SIZE):
-            batch = list(optimized_queryset[batch_start:batch_start + BATCH_SIZE])
+        # Keyset-Paginierung über pk: LIMIT/OFFSET ohne feste Sortierung kann
+        # bei >500 Objekten Zeilen überspringen oder doppelt liefern.
+        optimized_queryset = optimized_queryset.order_by('pk')
+        last_pk = None
+        while True:
+            page_qs = optimized_queryset if last_pk is None else optimized_queryset.filter(pk__gt=last_pk)
+            batch = list(page_qs[:BATCH_SIZE])
             
             if not batch:
                 break
+            last_pk = batch[-1].pk
                 
             # Alle IDs für diese Batch sammeln
             obj_ids = [obj.pk for obj in batch if obj.pk not in seen_pks]
@@ -1733,6 +1738,9 @@ def prepare_coin_data(obj):
          'herstellung': obj.idfk_Herstellung or (mztyp.Herstellung if mztyp else None),
          'avleg': obj.avleg or (mztyp.avleg if mztyp else None),
          'rvleg': obj.rvleg or (mztyp.rvleg if mztyp else None),
+         # vom Änderungsvorschlag-Formular (scripte.html) vorbelegt
+         'avbeschr': obj.avbeschr or (mztyp.avbeschr if mztyp else None),
+         'rvbeschr': obj.rvbeschr or (mztyp.rvbeschr if mztyp else None),
          'av_bildtyp': obj.av_bildtyp or (mztyp.av_bildtyp if mztyp else None),
          'rv_bildtyp': obj.rv_bildtyp or (mztyp.rv_bildtyp if mztyp else None),
          'av_schlagworte': av_schlagworte_qs,
@@ -1771,6 +1779,15 @@ def prepare_coin_data(obj):
     
     if data['rv_offizin_symbol']:
         data['rv_offizin_symbol_html'] = data['rv_offizin_symbol'].get_svg_html()
+
+    # Browse-Filterwerte für Beizeichen: MTOA speichert den Textnamen mit
+    # ersetztem '?' (sync_mtoa.generate_mtoa_from_obj), keine ID.
+    for side in ('av', 'rv'):
+        bz = data[f'{side}_beizeichen']
+        name = (bz.name or '') if bz else ''
+        if name and data[f'{side}_offizin']:
+            name = name.replace('?', data[f'{side}_offizin'].name or '')
+        data[f'{side}_beizeichen_filter'] = name or None
 
     # Anpassung der Beizeichen-Anzeige für Vorderseite
     if data['av_beizeichen']:
@@ -2031,13 +2048,11 @@ from .services.search import MTOA_FILTERS, MTOA_FACETS, _get_filtered_mtoa_query
 # Neuer Endpoint für Chart-Daten
 def area_chart_data(request):
     try:
-        print(f"DEBUG: Request GET params: {request.GET}")
-
         filtered_qs, _, _ = _get_filtered_mtoa_queryset(request)
-        obj_ids = list(filtered_qs.values_list('obj_id', flat=True))
-        print(f"DEBUG: Gefundene MTOA-Objekte: {len(obj_ids)}")
+        object_count = filtered_qs.count()
+        logger.debug("area_chart_data: %d MTOA-Objekte", object_count)
 
-        if not obj_ids:
+        if not object_count:
             return JsonResponse({
                 'years': [],
                 'counts': [],
@@ -2050,7 +2065,7 @@ def area_chart_data(request):
                 Q(datierung_von=None) | Q(datierung_bis=None)
             ).values_list('datierung_von', 'datierung_bis')
         )
-        print(f"DEBUG: MTOA-Datumswerte: {len(pairs)} Paare gefunden")
+        logger.debug(f"area_chart_data: MTOA-Datumswerte: {len(pairs)} Paare gefunden")
 
         # Wenn Datierungsfilter aktiv sind, die Zeitspannen für den Chart
         # auf den angeforderten Bereich begrenzen. Sonst bleibt der Ausschnitt
@@ -2072,11 +2087,13 @@ def area_chart_data(request):
         if chart_from is not None and chart_to is not None and chart_from > chart_to:
             chart_from, chart_to = chart_to, chart_from
 
-        print(f"DEBUG: chart_from={chart_from}, chart_to={chart_to}")
+        logger.debug(f"area_chart_data: chart_from={chart_from}, chart_to={chart_to}")
 
+        # Obergrenze gilt immer: sonst hebt ?dat_von=-100000&dat_bis=100000 das
+        # Limit auf und jede Objektspanne wird jahresweise aufaddiert (CPU/RAM).
         max_span = 3000
         if chart_from is not None and chart_to is not None:
-            max_span = chart_to - chart_from + 2
+            max_span = min(max_span, chart_to - chart_from + 2)
 
         years_counter = Counter()
         error_count = 0
@@ -2107,8 +2124,8 @@ def area_chart_data(request):
                 error_count += 1
                 continue
 
-        print(f"DEBUG: Fehlerhafte Datumsbereiche: {error_count}")
-        print(f"DEBUG: Verarbeitete Jahre im Counter: {len(years_counter)}")
+        logger.debug(f"area_chart_data: Fehlerhafte Datumsbereiche: {error_count}")
+        logger.debug(f"area_chart_data: Verarbeitete Jahre im Counter: {len(years_counter)}")
         
         # Vollständige Jahresliste
         if years_counter:
@@ -2136,7 +2153,7 @@ def area_chart_data(request):
             'counts': counts,
             'percentages': percentages,
             'debug': {
-                'filtered_objects': len(obj_ids),
+                'filtered_objects': object_count,
                 'date_pairs': len(pairs),
                 'error_count': error_count,
                 'years_counter_items': len(years_counter),
@@ -2295,7 +2312,7 @@ class MzstaettenRView(viewsets.ModelViewSet):
 
 def jsonresp(request, id):
    # obj = Obj.objects.select_related('idfk_Muenzstand', 'idfk_Herstellung', 'idfk_SlgTeil', 'idfk_Nominal', 'idfk_Mzstaette').prefetch_related('Ppl').get(id=id)
-   obj = Obj.objects.get(pk=id)
+   obj = get_object_or_404(Obj, pk=id)
    serializer = ObjSerializer(obj)
    return JsonResponse(serializer.data)
    #data = serializers.serialize(obj, many=True).data
@@ -2305,28 +2322,36 @@ def jsonresp(request, id):
 
 def rdfliboutput(request, id):
    
-   obj = Obj.objects.get(pk=id)
-   #print(request.build_absolute_uri)
-   uri = URIRef('http://127.0.0.1:8000/slg/150')
-   uriobv = URIRef('http://127.0.0.1:8000/slg/150#obverse')
-   urirev = URIRef('http://127.0.0.1:8000/slg/150#reverse')
-   # uri = URIRef(obj.get_absolute_url)
-   titel = Literal(obj.titel)
-   invnr = Literal(obj.invnr)
-   slgteil = Literal(obj.SlgTeil)
-   stempelstellung = Literal(obj.stempelstellung)
-   durchmesser = Literal(obj.durchmesser)
+   from rdflib.namespace import XSD
+   from .models import stempelstellung_parts
+   from .oai.identifiers import object_uri
+
+   obj = get_object_or_404(Obj.objects.select_related('SlgTeil'), pk=id)
+   # Objekt-URI aus der öffentlichen Basis-URL bzw. dem Request, nicht mehr
+   # hartcodiert auf http://127.0.0.1:8000/slg/150 für jedes Objekt.
+   base = object_uri(request, obj.pk)
+   uri = URIRef(base)
+   uriobv = URIRef(base + '#obverse')
+   urirev = URIRef(base + '#reverse')
    nmo = Namespace("http://nomisma.org/ontology#")
    dcterms = Namespace(DCTERMS)
-   
+
    g = Graph()
    g.bind('nmo',nmo)
    g.bind('dcterms', dcterms)
-   g.add( (uri, dcterms.title, titel) )
-   g.add( (uri, dcterms.identifier, invnr) )
-   g.add( (uri, nmo.hasCollection, slgteil) )
-   g.add( (uri, nmo.hasAxis, stempelstellung) )
-   g.add( (uri, nmo.hasDiameter, durchmesser) )
+   if obj.titel:
+      g.add( (uri, dcterms.title, Literal(obj.titel)) )
+   if obj.invnr:
+      g.add( (uri, dcterms.identifier, Literal(obj.invnr)) )
+   if obj.SlgTeil_id:
+      g.add( (uri, nmo.hasCollection, Literal(str(obj.SlgTeil))) )
+   axis, _axis_text = stempelstellung_parts(obj.stempelstellung)
+   if axis is not None:
+      g.add( (uri, nmo.hasAxis, Literal(axis, datatype=XSD.integer)) )
+   if obj.durchmesser is not None:
+      g.add( (uri, nmo.hasDiameter, Literal(obj.durchmesser, datatype=XSD.decimal)) )
+   if obj.gewicht is not None:
+      g.add( (uri, nmo.hasWeight, Literal(obj.gewicht, datatype=XSD.decimal)) )
    g.add( (uri, nmo.hasObverse, uriobv) )
    g.add( (uri, nmo.hasReverse, urirev) )
    # g.add( (uriobv, foaf.depiction, uriobv) )
@@ -2702,11 +2727,12 @@ class MuenztypFilterView(APIView):
         TokenAuthentication,
     ]
     permission_classes = [AuthenticatedReadStaffModelWrite]
+    MAX_LIMIT = 5000
 
     def get(self, request):
         qs = Muenztyp.objects.select_related(
             'Nominal', 'Mzstaette', 'av_bildtyp', 'rv_bildtyp', 'Ref',
-            'av_beizeichen', 'av_offizin_symbol',
+            'rv_beizeichen', 'rv_offizin_symbol',
         )
 
         # --- text search across title, citation and represented person ---
@@ -2752,22 +2778,22 @@ class MuenztypFilterView(APIView):
         if denominations:
             qs = qs.filter(Nominal__name__in=denominations)
 
-        # --- mintMark (av_beizeichen.name) ---
+        # --- mintMark (rv_beizeichen.name; der Serializer liefert rv_*) ---
         mint_marks = request.query_params.getlist('mintMark')
         mint_marks = [m.strip() for m in mint_marks if m.strip()]
         if mint_marks:
-            qs = qs.filter(av_beizeichen__name__in=mint_marks)
+            qs = qs.filter(rv_beizeichen__name__in=mint_marks)
 
         # --- mintMark_search (text search) ---
         mintmark_search = (request.query_params.get('mintMark_search') or '').strip()
         if mintmark_search:
-            qs = qs.filter(av_beizeichen__name__iregex=self._wildcard_mintmark_regex(mintmark_search))
+            qs = qs.filter(rv_beizeichen__name__iregex=self._wildcard_mintmark_regex(mintmark_search))
 
-        # --- officinaMark (av_offizin_symbol.name) ---
+        # --- officinaMark (rv_offizin_symbol.name) ---
         officina_marks = request.query_params.getlist('officinaMark')
         officina_marks = [o.strip() for o in officina_marks if o.strip()]
         if officina_marks:
-            qs = qs.filter(av_offizin_symbol__name__in=officina_marks)
+            qs = qs.filter(rv_offizin_symbol__name__in=officina_marks)
 
         # --- dargestellt pills (exact person name) ---
         dargestellt_values = request.query_params.getlist('dargestellt')
@@ -2801,14 +2827,15 @@ class MuenztypFilterView(APIView):
 
         # --- limit ---
         try:
-            limit = max(1, int(request.query_params.get('limit', '5000')))
+            limit = int(request.query_params.get('limit', self.MAX_LIMIT))
         except (TypeError, ValueError):
-            limit = 5000
+            limit = self.MAX_LIMIT
+        limit = max(1, min(limit, self.MAX_LIMIT))
 
         type_ids = list(qs.order_by('muenztyptitel').values_list('id', flat=True)[:limit])
         types_qs = Muenztyp.objects.filter(id__in=type_ids).select_related(
             'Nominal', 'Mzstaette', 'av_bildtyp', 'rv_bildtyp', 'Ref',
-            'av_beizeichen', 'av_offizin_symbol',
+            'rv_beizeichen', 'rv_offizin_symbol',
         ).order_by('muenztyptitel')
 
         # Prefetch person names for dargestellt_av_eligius
@@ -2845,7 +2872,16 @@ class MuenztypFilterView(APIView):
             core = core[1:]
         if ends_with:
             core = core[:-1]
-        core = core.replace('?', '_')
+
+        if '?' in core:
+            # Django escaped '_' in (i)contains/startswith → '?' als echtes
+            # Einzelzeichen-Wildcard über einen Regex abbilden.
+            pattern = ''.join('.' if ch == '?' else re.escape(ch) for ch in core)
+            if starts_with:
+                pattern = f'^{pattern}'
+            if ends_with:
+                pattern = f'{pattern}$'
+            return ('iregex', pattern)
 
         if starts_with and ends_with:
             return ('iexact', core)
@@ -3633,7 +3669,22 @@ def ereignisse_api(request):
                if request.GET.get(name) not in (None, '') and not is_int_qparam(request.GET.get(name))]
     if invalid:
         return JsonResponse({'error': f"Ungültiger Jahreswert für: {', '.join(invalid)}"}, status=400)
-    cache_key = f"timeline_api:{request.get_full_path()}"
+    # Cache-Schlüssel nur aus den ausgewerteten Parametern bilden: mit der
+    # vollen URL ließe sich der LocMemCache über beliebige Query-Strings fluten.
+    params = tuple((name, (request.GET.get(name) or '').strip()[:200])
+                   for name in ('von', 'bis', 'sammlung', 'person', 'thema'))
+    values = dict(params)
+    # Nur endliche, typische Abfragen cachen; Freitext (thema, Personenname)
+    # und beliebige Jahreszahlen würden sonst je Anfrage einen Eintrag erzeugen.
+    cacheable = (
+        not values['thema']
+        and (not values['person'] or values['person'].isdigit())
+        and (not values['sammlung'] or values['sammlung'].isdigit())
+        and all(not values[name] or -1000 <= int(values[name]) <= 3000 for name in ('von', 'bis'))
+    )
+    if not cacheable:
+        return JsonResponse(get_timeline_data(request))
+    cache_key = 'timeline_api:' + hashlib.sha256(repr(params).encode()).hexdigest()
     data = cache.get(cache_key)
     if data is None:
         data = get_timeline_data(request)
@@ -4196,6 +4247,9 @@ def objekt_list_view_mtoa(request):
         {
             'id': m['mint_id'],
             'name': display_text(m['mint_name'], 'Mzstaette'),
+            # Filterwert immer der gespeicherte (deutsche) DB-Name; der
+            # übersetzte 'name' ist nur Anzeige (sonst 0 Treffer auf /en/).
+            'filter_value': m['mint_name'],
             'region': display_text(m['mint_region'], 'Region'),
             'longitude': float(m['mint_lon']) if m['mint_lon'] is not None else None,
             'latitude': float(m['mint_lat']) if m['mint_lat'] is not None else None,

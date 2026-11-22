@@ -294,8 +294,8 @@ def get_timeline_data(request):
     Gibt Ereignisse für die Zeitleiste basierend auf den Anfrageparametern zurück.
     
     Parameter:
-    - dat_von: Startdatum (optional)
-    - dat_bis: Enddatum (optional)
+    - von: Startjahr (optional)
+    - bis: Endjahr (optional)
     - sammlung: ID der Sammlung (optional)
     - person: ID der Person (optional)
     - thema: Thema/Schlagwort (optional)
@@ -315,26 +315,29 @@ def get_timeline_data(request):
     query = SlgInformation.objects.all()
     
     # Filter basierend auf Parametern anwenden
+    # Ein Ereignis ohne dat_bis gilt als Zeitpunkt dat_von (wie in der Ausgabe
+    # unten: 'dat_bis': info.dat_bis or info.dat_von).
     if dat_von:
         # Ereignisse, die nach oder während des Startdatums stattfinden
         query = query.filter(
-            Q(dat_von__gte=dat_von) | 
-            Q(dat_bis__gte=dat_von, dat_von__lte=dat_von)
+            Q(dat_von__gte=dat_von) |
+            Q(dat_bis__gte=dat_von)
         )
-    
+
     if dat_bis:
-        # Ereignisse, die vor oder während des Enddatums stattfinden
+        # Ereignisse, die vor oder während des Enddatums beginnen; dat_bis IS NULL
+        # darf hier nicht herausfallen.
         query = query.filter(
-            Q(dat_bis__lte=dat_bis) | 
-            Q(dat_von__lte=dat_bis, dat_bis__gte=dat_bis)
+            Q(dat_von__lte=dat_bis) |
+            Q(dat_von__isnull=True, dat_bis__lte=dat_bis)
         )
     
     if sammlung_id:
-        try:
-            query = query.filter(Slg_id=sammlung_id)
-        except ValueError:
-            # Wenn sammlung_id kein gültiger Integer ist
-            pass
+        if str(sammlung_id).strip().isdigit():
+            query = query.filter(Slg_id=int(sammlung_id))
+        else:
+            # Ungültige Sammlungs-ID ignorieren statt ValueError beim Auswerten
+            sammlung_id = None
     
     if person_param:
         # Versuchen, nach ID zu filtern, wenn es sich um eine Zahl handelt
@@ -398,10 +401,9 @@ def get_timeline_data(request):
     title = "Ereignisse"
     if sammlung_id:
         try:
-            from .models import Sammlung
             sammlung = Slg.objects.get(id=sammlung_id)
             title = f"Geschichte der {sammlung.name}"
-        except (ObjectDoesNotExist, ImportError):
+        except (ObjectDoesNotExist, ValueError, TypeError):
             pass
     elif person_param:
         try:

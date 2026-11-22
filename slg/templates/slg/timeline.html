@@ -344,8 +344,9 @@
       
       // Parameter für die API-Anfrage
       const apiParams = {
-        dat_von: urlParams.get('von'),
-        dat_bis: urlParams.get('bis'),
+        // helpers.get_timeline_data / ereignisse_api lesen 'von'/'bis'
+        von: urlParams.get('von'),
+        bis: urlParams.get('bis'),
         sammlung: urlParams.get('sammlung'),
         person: urlParams.get('person'),
         thema: urlParams.get('thema')

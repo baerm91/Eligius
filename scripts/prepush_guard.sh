@@ -8,8 +8,10 @@ ROOT_DIR="$(git rev-parse --show-toplevel)"
 cd "$ROOT_DIR"
 
 forbidden_regex='(^|/)(\.venv/|venv/|\.envrc$|\.env$|\.env\..+|dev-local/|secrets/|db\.sqlite3$|.*\.sqlite3$|.*\.sql$)'
+# Bewusst getrackte Vorlagen (siehe .gitignore: !.env.example, !dev-local/*.example)
+allowed_regex='(^|/)(\.env\.example$|dev-local/[^/]+\.example$|dev-local/README\.md$)'
 
-tracked_forbidden="$(git ls-files | grep -E "$forbidden_regex" || true)"
+tracked_forbidden="$(git ls-files | grep -E "$forbidden_regex" | grep -Ev "$allowed_regex" || true)"
 
 if [[ -n "$tracked_forbidden" ]]; then
   echo ""

@@ -1,0 +1,14 @@
+# Build-Kontext auf das beschränken, was das Dockerfile kopiert. Verhindert,
+# dass bei direktem "docker build" (z.B. unter Windows) .venv/, SQL-Dumps,
+# Secrets und Arbeitsdateien in den Kontext bzw. das Image gelangen.
+*
+!requirements.txt
+!manage.py
+!djangoproject/
+!slg/
+!docker/entrypoint.sh
+
+**/__pycache__/
+**/*.py[cod]
+slg/_unused_code_backup/
+slg/views copy*.py

@@ -179,7 +179,26 @@ def _page_context(url):
         # paths. Only the shared filter whitelist can enter returned context.
         allowed = allowed_filter_names()
         filters = {key: query.getlist(key) for key in query if key in allowed}
-        filters = dict(filter_request(filters).GET.lists())
+        # Browse-URLs enthalten leere Formularfelder (dat_von=&dat_bis=) und
+        # manuell veränderte, ungültige Werte. Die Seite ignoriert diese; der
+        # Kontext soll deshalb nicht mit HTTP 400 scheitern.
+        cleaned = {}
+        for key, values in filters.items():
+            values = [v for v in values if v.strip()]
+            if not values:
+                continue
+            try:
+                filter_request({key: values})
+            except ValueError:
+                continue
+            cleaned[key] = values
+        try:
+            filters = dict(filter_request(cleaned).GET.lists())
+        except ValueError:
+            # z.B. dat_von > dat_bis: Datumsgrenzen verwerfen, Rest behalten.
+            cleaned.pop('dat_von', None)
+            cleaned.pop('dat_bis', None)
+            filters = dict(filter_request(cleaned).GET.lists())
         return {'page_type': 'browse', 'filters': filters}
     if match.url_name == 'Objekt':
         obj = public_objects().filter(pk=match.kwargs['id']).values('pk', 'Typ_id', 'Slg_id').first()

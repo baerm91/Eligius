@@ -152,6 +152,12 @@ class EditorServiceTests(TestCase):
             with self.assertRaisesRegex(ValueError, 'Münztyp'):
                 self.preview(action, {'avleg': 'BAD'}, [self.classified.pk])
 
+    def test_classified_object_stale_direct_values_can_be_cleared(self):
+        Obj.objects.filter(pk=self.classified.pk).update(avleg='ALT')
+        self.apply(self.preview('update_unidentified_legend', {'avleg': None}, [self.classified.pk]))
+        self.classified.refresh_from_db()
+        self.assertIsNone(self.classified.avleg)
+
     def test_removal_preserves_direct_fields_without_default_copy(self):
         Obj.objects.filter(pk=self.classified.pk).update(idfk_Nominal=self.typ.Nominal_id, Metall=None)
         self.classified.refresh_from_db()

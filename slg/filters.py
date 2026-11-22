@@ -80,16 +80,28 @@ def build_filters(request, exclude_field=None):
             if param_values_from_request: # Check if there are values for this param in request
                 current_param_filters = []
                 int_only = any(field_needs_int(field) for field in config_values['fields'])
+                lookup = config_values["filter"]
                 for value in param_values_from_request:
-                    if is_valid_qparam(value) and (not int_only or is_int_qparam(value)):
-                        # config_values here is the dictionary for the current param from FILTER_PARAMETERS
-                        # e.g., {'fields': ['Typ__Nominal__name', 'idfk_Nominal__name'], 'filter': 'exact', ...}
-                        field_q_objects = [
-                            Q(**{f'{field}__{config_values["filter"]}': value})
-                            for field in config_values['fields']
-                        ]
-                        if field_q_objects:
-                            current_param_filters.append(reduce(or_, field_q_objects))
+                    if lookup == 'in':
+                        # __in braucht eine Liste. Ein String würde zeichenweise
+                        # iteriert (Nominal_id=12 → IN ('1', '2')). Kommagetrennte
+                        # Mehrfachwerte (num=1,2) bleiben erlaubt.
+                        parts = [p.strip() for p in str(value).split(',') if p.strip()]
+                        if int_only:
+                            parts = [p for p in parts if is_int_qparam(p)]
+                        if not parts:
+                            continue
+                        lookup_value = parts
+                    elif is_valid_qparam(value) and (not int_only or is_int_qparam(value)):
+                        lookup_value = value
+                    else:
+                        continue
+                    field_q_objects = [
+                        Q(**{f'{field}__{lookup}': lookup_value})
+                        for field in config_values['fields']
+                    ]
+                    if field_q_objects:
+                        current_param_filters.append(reduce(or_, field_q_objects))
                 if current_param_filters:
                      general_filters.append(reduce(or_, current_param_filters))
 

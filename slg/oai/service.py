@@ -30,6 +30,11 @@ ARGUMENTS = {
 TOKEN_SALT = 'slg.oai.pagination.v1'
 DATE = re.compile(r'[0-9]{4}-[0-9]{2}-[0-9]{2}(?:T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)?')
 SET = re.compile(r'[A-Za-z0-9_!~*\x27().-]+(?::[A-Za-z0-9_!~*\x27().-]+)*')
+# request@identifier ist im OAI-PMH-XSD xsd:anyURI: kein Leerraum, keine in
+# URIs verbotenen Zeichen, Prozent-Escapes nur mit zwei Hex-Ziffern.
+ANY_URI = re.compile(r'(?:[^\s<>"{}|\\^`%]|%[0-9A-Fa-f]{2})+')
+ROOT_SET = 'eligius'
+ALL_ARGUMENTS = {'verb'} | set().union(*(required | optional for required, optional in ARGUMENTS.values()))
 
 
 class OAIError(Exception):
@@ -92,6 +97,8 @@ def validate_parameters(query):
         raise OAIError('badArgument', 'Arguments must be nonempty and at most 4096 characters.')
     if required - set(params):
         raise OAIError('badArgument', 'Missing required argument.')
+    if 'identifier' in params and not ANY_URI.fullmatch(params['identifier']):
+        raise OAIError('badArgument', 'identifier must be a valid URI.')
     if 'metadataPrefix' in params and params['metadataPrefix'] not in FORMATS:
         raise OAIError('cannotDisseminateFormat', 'Supported formats are edm and oai_dc.')
     if 'set' in params and not SET.fullmatch(params['set']):
@@ -171,7 +178,7 @@ def list_response(root, params, request):
         if state['set']:
             if not Slg.objects.filter(kulturpool_export_erlaubt=True).exists():
                 raise OAIError('noSetHierarchy', 'No export collections are configured.')
-            if state['set'] != 'eligius':
+            if state['set'] != ROOT_SET:
                 match = re.fullmatch(r'eligius:collection-([1-9][0-9]{0,9})', state['set'])
                 rows = rows.filter(slg_fk_id=int(match[1])) if match else rows.none()
         lower, upper = date_bounds({key: state[key] for key in ('from', 'until') if state[key] is not None})
@@ -201,6 +208,12 @@ def list_response(root, params, request):
         # A concurrent withdrawal must never accidentally release stale metadata.
         raise OAIError('badResumptionToken' if resumed else 'noRecordsMatch', 'Records changed during this request; retry harvesting.')
     node = element(root, 'oai', verb)
+    if verb == 'ListSets' and not resumed:
+        # Die Sammlungs-Sets 'eligius:collection-N' sind Kinder von 'eligius';
+        # das Eltern-Set muss selbst in ListSets erscheinen.
+        item = element(node, 'oai', 'set')
+        element(item, 'oai', 'setSpec', ROOT_SET)
+        element(item, 'oai', 'setName', settings.ELIGIUS_OAI_REPOSITORY_NAME)
     for row in page:
         if verb == 'ListSets':
             item = element(node, 'oai', 'set')
@@ -258,7 +271,13 @@ def respond(query, request):
     except OAIError as error:
         for child in list(root)[2:]:
             root.remove(child)
-        if error.code in ('badVerb', 'badArgument'):
-            echo.attrib.clear()
+        echo.attrib.clear()
+        if error.code not in ('badVerb', 'badArgument'):
+            # OAI-PMH 4.2: außer bei badVerb/badArgument werden die Argumente
+            # auch im Fehlerfall echoed (z.B. cannotDisseminateFormat,
+            # badResumptionToken). Dann sind sie bereits syntaktisch geprüft.
+            echo.attrib.update({key: values[0] for key, values in query.lists()
+                                if key in ALL_ARGUMENTS and len(values) == 1
+                                and not INVALID_XML.search(values[0])})
         element(root, 'oai', 'error', error.message, code=error.code)
     return ET.tostring(root, encoding='utf-8', xml_declaration=True)

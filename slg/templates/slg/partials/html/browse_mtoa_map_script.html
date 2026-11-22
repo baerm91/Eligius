@@ -78,7 +78,7 @@
   Object.values(mintsData).forEach(mint => {
     if (mint.latitude && mint.longitude) {
       const url = new URL(window.location.href);
-      url.searchParams.set('Muenzstaette', mint.name);
+      url.searchParams.set('Muenzstaette', mint.filter_value || mint.name);
 
       // ✅ POPUP mit Objektanzahl
       const marker = L.marker([mint.latitude, mint.longitude])

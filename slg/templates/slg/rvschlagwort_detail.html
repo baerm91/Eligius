@@ -21,26 +21,15 @@
                             <td width="*">
                                 
                                 
-                                <nav aria-label="Page navigation example">
+                                <nav aria-label="{% translate 'Schlagwort-Navigation' %}">
                                     <ul class="pagination">
-                                        
-                                        <li class="page-item">
-                                        <a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"-10" }}" class="pull-left" aria-label="Previous">
-                                                <span aria-hidden="true">&laquo;</span>
-                                                <span class="sr-only">Previous</span>
-                                        </a>
+                                        {% for item in schlagwort_nav %}
+                                        <li class="page-item{% if item.current %} active{% endif %}">
+                                            <a class="page-link" href="{% url 'RvSchlagwort' item.id %}"{% if item.label %} aria-label="{{ item.label }}"{% endif %}>
+                                                {% if item.symbol %}<span aria-hidden="true">{{ item.symbol|safe }}</span><span class="visually-hidden">{{ item.label }}</span>{% else %}{{ item.id }}{% endif %}
+                                            </a>
                                         </li>
-                                        <li class="page-item"><a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"-2" }}">{{ rvbildtypen.schlagworte.id|add:"-2" }}</a></li>
-                                        <li class="page-item"><a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"-1" }}">{{ rvbildtypen.schlagworte.id|add:"-1" }}</a></li>
-                                        <li class="page-item"><a class="page-link" href="../{{ rvbildtypen.schlagworte.id }}">{{ rvbildtypen.schlagworte.id }}</a></li>
-                                        <li class="page-item"><a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"1" }}">{{ rvbildtypen.schlagworte.id|add:"1" }}</a></li>
-                                        <li class="page-item"><a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"2" }}">{{ rvbildtypen.schlagworte.id|add:"2" }}</a></li>
-                                        <li class="page-item">
-                                        <a class="page-link" href="../{{ rvbildtypen.schlagworte.id|add:"10" }}" class="pull-right" aria-label="Next">
-                                                <span aria-hidden="true">&raquo;</span>
-                                                <span class="sr-only">Next</span>
-                                        </a>
-                                        </li>
+                                        {% endfor %}
                                     </ul>
                                 </nav>
                                 {% endif %}
@@ -70,14 +59,14 @@
                     <tbody>
                         {% for bildtyp in rvbildtypen %}
                           
-                            <tr id="RvBildtypen" data-toggle="collapse" data-target="#typen{{forloop.counter}}" class="accordion-toggle">
+                            <tr data-bs-toggle="collapse" data-bs-target="#typen{{forloop.counter}}" class="accordion-toggle rv-bildtyp-row">
                                 <td colspan="2"><button class="btn btn-default btn-xs">{{bildtyp.display_name}}</button></td>
                                 <td>{% if request.user.is_authenticated %}<a href="{% url 'admin:slg_rvbildtyp_change' bildtyp.pk %}">{% translate "bearbeiten" %}</a>{% endif %}</td>
                             </tr>
                             <tr>
                                 <td></td>
                                 <td class="hiddenRow">
-                                <div id="typen{{forloop.counter}}" class="row infinite-container accordian-body collapse">
+                                <div id="typen{{forloop.counter}}" class="row accordian-body collapse">
                                     {% for Typ in bildtyp.rvmztypen.all %}
                                     
                                     <div class="col-sm-6 col-md-3 col-lg-3 col-xl-2 pt-3 pb-3 align-self-center infinite-item">
@@ -150,7 +139,7 @@
             });
             $("#Suche").on("keyup", function() {
                 var value = $(this).val().toLowerCase();
-                $("#RvBildtypen ").filter(function() {
+                $(".rv-bildtyp-row").filter(function() {
                   $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 });
             });
@@ -169,21 +158,6 @@
 
         
     </script>
-    <script>
-        var infinite = new Waypoint.Infinite({
-          element: $('.infinite-container')[0],
-          onBeforePageLoad: function () {
-            $('.loading').show();
-          },
-          onAfterPageLoad: function ($items) {
-            $('.loading').hide();
-          }
-        });
-    
-        function toggle_visibility(id) {
-        var e = document.getElementById(id);
-        e.style.visibility = ((e.style.visibility!='hidden') ? 'hidden' : 'visible');
-        }
-    </script>
+    {# Waypoint.Infinite entfernt: Bibliothek hier nicht geladen, keine Folgeseiten #}
 
 {% endblock scripts %}

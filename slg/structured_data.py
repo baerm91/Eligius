@@ -11,6 +11,7 @@ from decimal import Decimal
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
+from .models import stempelstellung_parts
 from .oai.edm import PERSON_AUTHORITY_FIELDS, authority_uri, typology_entries, valid_uri
 from .oai.rights import image_rights_uri, metadata_rights_uri
 from .seo import absolute_url, clean_text, public_base_url
@@ -234,6 +235,16 @@ def _quantity(name, value, unit_code, unit_text):
     return {'@type': 'PropertyValue', 'name': name, 'value': value, 'unitCode': unit_code, 'unitText': unit_text}
 
 
+def _die_axis(value):
+    """Stempelstellung: 1–12 als Stunden; 0/13 (unbekannt/nicht feststellbar) als Text."""
+    hours, text = stempelstellung_parts(value)
+    if hours is not None:
+        return _quantity(_('Stempelstellung'), hours, None, 'h')
+    if text:
+        return {'@type': 'PropertyValue', 'name': _('Stempelstellung'), 'value': _(text)}
+    return None
+
+
 def object_graph(request, obj, coin_data, labels):
     """Münze/Objekt als ``VisualArtwork``.
 
@@ -313,7 +324,7 @@ def object_graph(request, obj, coin_data, labels):
             if coin_data.get('metall') else None,
             _quantity(_('Gewicht'), coin_data.get('gewicht'), 'GRM', 'g'),
             _quantity(_('Durchmesser'), coin_data.get('durchmesser'), 'MMT', 'mm'),
-            _quantity(_('Stempelstellung'), coin_data.get('stempelstellung'), None, 'h'),
+            _die_axis(coin_data.get('stempelstellung')),
             {'@type': 'PropertyValue', 'name': _('Vs.'), 'value': clean_text(coin_data.get('avleg'), limit=0)}
             if coin_data.get('avleg') else None,
             {'@type': 'PropertyValue', 'name': _('Rs.'), 'value': clean_text(coin_data.get('rvleg'), limit=0)}

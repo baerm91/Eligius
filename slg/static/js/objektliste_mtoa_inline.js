@@ -144,7 +144,10 @@ document.addEventListener("DOMContentLoaded", function () {
         window.map = null;
       }
 
-      if (window.browseChart && window.browseChart.dispose) {
+      if (typeof window.disposeBrowseChart === 'function') {
+        // trennt auch den ResizeObserver des Charts
+        window.disposeBrowseChart();
+      } else if (window.browseChart && window.browseChart.dispose) {
         window.browseChart.dispose();
         window.browseChart = null;
       }

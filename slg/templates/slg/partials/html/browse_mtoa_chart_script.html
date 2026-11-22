@@ -1,15 +1,32 @@
 <script>
   let browseChart = null;
+  // Laufende Anfrage: DOMContentLoaded hier und initializePageResources() in
+  // objektliste_mtoa_inline.js rufen loadChartData() beide beim Laden auf.
+  let chartRequest = null;
 
   document.addEventListener("DOMContentLoaded", function () {
     loadChartData();
   });
 
+  function disposeBrowseChart() {
+    if (browseChart) {
+      if (browseChart.__ro) {
+        browseChart.__ro.disconnect();
+        browseChart.__ro = null;
+      }
+      browseChart.dispose();
+    }
+    browseChart = null;
+    window.browseChart = null;
+  }
+  window.disposeBrowseChart = disposeBrowseChart;
+
   function loadChartData() {
+    if (chartRequest) return chartRequest;
     const apiEndpoint = "{% url 'area_chart_data' %}";
     const fetchUrl = apiEndpoint + window.location.search;
 
-    fetch(fetchUrl)
+    chartRequest = fetch(fetchUrl)
       .then(r => {
         if (!r.ok) throw new Error(`Server-Antwort fehlgeschlagen: ${r.status} ${r.statusText}`);
         return r.json();
@@ -53,7 +70,11 @@
       })
       .catch(err => {
         showEmptyChart(gettext('Fehler beim Laden der Daten.'));
+      })
+      .finally(() => {
+        chartRequest = null;
       });
+    return chartRequest;
   }
 
   function formatYear(value) {
@@ -68,11 +89,10 @@
     const container = document.getElementById('objectsBarChart');
     if (!container) return;
 
-    if (browseChart) {
-      browseChart.dispose();
-    }
+    disposeBrowseChart();
 
     browseChart = echarts.init(container, null, { renderer: 'canvas' });
+    window.browseChart = browseChart;
 
     const labels = years.map(y => y.toString());
 
@@ -180,7 +200,8 @@
     browseChart.setOption(option);
 
     if (window.ResizeObserver) {
-      const ro = new ResizeObserver(() => browseChart.resize());
+      const chart = browseChart;
+      const ro = new ResizeObserver(() => chart.resize());
       ro.observe(container);
       browseChart.__ro = ro;
     }
@@ -218,11 +239,10 @@
     const container = document.getElementById('objectsBarChart');
     if (!container) return;
 
-    if (browseChart) {
-      browseChart.dispose();
-    }
+    disposeBrowseChart();
 
     browseChart = echarts.init(container, null, { renderer: 'canvas' });
+    window.browseChart = browseChart;
 
     browseChart.setOption({
       backgroundColor: '#161616',

@@ -41,7 +41,11 @@ RUN /venv/bin/pip install gunicorn==26.0.0 setproctitle==1.3.7
 COPY djangoproject djangoproject
 COPY slg slg
 COPY manage.py .
+# Bei einem Windows-Checkout fehlen Ausführungsrecht und ggf. LF-Zeilenenden
+# (sonst "exec /app/entrypoint.sh: no such file or directory"). Als root vor
+# USER normalisieren; funktioniert mit BuildKit und dem Legacy-Builder.
 COPY docker/entrypoint.sh .
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod 755 /app/entrypoint.sh
 
 # run as application user
 USER webapp:webapp

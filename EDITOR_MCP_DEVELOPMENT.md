@@ -80,7 +80,9 @@ Münzstätte eines Typs ändern:
 
 Die Vorschau zeigt Model, alte/neue Werte und Anzahl zugeordneter Objekte.
 Es wird ausschließlich Muenztyp geändert. Bei bestimmten Objekten lehnen
-Unbestimmten-Tools direkte typbezogene Änderungen ab.
+Unbestimmten-Tools neue direkte typbezogene Werte ab; erlaubt ist dort nur das
+Leeren (`null`/`""`) gespeicherter Obj-Altangaben, da diese in Browse, Detail
+und OAI Vorrang vor den Münztypangaben haben.
 
 Auch `Muenztyp.link` ist über `preview_coin_type_update` bearbeitbar. Zum
 Entfernen `changes: {"link": null}` (alternativ `{"link": ""}`) übergeben,

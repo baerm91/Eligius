@@ -52,39 +52,22 @@
         if (feldSelect && alterWertInput) {
             feldSelect.addEventListener('change', function () {
                 const selectedField = this.value;
-                let currentValue = '';
 
-                switch (selectedField) {
-                    case 'titel':
-                        currentValue = '{{ coin_data.titel|default:"" }}';
-                        break;
-                    case 'avleg':
-                        currentValue = '{{ coin_data.avleg|default:"" }}';
-                        break;
-                    case 'rvleg':
-                        currentValue = '{{ coin_data.rvleg|default:"" }}';
-                        break;
-                    case 'avbeschr':
-                        currentValue = '{{ coin_data.avbeschr|default:"" }}';
-                        break;
-                    case 'rvbeschr':
-                        currentValue = '{{ coin_data.rvbeschr|default:"" }}';
-                        break;
-                    case 'material':
-                        currentValue = '{{ coin_data.material|default:"" }}';
-                        break;
-                    case 'gewicht':
-                        currentValue = '{{ coin_data.gewicht|default:"" }}';
-                        break;
-                    case 'durchmesser':
-                        currentValue = '{{ coin_data.durchmesser|default:"" }}';
-                        break;
-                    case 'datierung':
-                        currentValue = '{{ coin_data.dat_verb|default:"" }}';
-                        break;
-                    default:
-                        currentValue = '';
-                }
+                // |escapejs: Zeilenumbrüche/Anführungszeichen in Beschreibungen
+                // dürfen das Skript nicht abbrechen.
+                const currentValues = {
+                    titel: '{{ coin_data.titel|default:""|escapejs }}',
+                    avleg: '{{ coin_data.avleg|default:""|escapejs }}',
+                    rvleg: '{{ coin_data.rvleg|default:""|escapejs }}',
+                    avbeschr: '{{ coin_data.avbeschr|default:""|escapejs }}',
+                    rvbeschr: '{{ coin_data.rvbeschr|default:""|escapejs }}',
+                    material: '{{ coin_data.metall|default:""|escapejs }}',
+                    gewicht: '{{ coin_data.gewicht|default:""|escapejs }}',
+                    durchmesser: '{{ coin_data.durchmesser|default:""|escapejs }}',
+                    datierung: '{{ coin_data.dat_verb|default:""|escapejs }}',
+                };
+                const currentValue = Object.prototype.hasOwnProperty.call(currentValues, selectedField)
+                    ? currentValues[selectedField] : '';
 
                 alterWertInput.value = currentValue;
             });

@@ -202,8 +202,10 @@ def _register_object_action(action, description):
 
 
 _register_object_action('update_unidentified_object_data',
-    'Only unidentified Obj rows. Allowed fields: ' + ', '.join(editor_api.UNIDENTIFIED_FIELDS) + '. Relations take IDs.')
-_register_object_action('update_unidentified_legend', 'Only unidentified Obj legends: avleg, rvleg.')
+    'Unidentified Obj rows; on classified rows only clearing (null) of stale direct values is allowed. '
+    'Allowed fields: ' + ', '.join(editor_api.UNIDENTIFIED_FIELDS) + '. Relations take IDs.')
+_register_object_action('update_unidentified_legend',
+    'Unidentified Obj legends: avleg, rvleg; on classified rows only clearing (null) is allowed.')
 _register_object_action('update_object_measurements', 'Obj measurements: gewicht, durchmesser, stempelstellung; null clears a value.')
 _register_object_action('update_object_note', 'Obj note: anmerkung; null clears the note.')
 

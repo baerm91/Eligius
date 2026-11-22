@@ -107,13 +107,15 @@ class OAITests(OAIFixtures, TestCase):
     def test_sets_only_opt_in_and_stable_after_rename(self):
         self.assertFalse(self.private.kulturpool_export_erlaubt)
         root = self.request('ListSets')
-        self.assertEqual([n.text for n in root.findall('.//oai:setSpec', NS)], [set_spec(self.collection.pk)])
+        # Eltern-Set 'eligius' wird vor den Sammlungs-Sets gelistet.
+        self.assertEqual([n.text for n in root.findall('.//oai:setSpec', NS)], ['eligius', set_spec(self.collection.pk)])
         self.assertNotIn(self.private.name, ET.tostring(root).decode())
         self.collection.name = 'Neuer Name'
         self.collection.save()
         root = self.request('ListSets')
-        self.assertEqual(root.findtext('.//oai:setSpec', namespaces=NS), set_spec(self.collection.pk))
-        self.assertEqual(root.findtext('.//oai:setName', namespaces=NS), 'Neuer Name')
+        sets = root.findall('.//oai:set', NS)
+        self.assertEqual(sets[1].findtext('oai:setSpec', namespaces=NS), set_spec(self.collection.pk))
+        self.assertEqual(sets[1].findtext('oai:setName', namespaces=NS), 'Neuer Name')
 
     def test_no_set_hierarchy(self):
         Slg.objects.update(kulturpool_export_erlaubt=False)

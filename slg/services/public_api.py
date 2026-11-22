@@ -11,13 +11,25 @@ from django.utils.html import strip_tags
 from slg.filter_config import FILTER_PARAMETERS
 from slg.models import MtoaPerson, Obj
 from slg.serializers import HerstellungsmerkmaleSerializer, Sek_MerkmaleSerializer
-from .search import _get_filtered_mtoa_queryset, MTOA_FACETS, public_objects
+from slg.filters import field_needs_int, is_int_qparam
+from .search import _get_filtered_mtoa_queryset, MTOA_FACETS, MTOA_FILTERS, public_objects
 from .authority_display import display_label, english, localize_facets
 
 
 def allowed_filter_names():
     """The same public filter whitelist for transports and page context."""
     return set().union(*(set(c) for c in FILTER_PARAMETERS.values())) | {'unbestimmt'}
+
+
+def int_filter_names():
+    """Filter, deren Werte als ID/Ganzzahl in das ORM gehen (Browse wie MTOA)."""
+    names = {key for key, config in MTOA_FILTERS.items()
+             if any(field_needs_int(field) for field in config['fields'])}
+    for context in FILTER_PARAMETERS.values():
+        for key, config in context.items():
+            if any(field_needs_int(field) for field in config.get('fields', ())):
+                names.add(key)
+    return names
 
 
 def filter_request(filters=None):
@@ -31,6 +43,7 @@ def filter_request(filters=None):
     if unknown:
         raise ValueError('Unknown filters: ' + ', '.join(sorted(unknown)))
     query = QueryDict('', mutable=True)
+    int_keys = int_filter_names()
     for key, value in filters.items():
         values = value if isinstance(value, list) else [value]
         if len(values) > 100:
@@ -39,17 +52,25 @@ def filter_request(filters=None):
             raise ValueError('Filter values must be strings, integers or booleans.')
         if any(len(str(v)) > 500 for v in values):
             raise ValueError('Filter values must be at most 500 characters.')
+        # Leere Werte (z.B. ?dat_von=&dat_bis= aus dem Browse-Formular) bedeuten
+        # "kein Filter" – wie in der Browse-Ansicht selbst.
+        values = [v for v in values if not (isinstance(v, str) and v.strip() == '')]
+        if not values:
+            continue
         if key == 'unbestimmt':
-            if len(values) != 1 or str(values[0]) not in ('True', 'False', 'Alle', ''):
+            if len(values) != 1 or str(values[0]) not in ('True', 'False', 'Alle'):
                 raise ValueError('unbestimmt must be True, False or Alle.')
+        elif any(type(v) is bool for v in values):
+            # bool ist eine int-Unterklasse: dat_von=True würde sonst als "True" ins ORM gehen.
+            raise ValueError(f'{key} does not accept boolean values.')
         if key in ('dat_von', 'dat_bis'):
             if len(values) != 1:
                 raise ValueError('Date bounds take one integer each.')
-            try:
-                int(values[0])
-            except (ValueError, TypeError):
-                raise ValueError('Date bounds must be integers.') from None
-        query.setlist(key, [str(v) for v in values])
+            if not is_int_qparam(values[0]):
+                raise ValueError('Date bounds must be integers.')
+        elif key in int_keys and not all(is_int_qparam(v) for v in values):
+            raise ValueError(f'{key} takes integer IDs only.')
+        query.setlist(key, [str(v).strip() for v in values])
     if query.get('dat_von') and query.get('dat_bis'):
         if int(query['dat_von']) > int(query['dat_bis']):
             raise ValueError('dat_von must not exceed dat_bis.')
@@ -194,8 +215,29 @@ def _facet_values(request, facet, include_current=False, term=None):
     objects = public_objects().filter(pk__in=rows.values('obj_id'))
     if facet == 'Paket':
         # Apply the public condition to the counted join, not a separate alias.
-        return _group(objects.filter(pakete__online_freigegeben=True),
-                      'pakete__titel_oeffentlich', 'pakete__id', 'pk', term)
+        # titel_oeffentlich ist optional (blank=True): wie Paket.oeffentlicher_titel
+        # auf den internen Namen zurückfallen, sonst fehlen veröffentlichte Pakete.
+        packages = objects.filter(pakete__online_freigegeben=True).annotate(
+            paket_titel=Coalesce(NullIf(F('pakete__titel_oeffentlich'), Value('')),
+                                 F('pakete__name'), output_field=CharField()))
+        return _group(packages, 'paket_titel', 'pakete__id', 'pk', term)
+    if facet == 'Ref':
+        # Der Ref-Filter (search.py) trifft bei typisierten Objekten sowohl
+        # Typ.Ref als auch Obj_Ref; die Facette muss beide Pfade zählen,
+        # ohne ein Objekt mit identischer Referenz doppelt zu zählen.
+        buckets = {}
+        for path in ('Typ__Ref', 'idfk_Ref'):
+            qs = objects
+            if term:
+                qs = qs.filter(**{path + '__abk__icontains': term})
+            rows_ = (qs.exclude(**{path + '__abk__isnull': True}).order_by()
+                     .values_list('pk', path + '__abk').distinct())
+            for pk, abk in rows_:
+                if abk == '':
+                    continue
+                buckets.setdefault(abk, set()).add(pk)
+        return _sort_values([{'name': abk, 'count': len(pks)}
+                             for abk, pks in buckets.items()], term)
     combined = {}
     for context, typed in (('default', True), ('unbestimmt', False)):
         config = FILTER_PARAMETERS[context].get(facet)

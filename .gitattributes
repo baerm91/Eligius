@@ -1,0 +1,5 @@
+# Shell-Skripte laufen in Linux-Containern bzw. Git-Bash und müssen auch bei
+# einem Windows-Checkout (core.autocrlf=true) LF-Zeilenenden behalten.
+*.sh text eol=lf
+Dockerfile text eol=lf
+docker/** text eol=lf

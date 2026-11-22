@@ -548,7 +548,7 @@
                     <a href="/browse/?av_bildtyp={{ coin_data.av_bildtyp.id }}" title="{% translate 'Av.-Bildbeschreibung' %}">{{coin_data.av_bildtyp.display_name}}</a>{% if coin_data.av_beizeichen_display or coin_data.av_offizin_display %}, {% endif %}
                     {% endif %}
                     {% if coin_data.av_beizeichen_display %}
-                        <a href="/browse/?av_beizeichen={{coin_data.av_beizeichen.id|default:"-"}}" title="{% translate 'Beizeichen' %}">{{coin_data.av_beizeichen_display}}</a>
+                        <a href="/browse/?av_beizeichen={{ coin_data.av_beizeichen_filter|default:""|urlencode }}" title="{% translate 'Beizeichen' %}">{{coin_data.av_beizeichen_display}}</a>
                     {% endif %}
                     {% if coin_data.av_offizin_display %}
                         {% if coin_data.av_beizeichen_display %}, {% endif %}
@@ -606,7 +606,7 @@
                     <a href="/browse/?rv_bildtyp={{ coin_data.rv_bildtyp.id }}" title="{% translate 'Rv.-Beschreibung' %}">{{coin_data.rv_bildtyp.display_name}}</a>{% if coin_data.rv_beizeichen_display or coin_data.rv_offizin_display %}, {% endif %}
                     {% endif %}
                     {% if coin_data.rv_beizeichen_display %}
-                        <a href="/browse/?rv_beizeichen={{coin_data.rv_beizeichen.id|default:"-"}}" title="{% translate 'Beizeichen' %}">{{coin_data.rv_beizeichen_display}}</a>
+                        <a href="/browse/?rv_beizeichen={{ coin_data.rv_beizeichen_filter|default:""|urlencode }}" title="{% translate 'Beizeichen' %}">{{coin_data.rv_beizeichen_display}}</a>
                     {% endif %}
                     {% if coin_data.rv_offizin_display %}
                         {% if coin_data.rv_beizeichen_display %}, {% endif %}
@@ -641,7 +641,10 @@
             </div>
         </div>
     </div>
+{% if request.user.is_authenticated %}
+{# schließt .detail-admin-shell, das nur für angemeldete Benutzer geöffnet wird #}
 </div>
+{% endif %}
 {% include "slg/modal.html" %}
 
 <!-- Floating feedback icon -->
@@ -721,67 +724,9 @@
     </div>
 </div>
 
-<!-- JavaScript für Formularvalidierung und Handling -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const editForm = document.getElementById('editForm');
-    const feldSelect = document.getElementById('feld');
-    const alterWertInput = document.getElementById('alter_wert');
-    const manualSubmitBtn = document.getElementById('manualSubmitBtn');
-    
-    // Manuelles Absenden des Formulars
-    manualSubmitBtn.addEventListener('click', function() {
-        // Überprüfen Sie, ob alle erforderlichen Felder ausgefüllt sind
-        if (editForm.checkValidity()) {
-            // Direkte Übermittlung des Formulars ohne den normalen Button-Submit
-            editForm.submit();
-        } else {
-            // Triggere die Browser-Validierung
-            editForm.reportValidity();
-        }
-    });
-
-    // Aktuellen Wert basierend auf Feldauswahl setzen
-    feldSelect.addEventListener('change', function() {
-        const selectedField = this.value;
-        let currentValue = '';
-        
-        switch(selectedField) {
-            case 'titel':
-                currentValue = '{{ coin_data.titel|default:"" }}';
-                break;
-            case 'avleg':
-                currentValue = '{{ coin_data.avleg|default:"" }}';
-                break;
-            case 'rvleg':
-                currentValue = '{{ coin_data.rvleg|default:"" }}';
-                break;
-            case 'avbeschr':
-                currentValue = '{{ coin_data.avbeschr|default:"" }}';
-                break;
-            case 'rvbeschr':
-                currentValue = '{{ coin_data.rvbeschr|default:"" }}';
-                break;
-            case 'material':
-                currentValue = '{{ coin_data.material|default:"" }}';
-                break;
-            case 'gewicht':
-                currentValue = '{{ coin_data.gewicht|default:"" }}';
-                break;
-            case 'durchmesser':
-                currentValue = '{{ coin_data.durchmesser|default:"" }}';
-                break;
-            case 'datierung':
-                currentValue = '{{ coin_data.dat_verb|default:"" }}';
-                break;
-            default:
-                currentValue = '';
-        }
-        
-        alterWertInput.value = currentValue;
-    });
-});
-</script>
+<!-- Formular-JavaScript (Absenden, Vorbelegung) liegt in slg/scripte.html
+     (active_block="jsobjektaenderung"); ein zweiter Listener hier hat
+     Änderungsvorschläge doppelt abgesendet. -->
 
 {% if request.user.is_authenticated %}
 <!-- Münzkontext Visualisierungsbereich -->
@@ -2721,7 +2666,7 @@ document.addEventListener('DOMContentLoaded', function() {
           .style("left", (event.pageX + 10) + "px")
           .style("top", (event.pageY - 28) + "px");
       })
-      .on("mouseout", function(d) {
+      .on("mouseout", function(event, d) {
         // Hover-Effekt zurücksetzen
         if (!d.data.isCurrentCoin) {
           d3.select(this)
@@ -2900,7 +2845,7 @@ document.addEventListener('DOMContentLoaded', function() {
           .style("left", (event.pageX + 12) + "px")
           .style("top", (event.pageY - 35) + "px");
       })
-      .on("mouseout", function(d) {
+      .on("mouseout", function(event, d) {
         // Hover-Effekt zurücksetzen
         if (!d.data.isCurrentCoin) {
           d3.select(this)

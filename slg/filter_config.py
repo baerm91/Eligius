@@ -331,14 +331,15 @@ FILTER_PARAMETERS = {
             'id_field':    'idfk_Mzstaette_id',
         },
         'Muenzstand': {
-            'fields': ['Typ__Muenzstand__name'],
+            # unbestimmte Objekte haben keinen Typ → direkt am Objekt filtern
+            'fields': ['idfk_Muenzstand__name'],
             'filter': 'exact',
             'display_name': _('Münzstand'),
             'model': Muenzstand,
             'display_field': 'name',
         },
         'region': {
-            'fields': ['Typ__Mzstaette__region__name'],
+            'fields': ['region__name', 'idfk_Mzstaette__region__name'],
             'filter': 'exact',
             'display_name': _('Region'),
             'model': Region,

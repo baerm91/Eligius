@@ -6,6 +6,7 @@ from xml.etree import ElementTree as ET
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
+from slg.models import stempelstellung_parts
 from .identifiers import absolute_uri, image_redirect_uri, object_uri
 from .rights import image_rights_uri, metadata_rights_uri
 from .xml import clean_text, element, qname
@@ -199,10 +200,14 @@ def serialize_edm(row, obj, request):
         legend = getattr(row, side + '_legende')
         if clean_text(legend):
             literal(cho, 'dc', 'description', f'{name}, Legende: {clean_text(legend)}', 'de')
-    for label, value, unit in (('Gewicht', row.gewicht, 'g'), ('Durchmesser', row.durchmesser, 'mm'),
-                               ('Stempelstellung', row.stempelstellung, 'h')):
+    for label, value, unit in (('Gewicht', row.gewicht, 'g'), ('Durchmesser', row.durchmesser, 'mm')):
         if value is not None and value != '':
             literal(cho, 'dcterms', 'extent', f'{label}: {value} {unit}', 'de')
+    hours, die_axis_text = stempelstellung_parts(row.stempelstellung)
+    if hours is not None:
+        literal(cho, 'dcterms', 'extent', f'Stempelstellung: {hours} h', 'de')
+    elif die_axis_text:
+        literal(cho, 'dcterms', 'extent', f'Stempelstellung: {die_axis_text}', 'de')
 
     seen_people = set()
     for rel in row.mtoaperson_set.all():

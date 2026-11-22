@@ -995,9 +995,10 @@
               if (window.jQuery) {
                   const $sel = $(sel);
                   if (!$sel.data('select2')) {
-                      $sel.select2({ width: '100%', dropdownParent: $sel.closest('.offcanvas').length ? $sel.closest('.offcanvas') : $(document.body), language: window.eligiusSelect2Language, placeholder: gettext("Sammlung wählen …") })
-                          .on('select2:select select2:unselect', onFacetChange);
-                      allowClear: true
+                      // Change-Events kommen über den delegierten .select2-filter-Listener
+                      // (Event Binding unten); ein zweiter direkter Listener würde
+                      // onFacetChange doppelt auslösen.
+                      $sel.select2({ width: '100%', dropdownParent: $sel.closest('.offcanvas').length ? $sel.closest('.offcanvas') : $(document.body), language: window.eligiusSelect2Language, placeholder: gettext("Sammlung wählen …"), allowClear: true });
                   } else {
                       $sel.trigger('change.select2');
                   }
@@ -1158,7 +1159,12 @@
       const term = termIn.val().trim();
 
       if (key) {
-          if (term) {
+          // Rubriken wie Muenzstaette/Person/Nominal sind zugleich Multi-Select-
+          // Facetten: set()/delete() würde deren übrige Auswahl verwerfen.
+          const isFacetKey = !!document.querySelector(`select[name="${CSS.escape(key)}"]`);
+          if (isFacetKey) {
+              if (term && !p.getAll(key).includes(term)) p.append(key, term);
+          } else if (term) {
               p.set(key, term);
           } else {
               p.delete(key);
