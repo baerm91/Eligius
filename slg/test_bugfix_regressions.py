@@ -146,14 +146,15 @@ class AdminRegressionTests(Fixtures, TestCase):
         dataset.append(['', 'Sammlung A', '', 'Neues Paket'])
 
         preview = ObjPaketZuweisungResource().import_data(dataset, dry_run=True)
-        self.assertEqual([row.number for row in preview.invalid_rows], [3, 2])
+        self.assertEqual(len(preview.base_errors), 2)
         self.assertFalse(Paket.objects.filter(name='Neues Paket').exists())
+        # Die Admin-Vorlage rendert error.traceback: das braucht echte Exceptions.
+        self.assertTrue(all(error.traceback for error in preview.base_errors))
 
-        result = ObjPaketZuweisungResource().import_data(dataset, dry_run=False)
+        ObjPaketZuweisungResource().import_data(dataset, dry_run=False)
         paket = Paket.objects.get(name='Neues Paket')
         self.assertTrue(paket.slug)
         self.assertEqual(list(in_teil.pakete.all()), [paket])
-        self.assertTrue(all(error.error for error in result.base_errors))
 
     def test_translation_import_with_non_numeric_id_does_not_raise(self):
         metall = Metall.objects.create(name='Gold')

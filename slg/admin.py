@@ -3178,136 +3178,130 @@ class ObjPaketZuweisungResource(resources.ModelResource):
         return cleaned if cleaned else None
 
     def import_data(self, dataset, dry_run=False, raise_errors=False, use_transactions=None, collect_failed_rows=False, **kwargs):
-        """Eigener Bulk-Import; der Dry-Run läuft dieselbe Logik in einer zurückgerollten Transaktion.
-
-        So zeigt die Admin-Vorschau bereits alle fehlenden Objekte/Pflichtfelder
-        als ungültige Zeilen an (nach der Bestätigung zeigt django-import-export
-        keine Fehler mehr an).
-        """
+        """Eigener Bulk-Import. Der Dry-Run (Vorschau) führt dieselbe Zuordnung aus
+        und rollt anschließend zurück, damit Fehler bereits in der Vorschau sichtbar sind."""
         return self._bulk_import(dataset, dry_run=dry_run)
 
-    def _row_error(self, result, number, row, message, dry_run):
-        if dry_run:
-            result.append_invalid_row(number, row, ValidationError(message))
-        else:
-            result.append_base_error(Error(ValueError(f'Zeile {number}: {message}'), number=number))
+    @staticmethod
+    def _norm(value):
+        return (value or '').strip().casefold()
+
+    def _row_value(self, row, *keys):
+        for key in keys:
+            if key in row:
+                return self._clean_string(row.get(key))
+        return None
 
     def _bulk_import(self, dataset, dry_run=False):
-        """Bulk-Import mit Chunking; Fehler werden als Error/InvalidRow-Objekte gemeldet."""
         from django.db import transaction
-        from slg.models import Paket, Slg, SlgTeil, Obj
+        from slg.models import Paket, Obj
 
         result = Result()
-        result.diff_headers = list(dataset.headers or [])
-        CHUNK_SIZE = 1000
+        ThroughModel = Obj.pakete.through
+        MAX_FEHLER = 20
 
+        rows = []
+        fehler = []
+        for i, row in enumerate(dataset.dict, start=2):  # Zeile 1 = Kopfzeile
+            obj_id = self._row_value(row, 'Objekt-ID', 'objekt_id', 'id')
+            invnr = self._row_value(row, 'invnr', 'Inv.-Nr.')
+            slg_name = self._row_value(row, 'Sammlung')
+            slgteil_name = self._row_value(row, 'Sammlungsteil')
+            paket_name = self._row_value(row, 'Paket')
+            if not paket_name:
+                fehler.append(f"Zeile {i}: Paket fehlt")
+                continue
+            if obj_id:
+                try:
+                    obj_id = int(float(obj_id))
+                except ValueError:
+                    fehler.append(f"Zeile {i}: ungültige Objekt-ID '{obj_id}'")
+                    continue
+            elif not (invnr and slg_name):
+                fehler.append(f"Zeile {i}: Objekt-ID oder invnr + Sammlung erforderlich")
+                continue
+            rows.append((i, obj_id, invnr, slg_name, slgteil_name, paket_name))
+
+        if not rows and not fehler:
+            fehler.append("Keine Datenzeilen gefunden. Spalten prüfen: invnr, Sammlung, Sammlungsteil, Paket "
+                          "(bei CSV Komma als Trennzeichen).")
+
+        created = skipped = 0
+        neue_pakete = []
         try:
             with transaction.atomic():
-                # 1. Zeilen einlesen und Pflichtfelder prüfen
-                import_rows = []  # (zeilennummer, row, invnr, slg_name, slgteil_name, paket_name)
-                paket_namen, slg_namen, slgteil_namen = set(), set(), set()
-                for number, row in enumerate(dataset.dict, 1):
-                    invnr = self._clean_string(row.get('invnr', ''))
-                    slg_name = self._clean_string(row.get('Sammlung', ''))
-                    slgteil_name = self._clean_string(row.get('Sammlungsteil', ''))
-                    paket_name = self._clean_string(row.get('Paket', ''))
-                    missing = [label for label, value in (('invnr', invnr), ('Sammlung', slg_name), ('Paket', paket_name)) if not value]
-                    if missing:
-                        self._row_error(result, number, row, f"Pflichtfeld fehlt: {', '.join(missing)}", dry_run)
-                        continue
-                    paket_namen.add(paket_name)
-                    slg_namen.add(slg_name)
-                    if slgteil_name:
-                        slgteil_namen.add(slgteil_name)
-                    import_rows.append((number, row, invnr, slg_name, slgteil_name, paket_name))
+                # Objekte laden: per ID oder per Inventarnummer (Namen werden am Objekt verglichen,
+                # nicht über Namens-Caches – so stören doppelte Sammlungs(teil)namen nicht).
+                ids = {r[1] for r in rows if r[1]}
+                invnrs = {r[2] for r in rows if not r[1]}
+                by_id = {o.id: o for o in Obj.objects.filter(pk__in=ids).select_related('Slg', 'SlgTeil')}
+                by_invnr = {}
+                for o in Obj.objects.filter(invnr__in=invnrs).select_related('Slg', 'SlgTeil'):
+                    by_invnr.setdefault(o.invnr.strip(), []).append(o)
 
-                # 2. Pakete laden; fehlende einzeln über save() anlegen, damit der Slug entsteht
-                existing_pakete = {p.name: p for p in Paket.objects.filter(name__in=paket_namen)}
-                neue_pakete = sorted(paket_namen - set(existing_pakete))
-                for name in neue_pakete:
-                    paket = Paket(name=name)
-                    paket.save()
-                    existing_pakete[name] = paket
+                paket_namen = {r[5] for r in rows}
+                pakete = {p.name: p for p in Paket.objects.filter(name__in=paket_namen)}
+                for name in sorted(paket_namen - set(pakete)):
+                    pakete[name] = Paket.objects.create(name=name)
+                    neue_pakete.append(name)
 
-                # 3. Referenzdaten; SlgTeil-Namen sind nur innerhalb einer Sammlung eindeutig
-                slg_cache = {s.name: s for s in Slg.objects.filter(name__in=slg_namen)}
-                slgteil_cache = {}
-                if slgteil_namen:
-                    for st in SlgTeil.objects.filter(name__in=slgteil_namen, idfk_Slg_SlgTeil__in=list(slg_cache.values())):
-                        slgteil_cache[(st.idfk_Slg_SlgTeil_id, st.name)] = st
-
-                total_created = total_skipped = total_errors = 0
-                ThroughModel = Obj.pakete.through
-
-                for chunk_start in range(0, len(import_rows), CHUNK_SIZE):
-                    chunk = import_rows[chunk_start:chunk_start + CHUNK_SIZE]
-
-                    # Ziel (slg_id, slgteil_id) je Zeile auflösen
-                    resolved = []
-                    for number, row, invnr, slg_name, slgteil_name, paket_name in chunk:
-                        slg = slg_cache.get(slg_name)
-                        if not slg:
-                            self._row_error(result, number, row, f"Sammlung '{slg_name}' nicht gefunden", dry_run)
-                            total_errors += 1
+                zuweisungen = []
+                for i, obj_id, invnr, slg_name, slgteil_name, paket_name in rows:
+                    if obj_id:
+                        obj = by_id.get(obj_id)
+                        if not obj:
+                            fehler.append(f"Zeile {i}: Objekt-ID {obj_id} existiert nicht")
                             continue
-                        slgteil_id = None
-                        if slgteil_name:
-                            slgteil = slgteil_cache.get((slg.id, slgteil_name))
-                            if not slgteil:
-                                self._row_error(result, number, row, f"Sammlungsteil '{slgteil_name}' in '{slg_name}' nicht gefunden", dry_run)
-                                total_errors += 1
-                                continue
-                            slgteil_id = slgteil.id
-                        resolved.append((number, row, invnr, slg.id, slgteil_id, slg_name, slgteil_name, paket_name))
-
-                    chunk_obj_cache = {}
-                    invnr_list = list({item[2] for item in resolved})
-                    slg_ids = list({item[3] for item in resolved})
-                    if invnr_list:
-                        for obj_id, obj_invnr, obj_slg_id, obj_slgteil_id in Obj.objects.filter(
-                            invnr__in=invnr_list, Slg_id__in=slg_ids
-                        ).values_list('id', 'invnr', 'Slg_id', 'SlgTeil_id'):
-                            chunk_obj_cache[(obj_invnr, obj_slg_id, obj_slgteil_id)] = obj_id
-
-                    chunk_obj_ids = list(chunk_obj_cache.values())
-                    chunk_paket_ids = [p.id for p in existing_pakete.values()]
-                    existing_relations = set()
-                    if chunk_obj_ids and chunk_paket_ids:
-                        existing_relations = set(
-                            ThroughModel.objects.filter(obj_id__in=chunk_obj_ids, paket_id__in=chunk_paket_ids)
-                            .values_list('obj_id', 'paket_id')
-                        )
-
-                    chunk_zuweisungen = {}
-                    for number, row, invnr, slg_id, slgteil_id, slg_name, slgteil_name, paket_name in resolved:
-                        obj_id = chunk_obj_cache.get((invnr, slg_id, slgteil_id))
-                        if not obj_id:
-                            ort = f'{slg_name}/{slgteil_name}' if slgteil_name else slg_name
-                            self._row_error(result, number, row, f"Objekt '{invnr}' in '{ort}' nicht gefunden", dry_run)
-                            total_errors += 1
+                    else:
+                        kandidaten = by_invnr.get(invnr, [])
+                        if not kandidaten:
+                            fehler.append(f"Zeile {i}: Inv.-Nr. '{invnr}' existiert nicht")
                             continue
-                        relation_key = (obj_id, existing_pakete[paket_name].id)
-                        if relation_key in existing_relations or relation_key in chunk_zuweisungen:
-                            total_skipped += 1
+                        passend = [
+                            o for o in kandidaten
+                            if self._norm(o.Slg.name if o.Slg else '') == self._norm(slg_name)
+                            and (not slgteil_name or self._norm(o.SlgTeil.name if o.SlgTeil else '') == self._norm(slgteil_name))
+                        ]
+                        if len(passend) != 1:
+                            vorhanden = '; '.join(
+                                f"{o.Slg.name if o.Slg else '–'} / {o.SlgTeil.name if o.SlgTeil else '–'}" for o in kandidaten
+                            )
+                            grund = 'mehrdeutig' if passend else 'Sammlung/Sammlungsteil passen nicht'
+                            fehler.append(f"Zeile {i}: '{invnr}' {grund} (in Eligius: {vorhanden})")
                             continue
-                        chunk_zuweisungen[relation_key] = ThroughModel(obj_id=relation_key[0], paket_id=relation_key[1])
+                        obj = passend[0]
+                    zuweisungen.append((obj.id, pakete[paket_name].id))
 
-                    if chunk_zuweisungen:
-                        ThroughModel.objects.bulk_create(list(chunk_zuweisungen.values()), batch_size=1000, ignore_conflicts=True)
-                        total_created += len(chunk_zuweisungen)
-
-                result.totals[RowResult.IMPORT_TYPE_NEW] = total_created
-                result.totals[RowResult.IMPORT_TYPE_SKIP] = total_skipped
-                result.totals[RowResult.IMPORT_TYPE_ERROR] = total_errors
+                vorhanden = set(
+                    ThroughModel.objects.filter(
+                        obj_id__in={z[0] for z in zuweisungen},
+                        paket_id__in={z[1] for z in zuweisungen},
+                    ).values_list('obj_id', 'paket_id')
+                )
+                neu = sorted(set(zuweisungen) - vorhanden)
+                skipped = len(zuweisungen) - len(neu)
+                ThroughModel.objects.bulk_create(
+                    [ThroughModel(obj_id=o, paket_id=p) for o, p in neu], batch_size=1000, ignore_conflicts=True
+                )
+                created = len(neu)
 
                 if dry_run:
-                    # Vorschau: nichts dauerhaft speichern (auch keine neuen Pakete)
                     transaction.set_rollback(True)
         except Exception as e:
-            import logging
-            logging.getLogger(__name__).exception('Paket-Zuweisungsimport fehlgeschlagen')
-            result.append_base_error(Error(e))
+            import traceback
+            traceback.print_exc()
+            fehler.append(f"Schwerwiegender Fehler: {e}")
+            created = skipped = 0
 
+        result.totals[RowResult.IMPORT_TYPE_NEW] = created
+        result.totals[RowResult.IMPORT_TYPE_SKIP] = skipped
+        result.totals[RowResult.IMPORT_TYPE_ERROR] = len(fehler)
+        from import_export.results import Error as ImportError_
+        for msg in fehler[:MAX_FEHLER]:
+            # Error erwartet eine Exception (das Admin-Template rendert error.traceback)
+            result.append_base_error(ImportError_(ValueError(msg)))
+        if len(fehler) > MAX_FEHLER:
+            result.append_base_error(ImportError_(ValueError(f"... und {len(fehler) - MAX_FEHLER} weitere Fehler")))
         return result
 
 # Optimierte Admin-Klasse für bessere Performance
