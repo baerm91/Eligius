@@ -1568,6 +1568,7 @@
     <div class="contact-form-wrap">
       <form method="POST" action="{% url 'kontakt' %}">
         {% csrf_token %}
+        <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
         <div class="contact-form-row">
           <div class="contact-form-group">
             <label class="prem-form-label">Name</label>

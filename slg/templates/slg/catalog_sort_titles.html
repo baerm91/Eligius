@@ -190,10 +190,10 @@
         </form>
     </div>
 
-    <!-- Sortable.js with MultiDrag plugin -->
+    <!-- Sortable.js (UMD-Build). Die ESM-Dateien (sortable.core.esm.js,
+         plugins/MultiDrag) ohne type="module" warfen einen SyntaxError und
+         wurden nicht genutzt. -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/modular/sortable.core.esm.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/plugins/MultiDrag/MultiDrag.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var sortableList = document.getElementById('sortable-list');

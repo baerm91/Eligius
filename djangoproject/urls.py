@@ -34,7 +34,7 @@ from slg import seo
 from slg.oai.views import oai_endpoint
 from slg.oai.media import bild_weiterleitung
 
-from slg.views import about, impressum, datenschutz, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, collection_nomisma_rdf, collection_nomisma_void, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa, sammlungen_uebersicht
+from slg.views import impressum, datenschutz, objekt_detail_partial, export_xlsx, get_konkordanzen, PraegeherrTimelineView, RvSchlagwortTimelineView, NominalModalView, PersonModalView, SammlungView, ObjektView, MzstaettenRView, jsonresp, rdfliboutput, collection_nomisma_rdf, collection_nomisma_void, MzUpdate, ObjCreateView, ObjUpdateView, TypView, AvSchlagwortView, RvSchlagwortView, ObjektDetail, objekt_list_view_mtoa, sammlungen_uebersicht
 
 # csrf_protect innerhalb von cache_page, damit gecachte Antworten nie ein fremdes
 # CSRF-Token ohne passendes Cookie ausliefern (Sprachumschalter in der Navbar).
@@ -56,7 +56,7 @@ urlpatterns = [
     path('api/webmcp/context/', webmcp.context, name='webmcp_context'),
     path('lab/', lab, name='lab'),
     path('health', health, name='health'),
-    path('about/', about, name='about'),
+    # /about/ kommt aus slg.urls (gecacht); ein Eintrag hier überschattete ihn.
     path('impressum/', impressum, name='impressum'),
     path('datenschutz/', datenschutz, name='datenschutz'),
     path('sammlungen/', sammlungen_uebersicht, name='sammlungen_uebersicht'),

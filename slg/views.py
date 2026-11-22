@@ -907,12 +907,9 @@ def sammlungen_api(request):
         logger.info(f"Serialisierte Sammlungen: {len(serializer.data)}")
         return Response(serializer.data)
         
-    except Exception as e:
-        logger.error(f"Fehler in sammlungen_api: {str(e)}", exc_info=True)
-        return Response(
-            {"error": f"Fehler beim Laden der Sammlungen: {str(e)}"},
-            status=500
-        )
+    except Exception:
+        logger.exception('Fehler in sammlungen_api')
+        return Response({"error": "Fehler beim Laden der Sammlungen."}, status=500)
 
 def _nomisma_uri(value):
    from slg.services.authority_inventory import identify_authority
@@ -1975,13 +1972,69 @@ def objekt_detail_partial(request, id=None):
     return render(request, 'slg/objekt_detail_partial.html', {'Obj': obj})
 
 
+PUBLIC_FORM_LIMIT = 5            # Einsendungen …
+PUBLIC_FORM_WINDOW = 10 * 60     # … pro 10 Minuten und IP
+PUBLIC_TEXT_MAX = 5000
+
+
+def _client_ip(request):
+    """Client-IP wie DRF (NUM_PROXIES): letzter vom eigenen Proxy angehängter Eintrag."""
+    from django.conf import settings
+    num_proxies = getattr(settings, 'REST_FRAMEWORK', {}).get('NUM_PROXIES')
+    forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+    if num_proxies and forwarded:
+        addrs = [a.strip() for a in forwarded.split(',') if a.strip()]
+        if addrs:
+            return addrs[-min(num_proxies, len(addrs))]
+    return request.META.get('REMOTE_ADDR', '')
+
+
+def _public_form_problem(request, scope, fields):
+    """Prüft ein öffentliches Formular. Gibt eine Fehlermeldung oder None zurück.
+
+    fields: [(Bezeichnung, Wert, Maximallänge)], alle Pflichtfelder; ein Feld
+    namens 'E-Mail' wird zusätzlich als Adresse validiert.
+    """
+    from django.core.exceptions import ValidationError
+    from django.core.validators import validate_email
+    for label, value, max_len in fields:
+        if not value:
+            return 'Bitte alle Pflichtfelder ausfüllen.'
+        if len(value) > max_len:
+            return f'{label} ist zu lang (max. {max_len} Zeichen).'
+        if label == 'E-Mail':
+            try:
+                validate_email(value)
+            except ValidationError:
+                return 'Bitte eine gültige E-Mail-Adresse angeben.'
+    key = 'public-form:%s:%s' % (scope, hashlib.sha256(_client_ip(request).encode()).hexdigest())
+    if cache.get(key, 0) >= PUBLIC_FORM_LIMIT:
+        return 'Zu viele Einsendungen. Bitte versuchen Sie es in einigen Minuten erneut.'
+    try:
+        cache.incr(key)
+    except ValueError:
+        cache.set(key, 1, PUBLIC_FORM_WINDOW)
+    return None
+
+
 def kontakt(request):
     if request.method == 'POST':
-        name = request.POST.get('name', '')
-        email = request.POST.get('email', '')
-        betreff = request.POST.get('betreff', '')
-        nachricht = request.POST.get('nachricht', '')
-        
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        betreff = request.POST.get('betreff', '').strip()
+        nachricht = request.POST.get('nachricht', '').strip()
+        success = 'Ihre Nachricht wurde erfolgreich gesendet. Wir werden uns so bald wie möglich bei Ihnen melden.'
+        if request.POST.get('website'):
+            # Honeypot ausgefüllt → Bot; nichts speichern, aber nichts verraten.
+            messages.success(request, success)
+            return redirect('/#kontakt')
+        problem = _public_form_problem(request, 'kontakt', [
+            ('Name', name, 100), ('E-Mail', email, 254), ('Betreff', betreff, 200),
+            ('Nachricht', nachricht, PUBLIC_TEXT_MAX)])
+        if problem:
+            messages.error(request, problem)
+            return redirect('/#kontakt')
+
         # Kontaktanfrage in der Datenbank speichern
         try:
             Kontaktanfrage.objects.create(
@@ -1990,10 +2043,10 @@ def kontakt(request):
                 betreff=betreff,
                 nachricht=nachricht
             )
-            messages.success(request, 'Ihre Nachricht wurde erfolgreich gesendet. Wir werden uns so bald wie möglich bei Ihnen melden.')
-        except Exception as e:
+            messages.success(request, success)
+        except Exception:
             messages.error(request, 'Beim Speichern Ihrer Nachricht ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.')
-            print(f"Kontaktformular-Fehler: {e}")
+            logger.exception('Kontaktformular konnte nicht gespeichert werden')
         
         # Zurück zur Startseite mit Anker zum Kontaktformular
         return redirect('/#kontakt')
@@ -2003,52 +2056,38 @@ def kontakt(request):
 
 def objekt_aenderung(request, objekt_id):
     objekt = get_object_or_404(Obj, id=objekt_id)
-    
-    if request.method == 'POST':
-        name = request.POST.get('name', '')
-        email = request.POST.get('email', '')
-        feld = request.POST.get('feld', '')
-        alter_wert = request.POST.get('alter_wert', '')
-        neuer_wert = request.POST.get('neuer_wert', '')
-        begruendung = request.POST.get('begruendung', '')
-        
-        # Änderungsvorschlag speichern
-        try:
-            # Prüfen, ob alle erforderlichen Felder vorhanden sind
-            if not all([name, email, feld, neuer_wert, begruendung]):
-                raise ValueError("Nicht alle erforderlichen Felder wurden ausgefüllt.")
-            
-            # Änderungsvorschlag erstellen
-            aenderung = ObjektAenderung.objects.create(
-                objekt=objekt,
-                name=name,
-                email=email,
-                feld=feld,
-                alter_wert=alter_wert,
-                neuer_wert=neuer_wert,
-                begruendung=begruendung
-            )
-            
-            # Erfolgreiche Erstellung des Änderungsvorschlags
-            messages.success(request, 'Ihr Änderungsvorschlag wurde erfolgreich übermittelt und wird geprüft.')
-            
-            # Optional: Benachrichtigung an Administratoren senden
-            # send_admin_notification(aenderung)
-            
-        except Exception as e:
-            # Detaillierte Fehlerinformationen für die Fehlersuche
-            error_details = traceback.format_exc()
-            print(f"Fehler beim Speichern des Änderungsvorschlags: {e}")
-            print(f"Fehlerdetails: {error_details}")
-            
-            # Benutzerfreundliche Fehlermeldung
-            messages.error(request, f'Beim Speichern Ihres Änderungsvorschlags ist ein Fehler aufgetreten: {str(e)}')
-        
-        # Zurück zur Detailseite
-        return HttpResponseRedirect(f'/objekt/{objekt_id}/')
-    
-    # Bei GET-Anfragen zur Detailseite zurückleiten
-    return HttpResponseRedirect(f'/objekt/{objekt_id}/')
+    back = HttpResponseRedirect(f'/objekt/{objekt_id}/')
+    if request.method != 'POST':
+        return back
+
+    from .admin_site import OBJECT_CHANGE_FIELD_LABELS
+    data = {key: request.POST.get(key, '').strip()
+            for key in ('name', 'email', 'feld', 'alter_wert', 'neuer_wert', 'begruendung')}
+    success = 'Ihr Änderungsvorschlag wurde erfolgreich übermittelt und wird geprüft.'
+    if request.POST.get('website'):
+        messages.success(request, success)  # Honeypot: Bot, nichts speichern
+        return back
+    if data['feld'] not in OBJECT_CHANGE_FIELD_LABELS:
+        messages.error(request, 'Bitte ein gültiges Feld auswählen.')
+        return back
+    if len(data['alter_wert']) > PUBLIC_TEXT_MAX:
+        messages.error(request, f'Alter Wert ist zu lang (max. {PUBLIC_TEXT_MAX} Zeichen).')
+        return back
+    problem = _public_form_problem(request, 'objekt_aenderung', [
+        ('Name', data['name'], 100), ('E-Mail', data['email'], 254),
+        ('Neuer Wert', data['neuer_wert'], PUBLIC_TEXT_MAX),
+        ('Begründung', data['begruendung'], PUBLIC_TEXT_MAX)])
+    if problem:
+        messages.error(request, problem)
+        return back
+    try:
+        ObjektAenderung.objects.create(objekt=objekt, **data)
+        messages.success(request, success)
+    except Exception:
+        logger.exception('Änderungsvorschlag zu Objekt %s konnte nicht gespeichert werden', objekt_id)
+        messages.error(request, 'Beim Speichern Ihres Änderungsvorschlags ist ein Fehler aufgetreten. '
+                                'Bitte versuchen Sie es später erneut.')
+    return back
 
 # Fügen Sie diese Funktion zu Ihrer views.py hinzu
 def about(request):

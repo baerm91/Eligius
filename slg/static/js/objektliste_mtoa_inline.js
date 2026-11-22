@@ -9,8 +9,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Check URL parameters for existing values
     const urlParams = new URLSearchParams(window.location.search);
-    const currentMinYear = urlParams.get('dat_von') ? parseInt(urlParams.get('dat_von')) : minYear;
-    const currentMaxYear = urlParams.get('dat_bis') ? parseInt(urlParams.get('dat_bis')) : maxYear;
+    // ?dat_von=abc ergäbe NaN und ließe noUiSlider.create() abstürzen.
+    const yearParam = (name, fallback) => {
+      const value = parseInt(urlParams.get(name), 10);
+      return Number.isFinite(value) ? value : fallback;
+    };
+    const currentMinYear = yearParam('dat_von', minYear);
+    const currentMaxYear = yearParam('dat_bis', maxYear);
 
     // Initialize the slider if it exists
     if (dateSlider) {

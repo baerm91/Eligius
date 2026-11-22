@@ -926,7 +926,9 @@
               .then(arr => {
                   const o = arr.find(x => String(x.id ?? x.name) === val || x.name === val);
                   const txt = o ? `${o.label ?? o.name} (${o.count})` : `${val} (0)`;
-                  if ($sel.find(`option[value="${val}"]`).length === 0) {
+                  // Wert aus der URL nicht in den Selektor interpolieren (Anführungszeichen o. Ä.)
+                  const exists = Array.from($sel[0].options).some(opt => opt.value === val);
+                  if (!exists) {
                       $sel.append(new Option(txt, val, true, true)).trigger('change.select2');
                   }
               })

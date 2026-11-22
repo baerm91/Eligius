@@ -26,11 +26,21 @@ def field_needs_int(field):
     return last in ('id', 'dat_von', 'dat_bis') or last.endswith('_id')
 
 # ... (Copy build_filters function here) ...
+def filter_context_key(request):
+    """Nur unbestimmt=True (bzw. 1/true/yes/on) nutzt die Obj-Pfade.
+
+    'False', 'Alle' und leer sind truthy Strings und galten früher fälschlich
+    als unbestimmt → falsche ORM-Pfade (idfk_… statt Typ__…).
+    """
+    value = (request.GET.get('unbestimmt') or '').strip().lower()
+    return 'unbestimmt' if value in ('true', '1', 'yes', 'on') else 'default'
+
+
 def build_filters(request, exclude_field=None):
     """
     Zentrale Funktion zum Aufbau der Filter-Logik.
     """
-    context_key = 'unbestimmt' if request.GET.get('unbestimmt') else 'default'
+    context_key = filter_context_key(request)
     parameters = FILTER_PARAMETERS.get(context_key, {})
 
     general_filters = []
@@ -143,7 +153,7 @@ def apply_filters(request, queryset, exclude_field=None, facet_context=False):
     for f in general_filters:
         queryset = queryset.filter(f)
 
-    context_key = 'unbestimmt' if request.GET.get('unbestimmt') else 'default'
+    context_key = filter_context_key(request)
     person_base_path = 'obj_person' if context_key == 'unbestimmt' else 'Typ__mztyp_person'
     
     # This mapping should align with FILTER_PARAMETERS keys and logic in build_filters
