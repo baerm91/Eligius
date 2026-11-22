@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # test_settings: SQLite in-memory, keine Secrets, keine MySQL nötig.
+      DJANGO_SETTINGS_MODULE: djangoproject.test_settings
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"   # wie das Docker-Basisimage
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: System checks
+        run: python manage.py check
+
+      - name: Fehlende Migrationen
+        # test_settings schaltet die slg-Migrationen ab; für den Check deshalb die
+        # normalen Settings. Ohne MySQL warnt makemigrations nur (History-Check).
+        env:
+          DJANGO_SETTINGS_MODULE: djangoproject.settings
+          DJANGO_DEBUG: "1"
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Tests
+        run: python manage.py test --settings=djangoproject.test_settings --noinput

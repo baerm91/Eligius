@@ -302,6 +302,8 @@ class Command(BaseCommand):
                     deleted, _ = MuenztypObjektAnzeige.objects.all().delete()
                 if verbosity >= 1:
                     self.stdout.write(f'  {deleted} bestehende MTOA-Einträge gelöscht.')
+                from slg.mtoa_sync import _invalidate_browse_cache
+                _invalidate_browse_cache()
 
             # 5. Vorhandene MTOA-Einträge laden (obj_id → mtoa.id Mapping)
             existing_map = {}

@@ -24,8 +24,6 @@
 <!-- Optimierte Font-Display Einstellungen -->
 
 
-<!-- Immediate font usage trigger -->
-<span class="font-preload-trigger" aria-hidden="true"></span>
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
 
 {% endblock stylesheets %}
@@ -34,6 +32,8 @@
 {% endblock page_title %}
 
 {% block content %}
+{# Nutzt die vorgeladene Icon-Schrift sofort (gehört in <body>, nicht <head>). #}
+<span class="font-preload-trigger" aria-hidden="true"></span>
 {% load slg_extras %}
 {% load custom_tags %} {# Ensure custom_tags are loaded if not already #}
 

@@ -39,6 +39,7 @@ from .models import *
 from .seo import clean_text, muenztyp_meta
 from . import structured_data as sd
 from .services.authority_display import display_label as authority_label, display_text as authority_text
+from .services import browse_cache
 from .admin import process_download_infos
 from .serializers import *
 from .forms import *
@@ -401,64 +402,37 @@ def index(request):
         Paket.objects
         .filter(online_freigegeben=True)
         .annotate(objektanzahl_db=Count('obj', distinct=True))
-        .prefetch_related(
-            'vergleichspakete',
-            'literatur',
-            Prefetch(
-                'obj_set',
-                queryset=Obj.objects.only('id').order_by('id'),
-                to_attr='homepage_objekte'
-            )
-        )
         .order_by('name')
     )
 
-    package_object_ids = []
-    for paket in context_packages:
-        paket.homepage_objekt_ids = [obj.id for obj in getattr(paket, 'homepage_objekte', [])]
-        package_object_ids.extend(paket.homepage_objekt_ids)
-
-    package_preview_map = defaultdict(list)
-    package_entries_map = defaultdict(list)
-    if package_object_ids:
-        preview_entries = list(
-            MuenztypObjektAnzeige.objects
-            .filter(obj_id__in=package_object_ids)
-            .select_related('slg_fk', 'slgteil_fk')
-            .order_by('-last_modified')
+    # Pro Paket nur, was die Startseite zeigt: Zeitspanne per DB-Aggregat und
+    # die ersten drei Objekte (nach Objekt-ID) mit Bild; sonst die ersten drei.
+    # Früher wurden alle Objekte aller Pakete aus MTOA und Obj geladen.
+    paket_links = Obj.pakete.through.objects
+    mtoa_of_link = MuenztypObjektAnzeige.objects.filter(obj_id=OuterRef('obj_id'))
+    extents = {
+        row['paket_id']: row
+        for row in (
+            paket_links.filter(paket_id__in=[paket.id for paket in context_packages])
+            .annotate(
+                von=Subquery(mtoa_of_link.values('datierung_von')[:1]),
+                bis=Subquery(mtoa_of_link.values('datierung_bis')[:1]),
+            )
+            .values('paket_id')
+            .annotate(start=Min('von'), end=Max('bis'))
+            .order_by()
         )
-        _refresh_mtoa_image_urls_from_objects(preview_entries)
-        previews_by_obj_id = {entry.obj_id: entry for entry in preview_entries}
-        for paket in context_packages:
-            package_entries = [
-                previews_by_obj_id[obj_id]
-                for obj_id in paket.homepage_objekt_ids
-                if obj_id in previews_by_obj_id
-            ]
-            package_entries_map[paket.id] = package_entries
-            entries_with_images = [
-                entry for entry in package_entries
-                if entry.thumbnail_av_url or entry.thumbnail_rv_url or entry.av_url or entry.rv_url
-            ]
-            package_preview_map[paket.id] = (entries_with_images or package_entries)[:3]
-
+    }
     for paket in context_packages:
-        paket.homepage_preview_objects = package_preview_map.get(paket.id, [])
-        package_entries = package_entries_map.get(paket.id, [])
-        starts = [
-            entry.datierung_von
-            for entry in package_entries
-            if entry.datierung_von is not None
-        ]
-        ends = [
-            entry.datierung_bis
-            for entry in package_entries
-            if entry.datierung_bis is not None
-        ]
-        if starts and ends:
-            paket.homepage_date_range_label = f"{_format_package_year(min(starts))} bis {_format_package_year(max(ends))}"
+        package_mtoa = MuenztypObjektAnzeige.objects.filter(
+            obj_id__in=paket_links.filter(paket_id=paket.id).values('obj_id')
+        )
+        extent = extents.get(paket.id, {})
+        if extent.get('start') is not None and extent.get('end') is not None:
+            paket.homepage_date_range_label = f"{_format_package_year(extent['start'])} bis {_format_package_year(extent['end'])}"
         else:
             paket.homepage_date_range_label = ''
+        paket.homepage_preview_objects = _package_preview_entries(package_mtoa)
 
     browse_url = reverse('Objektliste')
     highlighted_context_package = random.choice(context_packages) if context_packages else None
@@ -468,20 +442,27 @@ def index(request):
     ]
 
     def build_wordcloud_data(default_field, undetermined_field, filter_name, limit=80):
+        # Zählen per GROUP BY in der DB statt jede Objektzeile nach Python zu
+        # streamen; Ergebnis ist unabhängig vom Besucher und wird kurz gecacht.
+        cache_key = f'index-wordcloud:{filter_name}:{limit}'
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         counts = Counter()
-
-        for keyword in chain(
-            Obj.objects.filter(Typ__isnull=False).values_list(default_field, flat=True).iterator(),
-            Obj.objects.filter(Typ__isnull=True).values_list(undetermined_field, flat=True).iterator(),
+        for qs, field in (
+            (Obj.objects.filter(Typ__isnull=False), default_field),
+            (Obj.objects.filter(Typ__isnull=True), undetermined_field),
         ):
-            if not keyword:
-                continue
-            normalized_keyword = str(keyword).strip()
-            if not normalized_keyword:
-                continue
-            counts[normalized_keyword] += 1
+            rows = qs.order_by().values(field).annotate(n=Count('pk')).values_list(field, 'n')
+            for keyword, n in rows:
+                if not keyword:
+                    continue
+                normalized_keyword = str(keyword).strip()
+                if normalized_keyword:
+                    counts[normalized_keyword] += n
 
-        return [
+        data = [
             {
                 'text': keyword,
                 'value': count,
@@ -489,6 +470,8 @@ def index(request):
             }
             for keyword, count in sorted(counts.items(), key=lambda item: (-item[1], item[0].lower()))[:limit]
         ]
+        cache.set(cache_key, data, 60 * 10)
+        return data
 
     av_wordcloud_data = build_wordcloud_data(
         'Typ__av_bildtyp__avbildtyp_schlagwort__schlagwort__name',
@@ -511,6 +494,27 @@ def index(request):
     }
     
     return render(request, 'slg/index.html', context)
+
+def _package_preview_entries(package_mtoa, count=3, chunk_size=24):
+    """Erste `count` MTOA-Einträge eines Pakets (nach Objekt-ID) mit Bild,
+    sonst die ersten `count` überhaupt. Lädt nur so viele Zeilen wie nötig."""
+    ordered = package_mtoa.select_related('slg_fk', 'slgteil_fk').order_by('obj_id')
+    first_entries = []
+    with_images = []
+    offset = 0
+    while len(with_images) < count:
+        chunk = list(ordered[offset:offset + chunk_size])
+        if not chunk:
+            break
+        _refresh_mtoa_image_urls_from_objects(chunk)
+        if not first_entries:
+            first_entries = chunk[:count]
+        with_images.extend(
+            entry for entry in chunk
+            if entry.thumbnail_av_url or entry.thumbnail_rv_url or entry.av_url or entry.rv_url
+        )
+        offset += chunk_size
+    return (with_images or first_entries)[:count]
 
 def _build_package_distribution(entries, field_name, limit=4):
     counts = Counter()
@@ -1909,6 +1913,12 @@ def ObjektView(request, id):
         queryset=Obj_Ref.objects.select_related('idfk_Ref', 'variante')
     )
 
+    # details.html zeigt pro Konkordanz Ref/Ref.zitat an.
+    konkordanz_prefetch = Prefetch(
+        'Typ__Konkordanz',
+        queryset=Muenztyp.objects.select_related('Ref')
+    )
+
     obj_queryset = Obj.objects.select_related(
         # Existing relationships
         'idfk_Muenzstand', 'idfk_Herstellung', 'Slg', 'SlgTeil', 'idfk_Nominal', 
@@ -1929,12 +1939,15 @@ def ObjektView(request, id):
         'Typ__rv_bildtyp', 'Typ__av_beizeichen', 'Typ__rv_beizeichen',
         'Typ__av_bildrand', 'Typ__rv_bildrand', 'Typ__rand',
         'Typ__av_offizin_symbol', 'Typ__rv_offizin_symbol',
-        'Typ__auflage', 'Typ__Ref'
+        'Typ__auflage', 'Typ__Ref', 'Typ__Reichskreis',
+        'SlgTeil__idfk_Slg_SlgTeil',
         
     ).prefetch_related(
         'Herstellungsmerkmale', 'sekundaere_Merkmale',
         obj_ref_prefetch,
+        obj_person_prefetch,
         mztyp_person_prefetch,
+        konkordanz_prefetch,
         
         av_schlagwort_prefetch,
         rv_schlagwort_prefetch,
@@ -2107,18 +2120,30 @@ from .services.search import MTOA_FILTERS, MTOA_FACETS, _get_filtered_mtoa_query
 
 # Neuer Endpoint für Chart-Daten
 def area_chart_data(request):
+    payload = browse_cache.get_or_compute(request, 'area-chart', lambda: _area_chart_payload(request))
+    if payload is None:
+        return JsonResponse({
+            'error': 'Ungültige oder inkompatible Filterparameter.',
+            'years': [],
+            'counts': [],
+            'percentages': []
+        }, status=400)
+    return JsonResponse(payload)
+
+
+def _area_chart_payload(request):
     try:
         filtered_qs, _, _ = _get_filtered_mtoa_queryset(request)
         object_count = filtered_qs.count()
         logger.debug("area_chart_data: %d MTOA-Objekte", object_count)
 
         if not object_count:
-            return JsonResponse({
+            return {
                 'years': [],
                 'counts': [],
                 'percentages': [],
                 'debug': {'message': 'Keine Objekte mit passenden Filtern gefunden'}
-            })
+            }
 
         pairs = list(
             filtered_qs.exclude(
@@ -2156,6 +2181,7 @@ def area_chart_data(request):
             max_span = min(max_span, chart_to - chart_from + 2)
 
         years_counter = Counter()
+        diff = defaultdict(float)
         error_count = 0
 
         for start, end in pairs:
@@ -2177,12 +2203,22 @@ def area_chart_data(request):
                     error_count += 1
                     continue
 
+                # Differenz-Array statt Schleife über jedes Jahr der Spanne:
+                # O(Objekte + Jahre) statt O(Objekte × Spanne).
                 weight = 1.0 / span
-                for y in range(start, end + 1):
-                    years_counter[y] += weight
+                diff[start] += weight
+                diff[end + 1] -= weight
             except (TypeError, ValueError) as e:
                 error_count += 1
                 continue
+
+        if diff:
+            running = 0.0
+            for y in range(min(diff), max(diff)):
+                running += diff.get(y, 0.0)
+                # Rundungsreste der Prefix-Summe (±1e-16) nicht als Werte führen.
+                if running > 1e-9:
+                    years_counter[y] = running
 
         logger.debug(f"area_chart_data: Fehlerhafte Datumsbereiche: {error_count}")
         logger.debug(f"area_chart_data: Verarbeitete Jahre im Counter: {len(years_counter)}")
@@ -2208,7 +2244,7 @@ def area_chart_data(request):
         else:
             percentages = [0 for _ in counts]
         
-        return JsonResponse({
+        return {
             'years': years,
             'counts': counts,
             'percentages': percentages,
@@ -2222,18 +2258,13 @@ def area_chart_data(request):
                 'years_min': years[0] if years else None,
                 'years_max': years[-1] if years else None,
             }
-        })
+        }
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
         logger.error(f"ERROR in area_chart_data: {error_details}")
 
-        return JsonResponse({
-            'error': 'Ungültige oder inkompatible Filterparameter.',
-            'years': [],
-            'counts': [],
-            'percentages': []
-        }, status=400)
+        return None  # Fehler: nicht cachen, Antwort baut area_chart_data
 
 
 
@@ -2247,12 +2278,15 @@ def area_chart_data(request):
 def facet_api(request):
     from .services.public_api import facet_values
     try:
-        return Response(facet_values(
-            request, request.GET.get('facet'),
-            include_current=(request.GET.get('include_current_facet') == '1'
-                             or request.GET.get('include_selected') == '1'),
-            term=request.GET.get('term'),
-        )[:50])
+        facet = request.GET.get('facet')
+        include_current = (request.GET.get('include_current_facet') == '1'
+                           or request.GET.get('include_selected') == '1')
+        return Response(browse_cache.get_or_compute(
+            request, ('facet', facet, include_current),
+            lambda: facet_values(request, facet, include_current=include_current,
+                                 term=request.GET.get('term'))[:50],
+            localized=True,
+        ))
     except (ValueError, TypeError):
         return Response({'error': 'Ungültige Facette oder Filterparameter.'}, status=400)
 
@@ -4289,45 +4323,53 @@ def objekt_list_view_mtoa(request):
             return redirect('Objekt', id=obj.id)
     qs, is_unbestimmt, needs_distinct = _get_filtered_mtoa_queryset(request)
 
-    # Database-agnostic grouping for maps
-    mints_qs = (
-        qs.exclude(mzstaette_fk__isnull=True)
-        .values(
-            'mzstaette_fk__id',
-            'mzstaette',
-            'region',
-            'mzstaette_fk__lat',
-            'mzstaette_fk__long',
+    # Kartenpunkte und Trefferzahl sind besucherunabhängig: gemeinsam cachen
+    # (ungefilterte Ansicht / ein Filterwert, siehe services.browse_cache).
+    def compute_overview():
+        # Database-agnostic grouping for maps
+        mints_qs = (
+            qs.exclude(mzstaette_fk__isnull=True)
+            .values(
+                'mzstaette_fk__id',
+                'mzstaette',
+                'region',
+                'mzstaette_fk__lat',
+                'mzstaette_fk__long',
+            )
+            .annotate(
+                mint_id     = F('mzstaette_fk__id'),
+                mint_name   = F('mzstaette'),
+                mint_region = F('region'),
+                mint_lat    = F('mzstaette_fk__lat'),
+                mint_lon    = F('mzstaette_fk__long'),
+                obj_count   = Count('pk', distinct=needs_distinct),
+            )
+            .order_by('mzstaette_fk__id')
         )
-        .annotate(
-            mint_id     = F('mzstaette_fk__id'),
-            mint_name   = F('mzstaette'),
-            mint_region = F('region'),
-            mint_lat    = F('mzstaette_fk__lat'),
-            mint_lon    = F('mzstaette_fk__long'),
-            obj_count   = Count('pk', distinct=needs_distinct),
-        )
-        .order_by('mzstaette_fk__id')
-    )
 
-    mints_for_js = [
-        {
-            'id': m['mint_id'],
-            'name': display_text(m['mint_name'], 'Mzstaette'),
-            # Filterwert immer der gespeicherte (deutsche) DB-Name; der
-            # übersetzte 'name' ist nur Anzeige (sonst 0 Treffer auf /en/).
-            'filter_value': m['mint_name'],
-            'region': display_text(m['mint_region'], 'Region'),
-            'longitude': float(m['mint_lon']) if m['mint_lon'] is not None else None,
-            'latitude': float(m['mint_lat']) if m['mint_lat'] is not None else None,
-            'count': m['obj_count'],
-        }
-        for m in mints_qs
-        if m['mint_lon'] and m['mint_lat']
-    ]
+        mints_for_js = [
+            {
+                'id': m['mint_id'],
+                'name': display_text(m['mint_name'], 'Mzstaette'),
+                # Filterwert immer der gespeicherte (deutsche) DB-Name; der
+                # übersetzte 'name' ist nur Anzeige (sonst 0 Treffer auf /en/).
+                'filter_value': m['mint_name'],
+                'region': display_text(m['mint_region'], 'Region'),
+                'longitude': float(m['mint_lon']) if m['mint_lon'] is not None else None,
+                'latitude': float(m['mint_lat']) if m['mint_lat'] is not None else None,
+                'count': m['obj_count'],
+            }
+            for m in mints_qs
+            if m['mint_lon'] and m['mint_lat']
+        ]
+        return {'mints': mints_for_js, 'count': qs.count()}
+
+    overview = browse_cache.get_or_compute(request, 'browse-overview', compute_overview, localized=True)
+    mints_for_js = overview['mints']
 
     page = request.GET.get('page', 1)
     paginator = Paginator(qs, 30)
+    paginator.__dict__['count'] = overview['count']  # cached_property vorbelegen: kein zweites COUNT
     anzahl = paginator.count
     variables = request.GET.copy()
     if 'page' in variables:

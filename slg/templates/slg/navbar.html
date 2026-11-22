@@ -8,7 +8,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{% block title %}Eligius{% endblock title %}</title>
     {% load static %}
-    <script src="{% url 'ui_javascript_catalog' %}"></script>
+    <script src="{% url 'ui_javascript_catalog' %}?l={{ LANGUAGE_CODE }}"></script>
     <script src="{% static 'js/eligius-i18n.js' %}"></script>
     {% block canonical %}<link rel="canonical" href="{% canonical_url %}">{% endblock canonical %}
     {% robots_directive as site_robots_directive %}
@@ -65,7 +65,7 @@
           <div class="nav-center d-none d-xl-flex">
             <a class="nav-link" href="/">{% translate "Start" %}</a>
             <a class="nav-link" href="{% url 'sammlungen_uebersicht' %}">{% translate "Sammlungen" %}</a>
-            <a class="nav-link" href="/browse">{% translate "Objekte" %}</a>
+            <a class="nav-link" href="{% url 'Objektliste' %}">{% translate "Objekte" %}</a>
             <a class="nav-link" href="{% url 'about' %}">{% translate "Projekt" %}</a>
             <a class="nav-link" href="{% url 'lab' %}">{% translate "Eligius Lab" %}</a>
           </div>
@@ -73,7 +73,7 @@
           <!-- Login-Icon rechts -->
           <div class="nav-side nav-side--right d-flex">
             {% include 'slg/partials/language_switcher.html' %}
-            <a class="nav-login-icon d-none d-xl-inline-flex" href="/admin" title="{% translate 'Anmelden' %}" aria-label="{% translate 'Anmelden' %}">
+            <a class="nav-login-icon d-none d-xl-inline-flex" href="/admin/" title="{% translate 'Anmelden' %}" aria-label="{% translate 'Anmelden' %}">
               <i class="bi bi-person-circle"></i>
             </a>
           </div>
@@ -85,10 +85,10 @@
           <div class="d-flex flex-column align-items-center py-3 gap-2">
             <a class="nav-link" href="/">{% translate "Start" %}</a>
             <a class="nav-link" href="{% url 'sammlungen_uebersicht' %}">{% translate "Sammlungen" %}</a>
-            <a class="nav-link" href="/browse">{% translate "Objekte" %}</a>
+            <a class="nav-link" href="{% url 'Objektliste' %}">{% translate "Objekte" %}</a>
             <a class="nav-link" href="{% url 'about' %}">{% translate "Projekt" %}</a>
             <a class="nav-link" href="{% url 'lab' %}">{% translate "Eligius Lab" %}</a>
-            <a class="nav-link" href="/admin">{% translate "Anmelden" %}</a>
+            <a class="nav-link" href="/admin/">{% translate "Anmelden" %}</a>
           </div>
         </div>
       </div>

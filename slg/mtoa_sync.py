@@ -54,6 +54,15 @@ def save_projections(to_create, to_update, batch_size=500):
         model.objects.bulk_create(to_create, batch_size=batch_size, **kwargs)
     if to_update:
         model.objects.bulk_update(to_update, fields, batch_size=batch_size)
+    if to_create or to_update:
+        _invalidate_browse_cache()
+
+
+def _invalidate_browse_cache():
+    """Gecachte Browse-Zahlen/Facetten nach dem Commit verwerfen (sonst könnte
+    eine parallele Anfrage alte Daten unter der neuen Generation ablegen)."""
+    from slg.services import browse_cache
+    transaction.on_commit(browse_cache.invalidate)
 
 
 def replace_projection_persons(obj_to_persons):

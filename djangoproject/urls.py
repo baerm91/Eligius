@@ -25,6 +25,8 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_protect
 from slg.language_views import switch_language
 from django.views.i18n import JavaScriptCatalog
+from django.views.decorators.http import last_modified
+from django.utils import timezone
 from rest_framework import routers, serializers, viewsets
 
 from slg.api_views import ExportObjLSNO
@@ -40,6 +42,15 @@ from slg.views import impressum, datenschutz, objekt_detail_partial, export_xlsx
 # CSRF-Token ohne passendes Cookie ausliefern (Sprachumschalter in der Navbar).
 browse_view = objekt_list_view_mtoa if settings.DEBUG else cache_page(60 * 5)(csrf_protect(objekt_list_view_mtoa))
 
+# JS-Übersetzungskatalog: ändert sich nur mit einem Deploy. Die Navbar hängt
+# ?l=<Sprache> an, damit der Browser-Cache je Sprache getrennt ist (die Sprache
+# kommt sonst nur aus dem Cookie). Last-Modified = Prozessstart -> 304 nach Ablauf.
+_ui_js_last_modified = timezone.now()
+ui_js_view = JavaScriptCatalog.as_view(domain='django')
+if not settings.DEBUG:
+    # last_modified außen, sonst beantwortet cache_page If-Modified-Since mit 200.
+    ui_js_view = last_modified(lambda request, **kwargs: _ui_js_last_modified)(cache_page(60 * 60 * 6)(ui_js_view))
+
 urlpatterns = [
     # Technische SEO: robots.txt und Sitemap-Index mit Teil-Sitemaps
     path('robots.txt', seo.robots_txt, name='robots_txt'),
@@ -47,7 +58,7 @@ urlpatterns = [
     path('sitemap-<section>.xml', seo.sitemap_section, name='sitemap_section'),
     # Language is a cookie preference, never part of resource URLs/URIs.
     path('i18n/setlang/', switch_language, name='set_language'),
-    path('i18n/ui.js', JavaScriptCatalog.as_view(domain='django'), name='ui_javascript_catalog'),
+    path('i18n/ui.js', ui_js_view, name='ui_javascript_catalog'),
     path('oai/', oai_endpoint, name='oai_endpoint'),
     path('bild/<int:obj_id>/<slug:ansicht>/', bild_weiterleitung, name='bild_weiterleitung'),
     path('api/webmcp/manifest/', webmcp.manifest, name='webmcp_manifest'),

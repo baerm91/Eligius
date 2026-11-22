@@ -1762,7 +1762,21 @@ class KatalogFirmen(models.Model):
 
 class MuenztypObjektAnzeige(models.Model):
 	class Meta:
-		indexes = [models.Index(fields=['last_modified', 'obj_id'], name='mtoa_oai_modified_obj_idx')]
+		indexes = [
+			models.Index(fields=['last_modified', 'obj_id'], name='mtoa_oai_modified_obj_idx'),
+			# Browse: Datierungsfilter und Sortierung (datierung_von, datierung_bis, pk)
+			models.Index(fields=['datierung_von', 'datierung_bis'], name='mtoa_dat_von_bis_idx'),
+			models.Index(fields=['datierung_bis'], name='mtoa_dat_bis_idx'),
+			# Browse/Facetten: exakte Filter über Textspalten (MTOA_FILTERS).
+			# Kein Index auf objekttyp: 14 Werte, "Münze" = 43 % -> MariaDB-Messung
+			# (Dump 2026-05) zeigte 5x langsamere erste Seite mit Index.
+			models.Index(fields=['mzstaette'], name='mtoa_mzstaette_idx'),
+			models.Index(fields=['muenzstand'], name='mtoa_muenzstand_idx'),
+			models.Index(fields=['reichskreis'], name='mtoa_reichskreis_idx'),
+			models.Index(fields=['region'], name='mtoa_region_idx'),
+			models.Index(fields=['av_beizeichen'], name='mtoa_av_beizeichen_idx'),
+			models.Index(fields=['rv_beizeichen'], name='mtoa_rv_beizeichen_idx'),
+		]
 
 	obj_id = models.PositiveIntegerField(
 		unique=True,  # eine Projektion je Objekt (verhindert Duplikate bei parallelen Saves)

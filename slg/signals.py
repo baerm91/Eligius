@@ -99,6 +99,8 @@ def remove_obj_projection(sender, instance, **kwargs):
     from .models import MuenztypObjektAnzeige
     try:
         MuenztypObjektAnzeige.objects.filter(obj_id=instance.pk).delete()
+        from .mtoa_sync import _invalidate_browse_cache
+        _invalidate_browse_cache()
     except Exception:
         logger.exception("MTOA-Eintrag für gelöschtes Obj %s konnte nicht entfernt werden", instance.pk)
 
