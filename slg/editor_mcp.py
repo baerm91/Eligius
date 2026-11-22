@@ -312,7 +312,17 @@ def _authenticate(scope):
         close_old_connections()
 
 
+async def _reject_non_http(scope, receive, send):
+    """WebSocket u. Ä. ablehnen: ASGIRequest kennt nur HTTP-Scopes (KeyError)."""
+    if scope['type'] == 'websocket':
+        await receive()  # websocket.connect
+        await send({'type': 'websocket.close', 'code': 1008})
+
+
 async def authenticated_app(scope, receive, send):
+    if scope.get('type') != 'http':
+        await _reject_non_http(scope, receive, send)
+        return
     user_id, status = await sync_to_async(_authenticate, thread_sensitive=False)(scope)
     if user_id is None:
         response = JSONResponse({'detail': 'Authentifizierung oder Bearbeitungsberechtigung fehlt.'},

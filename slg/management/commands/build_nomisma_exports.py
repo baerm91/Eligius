@@ -28,7 +28,9 @@ class Command(BaseCommand):
             path = cached_dump(slg, request, force=True)
             if path is None:
                 raise CommandError(f'Cache-Verzeichnis nicht beschreibbar: {cache_path(slg)}')
-            exported = path.read_text(encoding='utf-8').count('<nmo:NumismaticObject ')
+            # Zeilenweise zählen statt den (u. U. sehr großen) Dump komplett zu laden.
+            with path.open(encoding='utf-8') as dump:
+                exported = sum(line.count('<nmo:NumismaticObject ') for line in dump)
             self.stdout.write(f'{slg.pk} {slg.name}: {exported} Münzen exportiert '
                               f'(kontrolliert: {controlled.count()}, davon Fälschung/Verdacht: '
                               f'{controlled.filter(faelschung__isnull=False).count()}, Typ unsicher: '

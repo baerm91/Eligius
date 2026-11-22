@@ -11,7 +11,9 @@ def is_valid_qparam(param):
    return param != '' and param is not None
 
 
-_INT_QPARAM = re.compile(r'^\s*-?\d+\s*$')
+# Nur ASCII-Ziffern: '²' oder arabisch-indische Ziffern erfüllen \d bzw.
+# isdigit(), int() wirft dafür aber ValueError (HTTP 500).
+_INT_QPARAM = re.compile(r'^\s*-?[0-9]+\s*$')
 
 
 def is_int_qparam(param):
@@ -21,7 +23,7 @@ def is_int_qparam(param):
 
 def field_needs_int(field):
     last = field.split('__')[-1]
-    return last == 'id' or last.endswith('_id')
+    return last in ('id', 'dat_von', 'dat_bis') or last.endswith('_id')
 
 # ... (Copy build_filters function here) ...
 def build_filters(request, exclude_field=None):

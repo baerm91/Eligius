@@ -151,7 +151,14 @@ class AdminRegressionTests(Fixtures, TestCase):
         # Die Admin-Vorlage rendert error.traceback: das braucht echte Exceptions.
         self.assertTrue(all(error.traceback for error in preview.base_errors))
 
-        ObjPaketZuweisungResource().import_data(dataset, dry_run=False)
+        # Fehlerhafte Zeilen → alles oder nichts: kein Teilimport, kein neues Paket.
+        result = ObjPaketZuweisungResource().import_data(dataset, dry_run=False)
+        self.assertIn('nichts gespeichert', str(result.base_errors[0].error))
+        self.assertFalse(Paket.objects.filter(name='Neues Paket').exists())
+
+        valid = tablib.Dataset(headers=dataset.headers)
+        valid.append(dataset[0])
+        ObjPaketZuweisungResource().import_data(valid, dry_run=False)
         paket = Paket.objects.get(name='Neues Paket')
         self.assertTrue(paket.slug)
         self.assertEqual(list(in_teil.pakete.all()), [paket])

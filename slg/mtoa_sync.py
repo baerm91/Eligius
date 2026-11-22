@@ -110,7 +110,7 @@ def sync_objs_to_mtoa(obj_ids):
     )
 
     if not obj_ids:
-        return
+        return 0, 0  # Aufrufer entpacken (created, updated)
 
     if isinstance(obj_ids, int):
         obj_ids = [obj_ids]

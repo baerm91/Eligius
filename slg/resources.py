@@ -1,5 +1,6 @@
 # resources.py
 
+from .import_utils import parse_object_id
 from import_export import resources
 from .models import *
 from django.db.models import Q
@@ -103,22 +104,36 @@ class ObjLSNOResource(resources.ModelResource):
         return self.get_persons(obj, personfunktion=3)
 
     def get_persons(self, obj, personfunktion, appears_on_rev=None):
-        persons = set()
-        
-        mztyp_persons = Mztyp_Person.objects.filter(Mztyp=obj.Typ, idfk_PersonFunktion=personfunktion)
-        obj_persons = Obj_Person.objects.filter(idfk_Obj=obj, idfk_PersonFunktion=personfunktion)
+        # Arbeitet auf den in export() vorgeladenen Relationen (kein N+1).
+        relations = list(obj.obj_person_set.all())
+        if obj.Typ:
+            relations += list(obj.Typ.mztyp_person_set.all())
+        names = []
+        for rel in relations:
+            if rel.idfk_PersonFunktion_id != personfunktion:
+                continue
+            if appears_on_rev is not None and bool(rel.appears_on_rev) != appears_on_rev:
+                continue
+            if rel.idfk_Person.name not in names:
+                names.append(rel.idfk_Person.name)
+        return ', '.join(names)
 
-        if appears_on_rev is not None:
-            mztyp_persons = mztyp_persons.filter(appears_on_rev=appears_on_rev)
-            obj_persons = obj_persons.filter(appears_on_rev=appears_on_rev)
-
-        for person in mztyp_persons:
-            persons.add(person.idfk_Person.name)
-
-        for person in obj_persons:
-            persons.add(person.idfk_Person.name)
-
-        return ', '.join(persons)
+    def export(self, queryset=None, **kwargs):
+        if queryset is None:
+            queryset = self.get_queryset()
+        if hasattr(queryset, 'select_related'):
+            # Vorher >16 Queries pro Objekt (Typ, Fund, Personen, Konkordanzen …).
+            queryset = queryset.select_related(
+                'workflow', 'Slg', 'SlgTeil', 'fund', 'fund__fundort',
+                'idfk_Muenzstand', 'idfk_Nominal', 'idfk_Herstellung', 'Metall',
+                'av_bildtyp', 'av_beizeichen', 'rv_bildtyp', 'rv_beizeichen', 'rv_offizin',
+                'Typ', 'Typ__workflow', 'Typ__Herstellung', 'Typ__Reichskreis', 'Typ__Muenzstand',
+                'Typ__Nominal', 'Typ__Metall', 'Typ__Mzstaette', 'Typ__region',
+                'Typ__av_bildtyp', 'Typ__av_beizeichen', 'Typ__rv_bildtyp', 'Typ__rv_beizeichen',
+            ).prefetch_related(
+                'Typ__Konkordanz', 'obj_person_set__idfk_Person', 'Typ__mztyp_person_set__idfk_Person',
+            )
+        return super().export(queryset=queryset, **kwargs)
     
     class Meta:
         model = Obj
@@ -190,7 +205,7 @@ class ObjLSNOResource(resources.ModelResource):
                 return "Münze"
         return ''
 
-    def dehydrate_Muenzstand(self, obj):
+    def dehydrate_Typ__Muenzstand__name(self, obj):
         if obj.Typ and obj.Typ.Muenzstand:
             return obj.Typ.Muenzstand.name
         else:
@@ -342,10 +357,7 @@ class FundResource(resources.ModelResource):
 		obj_id = row.get('Objekt-ID')
 		if self._is_empty(obj_id):
 			raise ValueError('Spalte "Objekt-ID" ist leer.')
-		try:
-			obj_id = int(float(str(obj_id).strip()))
-		except ValueError:
-			raise ValueError(f'Ungültige Objekt-ID: {obj_id!r}')
+		obj_id = parse_object_id(obj_id)  # "12.5" → Fehler statt Objekt 12
 		if not Obj.objects.filter(pk=obj_id).exists():
 			raise ValueError(f'Objekt-ID {obj_id} existiert nicht.')
 		row['Objekt-ID'] = obj_id

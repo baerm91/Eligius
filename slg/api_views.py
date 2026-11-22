@@ -74,8 +74,9 @@ def obtain_auth_token(request):
         "email": "user@example.com"
     }
     """
-    username = request.data.get('username')
-    password = request.data.get('password')
+    data = request.data if hasattr(request.data, 'get') else {}
+    username = data.get('username')
+    password = data.get('password')
     
     if not username or not password:
         return Response({

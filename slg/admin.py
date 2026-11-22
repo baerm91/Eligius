@@ -23,6 +23,7 @@ from .models import *
 from .translation_resources import (AvBildtypTranslationResource, RvBildtypTranslationResource, TranslationStatusFilter, TranslationAdminMixin,
     ObjekttypTranslationResource, HerstellungTranslationResource, PersonFunktionTranslationResource, SchlagwortTranslationResource,
     MetallTranslationResource, NominalTranslationResource, MzstaetteTranslationResource)
+from .import_utils import parse_object_id
 from .services.schlagwort_merge import METADATA, lock_keyword_writes, merge_keywords, merge_preview
 from import_export.resources import modelresource_factory
 # from .models import Slg, Obj, SlgTeil, Person, PersonFunktion, Herstellung, Ref, Nominal, Mzstaette, Obj_Person, Obj_Ref, Muenzstand, Variantenbeschr, AvBildtyp, RvBildtyp, AvBeizeichen, RvBeizeichen, AvBildrand, RvBildrand, Workflow, Obj_interne_Anmerkung, interneAnmerkung, Schlagwort, AvBildtyp_Schlagwort, RvBildtyp_Schlagwort, Muenztyp, Mztyp_Person, Faelschung
@@ -1571,44 +1572,37 @@ def process_download_infos(obj):
         if link_kind == 'numismatics':
             obj.Muenzstand = Muenzstand.objects.get(id=424)
 
-        for praegeherr in praegeherr_list:
-            if praegeherr:
-                try:
-                    with transaction.atomic():
-                        p1person = Person.objects.filter(name_nom_id=praegeherr).first()
-                        p1 = Mztyp_Person(Mztyp=obj, idfk_Person=p1person, idfk_PersonFunktion=PersonFunktion.objects.get(id=1), appears_on_rev=0)
-                        p1.save()
-                except IntegrityError:
-                    pass
-        
-        for avpor in avpor_list:
-            if avpor:
-                try:
-                    with transaction.atomic():
-                        p3person = Person.objects.filter(name_nom_id=avpor).first()
-                        p3 = Mztyp_Person(Mztyp=obj, idfk_Person=p3person, idfk_PersonFunktion=PersonFunktion.objects.get(id=2), appears_on_rev=0)
-                        p3.save()
-                except IntegrityError:
-                    pass
-        
-        for rvpor in rvpor_list:
-            if rvpor:
-                try:
-                    with transaction.atomic():
-                        p3person = Person.objects.filter(name_nom_id=rvpor).first()
-                        p3 = Mztyp_Person(Mztyp=obj, idfk_Person=p3person, idfk_PersonFunktion=PersonFunktion.objects.get(id=2), appears_on_rev=1)
-                        p3.save()
-                except IntegrityError:
-                    pass
-
-        # Save object
+        # Erst die Typdaten speichern, dann Personen verknüpfen: eine unbekannte
+        # Nomisma-Person darf die übrigen geladenen Felder nicht verwerfen.
         try:
             obj.save()
-            return True, "Daten erfolgreich verarbeitet"
         except Exception as e:
             # Hier gibt es weder request noch message_user; der Aufrufer zeigt die Meldung an.
             logging.getLogger(__name__).exception('Münztyp %s konnte nach dem Typdaten-Abruf nicht gespeichert werden', obj.pk)
             return False, f"Fehler beim Speichern: {e}"
+
+        missing = []
+        for uris, funktion_id, on_rev in ((praegeherr_list, 1, 0), (avpor_list, 2, 0), (rvpor_list, 2, 1)):
+            for uri in uris:
+                if not uri:
+                    continue
+                person = Person.objects.filter(name_nom_id=uri).first()
+                if person is None:
+                    missing.append(str(uri))
+                    continue
+                try:
+                    with transaction.atomic():
+                        Mztyp_Person.objects.create(
+                            Mztyp=obj, idfk_Person=person,
+                            idfk_PersonFunktion=PersonFunktion.objects.get(id=funktion_id),
+                            appears_on_rev=on_rev)
+                except IntegrityError:
+                    pass  # Verknüpfung existiert bereits
+
+        if missing:
+            return True, ("Daten erfolgreich verarbeitet. Nicht in Eligius vorhandene Personen "
+                          "(name_nom_id): " + ", ".join(sorted(set(missing))))
+        return True, "Daten erfolgreich verarbeitet"
 
     except Exception as e:
         print(f"Fehler bei der Verarbeitung: {e}")
@@ -2065,9 +2059,13 @@ class ObjImport(resources.ModelResource):
         report_skipped = True
         use_bulk = True
         batch_size = 500
-    
+        # Bulk-Import ohne Transaktion hinterließ bei Fehlern Teilimporte.
+        use_transactions = True
+
     def get_import_id_fields(self):
-        return ['invnr', 'Slg']
+        # Pro Resource-Instanz (= pro Import) statt über die geteilte Meta-Klasse:
+        # Fundmünzprojekt-Zeilen identifizieren sich zusätzlich über SlgTeil.
+        return list(getattr(self, '_current_id_fields', None) or ['invnr', 'Slg'])
     
     def before_import_row(self, row, **kwargs):
         sammlung_name = row.get('Sammlung', '')
@@ -2109,15 +2107,7 @@ class ObjImport(resources.ModelResource):
 
             return self.Meta.model(), True
 
-        # Fallback ohne Cache
-        if hasattr(self, '_current_id_fields'):
-            original_id_fields = self.get_import_id_fields()
-            self.Meta.import_id_fields = self._current_id_fields
-            try:
-                return super().get_or_init_instance(instance_loader, row)
-            finally:
-                self.Meta.import_id_fields = original_id_fields
-        
+        # Fallback ohne Cache: get_import_id_fields() berücksichtigt _current_id_fields.
         return super().get_or_init_instance(instance_loader, row)
 
 class UserActionListFilter(admin.SimpleListFilter):
@@ -2523,8 +2513,13 @@ class ObjAdmin(ImportExportModelAdmin):
         """Admin-Aktion: Ausgewählte Objekte in MuenztypObjektAnzeige synchronisieren."""
         from .mtoa_sync import sync_objs_to_mtoa
 
-        obj_ids = list(queryset.values_list('pk', flat=True))
-        created, updated = sync_objs_to_mtoa(obj_ids)
+        obj_ids = list(queryset.order_by().values_list('pk', flat=True).distinct())
+        created = updated = 0
+        # In 500er-Blöcken statt alles auf einmal in einer Transaktion zu laden.
+        for start in range(0, len(obj_ids), 500):
+            c, u = sync_objs_to_mtoa(obj_ids[start:start + 500])
+            created += c
+            updated += u
 
         self.message_user(
             request,
@@ -2671,7 +2666,11 @@ class MyObjectsAdmin(admin.ModelAdmin,):
     def get_queryset(self, request):
         return super(MyObjectsAdmin,self).get_queryset(request).select_related('Slg','SlgTeil','Typ','rv_beizeichen', 'rv_offizin' )
     
-    #entfernt den Löschenbutton
+    def get_actions(self, request):
+        # Entfernt die Sammel-Löschaktion (Objekte nur einzeln löschen).
+        actions = super().get_actions(request)
+        actions.pop('delete_selected', None)
+        return actions
 
     def SlgHlHaupt(self, request, queryset):
         ids = list(queryset.values_list('pk', flat=True))
@@ -3198,7 +3197,7 @@ class ObjPaketZuweisungResource(resources.ModelResource):
                 continue
             if obj_id:
                 try:
-                    obj_id = int(float(obj_id))
+                    obj_id = parse_object_id(obj_id)
                 except ValueError:
                     fehler.append(f"Zeile {i}: ungültige Objekt-ID '{obj_id}'")
                     continue
@@ -3270,7 +3269,15 @@ class ObjPaketZuweisungResource(resources.ModelResource):
                 )
                 created = len(neu)
 
-                if dry_run:
+                if fehler:
+                    # Alles oder nichts: keine Teilimporte und keine neu angelegten
+                    # Pakete, wenn eine Zeile fehlerhaft ist.
+                    transaction.set_rollback(True)
+                    created = skipped = 0
+                    if not dry_run:
+                        fehler.insert(0, "Import abgebrochen – es wurde nichts gespeichert. "
+                                         "Bitte die fehlerhaften Zeilen korrigieren.")
+                elif dry_run:
                     transaction.set_rollback(True)
         except Exception as e:
             import traceback

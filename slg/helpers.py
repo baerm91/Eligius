@@ -1,3 +1,4 @@
+import re
 from django.db.models import Subquery, OuterRef, Prefetch, Count, Min, Max
 from collections import defaultdict, OrderedDict
 from django.db.models import Q
@@ -333,7 +334,7 @@ def get_timeline_data(request):
         )
     
     if sammlung_id:
-        if str(sammlung_id).strip().isdigit():
+        if re.fullmatch(r'[0-9]+', str(sammlung_id).strip()):
             query = query.filter(Slg_id=int(sammlung_id))
         else:
             # Ungültige Sammlungs-ID ignorieren statt ValueError beim Auswerten
@@ -341,7 +342,7 @@ def get_timeline_data(request):
     
     if person_param:
         # Versuchen, nach ID zu filtern, wenn es sich um eine Zahl handelt
-        if person_param.isdigit():
+        if re.fullmatch(r'[0-9]+', person_param):
             try:
                 query = query.filter(person__id=person_param)
             except ValueError:
@@ -408,7 +409,7 @@ def get_timeline_data(request):
     elif person_param:
         try:
             # Wenn person_param eine ID ist
-            if person_param.isdigit():
+            if re.fullmatch(r'[0-9]+', person_param):
                 person = Person.objects.get(id=person_param)
                 title = f"Ereignisse zu {person.name}"
             # Wenn person_param ein Name ist

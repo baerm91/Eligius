@@ -19,6 +19,17 @@ from django.db import connection, transaction, IntegrityError
 from django.db.models import Prefetch, Q, Count, Max, Min, Avg, F, Exists, OuterRef, Subquery, Case, When, Value, IntegerField
 from rest_framework.pagination import PageNumberPagination
 from slg.filters import is_int_qparam
+
+
+def _request_object(request):
+    """request.data als Objekt/QueryDict; ein JSON-Array o. Ä. ergibt HTTP 400 statt 500."""
+    from rest_framework.exceptions import ParseError
+    data = request.data
+    if data is None or data == '':
+        return {}
+    if not hasattr(data, 'get'):
+        raise ParseError('JSON-Objekt erwartet.')
+    return data
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.forms import inlineformset_factory, modelformset_factory
 from django.shortcuts import render , get_object_or_404, redirect
@@ -1253,7 +1264,7 @@ def export_coins_api(request):
     (e.g. Concordia), but selects the Obj rows by inventory number instead of by admin
     queryset. Optionally accepts a `filename` field for the Content-Disposition.
     """
-    payload = request.data or {}
+    payload = _request_object(request)
     invnrs = payload.get('invnrs') or []
     if not isinstance(invnrs, list):
         return Response({'error': "'invnrs' must be a list"}, status=400)
@@ -1330,7 +1341,7 @@ def _export_datetime(value):
 @permission_classes([staff_with_perms('slg.view_obj')])
 def export_coin_states_api(request):
     """Return current object/type modification timestamps for inventory numbers."""
-    payload = request.data or {}
+    payload = _request_object(request)
     invnrs = payload.get('invnrs') or []
     if not isinstance(invnrs, list):
         return Response({'error': "'invnrs' must be a list"}, status=400)
@@ -1958,7 +1969,7 @@ def ObjektView(request, id):
 def objekt_detail_partial(request, id=None):
     # Die Route /objekt_detail_partial/ übergibt keine ID; sie kommt als ?id=.
     obj_id = id if id is not None else request.GET.get('id', '')
-    if not str(obj_id).isdigit():
+    if not re.fullmatch(r'[0-9]+', str(obj_id)):
         raise Http404('Objekt-ID fehlt oder ist ungültig.')
     obj = get_object_or_404(Obj.objects.select_related('Slg'), id=int(obj_id))
     return render(request, 'slg/objekt_detail_partial.html', {'Obj': obj})
@@ -2235,7 +2246,8 @@ def get_konkordanzen(request):
 @authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def konkordanzen_bulk(request):
-    raw_type_ids = request.data.get('type_ids') or request.data.get('ids') or []
+    data = _request_object(request)
+    raw_type_ids = data.get('type_ids') or data.get('ids') or []
     if not isinstance(raw_type_ids, list):
         return Response({'ok': False, 'error': 'type_ids must be a list'}, status=400)
 
@@ -2269,8 +2281,9 @@ def konkordanzen_bulk(request):
 @authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
 @permission_classes([staff_with_perms('slg.change_muenztyp')])
 def muenztyp_konkordanz_create(request, type_id=None):
-    source_type_id = type_id or request.data.get('source_type_id') or request.data.get('typ')
-    target_type_id = request.data.get('target_type_id') or request.data.get('konkordanz') or request.data.get('Konkordanz')
+    data = _request_object(request)
+    source_type_id = type_id or data.get('source_type_id') or data.get('typ')
+    target_type_id = data.get('target_type_id') or data.get('konkordanz') or data.get('Konkordanz')
 
     try:
         source_type_id = int(source_type_id)
@@ -2589,7 +2602,7 @@ class MuenztypDuplicateView(APIView):
         if not source:
             return Response({"ok": False, "error": "Muenztyp nicht gefunden"}, status=404)
 
-        payload = request.data or {}
+        payload = _request_object(request)
         ref_requested = any(key in payload for key in ("Ref", "RefId"))
         ref_obj = _lookup_ref(payload.get("Ref"), payload.get("RefId")) if ref_requested else source.Ref
         if ref_requested and not ref_obj:
@@ -2670,7 +2683,7 @@ class ConcordiaMuenztypCreateView(APIView):
     permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def post(self, request):
-        payload = request.data or {}
+        payload = _request_object(request)
         unresolved = []
         muenztyptitel = _clean_concordia_value(payload.get("muenztyptitel") or payload.get("prefLabel"))
         if not muenztyptitel:
@@ -2948,7 +2961,7 @@ class ObjektList(generics.ListAPIView):
 @authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def objekte_bulk_api(request):
-    payload = request.data or {}
+    payload = _request_object(request)
     raw_invnrs = payload.get('invnrs') or payload.get('objects') or []
     if not isinstance(raw_invnrs, list):
         return Response({'error': "'invnrs' must be a list"}, status=400)
@@ -3074,8 +3087,10 @@ class ObjektPersonenView(generics.GenericAPIView):
         'depicted_rv': 2,
     }
 
-    def get_object(self):
-        return get_object_or_404(Obj, invnr__iexact=self.kwargs.get(self.lookup_url_kwarg))
+    queryset = Obj.objects.all()
+    # Gleiche Auflösung wie ObjektDetail: ?slg=/&slgteil= zum Eingrenzen, 409 bei
+    # Mehrdeutigkeit statt MultipleObjectsReturned (HTTP 500).
+    get_object = ObjektDetail.get_object
 
     def _serialize_relations(self, obj):
         relations = Obj_Person.objects.filter(idfk_Obj=obj).select_related(
@@ -3688,9 +3703,10 @@ def ereignisse_api(request):
     # und beliebige Jahreszahlen würden sonst je Anfrage einen Eintrag erzeugen.
     cacheable = (
         not values['thema']
-        and (not values['person'] or values['person'].isdigit())
-        and (not values['sammlung'] or values['sammlung'].isdigit())
-        and all(not values[name] or -1000 <= int(values[name]) <= 3000 for name in ('von', 'bis'))
+        and (not values['person'] or is_int_qparam(values['person']))
+        and (not values['sammlung'] or is_int_qparam(values['sammlung']))
+        and all(not values[name] or (is_int_qparam(values[name]) and -1000 <= int(values[name]) <= 3000)
+                for name in ('von', 'bis'))
     )
     if not cacheable:
         return JsonResponse(get_timeline_data(request))

@@ -45,5 +45,9 @@ if settings.ELIGIUS_MCP_ENABLED or settings.ELIGIUS_EDITOR_MCP_ENABLED:
     async def application(scope, receive, send):
         if scope['type'] == 'lifespan':
             await lifecycle(scope, receive, send)
+        elif scope['type'] == 'websocket':
+            # Weder Django noch die MCP-Transports sprechen WebSocket.
+            await receive()
+            await send({'type': 'websocket.close', 'code': 1008})
         else:
             await transports.get(scope.get('path'), django_application)(scope, receive, send)

@@ -378,6 +378,13 @@ def cache_path(slg):
     return directory / f'collection-{slg.id}.rdf'
 
 
+def _discard(tmp):
+    try:
+        os.unlink(tmp)
+    except OSError:
+        pass
+
+
 def cached_dump(slg, request, max_age=None, force=False):
     """Pfad zu einer aktuellen Dump-Datei; erzeugt sie bei Bedarf atomar neu.
 
@@ -388,22 +395,40 @@ def cached_dump(slg, request, max_age=None, force=False):
     if path is None:
         return None
     max_age = getattr(settings, 'ELIGIUS_NOMISMA_CACHE_SECONDS', 6 * 3600) if max_age is None else max_age
+    def fresh():
+        return path.exists() and time.time() - path.stat().st_mtime < max_age
+
     try:
-        if not force and path.exists() and time.time() - path.stat().st_mtime < max_age:
+        if not force and fresh():
             return path
         path.parent.mkdir(parents=True, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=path.name, suffix='.tmp')
+        lock = open(path.with_name(path.name + '.lock'), 'a+')
     except OSError:
         return None
-    try:
-        with os.fdopen(fd, 'w', encoding='utf-8') as handle:
-            for part in iter_collection_rdf(slg, request):
-                handle.write(part)
-        os.replace(tmp, path)
-    except BaseException:
+    with lock:
+        # Ein Rebuild pro Datei: parallele Anfragen warten und nutzen danach das
+        # frisch geschriebene Ergebnis statt selbst neu zu bauen.
         try:
-            os.unlink(tmp)
+            import fcntl
+            fcntl.flock(lock, fcntl.LOCK_EX)
+        except (ImportError, OSError):
+            pass  # Windows-Entwicklung: ohne Lock weiter
+        try:
+            if not force and fresh():
+                return path
+            fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=path.name, suffix='.tmp')
         except OSError:
-            pass
-        raise
+            return None
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as handle:
+                for part in iter_collection_rdf(slg, request):
+                    handle.write(part)
+            os.replace(tmp, path)
+        except OSError:
+            # Speicher voll, Dateisperre o. Ä.: direkt ausliefern statt HTTP 500.
+            _discard(tmp)
+            return None
+        except BaseException:
+            _discard(tmp)
+            raise
     return path

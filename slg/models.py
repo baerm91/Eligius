@@ -1808,10 +1808,10 @@ class MuenztypObjektAnzeige(models.Model):
 	personen_rv = models.TextField(blank=True, null=True, verbose_name='Personen Rv')
 	personen_sonstige = models.TextField(blank=True, null=True, verbose_name='Sonstige Personen')
 	last_modified = models.DateTimeField(auto_now=True, null=True, blank=True, verbose_name='Zuletzt bearbeitet')
-	av_url           = models.URLField(null=True, blank=True, verbose_name='Bild Avers')
-	rv_url           = models.URLField(null=True, blank=True, verbose_name='Bild Revers')
-	thumbnail_av_url = models.URLField(null=True, blank=True, verbose_name='Thumbnail Avers')
-	thumbnail_rv_url = models.URLField(null=True, blank=True, verbose_name='Thumbnail Revers')
+	av_url           = models.URLField(max_length=500, null=True, blank=True, verbose_name='Bild Avers')
+	rv_url           = models.URLField(max_length=500, null=True, blank=True, verbose_name='Bild Revers')
+	thumbnail_av_url = models.URLField(max_length=500, null=True, blank=True, verbose_name='Thumbnail Avers')
+	thumbnail_rv_url = models.URLField(max_length=500, null=True, blank=True, verbose_name='Thumbnail Revers')
 
 	# ── FK-Felder für effizientes Filtern (Hybrid: FK + Text) ──
 	# Text-Felder oben bleiben für JOIN-freie Anzeige.
