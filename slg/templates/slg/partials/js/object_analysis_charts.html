@@ -1,0 +1,388 @@
+  // Erstellt ein einzelnes großes Kreisdiagramm für die ausgewählte Münzstätte
+  function createSinglePieChart() {
+    if (!selectedMotifId || !coinContextData || !coinContextData.staetten) {
+      singleChart.innerHTML = "<p>Keine Daten verfügbar</p>";
+      return;
+    }
+
+    const selectedMint = coinContextData.staetten[selectedMotifId];
+    if (!selectedMint) {
+      singleChart.innerHTML = "<p>Münzstätte nicht gefunden</p>";
+      return;
+    }
+
+    singleChartTitle.textContent = `${gettext('Münzverteilung')} - ${selectedMint.name}`;
+
+    // Sammle Daten: alle Münzen dieser Münzstätte gruppiert nach Motiven
+    const motifData = [];
+    let totalCoins = 0;
+
+    if (selectedMint.rows) {
+      Object.entries(selectedMint.rows).forEach(([motifId, motifInfo]) => {
+        if (!motifInfo || !motifInfo.cells) return;
+        
+        let motifTotal = 0;
+        Object.values(motifInfo.cells).forEach(cell => {
+          if (cell && cell.count) {
+            motifTotal += cell.count;
+          }
+        });
+        
+        if (motifTotal > 0) {
+          motifData.push({
+            motifId: parseInt(motifId),
+            name: motifInfo.name || `${gettext('Motiv')} ${motifId}`,
+            value: motifTotal,
+            color: motifColors[motifId] || "#ccc",
+            isCurrentCoin: currentCoinReverseMotifId && parseInt(motifId) === currentCoinReverseMotifId
+          });
+          totalCoins += motifTotal;
+        }
+      });
+    }
+
+    if (motifData.length === 0) {
+      singleChart.innerHTML = "<p>" + gettext("Keine Münzen für diese Münzstätte gefunden") + "</p>";
+      return;
+    }
+
+    // Sortiere nach Anzahl (größte zuerst)
+    motifData.sort((a, b) => b.value - a.value);
+
+    // Container leeren
+    singleChart.innerHTML = "";
+
+    // SVG-Dimensionen
+    const width = 400;
+    const height = 300;
+    const radius = Math.min(width, height) / 2 - 20; // Mehr Platz für Pull-out
+    const pullOutDistance = 10; // Distanz für herausgezogene Segmente
+
+    // SVG erstellen
+    const svg = d3.select(singleChart)
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const g = svg.append("g")
+      .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    // D3 Pie Generator
+    const pie = d3.pie()
+      .value(d => d.value)
+      .sort(null);
+
+    // Arc Generators - normal und herausgezogen
+    const arcNormal = d3.arc()
+      .innerRadius(0)
+      .outerRadius(radius);
+
+    const arcHover = d3.arc()
+      .innerRadius(0)
+      .outerRadius(radius + 5);
+
+    const arcPulled = d3.arc()
+      .innerRadius(0)
+      .outerRadius(radius);
+
+    // Tooltip erstellen - entferne alte Tooltips zuerst
+    d3.selectAll(".pie-tooltip").remove();
+    const tooltip = d3.select("body").append("div")
+      .attr("class", "pie-tooltip")
+      .style("position", "absolute")
+      .style("padding", "8px 12px")
+      .style("background", "rgba(0, 0, 0, 0.8)")
+      .style("color", "white")
+      .style("border-radius", "4px")
+      .style("pointer-events", "none")
+      .style("font-size", "12px")
+      .style("z-index", "1000")
+      .style("opacity", 0);
+
+    // Pie Segmente erstellen
+    const arcs = g.selectAll(".arc")
+      .data(pie(motifData))
+      .enter().append("g")
+      .attr("class", "arc");
+
+    // Berechne Pull-out Transformation für aktuelle Münze
+    function getTransform(d) {
+      if (d.data.isCurrentCoin) {
+        const centroid = arcNormal.centroid(d);
+        const x = centroid[0] * pullOutDistance / radius;
+        const y = centroid[1] * pullOutDistance / radius;
+        return `translate(${x},${y})`;
+      }
+      return "translate(0,0)";
+    }
+
+    // Pfade erstellen
+    arcs.append("path")
+      .attr("d", arcNormal)
+      .attr("fill", d => d.data.color)
+      .attr("stroke", "white")
+      .attr("stroke-width", 2)
+      .attr("transform", getTransform)
+      .style("cursor", "pointer")
+      .style("filter", d => d.data.isCurrentCoin ? "drop-shadow(2px 2px 4px rgba(0,0,0,0.3))" : "none")
+      .on("mouseover", function(event, d) {
+        // Hover-Effekt: Segment vergrößern
+        if (!d.data.isCurrentCoin) {
+          d3.select(this)
+            .transition()
+            .duration(150)
+            .attr("d", arcHover);
+        }
+        
+        const percentage = ((d.data.value / totalCoins) * 100).toFixed(1);
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", 1);
+          
+        tooltip.html(`
+          <div style="font-weight: bold;">${escHtml(d.data.name)}</div>
+          <div>${escHtml(d.data.value)} Münzen (${percentage}%)</div>
+          ${d.data.isCurrentCoin ? '<div style="color: #ffd700;">⭐ Aktuelle Münze</div>' : ''}
+        `)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mousemove", function(event, d) {
+        tooltip
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mouseout", function(event, d) {
+        // Hover-Effekt zurücksetzen
+        if (!d.data.isCurrentCoin) {
+          d3.select(this)
+            .transition()
+            .duration(150)
+            .attr("d", arcNormal);
+        }
+        
+        tooltip.transition()
+          .duration(300)
+          .style("opacity", 0);
+      })
+      .on("click", function(event, d) {
+        // Klick-Event: Link zu ähnlichen Münzen
+        const rulerName = coinContextData.ruler_motif_stats?.ruler_name || "";
+        const periodStart = coinContextData.ruler_motif_stats?.period_start || "";
+        const periodEnd = coinContextData.ruler_motif_stats?.period_end || "";
+        const mintName = selectedMint.name || "";
+        
+        const url = `/browse/?Praegeherren=${encodeURIComponent(rulerName)}&Muenzstaette=${encodeURIComponent(mintName)}&rv_bildtyp=${d.data.motifId}&dat_von=${encodeURIComponent(periodStart)}&dat_bis=${encodeURIComponent(periodEnd)}`;
+        window.open(url, '_blank');
+      });
+
+    // Labels hinzufügen (nur für größere Segmente)
+    arcs.append("text")
+      .attr("transform", d => {
+        const centroid = arcNormal.centroid(d);
+        const pulloutTransform = getTransform(d);
+        // Parse the pullout translation values
+        const match = pulloutTransform.match(/translate\(([^,]+),([^)]+)\)/);
+        const pullX = match ? parseFloat(match[1]) : 0;
+        const pullY = match ? parseFloat(match[2]) : 0;
+        return `translate(${centroid[0] + pullX},${centroid[1] + pullY})`;
+      })
+      .attr("dy", ".35em")
+      .style("text-anchor", "middle")
+      .style("font-size", "12px")
+      .style("fill", "white")
+      .style("font-weight", "bold")
+      .style("text-shadow", "1px 1px 2px rgba(0,0,0,0.7)")
+      .style("pointer-events", "none")
+      .text(d => {
+        const percentage = (d.data.value / totalCoins) * 100;
+        return percentage > 8 ? `${percentage.toFixed(0)}%` : "";
+      });
+
+    // Cleanup function für alte Tooltips
+    setTimeout(() => {
+      d3.selectAll(".pie-tooltip").filter(function() {
+        return this !== tooltip.node();
+      }).remove();
+    }, 100);
+
+    // SVG mouseleave Event hinzufügen - NEUE ZEILE
+    svg.on("mouseleave", function() {
+      tooltip.transition()
+        .duration(200)
+        .style("opacity", 0);
+    });
+  }
+
+  // Erstellt kleine Kreisdiagramme für die Matrix
+  function createSmallPieChart(container, data) {
+    if (!data || data.length === 0) return;
+
+    // Füge isCurrentCoin Flag zu den Daten hinzu
+    const enhancedData = data.map(d => ({
+      ...d,
+      isCurrentCoin: currentCoinReverseMotifId && d.motifId === currentCoinReverseMotifId
+    }));
+
+    // Dimensionen für kleine Diagramme
+    const width = 110;
+    const height = 110;
+    const radius = Math.min(width, height) / 2 - 6; // Mehr Platz für Pull-out
+    const innerRadius = radius * 0.55; // Donut: Platz für die Gesamtzahl in der Mitte
+    const pullOutDistance = 3; // Kleinere Distanz für kleine Diagramme
+
+    // Container leeren
+    container.innerHTML = "";
+
+    // SVG erstellen
+    const svg = d3.select(container)
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const g = svg.append("g")
+      .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    // D3 Pie Generator
+    const pie = d3.pie()
+      .value(d => d.value)
+      .sort(null);
+
+    // Arc Generators
+    const arcNormal = d3.arc()
+      .innerRadius(innerRadius)
+      .outerRadius(radius);
+
+    const arcHover = d3.arc()
+      .innerRadius(innerRadius)
+      .outerRadius(radius + 3);
+
+    // Berechne Gesamtanzahl
+    const total = enhancedData.reduce((sum, d) => sum + d.value, 0);
+
+    // Verwende eine eindeutige Tooltip-Klasse für jedes kleine Diagramm
+    const tooltipId = `matrix-tooltip-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Entferne nur bestehende Tooltips dieser spezifischen Instanz
+    d3.selectAll(`.${tooltipId}`).remove();
+    
+    const tooltip = d3.select("body").append("div")
+      .attr("class", `pie-tooltip ${tooltipId}`)
+      .style("position", "absolute")
+      .style("padding", "8px 12px")
+      .style("background", "rgba(0, 0, 0, 0.85)")
+      .style("color", "white")
+      .style("border-radius", "6px")
+      .style("pointer-events", "none")
+      .style("font-size", "12px")
+      .style("z-index", "10000")
+      .style("box-shadow", "0 2px 8px rgba(0,0,0,0.3)")
+      .style("opacity", 0);
+
+    // Berechne Pull-out Transformation für aktuelle Münze
+    function getTransform(d) {
+      if (d.data.isCurrentCoin) {
+        const centroid = arcNormal.centroid(d);
+        const x = centroid[0] * pullOutDistance / radius;
+        const y = centroid[1] * pullOutDistance / radius;
+        return `translate(${x},${y})`;
+      }
+      return "translate(0,0)";
+    }
+
+    // Pie Segmente erstellen
+    const arcs = g.selectAll(".arc")
+      .data(pie(enhancedData))
+      .enter().append("g")
+      .attr("class", "arc");
+
+    arcs.append("path")
+      .attr("d", arcNormal)
+      .attr("fill", d => d.data.color)
+      .attr("stroke", "rgba(0,0,0,0.35)")
+      .attr("stroke-width", 1)
+      .attr("transform", getTransform)
+      .style("cursor", "pointer")
+      .style("filter", d => d.data.isCurrentCoin ? "drop-shadow(1px 1px 2px rgba(0,0,0,0.3))" : "none")
+      .on("mouseover", function(event, d) {
+        // Hover-Effekt: Segment vergrößern
+        if (!d.data.isCurrentCoin) {
+          d3.select(this)
+            .transition()
+            .duration(150)
+            .attr("d", arcHover);
+        }
+        
+        const percentage = ((d.data.value / total) * 100).toFixed(1);
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", 1);
+          
+        tooltip.html(`
+          <div style="font-weight: bold; margin-bottom: 4px;">${escHtml(d.data.name)}</div>
+          <div style="margin-bottom: 2px;">${escHtml(d.data.value)} Münzen (${percentage}%)</div>
+          ${d.data.isCurrentCoin ? '<div style="color: #ffd700; font-size: 10px;"><strong>⭐ Aktuelle Münze</strong></div>' : ''}
+        `)
+          .style("left", (event.pageX + 12) + "px")
+          .style("top", (event.pageY - 35) + "px");
+      })
+      .on("mousemove", function(event, d) {
+        tooltip
+          .style("left", (event.pageX + 12) + "px")
+          .style("top", (event.pageY - 35) + "px");
+      })
+      .on("mouseout", function(event, d) {
+        // Hover-Effekt zurücksetzen
+        if (!d.data.isCurrentCoin) {
+          d3.select(this)
+            .transition()
+            .duration(150)
+            .attr("d", arcNormal);
+        }
+        
+        // Nur ausblenden: remove() hätte den Tooltip dauerhaft gelöscht, beim
+        // nächsten mouseover wäre er nicht mehr erschienen.
+        tooltip.transition()
+          .duration(300)
+          .style("opacity", 0);
+      });
+
+    // Gesamtzahl in der Mitte anzeigen - angepasst für Pull-out
+    g.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", ".35em")
+      .style("font-size", "18px")
+      .style("font-weight", "bold")
+      .style("fill", "currentColor")
+      .style("pointer-events", "none")
+      .text(total);
+
+    // Legende neben dem Diagramm (Motiv, Anzahl)
+    const legend = document.createElement("ul");
+    legend.className = "matrix-legend";
+    [...enhancedData]
+      .sort((a, b) => b.value - a.value)
+      .forEach(d => {
+        const li = document.createElement("li");
+        li.title = `${d.name}: ${d.value}`;
+        const dot = document.createElement("span");
+        dot.className = "color-dot";
+        dot.style.backgroundColor = d.color;
+        const name = document.createElement("span");
+        name.className = "legend-name";
+        name.textContent = (d.isCurrentCoin ? "★ " : "") + d.name;
+        const count = document.createElement("span");
+        count.className = "legend-count";
+        count.textContent = d.value;
+        li.append(dot, name, count);
+        legend.appendChild(li);
+      });
+    container.appendChild(legend);
+
+    // SVG mouseleave Event hinzufügen - NEUE ZEILE
+    svg.on("mouseleave", function() {
+      tooltip.transition()
+        .duration(200)
+        .style("opacity", 0);
+    });
+  }

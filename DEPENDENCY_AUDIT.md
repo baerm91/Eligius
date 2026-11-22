@@ -1,48 +1,26 @@
-# Dependency Audit (Django 4.2 phase)
+# Laufzeitabhängigkeiten
 
-## Direkt bestätigt in Code genutzt
+`requirements.txt` definiert die aktive Laufzeitumgebung für Entwicklung und
+Docker. `requirements.legacy.txt` dokumentiert ältere Installationen.
 
-- Django
-- djangorestframework
-- django-filter
-- django-cors-headers
-- django-debug-toolbar
-- django-import-export
-- django-select2
-- django-simple-history
-- django-adminactions
-- django-admin-list-filter-dropdown
-- django-bootstrap3
-- django-bootstrap-modal-forms
-- django-widget-tweaks
-- django-nested-admin
-- django-clone
-- django-crispy-forms
-- PyMySQL
-- requests
-- beautifulsoup4
-- rdflib
-- wikipedia
-- Wikipedia-API
-- Markdown
-- openpyxl
-- tablib
-- odfpy/xlrd/xlwt (Export/Tablib-Ökosystem)
+## Bereinigt
 
-## Entfernt bzw. ersetzt
+- **wikipedia** und **Wikipedia-API**. Der Personen-Dialog ruft
+  Wikipedia-Zusammenfassungen über die bestehende HTTP-Integration mit
+  requests ab.
+- **django-simple-history**. Das Admin-Protokoll nutzt Djangos LogEntry.
+- **django-filter**. Die API- und Browse-Filter verwenden Django-QuerySets
+  und die projektspezifischen Filterfunktionen.
+- **Markdown** wurde aus den Laufzeitanforderungen entfernt.
+- **django-bootstrap3** und **django-crispy-forms**. Aktive Formulare nutzen
+  Django, `django-bootstrap-modal-forms` und `django-widget-tweaks`.
+  Die öffentliche Oberfläche bezieht Bootstrap über Staticfiles.
 
-- `mysqlclient` -> durch `PyMySQL` (für einfaches Dev-Setup)
-- alte Legacy-Pins aus `requirements.legacy.txt` bleiben nur als Referenz
+Die Datenexporte nutzen Tablib mit openpyxl, odfpy, xlrd und xlwt. Diese Pakete
+bleiben für ihre jeweiligen Dateiformate Teil der Laufzeitumgebung. PyMySQL
+ermöglicht das Entwicklungssetup ohne native Clientbibliothek. Das
+Produktionsimage installiert mysqlclient separat.
 
-## Optional / aktuell nicht im Runtime-Code importiert
+## Optional
 
-- pandas
-- numpy
-
-Diese sind in `requirements.txt` aktuell auskommentiert.
-Wenn ihr Analyse-/Notebook-Funktionen braucht, können sie wieder aktiviert werden.
-
-## Nächster Cleanup Schritt
-
-- echte Testabdeckung aufbauen (derzeit 0 Tests)
-- danach aggressive Bereinigung weiterer optionaler Libraries
+pandas und numpy bleiben in den aktiven Anforderungen auskommentiert.

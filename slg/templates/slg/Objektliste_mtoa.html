@@ -10,13 +10,7 @@
 {% block stylesheets %}
 {{ block.super }}
 
-<!-- PERFORMANCE: Critical CSS only -->
-<link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/fonts/bootstrap-icons.woff2"
-  as="font" type="font/woff2" crossorigin>
-<link rel="dns-prefetch" href="//cdn.jsdelivr.net">
-<link rel="dns-prefetch" href="//unpkg.com">
-
-{% include 'slg/partials/html/browse_mtoa_vendor_css.html' %}
+{% include 'slg/partials/html/browse_mtoa_vendor_css.html' with browse_assets=True %}
 
 <link rel="preload" href="{% static 'css/objektliste_mtoa_inline.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="{% static 'css/objektliste_mtoa_inline.css' %}"></noscript>
@@ -172,7 +166,7 @@
 
 {% block scripts %}
 {% include 'slg/scripte.html' with active_block='jsobjektliste' %}
-{% include 'slg/partials/html/browse_mtoa_vendor_js.html' %}
+{% include 'slg/partials/html/browse_mtoa_vendor_js.html' with browse_assets=True %}
 
 
 

@@ -1,0 +1,252 @@
+  // Add at the top with other global variables
+  let timelineDataCache = null;
+
+  // Neue Sortable Timeline-Daten laden
+  async function loadTimelineData() {
+    if (!coinContextData || !coinContextData.ruler_motif_stats) {
+      document.getElementById('nestedListRoot').innerHTML = '<li>' + gettext("Keine Zeitleisten-Daten verfügbar") + '</li>';
+      document.getElementById('simpleList').innerHTML = '<li>' + gettext("Keine Münzen verfügbar") + '</li>';
+      return;
+    }
+    
+    // Daten für die Timeline zusammenstellen
+    const ruler = coinContextData.ruler_motif_stats.ruler_name || "Unbekannter Herrscher";
+    const startYear = coinContextData.ruler_motif_stats.period_start;
+    const endYear = coinContextData.ruler_motif_stats.period_end;
+    
+    if (!startYear || !endYear) {
+      document.getElementById('nestedListRoot').innerHTML = '<li>' + gettext("Keine Zeitangaben verfügbar") + '</li>';
+      document.getElementById('simpleList').innerHTML = '<li>' + gettext("Keine Münzen verfügbar") + '</li>';
+      return;
+    }
+    
+    try {
+      // API-Aufruf für Ereignisse - erweitert um zusätzliche Felder
+      const response = await fetch(`/api/ereignisse/?${new URLSearchParams({von: startYear, bis: endYear, person: ruler, include_details: 'true'})}`);
+      
+      if (!response.ok) {
+        throw new Error(`Fehler beim Laden der Ereignisse: ${response.status}`);
+      }
+      
+      const eventData = await response.json();
+      console.log("Event data loaded:", eventData);
+      
+      // Erstelle Ereignisliste für linke Seite
+      createEventsList(eventData.ereignisse || []);
+      
+      // Erstelle Münzliste für rechte Seite
+      createCoinsList();
+      
+      // Initialisiere SortableJS
+      initializeSortable();
+      
+    } catch (error) {
+      console.error("Fehler beim Laden der Timeline:", error);
+      document.getElementById('nestedListRoot').innerHTML = `<li>Fehler: ${escHtml(error.message)}</li>`;
+      document.getElementById('simpleList').innerHTML = '<li>' + gettext("Keine Münzen verfügbar") + '</li>';
+    }
+  }
+
+  // Erstelle die Ereignisliste (linke Seite)
+  function createEventsList(events) {
+    const nestedListRoot = document.getElementById('nestedListRoot');
+    nestedListRoot.innerHTML = '';
+    
+    if (!events || events.length === 0) {
+      nestedListRoot.innerHTML = '<li>' + gettext("Keine Ereignisse gefunden") + '</li>';
+      return;
+    }
+    
+    // Sortiere Ereignisse nach Datum
+    events.sort((a, b) => a.dat_von - b.dat_von);
+    
+    events.forEach(event => {
+      const eventItem = document.createElement('li');
+      
+      // Erstelle erweiterte Ereignisdarstellung
+      let eventHtml = `
+        <div class="event-header">
+          <strong>${escHtml(event.name || 'Historisches Ereignis')}</strong>
+          <span class="event-date">(${escHtml(event.dat_verb || event.dat_von || 'Unbekanntes Datum')})</span>
+        </div>
+      `;
+      
+      // Füge längere Beschreibung hinzu, falls vorhanden
+      if (event.information && event.information.trim() !== '' && event.information !== event.name) {
+        eventHtml += `
+          <div class="event-description">
+            ${escHtml(event.information)}
+          </div>
+        `;
+      }
+      
+      // Füge Personen hinzu - verschiedene mögliche Formate berücksichtigen
+      let personsToShow = [];
+      if (event.personen) {
+        if (Array.isArray(event.personen)) {
+          // Personen als Array von Objekten mit {id, name}
+          personsToShow = event.personen.map(person => {
+            if (typeof person === 'object' && person.name) {
+              return person.name;
+            } else if (typeof person === 'string') {
+              return person;
+            } else {
+              return String(person);
+            }
+          });
+        } else if (typeof event.personen === 'string') {
+          personsToShow = [event.personen];
+        } else if (event.personen.length) {
+          personsToShow = Array.from(event.personen);
+        }
+      }
+      
+      // Alternative: Falls "person" Feld existiert
+      if (personsToShow.length === 0 && event.person) {
+        if (typeof event.person === 'object' && event.person.name) {
+          personsToShow = [event.person.name];
+        } else {
+          personsToShow = [event.person];
+        }
+      }
+      
+      if (personsToShow.length > 0) {
+        eventHtml += `
+          <div class="event-persons">
+            <small><strong>Personen:</strong> ${personsToShow.map(escHtml).join(', ')}</small>
+          </div>
+        `;
+      }
+      
+      // Füge die Münz-Dropzone hinzu
+      eventHtml += `<ul class="event-sublist"></ul>`;
+      
+      eventItem.innerHTML = eventHtml;
+      eventItem.className = 'event-item'; // Für besseres Styling
+      nestedListRoot.appendChild(eventItem);
+    });
+  }
+
+  // Erstelle die Münzliste (rechte Seite)
+  function createCoinsList() {
+    const simpleList = document.getElementById('simpleList');
+    simpleList.innerHTML = '';
+    
+    if (!coinContextData || !coinContextData.staetten) {
+      simpleList.innerHTML = '<li class="coin">M1</li><li class="coin">M2</li><li class="coin">M3</li>';
+      return;
+    }
+    
+    // Sammle Münzen aus allen Münzstätten
+    const coins = [];
+    let coinCounter = 1;
+    
+    Object.values(coinContextData.staetten).forEach(mint => {
+      if (!mint.rows) return;
+      
+      Object.entries(mint.rows).forEach(([motifId, motifInfo]) => {
+        if (!motifInfo || !motifInfo.cells) return;
+        
+        // Finde die erste Münze mit einem Bild für dieses Motiv
+        Object.values(motifInfo.cells).forEach(cell => {
+          if (!cell || !cell.thumb) return;
+          
+          coins.push({
+              id: cell.id,
+              thumb: cell.thumb,
+              url: cell.url,
+              name: motifInfo.name || `${gettext('Motiv')} ${motifId}`,
+              motifId: motifId,
+              // Neue Tooltip-Daten
+              avleg: cell.avleg || "",
+              rvleg: cell.rvleg || "",
+              av_bildtyp: cell.av_bildtyp || "",
+              rv_bildtyp: cell.rv_bildtyp || "",
+              invnr: cell.invnr || ""
+          });
+        });
+      });
+    });
+    
+    // Begrenze auf maximal 10 Münzen für bessere Übersicht
+    const limitedCoins = coins.slice(0, 10);
+    
+    if (limitedCoins.length === 0) {
+      // Fallback: Verwende simulierte Münzen
+      for (let i = 1; i <= 6; i++) {
+        const coinLi = document.createElement('li');
+        coinLi.className = 'coin';
+        coinLi.textContent = `M${i}`;
+        simpleList.appendChild(coinLi);
+      }
+    } else {
+      // Verwende echte Münzen
+      limitedCoins.forEach((coin, index) => {
+        const coinLi = document.createElement('li');
+        coinLi.className = 'coin';
+        
+        // Erstelle erweiterten Tooltip
+        let tooltipText = `${coin.name}`;
+        if (coin.invnr) {
+          tooltipText += ` (${coin.invnr})`;
+        }
+        if (coin.avleg || coin.rvleg || coin.av_bildtyp || coin.rv_bildtyp) {
+          tooltipText += '\n';
+          if (coin.avleg) {
+            tooltipText += `Av: ${coin.avleg}`;
+          }
+          if (coin.av_bildtyp) {
+            if (coin.avleg) tooltipText += ' - ';
+            tooltipText += `${coin.av_bildtyp}`;
+          }
+          if (coin.avleg || coin.av_bildtyp) {
+            tooltipText += '\n';
+          }
+          if (coin.rvleg) {
+            tooltipText += `Rv: ${coin.rvleg}`;
+          }
+          if (coin.rv_bildtyp) {
+            if (coin.rvleg) tooltipText += ' - ';
+            tooltipText += `${coin.rv_bildtyp}`;
+          }
+        }
+        
+        coinLi.title = tooltipText;
+        
+        if (coin.thumb) {
+          const img = document.createElement('img');
+          img.src = coin.thumb;
+          img.alt = coin.name;
+          coinLi.appendChild(img);
+        } else {
+          coinLi.textContent = `M${index + 1}`;
+        }
+        
+        simpleList.appendChild(coinLi);
+      });
+    }
+  }
+
+  // Initialisiere SortableJS für Drag & Drop
+  function initializeSortable() {
+    const sharedGroupName = 'shared-coins';
+
+    // Rechte Liste (Münzsammlung)
+    new Sortable(document.getElementById('simpleList'), {
+      group: sharedGroupName,
+      animation: 150,
+      fallbackOnBody: true,
+      swapThreshold: 0.65
+    });
+
+    // Linke verschachtelte Liste (Ereignisse)
+    const eventSublists = document.querySelectorAll('#nestedListRoot .event-sublist');
+    eventSublists.forEach(sublist => {
+      new Sortable(sublist, {
+        group: sharedGroupName,
+        animation: 150,
+        fallbackOnBody: true,
+        swapThreshold: 0.65
+      });
+    });
+  }

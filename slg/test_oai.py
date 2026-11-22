@@ -210,8 +210,16 @@ class OAITests(OAIFixtures, TestCase):
         self.obj('new')
         second = self.request('ListRecords', resumptionToken=token)
         repeat = self.request('ListRecords', resumptionToken=token)
-        self.assertEqual(ET.tostring(second.find('oai:ListRecords', NS)), ET.tostring(repeat.find('oai:ListRecords', NS)))
-        next_token = second.findtext('.//oai:resumptionToken', namespaces=NS)
+        second_page = second.find('oai:ListRecords', NS)
+        replay_page = repeat.find('oai:ListRecords', NS)
+        second_cursor = second_page.find('oai:resumptionToken', NS)
+        replay_cursor = replay_page.find('oai:resumptionToken', NS)
+        next_token = second_cursor.text
+        # Signatures include issuance time, so compare the decoded cursor and the page separately.
+        self.assertEqual(signing.loads(next_token, salt=TOKEN_SALT),
+                         signing.loads(replay_cursor.text, salt=TOKEN_SALT))
+        second_cursor.text = replay_cursor.text = None
+        self.assertEqual(ET.tostring(second_page), ET.tostring(replay_page))
         third = self.request('ListRecords', resumptionToken=next_token)
         self.assertEqual(third.find('.//oai:resumptionToken', NS).text, None)
         self.assertEqual(third.find('.//oai:resumptionToken', NS).get('cursor'), '4')

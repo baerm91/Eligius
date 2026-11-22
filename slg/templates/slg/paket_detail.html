@@ -970,9 +970,16 @@
       packageChart.setOption({
         backgroundColor: '#161616',
         color: colors,
-        grid: { left: '5%', right: '5%', top: '12%', bottom: '18%', containLabel: true },
+        grid: { left: '5%', right: '5%', top: 64, bottom: 76, containLabel: true },
         legend: {
+          type: 'scroll',
           top: 10,
+          left: 12,
+          right: 12,
+          formatter: function (name) {
+            const availableWidth = Math.max(80, chartContainer.clientWidth - 110);
+            return echarts.format.truncateText(name, availableWidth, '600 12px sans-serif', '…');
+          },
           textStyle: { color: '#d4c5a0', fontWeight: 600 }
         },
         dataZoom: [
@@ -995,7 +1002,7 @@
           data: labels,
           name: 'Chronologie',
           nameLocation: 'middle',
-          nameGap: 40,
+          nameGap: 28,
           nameTextStyle: { color: '#d4c5a0', fontSize: 13, fontWeight: 600 },
           axisLine: { lineStyle: { color: '#8a7d65', width: 1.5 } },
           axisTick: { show: true, alignWithLabel: true, lineStyle: { color: '#8a7d65' } },

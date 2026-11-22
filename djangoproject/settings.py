@@ -96,16 +96,15 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     #'qurl_templatetag',
-    'bootstrap3',
     'bootstrap_modal_forms',
     'widget_tweaks',
     'django_admin_listfilter_dropdown',
     'nested_admin',
     'corsheaders',
-    #'crispy_forms',
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'slg.pagination.OptInPageNumberPagination',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',

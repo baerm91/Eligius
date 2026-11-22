@@ -1,0 +1,388 @@
+<script>
+  function escHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  // Globale Variablen für Kontext-Daten
+  let coinContextData = null;
+  let selectedMotifId = null; // Will store MINT ID or null
+  let showMatrix = false;
+  let showTimeline = false; // Neue Variable für Timeline-Ansicht
+  let motifColors = {};
+  let currentCoinReverseMotifId = null;
+  let currentCoinMintName = null; // Store the current coin's mint name
+  let matrixCreated = false; // Flag for matrix creation
+  let timelineCreated = false; // Flag for timeline creation
+  {% if coin_data.rv_bildtyp and coin_data.rv_bildtyp.id %}
+    currentCoinReverseMotifId = {{ coin_data.rv_bildtyp.id }};
+  {% endif %}
+  {% if coin_data.mzstaette %}
+    currentCoinMintName = "{{ coin_data.mzstaette|default:""|escapejs }}";
+  {% endif %}
+  
+  // DOM-Elemente
+  const matrixViewBtn = document.getElementById("matrixViewBtn");
+  const timelineViewBtn = document.getElementById("timelineViewBtn");
+  const singleChartView = document.getElementById("singleChartView");
+  const matrixView = document.getElementById("matrixView");
+  const timelineView = document.getElementById("timeline-view");
+  const motifSelector = document.getElementById("motifSelector");
+  const selectedMotifInfo = document.getElementById("selectedMotifInfo");
+  const motifDetails = document.getElementById("motifDetails");
+  const motifStats = document.getElementById("motifStats");
+  const currentMotifStats = document.getElementById("currentMotifStats");
+  const motifTimeline = document.getElementById("motifTimeline");
+  const singleChartTitle = document.getElementById("singleChartTitle");
+  const singleChart = document.getElementById("singleChart");
+  const matrixContainer = document.getElementById("matrixContainer");
+  const loadingSpinner = document.getElementById("loadingSpinner");
+  const contextContent = document.getElementById("contextContent");
+  const sidePanelTitle = document.getElementById("sidePanelTitle");
+
+  // Farben für die Diagramme
+  const colors = ["#20c997", "#0d6efd", "#ffc107", "#dc3545", "#6610f2"];
+
+  // Event-Listener für die View-Buttons
+  matrixViewBtn.addEventListener("click", function() {
+    matrixViewBtn.classList.add("active");
+    timelineViewBtn.classList.remove("active");
+    
+    showMatrix = true;
+    showTimeline = false;
+    timelineCreated = false; // Reset timeline flag when switching to matrix
+    
+    updateViewVisibility();
+    
+    // Update sidebar
+    sidePanelTitle.textContent = gettext("Motiv-Info");
+    motifStats.style.display = "block";
+    updateMotifDetails(true);
+  });
+  
+  timelineViewBtn.addEventListener("click", function() {
+    timelineViewBtn.classList.add("active");
+    matrixViewBtn.classList.remove("active");
+    
+    showTimeline = true;
+    showMatrix = false;
+    selectedMotifId = null;
+    matrixCreated = false; // Reset matrix flag when switching to timeline
+    
+    updateViewVisibility();
+    if (!timelineCreated) {
+      loadTimelineData();
+      timelineCreated = true;
+    }
+    
+    // Update sidebar
+    sidePanelTitle.textContent = gettext("Ereignis-Info");
+    motifStats.style.display = "none";
+    motifDetails.innerHTML = `
+      <p>Diese Zeitleiste zeigt historische Ereignisse und Münzprägungen während der Regierungszeit.</p>
+      <p>Klicken Sie auf ein Ereignis für weitere Details.</p>
+    `;
+  });
+  
+  function updateViewVisibility() {
+    if (showTimeline) {
+      timelineView.style.display = "block";
+      singleChartView.style.display = "none";
+      matrixView.style.display = "none";
+    } else if (showMatrix) {
+      matrixView.style.display = "block";
+      singleChartView.style.display = "none";
+      timelineView.style.display = "none";
+      if (!matrixCreated) {
+        createMatrixView();
+        matrixCreated = true;
+      }
+    } else {
+      singleChartView.style.display = "block";
+      matrixView.style.display = "none";
+      timelineView.style.display = "none";
+    }
+  }
+
+  // API-Daten laden
+  async function fetchCoinContextData() {
+    try {
+      const coinId = {{ test.id }}; // Die ID der aktuellen Münze
+      const response = await fetch(`/api/muenzen/${coinId}/kontext/`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Loaded context data:", data); // Debug log
+      loadingSpinner.classList.add("d-none");
+      contextContent.classList.remove("d-none");
+      
+      // Setze die Daten und initialisiere die Visualisierung
+      coinContextData = data;
+      
+      // Update the main title for the context analysis section
+      const contextTitleElement = document.getElementById('contextAnalysisTitle');
+      if (contextTitleElement) { // Check if element exists
+        let titleText = gettext("Münzkontext-Analyse"); // Default fallback
+        if (data.ruler_motif_stats) {
+            const rulerName = data.ruler_motif_stats.ruler_name;
+            const periodStart = data.ruler_motif_stats.period_start;
+            const periodEnd = data.ruler_motif_stats.period_end;
+
+            if (rulerName) {
+              titleText = interpolate(gettext("Vergleich der Prägungen von %(ruler)s"), {ruler: rulerName}, true);
+              if (periodStart && periodEnd) {
+                titleText += interpolate(gettext(" im Zeitraum %(start)s – %(end)s"), {start: periodStart, end: periodEnd}, true);
+              } else if (periodStart) {
+                titleText += interpolate(gettext(" (ab %(start)s)"), {start: periodStart}, true);
+              } else if (periodEnd) {
+                titleText += interpolate(gettext(" (bis %(end)s)"), {end: periodEnd}, true);
+              }
+            } else if (periodStart && periodEnd) {
+                titleText = interpolate(gettext("Münzkontext-Analyse im Zeitraum %(start)s – %(end)s"), {start: periodStart, end: periodEnd}, true);
+            } else if (periodStart) {
+                titleText = interpolate(gettext("Münzkontext-Analyse ab %(start)s"), {start: periodStart}, true);
+            } else if (periodEnd) {
+                titleText = interpolate(gettext("Münzkontext-Analyse bis %(end)s"), {end: periodEnd}, true);
+            }
+        }
+        contextTitleElement.textContent = titleText;
+      }
+      
+      // Setze den ausgewählten ID und Ansichtsmodus
+      if (data.staetten && Object.keys(data.staetten).length > 0) {
+        // Default to first mint
+        selectedMotifId = parseInt(Object.keys(data.staetten)[0]); 
+        showMatrix = false;
+        showTimeline = false;
+        
+        // If we have the current coin's mint name, try to find and select it
+        if (currentCoinMintName) {
+          // Look for the mint that matches the current coin's mint
+          Object.entries(data.staetten).forEach(([mintIdStr, mintInfo]) => {
+            if (mintInfo.name === currentCoinMintName) {
+              selectedMotifId = parseInt(mintIdStr);
+              console.log("Found and selected current coin's mint:", currentCoinMintName, "with ID:", selectedMotifId);
+            }
+          });
+        }
+      } else {
+        // No mints available. Default to matrix view.
+        showMatrix = true; 
+        showTimeline = false;
+        selectedMotifId = null;
+      }
+      console.log("Initial selected mint ID:", selectedMotifId, "showMatrix:", showMatrix);
+      
+      // Erstelle globale Farbzuordnung für alle Motive
+      const colorScale = d3.scaleOrdinal(d3.schemeTableau10);
+      Object.values(data.staetten || {}).forEach(mint => {
+        Object.keys(mint.rows || {}).forEach(motifId => {
+          if (!motifColors[motifId]) {
+            motifColors[motifId] = colorScale(motifId);
+          }
+        });
+      });
+      
+      // UI initialisieren
+      initializeUI();
+    } catch (error) {
+      console.error('Fehler beim Laden der Kontextdaten:', error);
+      loadingSpinner.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          Fehler beim Laden der Kontextdaten: ${escHtml(error.message)}
+        </div>
+      `;
+    }
+  }
+
+  // Initialisierung der Münzstätten-Auswahl
+  function initializeMotifSelector() {
+    if (!coinContextData) return; // coinContextData might exist even without staetten
+    
+    motifSelector.innerHTML = "";
+    
+    // 1. Create the "Matrix View" toggle button
+    const matrixToggleButton = document.createElement("button");
+    matrixToggleButton.className = `btn btn-${showMatrix ? "primary" : "outline-secondary"} btn-sm motif-item`;
+    matrixToggleButton.textContent = gettext("Gesamtübersicht Matrix");
+    matrixToggleButton.title = gettext("Zeigt eine Matrix aller Münzstätten und deren Motive");
+    
+    matrixToggleButton.addEventListener("click", () => {
+      showMatrix = true;
+      showTimeline = false;
+      selectedMotifId = null; // No single mint is selected when matrix is shown
+      
+      updateViewVisibility();
+      
+      if (coinContextData && Object.keys(coinContextData.staetten || {}).length > 0) { // Check if staetten exist for matrix
+        createMatrixView();
+      } else if (coinContextData) { // If no staetten, matrix view might still be attempted or show a message
+        createMatrixView(); // Allow createMatrixView to handle missing staetten if necessary
+      }
+      // Update UI
+      matrixViewBtn.classList.add("active");
+      timelineViewBtn.classList.remove("active");
+      updateUI();
+    });
+    motifSelector.appendChild(matrixToggleButton);
+    
+    // 2. Create buttons for each mint (if staetten exist)
+    if (coinContextData.staetten) {
+        const mints = Object.entries(coinContextData.staetten);
+        
+        mints.forEach(([mintIdStr, mintInfo]) => {
+          const mintId = parseInt(mintIdStr);
+          const button = document.createElement("button");
+          // A mint button is primary if !showMatrix AND it's the selectedMotifId AND !showTimeline
+          const isSelected = !showMatrix && !showTimeline && selectedMotifId === mintId;
+          
+          button.className = `btn btn-${isSelected ? "primary" : "outline-secondary"} btn-sm motif-item`;
+          button.textContent = mintInfo.name;
+          button.title = mintInfo.name;
+          
+          button.addEventListener("click", () => {
+            showMatrix = false;
+            showTimeline = false;
+            selectedMotifId = mintId;
+            
+            updateViewVisibility();
+            // Update UI
+            matrixViewBtn.classList.remove("active");
+            timelineViewBtn.classList.remove("active");
+            updateUI(); 
+          });
+          
+          motifSelector.appendChild(button);
+        });
+    }
+  }
+
+  // Aktualisiert die Anzeige der ausgewählten Münzstätte oder Matrix-Status
+  function updateSelectedMotifInfo() {
+    if (!coinContextData) return;
+
+    // Entferne alle Statusmeldungen - diese sind nicht mehr nötig
+    selectedMotifInfo.textContent = "";
+    
+    /* Original Code - auskommentiert
+    if (showTimeline) {
+      selectedMotifInfo.textContent = gettext("Zeitleistenansicht aktiv");
+    } else if (showMatrix) {
+      selectedMotifInfo.textContent = gettext("Gesamtübersicht (Matrix) aktiv");
+    } else if (selectedMotifId && coinContextData.staetten && coinContextData.staetten[selectedMotifId]) {
+      const selectedMint = coinContextData.staetten[selectedMotifId];
+      if (selectedMint) {
+        selectedMotifInfo.textContent = `${gettext('Ausgewählte Münzstätte:')} ${selectedMint.name}`;
+      } else {
+        selectedMotifInfo.textContent = gettext("Ausgewählte Münzstätte nicht gefunden.");
+      }
+    } else if (!selectedMotifId && !showMatrix && coinContextData.staetten && Object.keys(coinContextData.staetten).length > 0) {
+      selectedMotifInfo.textContent = gettext("Bitte eine Münzstätte auswählen.");
+    } else if (!coinContextData.staetten || Object.keys(coinContextData.staetten).length === 0) {
+      selectedMotifInfo.textContent = gettext("Keine Münzstätten verfügbar.");
+    } else {
+      selectedMotifInfo.textContent = ""; // Default to empty if no specific state applies
+    }
+    */
+  }
+
+{% include "slg/partials/js/object_analysis_timeline.html" %}
+  // Aktualisiert die gesamte Benutzeroberfläche
+  function updateUI() {
+    initializeMotifSelector();
+    updateSelectedMotifInfo();
+    updateViewVisibility(); // This function now solely handles showing/hiding/creating main views
+    
+    if (showTimeline) {
+      // Timeline-spezifische Updates für die Seitenleiste
+      sidePanelTitle.textContent = gettext("Ereignis-Info");
+      motifStats.style.display = "none";
+      motifDetails.innerHTML = `
+        <p>Diese Zeitleiste zeigt historische Ereignisse und Münzprägungen während der Regierungszeit.</p>
+        <p>Klicken Sie auf ein Ereignis für weitere Details.</p>
+      `;
+    } else { 
+      // Matrix oder Single Chart Updates für die Seitenleiste
+      sidePanelTitle.textContent = gettext("Motiv-Info");
+      motifStats.style.display = "block";
+      updateMotifDetails(showMatrix);
+      
+      // Nur das Einzel-Kreisdiagramm erstellen, wenn !showMatrix und !showTimeline
+      if (!showMatrix && !showTimeline && selectedMotifId) {
+        createSinglePieChart(); 
+      } else {
+        singleChart.innerHTML = ""; // Clear single chart if not in that specific view
+        singleChartTitle.textContent = "";
+      }
+      
+      // Entferne den redundanten Matrix-Erstellungsblock von hier
+      // updateViewVisibility kümmert sich bereits darum.
+      /*
+      if (showMatrix && coinContextData && coinContextData.staetten && Object.keys(coinContextData.staetten).length > 0) {
+        if (!matrixCreated) {
+          createMatrixView();
+          matrixCreated = true;
+        }
+      } else if (showMatrix) {
+        matrixContainer.innerHTML = `<div class="alert alert-info mt-4">Keine ausreichenden Daten für Matrix-Ansicht vorhanden.</div>`;
+      }
+      */
+    }
+  }
+
+  // Initialisiert die Benutzeroberfläche
+  function initializeUI() {
+    updateUI();
+
+    // Fenstergrößenänderung behandeln
+    window.addEventListener("resize", () => {
+      if (showMatrix) {
+        // Just redraw if needed, but don't recreate
+        // Add specific resize handling for matrix if needed
+      } else if (!showTimeline) {
+        createSinglePieChart();
+      }
+    });
+  }
+
+  // Initialisierung beim Laden der Seite
+  document.addEventListener("DOMContentLoaded", () => {
+    if (document.getElementById('contextContent')) {
+      // Ensure duplicate event listeners are commented out
+      /*
+      matrixViewBtn.addEventListener("click", function() {
+        matrixViewBtn.classList.add("active");
+        timelineViewBtn.classList.remove("active");
+        showMatrix = true;
+        showTimeline = false;
+        updateUI(); 
+      });
+      
+      timelineViewBtn.addEventListener("click", function() {
+        timelineViewBtn.classList.add("active");
+        matrixViewBtn.classList.remove("active");
+        showMatrix = false;
+        showTimeline = true;
+        updateUI(); 
+        if (!timelineCreated) {
+          loadTimelineData();
+          timelineCreated = true;
+        }
+      });
+      */
+      
+      // Lade API-Daten
+      fetchCoinContextData();
+    }
+  });
+
+{% include "slg/partials/js/object_analysis_motifs.html" %}
+{% include "slg/partials/js/object_analysis_charts.html" %}
+</script>

@@ -1,11 +1,15 @@
-<!-- Browse vendor JS (shared) -->
 {% load static %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@maplibre/maplibre-gl-leaflet@0.1.2/leaflet-maplibre-gl.js"></script>
-<script src="{% static 'js/eligius-maps.js' %}"></script>
-<script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@2.4.0/Control.FullScreen.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/nouislider@14.7.0/distribute/nouislider.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/wnumb@1.2.0/wNumb.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+{% if browse_assets or package_map_markers %}
+<script defer src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script defer src="{% static 'vendor/maplibre-gl/maplibre-gl.js' %}"></script>
+<script defer src="{% static 'vendor/maplibre-gl-leaflet/leaflet-maplibre-gl.js' %}"></script>
+<script defer src="{% static 'js/eligius-maps.js' %}"></script>
+{% endif %}
+{% if browse_assets %}
+<script defer src="{% static 'vendor/leaflet.fullscreen/Control.FullScreen.js' %}"></script>
+<script defer src="{% static 'vendor/leaflet.markercluster/leaflet.markercluster.js' %}"></script>
+<script defer src="{% static 'vendor/nouislider/nouislider.min.js' %}"></script>
+{% endif %}
+{% if browse_assets or package_time_extent.start != None and package_time_extent.end != None %}
+<script defer src="{% static 'vendor/echarts/echarts.min.js' %}"></script>
+{% endif %}

@@ -1,0 +1,489 @@
+<style>
+    .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .matrix-cell {
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .matrix-cell.highlighted {
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.5);
+      z-index: 1;
+    }
+    
+    .matrix-cell .coin-count {
+      position: absolute;
+      top: 5px;
+      right: 8px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border-radius: 10px;
+      padding: 0 6px;
+      font-size: 11px;
+    }
+
+    .chart-container {
+      height: 150px;
+      position: relative;
+    }
+
+    #singleChart {
+      height: 300px;
+    }
+
+    .motif-item {
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+    }
+
+    .matrix-header {
+      font-weight: 600;
+      text-align: center;
+      color: inherit;
+      background-color: rgba(128, 128, 128, 0.18);
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.85rem;
+    }
+
+    .matrix-row-header {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      color: inherit;
+      background-color: rgba(128, 128, 128, 0.18);
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 1rem;
+      min-width: 110px;
+    }
+
+    .matrix-grid {
+      display: grid;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      align-items: stretch;
+    }
+
+    .matrix-grid .matrix-cell {
+      border-color: rgba(128, 128, 128, 0.35) !important;
+    }
+
+    .matrix-sum-cell {
+      font-size: 1.25rem;
+      font-weight: 600;
+      min-width: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .matrix-total-row {
+      background-color: rgba(128, 128, 128, 0.12);
+    }
+
+    .matrix-chart {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      height: auto;
+      min-height: 110px;
+    }
+
+    .matrix-chart svg {
+      flex: 0 0 auto;
+    }
+
+    .matrix-legend {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      min-width: 0;
+    }
+
+    .matrix-legend li {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .matrix-legend .legend-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .matrix-legend .legend-count {
+      opacity: 0.7;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .matrix-legend .color-dot {
+      flex: 0 0 auto;
+    }
+
+    .pie-tooltip {
+      position: absolute;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border-radius: 4px;
+      pointer-events: none;
+      font-size: 12px;
+      z-index: 1000;
+    }
+    
+    .coin-thumbnail {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .loading-spinner {
+      text-align: center;
+      padding: 2rem;
+    }
+    
+    .motif-stats {
+      margin-top: 1rem;
+    }
+    
+    .current-motif {
+      background-color: rgba(13, 110, 253, 0.1);
+      border-left: 4px solid #0d6efd;
+      padding-left: 8px;
+    }
+
+    /* Timeline Styling */
+    #timeline-view {
+      display: none;
+    }
+
+    .timeline-container {
+      position: relative;
+      margin: 20px 0;
+    }
+
+    {% comment %} .timeline-container::after {
+      content: '';
+      position: absolute;
+      width: 2px;
+      background: #ccc;
+      top: 0;
+      bottom: 0;
+      left: 50px;
+      margin-left: -1px;
+    } {% endcomment %}
+
+    .timeline-item {
+      padding: 10px 40px 10px 70px;
+      position: relative;
+      margin-bottom: 15px;
+    }
+
+    .timeline-item::after {
+      content: '';
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background-color: white;
+      border: 2px solid #ccc;
+      border-radius: 50%;
+      top: 15px;
+      left: 49px;
+      margin-left: -7px;
+      z-index: 1;
+    }
+
+    .timeline-item.event-coin::after {
+      background-color: #20c997;
+      border-color: #0d6efd;
+    }
+
+    .timeline-item.event-historical::after {
+      background-color: #ffc107;
+      border-color: #dc3545;
+    }
+
+    .timeline-date {
+      position: absolute;
+      width: 40px;
+      text-align: right;
+      left: 0;
+      top: 12px;
+      font-weight: bold;
+      color: #888;
+    }
+
+    .timeline-content {
+      padding: 10px 15px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      position: relative;
+    }
+
+    .timeline-content h3 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    .year-divider {
+      text-align: center;
+      font-weight: bold;
+      margin: 20px 0;
+      color: #666;
+      position: relative;
+      z-index: 2;
+    }
+
+    .year-divider span {
+      background: white;
+      padding: 0 10px;
+    }
+  </style>
+
+  <!-- Sortable Timeline CSS -->
+  <style>
+    /* Sortable Timeline Styling */
+    .sortable-timeline-container {
+      padding: 20px 0;
+    }
+
+    .list-container {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 8px;
+      background-color: #ffffff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      height: 100%;
+    }
+
+    .list-container h4 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+
+    .nested-list ul,
+    #simpleList {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .nested-list li,
+    #simpleList li {
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: grab;
+      color: #555;
+    }
+
+    .nested-list li:hover,
+    #simpleList li:hover {
+      background-color: #f0f0f0;
+    }
+
+    .nested-list ul.event-sublist {
+      display: flex;
+      flex-direction: row;
+      gap: 15px;
+      min-height: 20px;
+      margin-top: 10px;
+      border-left: 2px dashed #e0e0e0;
+      padding-left: 15px;
+      align-items: flex-start;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      transition: min-height 0.3s ease, padding 0.3s ease, background-color 0.3s ease;
+      flex-wrap: wrap;
+      max-width: calc(100% - 20px);
+      overflow: visible;
+    }
+
+    .nested-list ul.event-sublist:not(:empty) {
+      min-height: 110px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      background-color: rgba(168, 184, 255, 0.1);
+      border-left-color: #a8b8ff;
+      border-radius: 0 8px 8px 0;
+      height: auto;
+    }
+
+    .nested-list > li {
+      background-color: #e9efff;
+      font-weight: bold;
+      padding: 15px;
+      margin-bottom: 12px;
+      overflow: visible;
+      min-height: auto;
+    }
+
+    .event-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .event-header strong {
+      color: #2c5aa0;
+      font-size: 16px;
+      flex: 1;
+    }
+
+    .event-date {
+      color: #666;
+      font-weight: normal;
+      font-size: 14px;
+      margin-left: 10px;
+      white-space: nowrap;
+    }
+
+    .event-description {
+      font-weight: normal;
+      color: #444;
+      font-size: 14px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      font-style: italic;
+    }
+
+    .event-persons {
+      font-weight: normal;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .event-persons strong {
+      color: #2c5aa0;
+      font-weight: bold;
+    }
+
+    .event-item {
+      border-radius: 8px;
+      border: 1px solid #d0d7ff;
+      transition: all 0.2s ease;
+      overflow: visible;
+      height: auto;
+    }
+
+    .event-item:hover {
+      box-shadow: 0 2px 8px rgba(44, 90, 160, 0.15);
+      border-color: #a8b8ff;
+    }
+
+    .event-sublist {
+      margin-top: 12px !important;
+      border-left-color: #a8b8ff !important;
+    }
+
+    .coin {
+      width: 90px;
+      height: 90px;
+      background-color: gold;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #4a3800;
+      border: 2px solid darkgoldenrod;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+      font-weight: bold;
+      margin-bottom: 0;
+      cursor: grab;
+      transition: transform 0.2s ease;
+    }
+
+    .coin:hover {
+      transform: scale(1.05);
+    }
+
+    .coin img {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .sortable-ghost {
+      opacity: 0.7;
+      background-color: #c8ebfb;
+    }
+
+    .sortable-drag {
+      opacity: 0.9 !important;
+    }
+
+    .arrows {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      font-size: 1.5rem;
+      color: #888;
+      user-select: none;
+      min-width: 40px;
+    }
+
+    .arrows .arrow-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 5px;
+      font-size: 1.5rem;
+    }
+
+    #simpleList {
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      flex-wrap: wrap;
+      min-height: 100px;
+      align-items: flex-start;
+      padding: 8px;
+      justify-content: center;
+    }
+
+    #simpleList li {
+      margin-bottom: 8px;
+    }
+
+    .sticky-coins {
+      position: sticky;
+      top: 20px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+
+    .sticky-coins h4 {
+      position: sticky;
+      top: 0;
+      background-color: #ffffff;
+      z-index: 10;
+      margin: 0 -15px 15px -15px;
+      padding: 10px 15px;
+      border-bottom: 1px solid #eee;
+    }
+  </style>

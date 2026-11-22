@@ -50,6 +50,34 @@ Die optionale native Browserintegration ist in [WEBMCP_DEVELOPMENT.md](WEBMCP_DE
 beschrieben. Sie verwendet dieselben fünf Datentools und ergänzt Navigation,
 Browse-Filter und Seitenkontext. Aktivierung: `ELIGIUS_WEBMCP_ENABLED=1`.
 
+## Listen-API und lokale Frontend-Bibliotheken
+
+DRF-Listen mit dem Standard-Paginator liefern ohne Parameter weiterhin ein
+JSON-Array. Mit `?page=1` oder `?page_size=50` liefern sie
+`count`, `next`, `previous` und `results`. Die Seiten sind nach
+Primärschlüssel sortiert. Die Standardgröße ist 100, das Maximum 500.
+Filter bleiben in den Navigationslinks erhalten. Endpunkte mit eigenem
+Paginator behalten ihr bisheriges Verhalten.
+
+Die öffentlichen Templates laden die folgenden Assets über Django Staticfiles
+aus `slg/static/vendor/`. Die Verzeichnisse enthalten die jeweiligen
+Lizenztexte. Die Quellen sind die gleichnamigen npm-Pakete und bei den
+Schriften die Pakete unter `@fontsource-variable`.
+
+| Bibliothek | Version |
+| --- | --- |
+| jQuery | 3.7.1 |
+| Bootstrap / Bootstrap Icons | 5.3.0 / 1.11.1 |
+| Cookie Consent | 3.1.1 |
+| Select2 (CSS) | 4.1.0-rc.0 |
+| LightGallery (CSS und Schrift) | 1.6.11 |
+| Leaflet / Leaflet.markercluster / Leaflet.fullscreen | 1.9.4 / 1.4.1 / 2.4.0 |
+| MapLibre GL / @maplibre/maplibre-gl-leaflet | 5.24.0 / 0.1.2 |
+| noUiSlider / ECharts | 14.7.0 / 5.5.0 |
+| Cormorant Garamond, Plus Jakarta Sans, Josefin Sans, Inter, Outfit, Playfair Display | 5.3.0 |
+
+Die Basiskarte bezieht ihre Kartendaten weiterhin von OpenFreeMap.
+
 ## 1) Voraussetzungen
 
 - Docker Desktop läuft

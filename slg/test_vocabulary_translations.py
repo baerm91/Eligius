@@ -131,7 +131,7 @@ class DetailModalTests(TestCase):
         self.assertEqual(nomisma_url('https://example.org/id/prague'), '')
         self.assertEqual(nomisma_url('http://nomisma.org/id/prague'), 'https://nomisma.org/id/prague')
 
-    @patch('slg.views._wikipedia_summary')
+    @patch('slg.views.public._wikipedia_summary')
     def test_person_modal_links_to_the_article_it_displays(self, summary):
         person = Person.objects.create(
             name='Maria Theresia', beschreibung='Lokale Beschreibung',

@@ -2,7 +2,6 @@ from django import forms
 from django.forms import ModelForm, widgets
 from .models import *
 from django_select2.forms import Select2MultipleWidget, Select2Widget, ModelSelect2Widget
-from crispy_forms.helper import FormHelper
 from bootstrap_modal_forms.forms import BSModalForm, BSModalModelForm
 
 

@@ -20,8 +20,8 @@
     {% block stylesheets %}
       {% load static %}
       {% include 'slg/styles.html' with active_block='cssnavbar' %}
-      <link rel="preload" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-      <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" /></noscript>
+      <link rel="preload" href="{% static 'vendor/cookieconsent/cookieconsent.min.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+      <noscript><link rel="stylesheet" href="{% static 'vendor/cookieconsent/cookieconsent.min.css' %}" /></noscript>
       <style>.cc-window.cc-invisible { visibility: hidden; }</style>
     {% endblock stylesheets %}
 
@@ -124,7 +124,7 @@
       </nav>
     </footer>
 
-    <script defer src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"></script>
+    <script defer src="{% static 'vendor/cookieconsent/cookieconsent.min.js' %}"></script>
     <script>
     {% translate "Diese Website verwendet Cookies, um Ihnen das beste Erlebnis auf unserer Webseite zu ermöglichen." as cookie_message %}
     {% translate "Ablehnen" as cookie_dismiss %}

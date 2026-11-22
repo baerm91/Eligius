@@ -1,10 +1,3 @@
-@font-face {
-    font-family: 'bootstrap-icons';
-    src: url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/fonts/bootstrap-icons.woff2') format('woff2');
-    font-display: swap;
-    /* Zeigt Fallback-Text sofort an */
-  }
-
   .bi {
     font-family: "bootstrap-icons", sans-serif;
     font-display: swap;
