@@ -57,6 +57,7 @@ from django.db.models import Q
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from .authentication import QueryParamTokenAuthentication
+from .export_safety import neutralize_dataset, neutralize_formula
 from .permissions import AuthenticatedReadStaffModelWrite, PublicReadStaffModelWrite, is_active_staff, staff_with_perms
 import copy
 import html as html_lib
@@ -95,6 +96,41 @@ _JSON_SCRIPT_ESCAPES = {
 def json_for_script(value):
     """JSON, das gefahrlos direkt in einen <script>-Block eingebettet werden kann."""
     return mark_safe(json.dumps(value).translate(_JSON_SCRIPT_ESCAPES))
+
+
+_BEIZEICHEN_TOKEN_RE = re.compile(r'\[([^\]]+)\]')
+
+
+def render_beizeichen_html(raw_text, symbol_html=None, offizin_name=None):
+    """Baut die Beizeichen-HTML in einem Durchgang auf dem Rohtext auf.
+
+    Platzhalter ([Offizinszeichen], [Monogramm], [Symbolname]) und "?" werden nur
+    im Text zwischen den eingesetzten Symbolen ersetzt – nie in bereits
+    erzeugtem HTML (Attribut-Breakout, "?" in Symbol-URLs).
+    Rückgabe: (SafeString, ob "?" durch den Offizin-Namen ersetzt wurde).
+    """
+    raw = raw_text or ''
+    offizin_used = False
+
+    def text(part):
+        nonlocal offizin_used
+        if offizin_name and '?' in part:
+            offizin_used = True
+            return str(escape(offizin_name)).join(str(escape(p)) for p in part.split('?'))
+        return str(escape(part))
+
+    parts, pos = [], 0
+    for match in _BEIZEICHEN_TOKEN_RE.finditer(raw):
+        parts.append(text(raw[pos:match.start()]))
+        name = match.group(1)
+        if name in ('Offizinszeichen', 'Monogramm') and symbol_html:
+            parts.append(str(symbol_html))
+        else:
+            symbol = OffizinSymbol.objects.filter(name=name).first()
+            parts.append(str(symbol.get_svg_html()) if symbol else text(match.group(0)))
+        pos = match.end()
+    parts.append(text(raw[pos:]))
+    return mark_safe(''.join(parts)), offizin_used
 
 
 def replace_monogram_references(text):
@@ -231,7 +267,7 @@ def export_xlsx(request):
         return JsonResponse({"error": "Ungültige Filterparameter."}, status=400)
 
     resource = ObjLSNOResource()
-    dataset = resource.export(queryset)
+    dataset = neutralize_dataset(resource.export(queryset))
     response = HttpResponse(
         dataset.xlsx,
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -277,23 +313,25 @@ class ObjUpdateView(StaffModelPermissionMixin, BSModalUpdateView):
 @staff_member_required
 @permission_required('slg.change_obj', raise_exception=True)
 def MzUpdate(request, id):
-   obj = Obj.objects.get(id=id)
+   obj = get_object_or_404(Obj, id=id)
+   # Verwaltungsfelder nur für Superuser (wie ObjDetailUpdateSerializer).
+   DetailForm = DetailUpdateForm if request.user.is_superuser else StaffDetailUpdateForm
    PersonFormSet = inlineformset_factory(Obj, Obj_Person, fields=('idfk_Person','idfk_PersonFunktion','appears_on_rev'), can_delete=True, extra=2)
-   RefFormSet = inlineformset_factory(Obj, Obj_Ref, fields=('idfk_Ref','nummer', 'variante', 'link'), can_delete=True, extra=1,)
+   RefFormSet = inlineformset_factory(Obj, Obj_Ref, fields=('idfk_Ref','nummer', 'nach', 'variante', 'link'), can_delete=True, extra=1,)
    # RefFormSet = inlineformset_factory(Obj, Obj_Ref, form=RefUpdateForm, can_delete=True, extra=1,)
    #print(formset)
-   form = DetailUpdateForm(instance=obj)
+   form = DetailForm(instance=obj)
    if request.method == 'POST':
       #print("erstes IF")
       #print(request.POST)
       Personen = PersonFormSet(request.POST, instance=obj, prefix='personen')
       Literatur = RefFormSet(request.POST, instance=obj, prefix='referenzen')
-      form = DetailUpdateForm(request.POST, instance=obj)
+      form = DetailForm(request.POST, instance=obj)
       if form.is_valid() and Literatur.is_valid() and Personen.is_valid():
-         #print("zweites IF")
-         form.save()
-         Literatur.save()
-         Personen.save()
+         with transaction.atomic():
+            form.save()
+            Literatur.save()
+            Personen.save()
          # Personen = Personen.save(commit=False)
          # for inline_form in Personen:
          #        #if inline_form.cleaned_data:
@@ -1207,7 +1245,7 @@ def PraegeherrTimelineView(request, id):
 
 @api_view(['POST'])
 @authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([staff_with_perms('slg.view_obj')])
 def export_coins_api(request):
     """Accept a JSON payload {"invnrs": [...]} and return the coin list CSV export.
 
@@ -1257,12 +1295,11 @@ def export_coins_api(request):
 
     response = prepare_coin_data_export(queryset)
 
-    filename = str(payload.get('filename') or '').strip() or 'exported_coins.csv'
-    if '/' in filename or '\\' in filename or '\r' in filename or '\n' in filename:
-        filename = 'exported_coins.csv'
+    filename = re.sub(r'[\x00-\x1f\x7f"\\/;]', '_', str(payload.get('filename') or '')).strip()[:150]
+    filename = filename or 'exported_coins.csv'
     if not filename.lower().endswith('.csv'):
         filename = f"{filename}.csv"
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response['Content-Disposition'] = content_disposition_header(True, filename)
 
     # Informative header for proxies that need to know how many rows matched.
     response['X-Export-Matched-Invnrs'] = str(len(distinct_pks))
@@ -1290,7 +1327,7 @@ def _export_datetime(value):
 
 @api_view(['POST'])
 @authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([staff_with_perms('slg.view_obj')])
 def export_coin_states_api(request):
     """Return current object/type modification timestamps for inventory numbers."""
     payload = request.data or {}
@@ -1632,7 +1669,7 @@ def prepare_coin_data_export(queryset):
             
             # Schreibe alle Zeilen dieses Batches auf einmal
             for row_data in rows_to_write:
-                writer.writerow(row_data)
+                writer.writerow({key: neutralize_formula(value) for key, value in row_data.items()})
             
             # Yield den gesamten Batch
             if rows_to_write:
@@ -1792,54 +1829,26 @@ def prepare_coin_data(obj):
 
     # Anpassung der Beizeichen-Anzeige für Vorderseite
     if data['av_beizeichen']:
-        # DB-Text zuerst escapen; danach nur geprüftes HTML (Symbole) einsetzen
-        beizeichen_text = str(escape(data['av_beizeichen'].name or ''))
-        
-        # Replace [Offizinszeichen] and [Monogramm] with SVG if available
-        if data['av_offizin_symbol_html']:
-            if "[Offizinszeichen]" in beizeichen_text:
-                beizeichen_text = beizeichen_text.replace("[Offizinszeichen]", data['av_offizin_symbol_html'])
-            if "[Monogramm]" in beizeichen_text:
-                beizeichen_text = beizeichen_text.replace("[Monogramm]", data['av_offizin_symbol_html'])
-        
-        # Replace specific monogram references like [Lorber Monogram 219]
-        beizeichen_text = replace_monogram_references(beizeichen_text)
-        
-        # Handle the existing ? replacement logic
-        if "?" in beizeichen_text and data['av_offizin']:
-            beizeichen_text = beizeichen_text.replace("?", str(escape(data['av_offizin'].name or '')))
-            data['av_offizin_display'] = None  # Setze auf None, da es bereits im Beizeichen enthalten ist
-        else:
-            data['av_offizin_display'] = data['av_offizin'].name if data['av_offizin'] else None
-            
-        data['av_beizeichen_display'] = mark_safe(beizeichen_text)
+        offizin = data['av_offizin']
+        html, offizin_used = render_beizeichen_html(
+            data['av_beizeichen'].name, data['av_offizin_symbol_html'],
+            (offizin.name or '') if offizin else None)
+        # Offizin-Name nur separat anzeigen, wenn er nicht schon im Beizeichen steht
+        data['av_offizin_display'] = None if offizin_used else (offizin.name if offizin else None)
+        data['av_beizeichen_display'] = html
     elif data['av_offizin']:
         data['av_beizeichen_display'] = None
         data['av_offizin_display'] = data['av_offizin'].name
 
     # Ähnliche Logik für die Rückseite
     if data['rv_beizeichen']:
-        # DB-Text zuerst escapen; danach nur geprüftes HTML (Symbole) einsetzen
-        beizeichen_text = str(escape(data['rv_beizeichen'].name or ''))
-        
-        # Replace [Offizinszeichen] and [Monogramm] with SVG if available
-        if data['rv_offizin_symbol_html']:
-            if "[Offizinszeichen]" in beizeichen_text:
-                beizeichen_text = beizeichen_text.replace("[Offizinszeichen]", data['rv_offizin_symbol_html'])
-            if "[Monogramm]" in beizeichen_text:
-                beizeichen_text = beizeichen_text.replace("[Monogramm]", data['rv_offizin_symbol_html'])
-        
-        # Replace specific monogram references like [Lorber Monogram 219]
-        beizeichen_text = replace_monogram_references(beizeichen_text)
-        
-        # Handle the existing ? replacement logic
-        if "?" in beizeichen_text and data['rv_offizin']:
-            beizeichen_text = beizeichen_text.replace("?", str(escape(data['rv_offizin'].name or '')))
-            data['rv_offizin_display'] = None
-        else:
-            data['rv_offizin_display'] = data['rv_offizin'].name if data['rv_offizin'] else None
-            
-        data['rv_beizeichen_display'] = mark_safe(beizeichen_text)
+        offizin = data['rv_offizin']
+        html, offizin_used = render_beizeichen_html(
+            data['rv_beizeichen'].name, data['rv_offizin_symbol_html'],
+            (offizin.name or '') if offizin else None)
+        # Offizin-Name nur separat anzeigen, wenn er nicht schon im Beizeichen steht
+        data['rv_offizin_display'] = None if offizin_used else (offizin.name if offizin else None)
+        data['rv_beizeichen_display'] = html
     elif data['rv_offizin']:
         data['rv_beizeichen_display'] = None
         data['rv_offizin_display'] = data['rv_offizin'].name
@@ -3935,7 +3944,8 @@ def catalog_sort_titles(request):
     
     return render(request, 'slg/catalog_sort_titles.html', context)
 
-@login_required
+@staff_member_required
+@permission_required('slg.view_obj', raise_exception=True)
 def catalog_generate(request):
     """
     View zur Generierung des Katalogs als HTML
@@ -4288,7 +4298,26 @@ def objekt_list_view_mtoa(request):
 
     return render(request, 'slg/Objektliste_mtoa.html', context)
 
-@login_required
+EXCEL_ENRICH_MAX_UPLOAD = 10 * 1024 * 1024          # 10 MB Datei
+EXCEL_ENRICH_MAX_UNCOMPRESSED = 100 * 1024 * 1024   # 100 MB entpackt (ZIP-Bomben)
+
+
+def _xlsx_too_large(uploaded):
+    import zipfile
+    if uploaded.size > EXCEL_ENRICH_MAX_UPLOAD:
+        return True
+    try:
+        with zipfile.ZipFile(uploaded) as archive:
+            total = sum(info.file_size for info in archive.infolist())
+    except zipfile.BadZipFile:
+        return False  # openpyxl meldet das Format sauber als Fehler
+    finally:
+        uploaded.seek(0)
+    return total > EXCEL_ENRICH_MAX_UNCOMPRESSED
+
+
+@staff_member_required
+@permission_required('slg.view_muenztyp', raise_exception=True)
 def excel_ocre_enrich(request):
     import io
     import openpyxl
@@ -4301,13 +4330,20 @@ def excel_ocre_enrich(request):
 
         excel_file = request.FILES['excel_file']
         ocre_column_name = request.POST.get('ocre_column').strip()
+        if _xlsx_too_large(excel_file):
+            messages.error(request, 'Die Datei ist zu groß (max. 10 MB, entpackt 100 MB).')
+            return redirect('excel_ocre_enrich')
 
         try:
             wb = openpyxl.load_workbook(excel_file)
             sheet = wb.active
 
             # Find the OCRE column index (case-insensitive and ignoring extra spaces)
-            header_row = list(sheet.rows)[0]
+            # Nur die erste Zeile lesen (list(sheet.rows) lädt das ganze Blatt).
+            header_row = next(sheet.iter_rows(min_row=1, max_row=1), None)
+            if not header_row:
+                messages.error(request, 'Die Tabelle ist leer.')
+                return redirect('excel_ocre_enrich')
             ocre_col_idx = None
             for idx, cell in enumerate(header_row):
                 if cell.value and str(cell.value).strip().lower() == ocre_column_name.lower():
@@ -4367,10 +4403,10 @@ def excel_ocre_enrich(request):
                         data = id_to_data.get(extracted_id)
                         
                         if data:
-                            sheet.cell(row=row_idx, column=col_avbeschr, value=data['av'])
-                            sheet.cell(row=row_idx, column=col_rvbeschr, value=data['rv'])
-                            sheet.cell(row=row_idx, column=col_workflow, value=data['wf'])
-                            sheet.cell(row=row_idx, column=col_titel, value=data['titel'])
+                            sheet.cell(row=row_idx, column=col_avbeschr, value=neutralize_formula(data['av']))
+                            sheet.cell(row=row_idx, column=col_rvbeschr, value=neutralize_formula(data['rv']))
+                            sheet.cell(row=row_idx, column=col_workflow, value=neutralize_formula(data['wf']))
+                            sheet.cell(row=row_idx, column=col_titel, value=neutralize_formula(data['titel']))
 
             # Save to memory and return
             output = io.BytesIO()
@@ -4388,9 +4424,9 @@ def excel_ocre_enrich(request):
             response['Content-Disposition'] = content_disposition_header(True, new_name)
             return response
 
-        except Exception as e:
-            logger.error(f"Fehler bei Excel-Verarbeitung: {e}")
-            messages.error(request, f'Es ist ein Fehler aufgetreten: {str(e)}')
+        except Exception:
+            logger.exception('Fehler bei Excel-Verarbeitung')
+            messages.error(request, 'Die Datei konnte nicht verarbeitet werden. Bitte eine gültige .xlsx-Datei hochladen.')
             return redirect('excel_ocre_enrich')
 
     return render(request, 'slg/excel_ocre_enrich.html')

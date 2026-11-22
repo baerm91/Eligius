@@ -119,7 +119,24 @@ REST_FRAMEWORK = {
         'token_auth': os.getenv('ELIGIUS_TOKEN_AUTH_RATE', '10/min'),
         'token_auth_user': os.getenv('ELIGIUS_TOKEN_AUTH_USER_RATE', '20/hour'),
     },
+    # Anzahl vertrauenswürdiger Reverse-Proxys vor Gunicorn (Produktion: nginx).
+    # Ohne Angabe nimmt DRF den kompletten, vom Client fälschbaren
+    # X-Forwarded-For-Header als Throttle-Schlüssel. nginx muss
+    # 'proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;' setzen.
+    'NUM_PROXIES': int(os.getenv('ELIGIUS_NUM_PROXIES', '0' if DEBUG else '1')),
 }
+
+# Geteilter Cache für alle Gunicorn-Worker eines Containers (Rate-Limits,
+# cache_page). LocMemCache wäre pro Worker isoliert (WEB_CONCURRENCY=8 →
+# 8-faches effektives Limit, inkonsistentes Page-Caching).
+_CACHE_DIR = os.getenv('ELIGIUS_CACHE_DIR', '' if DEBUG else '/tmp/eligius-django-cache')
+if _CACHE_DIR:
+    CACHES = {'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': _CACHE_DIR,
+        'TIMEOUT': 300,
+        'OPTIONS': {'MAX_ENTRIES': 10000},
+    }}
 
 # DRF-Tokens per ?token=/?auth_token= sind standardmäßig deaktiviert, weil sie in
 # Proxy-/Server-Logs, Browser-History und Referer-Headern landen. Nur für
@@ -208,6 +225,9 @@ ELIGIUS_NOMISMA_CACHE_SECONDS = int(os.getenv('ELIGIUS_NOMISMA_CACHE_SECONDS', s
 
 # Admin-Benutzer, die auf der Admin-Startseite die Vorschau offener
 # Kontaktanfragen/Objektänderungen sehen (kommagetrennt).
+# django-import-export: Admin-Exporte gegen Formula-Injection absichern.
+from slg.export_safety import SAFE_EXPORT_FORMATS as EXPORT_FORMATS  # noqa: E402
+
 ELIGIUS_ADMIN_DASHBOARD_USERS = [
     u.strip() for u in os.getenv('ELIGIUS_ADMIN_DASHBOARD_USERS', '').split(',') if u.strip()
 ]

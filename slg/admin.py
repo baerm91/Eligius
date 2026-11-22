@@ -327,30 +327,28 @@ class RawPersonenFilter(admin.SimpleListFilter):
 
 import re
 
+@admin.action(description="Personen matchen (Exact Only)", permissions=['change'])
 def match_personen_exact(modeladmin, request, queryset):
+    updated = skipped = 0
     for ereignis in queryset:
-        # Vorherige Zuordnungen löschen
-        ereignis.person.clear()
-
         raw = ereignis.raw_personen or ""
         # Kommaseparierte Liste in Einzelnamen aufsplitten
         names = [n.strip() for n in raw.split(",") if n.strip()]
-
+        persons = []
         for name in names:
-            try:
-                # Use regex lookup instead of iexact to avoid collation issues
-                person = Person.objects.filter(name__iregex=r'^' + re.escape(name) + r'$').first()
-                if person:
-                    # Treffer hinzufügen
-                    ereignis.person.add(person)
-            except Exception as e:
-                # Log the error but continue processing
-                continue
-
-        ereignis.save()
-
-# Füge die Beschreibung als Attribut hinzu
-match_personen_exact.short_description = "Personen matchen (Exact Only)"
+            # Regex statt iexact, um Collation-Probleme zu vermeiden
+            person = Person.objects.filter(name__iregex=r'^' + re.escape(name) + r'$').first()
+            if person and person not in persons:
+                persons.append(person)
+        if not persons:
+            # Leeres raw_personen oder kein Treffer: bestehende Links nicht löschen.
+            skipped += 1
+            continue
+        with transaction.atomic():
+            ereignis.person.set(persons)
+        updated += 1
+    modeladmin.message_user(
+        request, f'{updated} Ereignis(se) aktualisiert, {skipped} ohne Treffer unverändert gelassen.')
 
 class SlgInformation_SchlagwortInline(admin.TabularInline):
     model = SlgInformationSchlagwort
@@ -618,90 +616,70 @@ class PersonView(ImportExportModelAdmin,):
             query,
         )
 
+    PERSON_LINK_HOSTS = (
+        ('Zisterzienserlexikon', ('zisterzienserlexikon.de',)),
+        ('OeBL', ('biographien.ac.at',)),
+        ('DB', ('deutsche-biographie.de',)),
+        ('DeutscheDigitaleBib', ('deutsche-digitale-bibliothek.de',)),
+    )
+    PERSONDATA_HOSTS = ('tools.wmflabs.org', 'toolforge.org')
+    GND_ID_RE = re.compile(r'[0-9][0-9Xx-]{0,15}')
+
     def response_change(self, request, obj, post_url_continue=None):
-        # lädt die Daten OCRE und Co. über eine SPARQL-Abfrage als CSV herunter und fügt sie zum Datensatz hinzu
+        # Ergänzt Personenlinks über den GND-SeeAlso-Beacon (beacon.findbuch.de).
         if "_download_infos" in request.POST:
-            
-            if obj.DNB:
-                link = obj.DNB
-                linkid = link.replace('http://d-nb.info/gnd/', '').replace('https://d-nb.info/gnd/', '')
-                url2 = "http://beacon.findbuch.de/seealso/pnd-aks?format=seealso&id="+linkid
-                
-                
-                with requests.Session() as s:
-                    download = s.get(url2)
-
-                    #decoded_content = download.content.decode('utf-8')
-
-                    # cr = csv.reader(decoded_content.splitlines(), delimiter=',')
-                    # data = json.load(download.read())
-                    data = download.json()
-                    print("JSON string = ", data[3]) 
-                    for d in data[3]:
-                        print(d)
-                        if "https://tools.wmflabs.org/persondata/redirect/gnd/de/" in d:
-                            if not obj.WikiDe:
-                                r = requests.get(d) 
-                                obj.WikiDe = r.url
-                                print("abgespeichert")
-                        if "http://www.zisterzienserlexikon.de/" in d:
-                            if not obj.Zisterzienserlexikon:
-                                #r = requests.get(d) 
-                                obj.Zisterzienserlexikon = d
-                                print("abgespeichert")
-                        if "http://www.biographien.ac.at" in d:
-                            if not obj.OeBL:
-                                #r = requests.get(d) 
-                                obj.OeBL = d
-                                print("abgespeichert")
-                        if "http://www.deutsche-biographie.de/" in d:
-                            if not obj.DB:
-                                #r = requests.get(d) 
-                                obj.DB = d
-                                print("abgespeichert")
-                        if "https://www.deutsche-digitale-bibliothek.de/" in d:
-                            if not obj.DeutscheDigitaleBib:
-                                #r = requests.get(d) 
-                                obj.DeutscheDigitaleBib = d
-                                print("abgespeichert")
-                        
-                            # r.url
-                    # obj.Ppl.add(Person.objects.get(name_nom_id=praegeherr))
-                    # obj.mztyp_person_set.add(PersonFunktion.objects.get(id=1))
-                    
-                    #print(obj.Mzstaette)
-                    obj.save()
-
-                    opts = obj._meta
-                    obj_url = reverse(
-                        'admin:%s_%s_change' % (opts.app_label, opts.model_name),
-                        args=(quote(obj.pk),),
-                        current_app=self.admin_site.name,
-                    )
-                    self.message_user(request, "Daten vom Online-Typenkatalog heruntergeladen")
-                    if post_url_continue is None:
-                        post_url_continue = obj_url
-                        return HttpResponseRedirect(post_url_continue)
-                    #save_as=True
-                ##############################################
-                # json_string = urllib.request.urlopen(url)
-                # cr = json_string.reader()
-
-                # for row in cr:
-                #     print(row)
-
-                #data = json.loads(json_string)
-                # decoded_reponse = json_string.read().decode('utf-8')
-                # json_response = json.loads(decoded_reponse)
-
-                # print(json_response)
-                # for key, value in json_response.items():
-                #     print(key, ":", value)
-                # print("Project name: ", json_response["projectinfo"][0]["name"])
-                
-                #return HttpResponseRedirect(".")
-        
+            self._download_person_links(request, obj)
+            opts = obj._meta
+            return HttpResponseRedirect(reverse(
+                'admin:%s_%s_change' % (opts.app_label, opts.model_name),
+                args=(quote(obj.pk),),
+                current_app=self.admin_site.name,
+            ))
         return super().response_change(request, obj)
+
+    def _download_person_links(self, request, obj):
+        gnd = re.sub(r'^https?://d-nb\.info/gnd/', '', (obj.DNB or '').strip()).strip('/')
+        if not self.GND_ID_RE.fullmatch(gnd):
+            self.message_user(request, 'Keine gültige GND-ID im Feld DNB.', messages.ERROR)
+            return
+        url = 'http://beacon.findbuch.de/seealso/pnd-aks?' + urlencode({'format': 'seealso', 'id': gnd})
+        try:
+            data = _safe_get(url, ('beacon.findbuch.de',)).json()
+        except (RequestException, RuntimeError, ValueError):
+            logging.getLogger(__name__).warning('GND-Beacon für Person %s nicht abrufbar', obj.pk, exc_info=True)
+            self.message_user(request, 'Personendaten konnten nicht abgerufen werden.', messages.ERROR)
+            return
+        links = data[3] if isinstance(data, list) and len(data) > 3 and isinstance(data[3], list) else []
+        changed = []
+        for link in links:
+            if not isinstance(link, str) or len(link) > 255:
+                continue
+            try:
+                parts = urlparse(link)
+            except ValueError:
+                continue
+            if parts.scheme not in ('http', 'https'):
+                continue
+            if _host_matches(parts.hostname, self.PERSONDATA_HOSTS):
+                if obj.WikiDe or not parts.path.startswith('/persondata/redirect/gnd/de/'):
+                    continue
+                try:
+                    final = _safe_get(link, self.PERSONDATA_HOSTS + ('de.wikipedia.org',)).url
+                except (RequestException, RuntimeError):
+                    continue
+                if _host_matches(urlparse(final).hostname, ('de.wikipedia.org',)) and len(final) <= 255:
+                    obj.WikiDe = final
+                    changed.append('WikiDe')
+                continue
+            for field, hosts in self.PERSON_LINK_HOSTS:
+                if not getattr(obj, field) and _host_matches(parts.hostname, hosts):
+                    setattr(obj, field, link)
+                    changed.append(field)
+        if changed:
+            obj.save(update_fields=changed)
+            self.message_user(request, 'Personenlinks ergänzt: ' + ', '.join(changed))
+        else:
+            self.message_user(request, 'Keine neuen Personenlinks gefunden.', messages.WARNING)
 
 class WappenAdmin(admin.ModelAdmin):
     ordering = ['name']

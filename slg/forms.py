@@ -42,10 +42,17 @@ class PersonenUpdateForm(forms.ModelForm):
         
 
 class DetailUpdateForm(forms.ModelForm):
+    """Objekt-Bearbeitung unter /id/<id>/update/ (Superuser).
+
+    M2M-Felder mit eigenem Through-Modell (Ppl, idfk_Ref, interne_anmerkungen)
+    werden über eigene Formsets bzw. den Admin gepflegt; ein form.save() würde
+    sonst Through-Zeilen ohne Pflichtfelder anlegen (IntegrityError bei
+    Obj_Ref.nach).
+    """
     class Meta:
         model = Obj
         fields = '__all__'
-        exclude = ['Ppl']
+        exclude = ['Ppl', 'idfk_Ref', 'interne_anmerkungen']
         # fields = 'titel', 'dat_verb', 'anmerkung', 'freigabe'
         widgets = {
             # 'link': forms.TextInput(attrs={'class':'form-control', 'cols': 80, 'rows': 10}),
@@ -145,3 +152,16 @@ class RefUpdateForm(forms.ModelForm):
     # rv_bildrand = forms.ForeignKey('RvBildrand', on_delete=forms.CASCADE, blank=True, null=True, verbose_name='RvBildrand')
     # anmerkung = forms.TextField(blank=True, null=True, verbose_name='Anmerkungen')
     
+
+
+class StaffDetailUpdateForm(DetailUpdateForm):
+    """Wie DetailUpdateForm, aber ohne Verwaltungsfelder für Nicht-Superuser.
+
+    Entspricht ObjDetailUpdateSerializer.PRIVILEGED_FIELDS: Workflow-Status,
+    Freigabe, Sammlungs-/Paketzuordnung und Fälschungskennzeichen ändern nur
+    Superuser.
+    """
+    class Meta(DetailUpdateForm.Meta):
+        exclude = DetailUpdateForm.Meta.exclude + [
+            'workflow', 'Slg', 'SlgTeil', 'pakete', 'faelschung', 'freigabe', 'fmid',
+        ]

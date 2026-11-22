@@ -158,6 +158,8 @@ FILTER_PARAMETERS = {
         },
         'Paket': {
             'fields': ['pakete__id'],
+            # Nur veröffentlichte Pakete (wie search.py), im selben Join geprüft.
+            'conditions': {'pakete__online_freigegeben': True},
             'filter': 'exact',
             'display_name': _('Paket'),
             'model': Paket,
@@ -421,6 +423,8 @@ FILTER_PARAMETERS = {
         },
         'Paket': {
             'fields': ['pakete__id'],
+            # Nur veröffentlichte Pakete (wie search.py), im selben Join geprüft.
+            'conditions': {'pakete__online_freigegeben': True},
             'filter': 'exact',
             'display_name': _('Paket'),
             'model': Paket,

@@ -5,6 +5,7 @@ DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memor
 # Legacy MySQL migrations contain platform-specific SQL. Build model fixtures
 # directly for portable service tests; verify MySQL separately on Development.
 MIGRATION_MODULES = {'slg': None}
+CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
 PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 ELIGIUS_PUBLIC_BASE_URL = 'https://example.test'
 ELIGIUS_MCP_ENABLED = True

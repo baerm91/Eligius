@@ -10,13 +10,16 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from import_export.formats.base_formats import XLSX
 from .resources import ObjLSNOResource
+from .export_safety import neutralize_dataset
+from .permissions import staff_with_perms
 
 class ExportObjLSNO(APIView):
     authentication_classes = [QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # Interne Workflow-/Funddaten: nur aktive Staff-Accounts mit Leserecht (wie export_xlsx).
+    permission_classes = [staff_with_perms('slg.view_obj')]
 
     def get(self, request):
-        dataset = ObjLSNOResource().export()
+        dataset = neutralize_dataset(ObjLSNOResource().export())
         export_format = XLSX()
         
         # tablib erwartet bei Dataset.export() einen Formatnamen; das Format-Objekt exportiert selbst.

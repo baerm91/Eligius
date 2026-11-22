@@ -96,8 +96,11 @@ def build_filters(request, exclude_field=None):
                         lookup_value = value
                     else:
                         continue
+                    # Zusatzbedingungen im selben Q() → derselbe Join (z. B. nur
+                    # veröffentlichte Pakete: pakete__id UND pakete__online_freigegeben).
+                    conditions = config_values.get('conditions', {})
                     field_q_objects = [
-                        Q(**{f'{field}__{lookup}': lookup_value})
+                        Q(**{f'{field}__{lookup}': lookup_value}, **conditions)
                         for field in config_values['fields']
                     ]
                     if field_q_objects:
