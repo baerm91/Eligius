@@ -335,11 +335,15 @@
 {% block scripts %}
   {{block.super}}
   <script type="text/javascript">
-    function escapePersonName(name) {
-      const text = document.createElement('span');
-      text.textContent = name;
-      return text.innerHTML;
+    function escHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
+    const escapePersonName = escHtml;
 
     
     function toggle_visibility(id) {
@@ -386,7 +390,7 @@
               
               currentYear = year;
               timelineHTML += `<section class="year">
-                <h3>${year}</h3>
+                <h3>${escHtml(year)}</h3>
                 <section>
                   <ul>`;
               sectionOpen = true;
@@ -396,14 +400,14 @@
             let referenzenHtml = '';
             if (info.referenzen && info.referenzen.length > 0) {
               referenzenHtml = info.referenzen.map((ref, i) => 
-                `${i > 0 ? ', ' : ''}<abbr title="${ref.zitat || ''}"><small>${ref.name}${ref.nummer ? ', ' + ref.nummer : ''}</small></abbr>`
+                `${i > 0 ? ', ' : ''}<abbr title="${escHtml(ref.zitat || '')}"><small>${escHtml(ref.name)}${ref.nummer ? ', ' + escHtml(ref.nummer) : ''}</small></abbr>`
               ).join('');
             }
             
             // Personen formatieren
             let personenHtml = '';
             if (info.personen && info.personen.length > 0) {
-              personenHtml = info.personen.map(person => 
+              personenHtml = info.personen.filter(person => /^\d+$/.test(String(person.id))).map(person => 
                 `<a href="#theModal" data-remote="${"{% url 'PersonModal' id=0 %}".replace('/0/', '/' + person.id + '/')}"
                  data-footer="/admin/slg/person/${person.id}/change/" data-bs-toggle="modal"
                  data-bs-target="#theModal" class="badge text-bg-info" title="Person">${escapePersonName(person.name)}</a>`
@@ -412,12 +416,12 @@
             
             // Füge die Information hinzu
             timelineHTML += `<li>
-              ${info.information}<br>
+              ${escHtml(info.information)}<br>
               <span style="float:right;">
                 ${referenzenHtml}<br>
               </span>
               <span style="text-align:left;color:var(--text-muted)">
-                ${info.dat_verb || ''}
+                ${escHtml(info.dat_verb || '')}
               </span>
               <p style="text-align:right;color:var(--text-muted)">
                 ${personenHtml}

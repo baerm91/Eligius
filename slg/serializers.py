@@ -205,22 +205,57 @@ class ObjDetailSerializer(serializers.ModelSerializer):
         return result
 
 class ObjDetailUpdateSerializer(serializers.ModelSerializer):
-    """Update-Serializer für Objekt-Bearbeitung - akzeptiert alle Felder"""
-    
+    """Update-Serializer für Objekt-Bearbeitung.
+
+    Nur beschreibende Felder sind per API schreibbar (explizite Allowlist statt
+    ``'__all__'``). Verwaltungsfelder (Workflow-Status, Sammlungszuordnung,
+    Pakete, Fälschungs-Kennzeichnung, Freigabe) dürfen nur Superuser ändern,
+    damit z. B. die OAI-/Nomisma-Freigabe nicht per API umgangen werden kann.
+    """
+
+    PRIVILEGED_FIELDS = ['workflow', 'Slg', 'SlgTeil', 'pakete', 'faelschung', 'freigabe', 'fmid']
+    READ_ONLY_FIELDS = ['id', 'invnr', 'created_at', 'modified_at']
+
     class Meta:
         model = Obj
-        fields = '__all__'
+        fields = [
+            'id', 'invnr', 'created_at', 'modified_at',
+            'Typ', 'Typ_unsicher', 'Untertyp', 'Untertyp_unsicher', 'TempTyp',
+            'titel', 'Objekttyp', 'idfk_Muenzstand', 'idfk_Herstellung',
+            'Herstellungsmerkmale', 'sekundaere_Merkmale',
+            'idfk_Nominal', 'Metall', 'idfk_Mzstaette', 'region',
+            'dat_von', 'dat_bis', 'dat_verb',
+            'durchmesser', 'gewicht', 'stempelstellung', 'abnutzung',
+            'avleg', 'avbeschr', 'av_bildtyp', 'av_beizeichen', 'av_offizin',
+            'av_offizin_symbol', 'av_bildrand',
+            'rvleg', 'rvbeschr', 'rv_bildtyp', 'rv_beizeichen', 'rv_offizin',
+            'rv_offizin_symbol', 'rv_bildrand',
+            'rand', 'anmerkung',
+            'workflow', 'Slg', 'SlgTeil', 'pakete', 'faelschung', 'freigabe', 'fmid',
+        ]
         read_only_fields = ['id', 'invnr', 'created_at', 'modified_at']
-        
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Alle Felder optional machen (außer read_only)
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        privileged = bool(user and getattr(user, 'is_superuser', False))
+
         for field_name, field in self.fields.items():
-            if field_name not in self.Meta.read_only_fields:
-                field.required = False
-                field.allow_null = True
-                if hasattr(field, 'allow_blank'):
-                    field.allow_blank = True
+            if field_name in self.READ_ONLY_FIELDS:
+                continue
+            if field_name in self.PRIVILEGED_FIELDS and not privileged:
+                field.read_only = True
+                continue
+            # Alle schreibbaren Felder optional machen
+            field.required = False
+            if isinstance(field, serializers.ManyRelatedField):
+                # M2M: leere Liste statt null (null führte zu TypeError/HTTP 500)
+                field.allow_empty = True
+                continue
+            field.allow_null = True
+            if hasattr(field, 'allow_blank'):
+                field.allow_blank = True
 
 class PersonFunktionSerializer(serializers.ModelSerializer):
     class Meta:

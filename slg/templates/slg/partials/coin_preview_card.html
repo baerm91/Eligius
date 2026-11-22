@@ -37,11 +37,11 @@
       {# --- Titel & Datierung – IMMER sichtbar ------------------------------ #}
       <div class="preview-title">
         {% if obj.Typ and obj.Typ.titel %}
-            {{ obj.Typ.titel|safe }}
+            {{ obj.Typ.titel }}
         {% elif obj.titel %}
-            {{ obj.titel|safe }}
+            {{ obj.titel }}
         {% elif obj.Typ and obj.Typ.muenztyptitel %}
-            {{ obj.Typ.muenztyptitel|safe }}
+            {{ obj.Typ.muenztyptitel }}
         {% else %}
             {% translate "Unbestimmt" %}
         {% endif %}
@@ -49,9 +49,9 @@
       {# --- Datierung ----------------------------------------------------------- #}
       <div class="preview-dat_verb">
         {% if obj.Typ and obj.Typ.dat_verb %}
-            {{ obj.Typ.dat_verb|safe }}
+            {{ obj.Typ.dat_verb }}
         {% elif obj.dat_verb %}
-            {{ obj.dat_verb|safe }}
+            {{ obj.dat_verb }}
         {% else %}
             <!-- leer lassen oder Platzhalter -->
         {% endif %}

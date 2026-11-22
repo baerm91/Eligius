@@ -45,11 +45,11 @@
     {# --- Titel & Datierung – IMMER sichtbar ------------------------------ #}
     <div class="coin-preview-plaque">
       <div class="preview-title">
-        {{ obj.objekttitel|default:"Unbestimmt"|safe }}
+        {{ obj.objekttitel|default:"Unbestimmt"|striptags }}
       </div>
       {# --- Datierung ----------------------------------------------------------- #}
       <div class="preview-dat_verb">
-        {{ obj.datierung_verbale|default:""|safe }}
+        {{ obj.datierung_verbale|default:""|striptags }}
       </div>
     </div>
 

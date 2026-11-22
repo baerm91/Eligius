@@ -6,6 +6,7 @@ from django.db.models.fields import related
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html, conditional_escape
 from django.contrib import admin
 from model_clone import CloneMixin
 from django.utils import timezone
@@ -1005,18 +1006,35 @@ class OffizinSymbol(models.Model):
 	def __str__(self):
 		return self.name
 	
+	@staticmethod
+	def _safe_http_url(value):
+		"""Nur absolute http(s)- oder relative Pfad-URLs zulassen (kein javascript:/data:)."""
+		value = (value or '').strip()
+		lowered = value.lower()
+		if lowered.startswith(('http://', 'https://')) or (value.startswith('/') and not value.startswith('//')):
+			return value
+		return ''
+
 	def get_svg_html(self):
-		"""Returns HTML for displaying the SVG symbol"""
-		html = ''
-		if self.svg_link:
-			html = f'<img src="{self.svg_link}" class="offizin-symbol" alt="{self.name}" title="{self.name}">'
+		"""Returns HTML for displaying the SVG symbol (alle DB-Werte escaped)."""
+		svg_link = self._safe_http_url(self.svg_link)
+		name = self.name or ''
+		if svg_link:
+			html = format_html(
+				'<img src="{}" class="offizin-symbol" alt="{}" title="{}">',
+				svg_link, name, name,
+			)
 		else:
-			html = self.name
-			
+			html = conditional_escape(name)
+
 		# Add URI reference link if available
-		if self.uri_reference:
-			html += f' <a href="{self.uri_reference}" target="_blank" rel="noopener noreferrer" title="Externe Referenz"><i class="bi bi-box-arrow-up-right"></i></a>'
-			
+		uri_reference = self._safe_http_url(self.uri_reference)
+		if uri_reference:
+			html = format_html(
+				'{} <a href="{}" target="_blank" rel="noopener noreferrer" title="Externe Referenz"><i class="bi bi-box-arrow-up-right"></i></a>',
+				html, uri_reference,
+			)
+
 		return mark_safe(html)
 	
 	class Meta:

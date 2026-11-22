@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
+from rest_framework.throttling import AnonRateThrottle, SimpleRateThrottle
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from .authentication import QueryParamTokenAuthentication
@@ -24,8 +25,33 @@ class ExportObjLSNO(APIView):
         return response
 
 
+class TokenAuthIPThrottle(AnonRateThrottle):
+    """Drosselt Token-Anfragen pro Client-IP (auch für eingeloggte Nutzer)."""
+
+    scope = 'token_auth'
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {'scope': self.scope, 'ident': self.get_ident(request)}
+
+
+class TokenAuthUsernameThrottle(SimpleRateThrottle):
+    """Drosselt Token-Anfragen pro Benutzername (gegen verteiltes Raten)."""
+
+    scope = 'token_auth_user'
+
+    def get_cache_key(self, request, view):
+        try:
+            username = str(request.data.get('username') or '').strip().lower()
+        except Exception:
+            username = ''
+        if not username:
+            return None
+        return self.cache_format % {'scope': self.scope, 'ident': username[:150]}
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([TokenAuthIPThrottle, TokenAuthUsernameThrottle])
 def obtain_auth_token(request):
     """
     API endpoint to obtain authentication token.

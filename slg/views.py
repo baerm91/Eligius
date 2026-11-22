@@ -10,7 +10,9 @@ from django.contrib import messages
 from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
 from django.contrib.admin.views.main import TO_FIELD_VAR, IGNORED_PARAMS
 from django.contrib.admin.filters import AllValuesFieldListFilter
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.admin.views.decorators import staff_member_required
 from django.core import serializers
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import connection, transaction, IntegrityError
@@ -52,6 +54,9 @@ from django.db.models import Q
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from .authentication import QueryParamTokenAuthentication
+from .permissions import AuthenticatedReadStaffModelWrite, PublicReadStaffModelWrite, is_active_staff, staff_with_perms
+import copy
+import html as html_lib
 import traceback
 import io
 import json  # Füge diesen Import hinzu
@@ -65,6 +70,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from .helpers import *
 from .filters import apply_filters, build_filters, is_valid_qparam
+from django.utils.html import escape, format_html
+from django.utils.safestring import mark_safe
 from .helpers import get_matrix_from_muenztypen
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -72,6 +79,20 @@ from .helpers import get_timeline_data
 from .nomisma_rdf import cached_dump as nomisma_cached_dump, serialize_collection_nomisma_rdf, serialize_collection_void
 
 logger = logging.getLogger(__name__)
+
+_JSON_SCRIPT_ESCAPES = {
+    ord('<'): '\\u003C',
+    ord('>'): '\\u003E',
+    ord('&'): '\\u0026',
+    0x2028: '\\u2028',
+    0x2029: '\\u2029',
+}
+
+
+def json_for_script(value):
+    """JSON, das gefahrlos direkt in einen <script>-Block eingebettet werden kann."""
+    return mark_safe(json.dumps(value).translate(_JSON_SCRIPT_ESCAPES))
+
 
 def replace_monogram_references(text):
     """
@@ -89,7 +110,7 @@ def replace_monogram_references(text):
     for match in matches:
         try:
             # Suche nach dem OffizinSymbol mit dem Namen
-            symbol = OffizinSymbol.objects.get(name=match)
+            symbol = OffizinSymbol.objects.get(name=html_lib.unescape(match))
             # Ersetze [Name] durch das SVG-HTML
             text = text.replace(f'[{match}]', symbol.get_svg_html())
         except OffizinSymbol.DoesNotExist:
@@ -190,61 +211,79 @@ class SlgTeilListAPIView(generics.ListAPIView):
             Q(idfk_Slg_SlgTeil__id=slg_id)
         ).distinct()
 
+# Query-Parameter, die nur der Authentifizierung/Steuerung dienen und nie als
+# Filter an das ORM weitergereicht werden dürfen.
+EXPORT_XLSX_NON_FILTER_PARAMS = ('token', 'auth_token', 'e', 'p', '_changelist_filters')
+
+
 @api_view(['GET'])
 @authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def export_xlsx(request):
-    filters = {key: value for key, value in request.GET.items() if key not in IGNORED_PARAMS}
+    """XLSX-Export der Objektliste mit den Filtern der Admin-Changelist.
 
-    queryset = Obj.objects.all()
-    invalid_filter_fields = []
-    for key, value in filters.items():
-        # Split the key to extract the field name and lookup type (if any)
-        field_lookup_parts = key.split('__')
-        field_name = field_lookup_parts[0]
-        lookup_type = field_lookup_parts[1] if len(field_lookup_parts) > 1 else 'exact'
+    Die Filter werden ausschließlich über ``ObjAdmin``/``ChangeList`` ausgewertet.
+    Damit gelten dieselben Regeln wie im Admin (``lookup_allowed``): nur die dort
+    konfigurierten ``list_filter``-Pfade und Suchfelder sind erlaubt. Beliebige
+    ORM-Traversals (z. B. ``aenderungen__bearbeitet_von__password__startswith``)
+    werden mit HTTP 400 abgewiesen, statt als Blind-Orakel zu dienen.
+    """
+    from django.contrib import admin as django_admin
+    from django.contrib.admin.options import IncorrectLookupParameters
+    from django.core.exceptions import FieldDoesNotExist, FieldError, SuspiciousOperation, ValidationError
 
-        # Unknown fields should not crash the export endpoint
-        try:
-            model_field = Obj._meta.get_field(field_name)
-        except Exception:
-            invalid_filter_fields.append(field_name)
-            continue
+    user = request.user
+    if not (user and user.is_active and user.is_staff and user.has_perm('slg.view_obj')):
+        return JsonResponse({"error": "Keine Berechtigung für den Objekt-Export."}, status=403)
 
-        # Handle '__exact' lookup for ForeignKey fields correctly
-        if lookup_type == 'exact' and isinstance(model_field, models.ForeignKey):
-            filter_key = f"{field_name}_id"
-        else:
-            filter_key = key
+    model_admin = django_admin.site._registry.get(Obj)
+    if model_admin is None:
+        return JsonResponse({"error": "Objekt-Admin nicht verfügbar."}, status=500)
 
-        # Convert the value if it's a boolean field or if it's an '__isnull' lookup
-        if lookup_type == 'isnull':
-            filter_value = value == 'True'
-        elif model_field.get_internal_type() == 'BooleanField':
-            filter_value = value == 'on'
-        else:
-            filter_value = value
+    django_request = request._request
+    params = django_request.GET.copy()
+    for name in EXPORT_XLSX_NON_FILTER_PARAMS:
+        params.pop(name, None)
 
-        # Apply the filter
-        if filter_value is not None:
-            try:
-                queryset = queryset.filter(**{filter_key: filter_value})
-            except Exception:
-                # Ignore invalid lookup/value combinations instead of 500
-                continue
+    cl_request = copy.copy(django_request)
+    cl_request.GET = params
+    cl_request.user = user
 
-    if invalid_filter_fields:
-        invalid_filter_fields = sorted(set(invalid_filter_fields))
-        return JsonResponse({"error": "Ungültige Filterfelder", "fields": invalid_filter_fields}, status=400)
+    try:
+        changelist = model_admin.get_changelist_instance(cl_request)
+        queryset = changelist.queryset
+    except (IncorrectLookupParameters, SuspiciousOperation, FieldError, FieldDoesNotExist, ValidationError, ValueError):
+        return JsonResponse({"error": "Ungültige Filterparameter."}, status=400)
 
     resource = ObjLSNOResource()
     dataset = resource.export(queryset)
-    response = HttpResponse(dataset.xlsx, content_type='application/vnd.ms-excel')
-    filename_base = 'objekte' if not filters else 'obj_filter'
+    response = HttpResponse(
+        dataset.xlsx,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    has_filters = any(key not in IGNORED_PARAMS for key in params.keys())
+    filename_base = 'obj_filter' if has_filters else 'objekte'
     response['Content-Disposition'] = f'attachment; filename="{filename_base}_export.xlsx"'
     return response
 
-class ObjCreateView(BSModalCreateView):
+class StaffModelPermissionMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Nur aktive Staff-Accounts mit den angegebenen Model-Permissions."""
+
+    required_permissions = ()
+    raise_exception = False
+
+    def test_func(self):
+        user = self.request.user
+        return is_active_staff(user) and user.has_perms(self.required_permissions)
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            self.raise_exception = True
+        return super().handle_no_permission()
+
+
+class ObjCreateView(StaffModelPermissionMixin, BSModalCreateView):
+    required_permissions = ('slg.add_obj',)
     template_name = 'slg/create_object.html'
     form_class = ObjForm
     success_message = 'Success: Objekt was created.'
@@ -252,14 +291,16 @@ class ObjCreateView(BSModalCreateView):
 
 # Update
 
-class ObjUpdateView(BSModalUpdateView):
+class ObjUpdateView(StaffModelPermissionMixin, BSModalUpdateView):
+    required_permissions = ('slg.change_obj',)
     model = Obj
     template_name = 'slg/update_obj.html'
     form_class = ObjForm
     success_message = 'Success: Obj was updated.'
     success_url = reverse_lazy('Objektliste')
 
-@login_required
+@staff_member_required
+@permission_required('slg.change_obj', raise_exception=True)
 def MzUpdate(request, id):
    obj = Obj.objects.get(id=id)
    PersonFormSet = inlineformset_factory(Obj, Obj_Person, fields=('idfk_Person','idfk_PersonFunktion','appears_on_rev'), can_delete=True, extra=2)
@@ -1723,7 +1764,8 @@ def prepare_coin_data(obj):
 
     # Anpassung der Beizeichen-Anzeige für Vorderseite
     if data['av_beizeichen']:
-        beizeichen_text = data['av_beizeichen'].name
+        # DB-Text zuerst escapen; danach nur geprüftes HTML (Symbole) einsetzen
+        beizeichen_text = str(escape(data['av_beizeichen'].name or ''))
         
         # Replace [Offizinszeichen] and [Monogramm] with SVG if available
         if data['av_offizin_symbol_html']:
@@ -1737,19 +1779,20 @@ def prepare_coin_data(obj):
         
         # Handle the existing ? replacement logic
         if "?" in beizeichen_text and data['av_offizin']:
-            beizeichen_text = beizeichen_text.replace("?", data['av_offizin'].name)
+            beizeichen_text = beizeichen_text.replace("?", str(escape(data['av_offizin'].name or '')))
             data['av_offizin_display'] = None  # Setze auf None, da es bereits im Beizeichen enthalten ist
         else:
             data['av_offizin_display'] = data['av_offizin'].name if data['av_offizin'] else None
             
-        data['av_beizeichen_display'] = beizeichen_text
+        data['av_beizeichen_display'] = mark_safe(beizeichen_text)
     elif data['av_offizin']:
         data['av_beizeichen_display'] = None
         data['av_offizin_display'] = data['av_offizin'].name
 
     # Ähnliche Logik für die Rückseite
     if data['rv_beizeichen']:
-        beizeichen_text = data['rv_beizeichen'].name
+        # DB-Text zuerst escapen; danach nur geprüftes HTML (Symbole) einsetzen
+        beizeichen_text = str(escape(data['rv_beizeichen'].name or ''))
         
         # Replace [Offizinszeichen] and [Monogramm] with SVG if available
         if data['rv_offizin_symbol_html']:
@@ -1763,12 +1806,12 @@ def prepare_coin_data(obj):
         
         # Handle the existing ? replacement logic
         if "?" in beizeichen_text and data['rv_offizin']:
-            beizeichen_text = beizeichen_text.replace("?", data['rv_offizin'].name)
+            beizeichen_text = beizeichen_text.replace("?", str(escape(data['rv_offizin'].name or '')))
             data['rv_offizin_display'] = None
         else:
             data['rv_offizin_display'] = data['rv_offizin'].name if data['rv_offizin'] else None
             
-        data['rv_beizeichen_display'] = beizeichen_text
+        data['rv_beizeichen_display'] = mark_safe(beizeichen_text)
     elif data['rv_offizin']:
         data['rv_beizeichen_display'] = None
         data['rv_offizin_display'] = data['rv_offizin'].name
@@ -2183,7 +2226,7 @@ def konkordanzen_bulk(request):
 
 @api_view(['POST'])
 @authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([staff_with_perms('slg.change_muenztyp')])
 def muenztyp_konkordanz_create(request, type_id=None):
     source_type_id = type_id or request.data.get('source_type_id') or request.data.get('typ')
     target_type_id = request.data.get('target_type_id') or request.data.get('konkordanz') or request.data.get('Konkordanz')
@@ -2227,7 +2270,7 @@ class MzstaettenRView(viewsets.ModelViewSet):
     
     queryset         = Mzstaette.objects.all()
     serializer_class = MzstaettenSerializer
-    
+    permission_classes = [PublicReadStaffModelWrite]
 
    #  def get_queryset(self):
    #      return Mzstaette.objects.all()
@@ -2304,15 +2347,6 @@ def collection_nomisma_void(request, id):
    slg = get_object_or_404(Slg, pk=id, nomisma_export_erlaubt=True)
    return HttpResponse(serialize_collection_void(slg, request), content_type="application/rdf+xml; charset=utf-8")
 
-@api_view(['POST'])
-def login(request):
-    user = get_object_or_404(User, username=request.data['username'])
-    if not user.check_password(request.data['password']):
-        return Response("missing user", status=status.HTTP_404_NOT_FOUND)
-    token, created = Token.objects.get_or_create(user=user)
-    serializer = UserSerializer(user)
-    return Response({'token': token.key, 'user': serializer.data})
-
 class MuenztypListCreate(generics.ListCreateAPIView):
     serializer_class = MuenztypSerializer
     authentication_classes = [
@@ -2320,7 +2354,7 @@ class MuenztypListCreate(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = Muenztyp.objects.all()
@@ -2493,12 +2527,13 @@ def _duplicate_konkordanz_targets(payload, default_type_id):
 
 
 class MuenztypDuplicateView(APIView):
+    required_write_permissions = ['slg.add_muenztyp']
     authentication_classes = [
         QueryParamTokenAuthentication,
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def post(self, request, type_id):
         source = Muenztyp.objects.filter(pk=type_id).first()
@@ -2577,12 +2612,13 @@ def _add_concordia_person(muenztyp, raw_value, funktion_id, appears_on_rev, unre
         )
 
 class ConcordiaMuenztypCreateView(APIView):
+    required_write_permissions = ['slg.add_muenztyp']
     authentication_classes = [
         QueryParamTokenAuthentication,
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def post(self, request):
         payload = request.data or {}
@@ -2651,7 +2687,7 @@ class MuenztypFilterView(APIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get(self, request):
         qs = Muenztyp.objects.select_related(
@@ -2838,7 +2874,7 @@ class ObjektList(generics.ListAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = Obj.objects.select_related('Typ', 'Typ__workflow', 'workflow', 'rv_offizin')
@@ -2904,7 +2940,7 @@ class ObjektDetail(generics.RetrieveUpdateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'invnr'
     lookup_url_kwarg = 'invnr'
 
@@ -2933,12 +2969,13 @@ class ObjektDetail(generics.RetrieveUpdateAPIView):
         return Response(read_serializer.data)
 
 class ObjektPersonenView(generics.GenericAPIView):
+    required_write_permissions = ['slg.change_obj']
     authentication_classes = [
         QueryParamTokenAuthentication,
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'invnr'
     lookup_url_kwarg = 'invnr'
 
@@ -3063,7 +3100,7 @@ class AvBildtypList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = AvBildtyp.objects.all()
@@ -3099,7 +3136,7 @@ class AvBildtypDetail(generics.RetrieveUpdateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'pk'
     queryset = AvBildtyp.objects.all()
     
@@ -3110,7 +3147,7 @@ class RvBildtypList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = RvBildtyp.objects.all()
@@ -3149,7 +3186,7 @@ class RvBildtypDetail(generics.RetrieveUpdateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'pk'
     queryset = RvBildtyp.objects.all()
 
@@ -3160,7 +3197,7 @@ class MzstaetteList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [PublicReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = Mzstaette.objects.all()
@@ -3188,7 +3225,7 @@ class MzstaetteDetail(generics.RetrieveUpdateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'pk'
     queryset = Mzstaette.objects.all()
 
@@ -3199,7 +3236,7 @@ class NominalList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [PublicReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = Nominal.objects.all()
@@ -3223,7 +3260,7 @@ class NominalDetail(generics.RetrieveUpdateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'pk'
     queryset = Nominal.objects.all()
 
@@ -3234,7 +3271,7 @@ class HerstellungsmerkmaleList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         return Herstellungsmerkmale.objects.all()
@@ -3246,7 +3283,7 @@ class Sek_MerkmaleList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         return Sek_Merkmale.objects.all()
@@ -3258,7 +3295,7 @@ class PersonList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = Person.objects.all()
@@ -3295,7 +3332,7 @@ class MuenzstandList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = Muenzstand.objects.all()
@@ -3311,7 +3348,7 @@ class MuenzstandDetail(generics.RetrieveUpdateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'pk'
     queryset = Muenzstand.objects.all()
 
@@ -3322,7 +3359,7 @@ class AvBeizeichenList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = AvBeizeichen.objects.all()
@@ -3338,7 +3375,7 @@ class AvBeizeichenDetail(generics.RetrieveUpdateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'pk'
     queryset = AvBeizeichen.objects.all()
 
@@ -3349,7 +3386,7 @@ class AvOffizinList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = AvOffizin.objects.all()
@@ -3365,7 +3402,7 @@ class AvOffizinDetail(generics.RetrieveUpdateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'pk'
     queryset = AvOffizin.objects.all()
 
@@ -3376,7 +3413,7 @@ class RvBeizeichenList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = RvBeizeichen.objects.all()
@@ -3392,7 +3429,7 @@ class RvBeizeichenDetail(generics.RetrieveUpdateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'pk'
     queryset = RvBeizeichen.objects.all()
 
@@ -3403,7 +3440,7 @@ class RvOffizinList(generics.ListCreateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = RvOffizin.objects.all()
@@ -3419,7 +3456,7 @@ class RvOffizinDetail(generics.RetrieveUpdateAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'pk'
     queryset = RvOffizin.objects.all()
 
@@ -3430,7 +3467,7 @@ class WorkflowList(generics.ListAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
 
     def get_queryset(self):
         queryset = Workflow.objects.all()
@@ -3446,7 +3483,7 @@ class WorkflowDetail(generics.RetrieveAPIView):
         SessionAuthentication,
         TokenAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AuthenticatedReadStaffModelWrite]
     lookup_field = 'pk'
     queryset = Workflow.objects.all()
 
@@ -3727,7 +3764,8 @@ def prepare_coin_labels_html(queryset):
     
     return response
 
-@login_required
+@staff_member_required
+@permission_required(('slg.add_titel', 'slg.change_titel'), raise_exception=True)
 def catalog_sort_titles(request):
     """
     View zum Sortieren der Titel für die Katalog-Erstellung
@@ -4130,7 +4168,7 @@ def objekt_list_view_mtoa(request):
 
     context = {
         'Objekte': qs,
-        'mints_map': json.dumps(mints_for_js),
+        'mints_map': json_for_script(mints_for_js),
         'Anzahl': anzahl,
         'getvars': '&{0}'.format(variables.urlencode()),
         'filter_config': parameters,

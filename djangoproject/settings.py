@@ -11,8 +11,11 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import sys
 import tempfile
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,19 +26,47 @@ ELIGIUS_AUTHORITY_LABELS_PATH = Path(os.getenv(
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
-def _get_secret_key():
-    key_file = os.getenv('DJANGO_SECRET_KEY_FILE')
-    if key_file:
-        try:
-            return Path(key_file).read_text(encoding='utf8').strip()
-        except (FileNotFoundError, OSError):
-            pass
-    return os.getenv('DJANGO_SECRET_KEY', 'dev-only-change-me')
-
-SECRET_KEY = _get_secret_key()
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes', 'on')
+
+# Testläufe (manage.py test bzw. --settings=djangoproject.test_settings) dürfen
+# ohne echte Secrets starten; alle anderen Nicht-DEBUG-Starts nicht.
+_IS_TEST_RUN = (
+    os.getenv('DJANGO_SETTINGS_MODULE', '').endswith('test_settings')
+    or (len(sys.argv) > 1 and sys.argv[1] == 'test')
+)
+_ALLOW_INSECURE_DEFAULTS = DEBUG or _IS_TEST_RUN
+
+
+def _read_secret_file(env_name):
+    """Liest eine Secret-Datei. Ist die Variable gesetzt, die Datei aber
+    fehlend/leer/unlesbar, wird *nie* still auf einen Default zurückgefallen."""
+    filename = os.getenv(env_name)
+    if not filename:
+        return None
+    try:
+        value = Path(filename).read_text(encoding='utf8').strip()
+    except OSError as exc:
+        raise ImproperlyConfigured(f'{env_name} ist gesetzt, aber nicht lesbar: {filename} ({exc})') from exc
+    if not value:
+        raise ImproperlyConfigured(f'{env_name} verweist auf eine leere Datei: {filename}')
+    return value
+
+
+def _get_secret_key():
+    key = _read_secret_file('DJANGO_SECRET_KEY_FILE') or os.getenv('DJANGO_SECRET_KEY', '').strip()
+    if key:
+        if key == 'dev-only-change-me' and not _ALLOW_INSECURE_DEFAULTS:
+            raise ImproperlyConfigured('Der Entwicklungs-SECRET_KEY darf nicht mit DEBUG=False verwendet werden.')
+        return key
+    if _ALLOW_INSECURE_DEFAULTS:
+        return 'dev-only-change-me'
+    raise ImproperlyConfigured(
+        'Kein SECRET_KEY konfiguriert: DJANGO_SECRET_KEY_FILE oder DJANGO_SECRET_KEY setzen '
+        '(oder DJANGO_DEBUG=1 für die lokale Entwicklung).'
+    )
+
+SECRET_KEY = _get_secret_key()
 
 # ALLOWED_HOSTS = ['46.101.237.189']
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
@@ -81,9 +112,21 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',  # Oder entferne diese Zeile komplett
-    ]
+        # Lesen öffentlich, Schreiben nur für Staff mit passender Model-Permission
+        'slg.permissions.PublicReadStaffModelWrite',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        # Login/Token-Ausgabe: pro IP und pro Benutzername gedrosselt
+        'token_auth': os.getenv('ELIGIUS_TOKEN_AUTH_RATE', '10/min'),
+        'token_auth_user': os.getenv('ELIGIUS_TOKEN_AUTH_USER_RATE', '20/hour'),
+    },
 }
+
+# DRF-Tokens per ?token=/?auth_token= sind standardmäßig deaktiviert, weil sie in
+# Proxy-/Server-Logs, Browser-History und Referer-Headern landen. Nur für
+# Altintegrationen bewusst per ELIGIUS_ALLOW_QUERY_PARAM_TOKEN_AUTH=1 aktivieren.
+ELIGIUS_ALLOW_QUERY_PARAM_TOKEN_AUTH = os.getenv(
+    'ELIGIUS_ALLOW_QUERY_PARAM_TOKEN_AUTH', 'False').lower() in ('1', 'true', 'yes', 'on')
 MIDDLEWARE = [
     'djangoproject.middleware.RobotsTagMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -167,13 +210,17 @@ ELIGIUS_MCP_ALLOWED_ORIGINS = [v.strip() for v in os.getenv(
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 def _get_database_password(default=None):
-    filename = os.getenv('DATABASE_PASSWORD_FILE')
-    if filename:
-        try:
-            return Path(filename).read_text(encoding='utf8').strip()
-        except (FileNotFoundError, OSError):
-            pass
-    return os.getenv('DATABASE_PASSWORD', default)
+    password = _read_secret_file('DATABASE_PASSWORD_FILE')
+    if password:
+        return password
+    password = os.getenv('DATABASE_PASSWORD')
+    if password:
+        return password
+    if _ALLOW_INSECURE_DEFAULTS:
+        return default
+    raise ImproperlyConfigured(
+        'Kein Datenbank-Passwort konfiguriert: DATABASE_PASSWORD_FILE oder DATABASE_PASSWORD setzen.'
+    )
 
 db_cnf_path = os.getenv('DJANGO_DB_CNF_PATH')
 has_docker_db_env = any(os.getenv(k) for k in ('DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASSWORD', 'DATABASE_PASSWORD_FILE', 'DATABASE_HOST'))

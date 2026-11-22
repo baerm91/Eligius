@@ -356,7 +356,7 @@
           .on("mouseover", function(event, d) {
             tooltip
               .style("display", "block")
-              .html(`ID: ${d.id}`);
+              .text(`ID: ${d.id}`);
             
             // Position des Tooltips aktualisieren
             const [x, y] = d3.pointer(event, document.body);

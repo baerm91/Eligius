@@ -1593,6 +1593,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.1.0/d3.layout.cloud.min.js"></script>
 <script>
+function escHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function safeUrl(value) {
+  const url = String(value ?? '').trim();
+  if (/^https?:\/\//i.test(url) || (url.startsWith('/') && !url.startsWith('//'))) {
+    return url;
+  }
+  return '#';
+}
 document.addEventListener('DOMContentLoaded', function() {
   const coinsContainer = document.getElementById('coinsContainer');
   const coinsIndicators = document.getElementById('coinsProgressIndicators');
@@ -1646,14 +1661,14 @@ document.addEventListener('DOMContentLoaded', function() {
       grid.innerHTML = colls.map(col => `
         <div class="prem-collection-card">
           <div class="prem-col-img-wrapper">
-            ${col.cover ? `<img src="${col.cover}" alt="${col.name}">` : `<i class="bi bi-collection collection-placeholder"></i>`}
+            ${col.cover ? `<img src="${escHtml(safeUrl(col.cover))}" alt="${escHtml(col.name)}">` : `<i class="bi bi-collection collection-placeholder"></i>`}
           </div>
           <div class="prem-col-content">
-            <h4 class="prem-col-title">${col.name}</h4>
-            <p class="prem-col-desc">${col.beschreibung ? col.beschreibung.substring(0, 100) + '...' : ''}</p>
+            <h4 class="prem-col-title">${escHtml(col.name)}</h4>
+            <p class="prem-col-desc">${col.beschreibung ? escHtml(col.beschreibung.substring(0, 100)) + '...' : ''}</p>
             <div class="prem-col-footer">
-              <a href="${col.absolute_url}" class="prem-col-link"><i class="bi bi-clock-history"></i> ${gettext("Zeitleiste")}</a>
-              <a href="/browse/?q=&Slg=${col.id}" class="prem-col-link"><i class="bi bi-search"></i> ${gettext("Objekte")}</a>
+              <a href="${escHtml(safeUrl(col.absolute_url))}" class="prem-col-link"><i class="bi bi-clock-history"></i> ${gettext("Zeitleiste")}</a>
+              <a href="/browse/?q=&Slg=${encodeURIComponent(col.id)}" class="prem-col-link"><i class="bi bi-search"></i> ${gettext("Objekte")}</a>
             </div>
           </div>
         </div>
@@ -1722,7 +1737,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (!window.d3) {
-      container.innerHTML = `<div class="wordcloud-fallback">${words.slice(0, 24).map(word => `<a class="wordcloud-fallback-tag" href="${word.url}">${word.text}<span>${word.value}</span></a>`).join('')}</div>`;
+      container.innerHTML = `<div class="wordcloud-fallback">${words.slice(0, 24).map(word => `<a class="wordcloud-fallback-tag" href="${escHtml(safeUrl(word.url))}">${escHtml(word.text)}<span>${escHtml(word.value)}</span></a>`).join('')}</div>`;
       return;
     }
 
@@ -1781,7 +1796,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).filter(Boolean);
 
     if (!positionedWords.length) {
-      container.innerHTML = `<div class="wordcloud-fallback">${words.slice(0, 24).map(word => `<a class="wordcloud-fallback-tag" href="${word.url}">${word.text}<span>${word.value}</span></a>`).join('')}</div>`;
+      container.innerHTML = `<div class="wordcloud-fallback">${words.slice(0, 24).map(word => `<a class="wordcloud-fallback-tag" href="${escHtml(safeUrl(word.url))}">${escHtml(word.text)}<span>${escHtml(word.value)}</span></a>`).join('')}</div>`;
       return;
     }
 
@@ -1794,7 +1809,7 @@ document.addEventListener('DOMContentLoaded', function() {
       .data(positionedWords)
       .enter()
       .append('a')
-      .attr('href', word => word.url);
+      .attr('href', word => safeUrl(word.url));
 
     links.append('text')
       .attr('class', 'wordcloud-word')

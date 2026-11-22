@@ -548,7 +548,7 @@
                     <a href="/browse/?av_bildtyp={{ coin_data.av_bildtyp.id }}" title="{% translate 'Av.-Bildbeschreibung' %}">{{coin_data.av_bildtyp.display_name}}</a>{% if coin_data.av_beizeichen_display or coin_data.av_offizin_display %}, {% endif %}
                     {% endif %}
                     {% if coin_data.av_beizeichen_display %}
-                        <a href="/browse/?av_beizeichen={{coin_data.av_beizeichen.id|default:"-"}}" title="{% translate 'Beizeichen' %}">{{coin_data.av_beizeichen_display|safe}}</a>
+                        <a href="/browse/?av_beizeichen={{coin_data.av_beizeichen.id|default:"-"}}" title="{% translate 'Beizeichen' %}">{{coin_data.av_beizeichen_display}}</a>
                     {% endif %}
                     {% if coin_data.av_offizin_display %}
                         {% if coin_data.av_beizeichen_display %}, {% endif %}
@@ -606,7 +606,7 @@
                     <a href="/browse/?rv_bildtyp={{ coin_data.rv_bildtyp.id }}" title="{% translate 'Rv.-Beschreibung' %}">{{coin_data.rv_bildtyp.display_name}}</a>{% if coin_data.rv_beizeichen_display or coin_data.rv_offizin_display %}, {% endif %}
                     {% endif %}
                     {% if coin_data.rv_beizeichen_display %}
-                        <a href="/browse/?rv_beizeichen={{coin_data.rv_beizeichen.id|default:"-"}}" title="{% translate 'Beizeichen' %}">{{coin_data.rv_beizeichen_display|safe}}</a>
+                        <a href="/browse/?rv_beizeichen={{coin_data.rv_beizeichen.id|default:"-"}}" title="{% translate 'Beizeichen' %}">{{coin_data.rv_beizeichen_display}}</a>
                     {% endif %}
                     {% if coin_data.rv_offizin_display %}
                         {% if coin_data.rv_beizeichen_display %}, {% endif %}
@@ -1399,6 +1399,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- JavaScript Code für die Münzanalyse -->
 <script>
+  function escHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
   // Globale Variablen für Kontext-Daten
   let coinContextData = null;
   let selectedMotifId = null; // Will store MINT ID or null
@@ -1588,7 +1596,7 @@ document.addEventListener('DOMContentLoaded', function() {
       loadingSpinner.innerHTML = `
         <div class="alert alert-danger">
           <i class="bi bi-exclamation-triangle-fill"></i>
-          Fehler beim Laden der Kontextdaten: ${error.message}
+          Fehler beim Laden der Kontextdaten: ${escHtml(error.message)}
         </div>
       `;
     }
@@ -1729,7 +1737,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
     } catch (error) {
       console.error("Fehler beim Laden der Timeline:", error);
-      document.getElementById('nestedListRoot').innerHTML = `<li>Fehler: ${error.message}</li>`;
+      document.getElementById('nestedListRoot').innerHTML = `<li>Fehler: ${escHtml(error.message)}</li>`;
       document.getElementById('simpleList').innerHTML = '<li>' + gettext("Keine Münzen verfügbar") + '</li>';
     }
   }
@@ -1753,8 +1761,8 @@ document.addEventListener('DOMContentLoaded', function() {
       // Erstelle erweiterte Ereignisdarstellung
       let eventHtml = `
         <div class="event-header">
-          <strong>${event.name || 'Historisches Ereignis'}</strong>
-          <span class="event-date">(${event.dat_verb || event.dat_von || 'Unbekanntes Datum'})</span>
+          <strong>${escHtml(event.name || 'Historisches Ereignis')}</strong>
+          <span class="event-date">(${escHtml(event.dat_verb || event.dat_von || 'Unbekanntes Datum')})</span>
         </div>
       `;
       
@@ -1762,7 +1770,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (event.information && event.information.trim() !== '' && event.information !== event.name) {
         eventHtml += `
           <div class="event-description">
-            ${event.information}
+            ${escHtml(event.information)}
           </div>
         `;
       }
@@ -1800,7 +1808,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (personsToShow.length > 0) {
         eventHtml += `
           <div class="event-persons">
-            <small><strong>Personen:</strong> ${personsToShow.join(', ')}</small>
+            <small><strong>Personen:</strong> ${personsToShow.map(escHtml).join(', ')}</small>
           </div>
         `;
       }
@@ -2103,7 +2111,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // uniqueNominaleInSelection is empty, and distinctMotifCount is 0 (due to initialization).
         
         motifDetails.innerHTML = `
-          <p>${mintNameForDetails}</p>
+          <p>${escHtml(mintNameForDetails)}</p>
           <p>${gettext('Münzen:')} ${totalCount} · ${gettext('Motive:')} ${distinctMotifCount}${uniqueNominaleInSelection.size > 0 ? ` · ${gettext('Nominale:')} ${uniqueNominaleInSelection.size}` : ''}</p>
         `;
       }
@@ -2123,7 +2131,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const nominaleHtml = Array.from(uniqueNominaleInSelection)
           .filter(id => coinContextData.nominale[id])
           .map(id => {
-            return `<span class="badge bg-light text-dark me-1 mb-1">${coinContextData.nominale[id]}</span>`;
+            return `<span class="badge bg-light text-dark me-1 mb-1">${escHtml(coinContextData.nominale[id])}</span>`;
           })
           .join('');
         
@@ -2140,7 +2148,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Finde das Motif in der all_motifs-Liste, um auf first_used und last_used zuzugreifen
         const fullMotifData = coinContextData.ruler_motif_stats?.all_motifs?.find(m => m.id === currentMotif.id);
         
-        const rulerNameForStats = coinContextData.ruler_motif_stats?.ruler_name || gettext('dem Prägeherrn');
+        const rulerNameForStats = escHtml(coinContextData.ruler_motif_stats?.ruler_name || gettext('dem Prägeherrn'));
 
         currentMotifStats.innerHTML = `
           <div class="card mb-3 current-motif">
@@ -2701,8 +2709,8 @@ document.addEventListener('DOMContentLoaded', function() {
           .style("opacity", 1);
           
         tooltip.html(`
-          <div style="font-weight: bold;">${d.data.name}</div>
-          <div>${d.data.value} Münzen (${percentage}%)</div>
+          <div style="font-weight: bold;">${escHtml(d.data.name)}</div>
+          <div>${escHtml(d.data.value)} Münzen (${percentage}%)</div>
           ${d.data.isCurrentCoin ? '<div style="color: #ffd700;">⭐ Aktuelle Münze</div>' : ''}
         `)
           .style("left", (event.pageX + 10) + "px")
@@ -2880,8 +2888,8 @@ document.addEventListener('DOMContentLoaded', function() {
           .style("opacity", 1);
           
         tooltip.html(`
-          <div style="font-weight: bold; margin-bottom: 4px;">${d.data.name}</div>
-          <div style="margin-bottom: 2px;">${d.data.value} Münzen (${percentage}%)</div>
+          <div style="font-weight: bold; margin-bottom: 4px;">${escHtml(d.data.name)}</div>
+          <div style="margin-bottom: 2px;">${escHtml(d.data.value)} Münzen (${percentage}%)</div>
           ${d.data.isCurrentCoin ? '<div style="color: #ffd700; font-size: 10px;"><strong>⭐ Aktuelle Münze</strong></div>' : ''}
         `)
           .style("left", (event.pageX + 12) + "px")

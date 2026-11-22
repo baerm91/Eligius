@@ -1,5 +1,36 @@
 # Eligius – Local Development (Docker MySQL)
 
+## Produktion aktualisieren (Windows)
+
+Nachdem der GitHub-Abgleich nach GitLab abgeschlossen ist, im Eligius-Ordner
+`deploy-uni.bat` doppelklicken. Alternativ lässt sich das PowerShell-Skript
+direkt ausführen:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-production.ps1
+```
+
+Das Skript benötigt Windows PowerShell 5.1 oder neuer, Git, PuTTY/Plink, Docker Desktop
+mit Linux-Containern und ein bestehendes Docker-Login mit Schreibrecht auf
+`dwb-gitlab.donau-uni.ac.at/zms/eligius`. Es verwendet den SSH-Zugang
+`mbaer@eligius.donau-uni.ac.at` mit geprüftem Hostschlüssel. Der persönliche
+PuTTY-Schlüssel liegt standardmäßig als `privatekey_mbaer.ppk` auf dem Desktop.
+Über `-KeyPath` lässt sich ein anderer Pfad angeben. Falls das Registry-Login
+abgelaufen ist, einmal `docker login dwb-gitlab.donau-uni.ac.at -u mbaer`
+ausführen und den Registry-Token bei der Passwortabfrage eingeben.
+
+Das Skript baut den GitLab-Commit aus einem separaten Verzeichnis und prüft das
+Image mit Django-Tests. Vor dem Webcontainer-Wechsel prüft es den Migrationsplan
+und erstellt ein Datenbank-Backup im Serververzeichnis `~/eligius-backups`.
+Nach erfolgreichem Start aktualisiert es `latest` und gleicht den Registry-Digest,
+die laufende GitLab-Revision und den Healthcheck ab. Die abschließende Meldung
+**Live** oder **Bereits live** bestätigt den veröffentlichten Stand.
+
+Mit `-CheckOnly` lassen sich Zugang, Build und Tests prüfen, ohne ein Image
+hochzuladen oder Produktion umzustellen. Bei einem fehlgeschlagenen Start
+versucht das Skript, das vorherige Webimage wieder einzusetzen. Eine bereits
+ausgeführte Datenbankmigration wird dabei nicht automatisch zurückgenommen.
+
 Deutsch/Englisch, stabile URLs und MCP-Übersetzungsentwürfe:
 [I18N_DEVELOPMENT.md](I18N_DEVELOPMENT.md).
 

@@ -212,17 +212,39 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    function escapePersonName(name) {
-      const text = document.createElement('span');
-      text.textContent = name;
-      return text.innerHTML;
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+    const escapePersonName = escapeHtml;
+
+    // Nur Endpunkte der eigenen Origin unterhalb von /api/ zulassen
+    // (verhindert fetch() auf fremde Hosts bzw. data:/javascript:-URLs).
+    const DEFAULT_TIMELINE_API = '/api/ereignisse/';
+    function resolveTimelineApiUrl(candidate) {
+      if (!candidate) return DEFAULT_TIMELINE_API;
+      try {
+        const url = new URL(candidate, window.location.origin);
+        if (url.origin !== window.location.origin) return DEFAULT_TIMELINE_API;
+        if (!url.pathname.startsWith('/api/')) return DEFAULT_TIMELINE_API;
+        return url.pathname + url.search;
+      } catch (e) {
+        return DEFAULT_TIMELINE_API;
+      }
     }
 
     // JavaScript-Funktion zum Laden der Daten von einer REST API und Aufbau der Zeitleiste
     async function loadTimelineData(apiUrl, params = {}) {
       try {
         // URL mit Parametern aufbauen
-        const url = new URL(apiUrl, window.location.origin);
+        const url = new URL(resolveTimelineApiUrl(apiUrl), window.location.origin);
+        if (url.origin !== window.location.origin) {
+          throw new Error('Unzulässige API-URL');
+        }
         
         // Parameter zur URL hinzufügen
         Object.keys(params).forEach(key => {
@@ -231,7 +253,10 @@
           }
         });
         
-        const response = await fetch(url);
+        const response = await fetch(url, { credentials: 'same-origin' });
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
         const data = await response.json();
         
         // Optional: Setze den Titel der Zeitleiste
@@ -262,7 +287,7 @@
               
               currentYear = year;
               timelineHTML += `<section class="year">
-                <h3>${year}</h3>
+                <h3>${escapeHtml(year)}</h3>
                 <section>
                   <ul>`;
               sectionOpen = true;
@@ -270,17 +295,17 @@
             
             // Füge die Information hinzu
             timelineHTML += `<li>
-              ${info.information || info.beschreibung || info.text || ''}<br>
+              ${escapeHtml(info.information || info.beschreibung || info.text || '')}<br>
               <span style="float:right;">
                 ${info.referenzen ? info.referenzen.map(ref => 
-                  `<abbr title="${ref.zitat || ''}"><small>${ref.name || ref.bezeichnung || ''}${ref.nummer ? ', ' + ref.nummer : ''}</small></abbr>`
+                  `<abbr title="${escapeHtml(ref.zitat || '')}"><small>${escapeHtml(ref.name || ref.bezeichnung || '')}${ref.nummer ? ', ' + escapeHtml(ref.nummer) : ''}</small></abbr>`
                 ).join(', ') : ''}
               </span>
               <span style="text-align:left;color:#afaeae">
-                ${info.dat_verb || info.datum_verbal || ''}
+                ${escapeHtml(info.dat_verb || info.datum_verbal || '')}
               </span>
               <p style="text-align:right;color:#afaeae">
-                ${info.personen ? info.personen.map(person => 
+                ${info.personen ? info.personen.filter(person => /^\d+$/.test(String(person.id))).map(person => 
                   `<a href="#theModal" data-remote="${"{% url 'PersonModal' id=0 %}".replace('/0/', '/' + person.id + '/')}"
                    data-footer="/admin/slg/person/${person.id}/change/" data-bs-toggle="modal"
                    data-bs-target="#theModal" class="badge text-bg-info" title="Person">${escapePersonName(person.name)}</a>`
@@ -328,7 +353,7 @@
       
       // Wenn eine spezifische API-URL angegeben ist, verwende diese
       if (urlParams.get('api_url')) {
-        apiUrl = urlParams.get('api_url');
+        apiUrl = resolveTimelineApiUrl(urlParams.get('api_url'));
       }
       
       loadTimelineData(apiUrl, apiParams);

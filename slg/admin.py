@@ -4,6 +4,8 @@ from django.core.checks import messages
 from django.db import IntegrityError, transaction, models
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.contrib.admin.options import csrf_protect_m
+from django.core.exceptions import PermissionDenied
 from django.contrib.admin.models import LogEntry, DELETION
 from django.contrib.admin.utils import quote
 from django.db.models.query import Prefetch, Q
@@ -589,8 +591,11 @@ class PersonView(ImportExportModelAdmin,):
         return form
 
     def Link(self, obj):
-        url = '<a href="https://portal.dnb.de/opac.htm?query={}&method=simpleSearch&categoryId=persons" target="_blank">GND</a>'.format(obj.name)
-        return mark_safe(url)
+        query = urlencode({'query': obj.name or '', 'method': 'simpleSearch', 'categoryId': 'persons'})
+        return format_html(
+            '<a href="https://portal.dnb.de/opac.htm?{}" target="_blank" rel="noopener noreferrer">GND</a>',
+            query,
+        )
 
     def response_change(self, request, obj, post_url_continue=None):
         # lädt die Daten OCRE und Co. über eine SPARQL-Abfrage als CSV herunter und fügt sie zum Datensatz hinzu
@@ -1213,22 +1218,108 @@ def extract_year(literal):
 
 
 
+# --- Sichere Verarbeitung externer Typ-Links (SSRF / SPARQL-Injection) -------
+TYPE_LINK_HOSTS = {
+    'numismatics': ('numismatics.org',),
+    'rpc': ('rpc.ashmus.ox.ac.uk',),
+}
+TYPE_LINK_TIMEOUT = 20
+TYPE_LINK_MAX_REDIRECTS = 3
+TYPE_LINK_MAX_BYTES = 5 * 1024 * 1024
+_SAFE_IRI_RE = re.compile(r'^https?://[^\s<>"{}|\\^`]+$')
+
+
+def _host_matches(hostname, allowed_hosts):
+    hostname = (hostname or '').lower().rstrip('.')
+    return any(hostname == host or hostname.endswith('.' + host) for host in allowed_hosts)
+
+
+def _normalize_type_link(link):
+    """Gibt (art, url) für erlaubte Typ-Links zurück, sonst (None, None).
+
+    Die Prüfung erfolgt auf dem geparsten Hostnamen (kein Substring-Vergleich),
+    erlaubt nur http/https, keine Zugangsdaten und keine Nicht-Standardports.
+    """
+    link = (link or '').strip()
+    if not link:
+        return None, None
+    if '://' not in link:
+        link = 'https://' + link
+    try:
+        parts = urlparse(link)
+        port = parts.port
+    except ValueError:
+        return None, None
+    if parts.scheme not in ('http', 'https') or parts.username or parts.password:
+        return None, None
+    if port not in (None, 80, 443):
+        return None, None
+    for kind, hosts in TYPE_LINK_HOSTS.items():
+        if _host_matches(parts.hostname, hosts):
+            return kind, link
+    return None, None
+
+
+def _safe_sparql_iri(value):
+    """Lässt nur IRIs zu, die gefahrlos in ``<...>`` interpoliert werden können."""
+    value = str(value or '').strip()
+    if not _SAFE_IRI_RE.match(value):
+        raise ValueError('Ungültige IRI für SPARQL-Abfrage')
+    return value
+
+
+def _safe_get(url, allowed_hosts, **kwargs):
+    """requests.get mit Timeout, Host-Allowlist und geprüften Redirects."""
+    kwargs.setdefault('timeout', TYPE_LINK_TIMEOUT)
+    current = url
+    for _ in range(TYPE_LINK_MAX_REDIRECTS + 1):
+        parts = urlparse(current)
+        if parts.scheme not in ('http', 'https') or not _host_matches(parts.hostname, allowed_hosts):
+            raise RuntimeError('Externe URL ist nicht erlaubt')
+        if parts.username or parts.password or parts.port not in (None, 80, 443):
+            raise RuntimeError('Externe URL ist nicht erlaubt')
+        response = requests.get(current, allow_redirects=False, stream=True, **kwargs)
+        if response.is_redirect or response.is_permanent_redirect:
+            location = response.headers.get('Location')
+            response.close()
+            if not location:
+                raise RuntimeError('Ungültige Weiterleitung')
+            current = urljoin(current, location)
+            continue
+        content = response.raw.read(TYPE_LINK_MAX_BYTES + 1, decode_content=True)
+        response.close()
+        if len(content) > TYPE_LINK_MAX_BYTES:
+            raise RuntimeError('Antwort zu groß')
+        response._content = content
+        response._content_consumed = True
+        return response
+    raise RuntimeError('Zu viele Weiterleitungen')
+
+
 def process_download_infos(obj):
     # Stellen Sie sicher, dass das Objekt einen Link enthält
     if not obj.link:
         return False, "Fehlermeldung"  # Beenden, falls kein Link vorhanden ist
 
+    link_kind, safe_link = _normalize_type_link(obj.link)
+    if link_kind is None:
+        return False, "Link-Domain wird nicht unterstützt (nur numismatics.org und rpc.ashmus.ox.ac.uk)"
+
     # Code zur Verarbeitung des Links und der Daten
     try:
+        obverse_uri = None
+        reverse_uri = None
         # Beispiel: Setzen von Feldern basierend auf geparsten Daten
-        if 'numismatics.org/' in obj.link:
+        if link_kind == 'numismatics':
             # Normalize link - SPARQL database typically uses HTTP URIs
-            if obj.link.startswith("https://"):
-                http_link = "http://" + obj.link[8:]
-            elif obj.link.startswith("http://"):
-                http_link = obj.link
+            if safe_link.startswith("https://"):
+                http_link = "http://" + safe_link[8:]
             else:
-                http_link = "http://" + obj.link
+                http_link = safe_link
+            try:
+                http_link = _safe_sparql_iri(http_link)
+            except ValueError as exc:
+                return False, str(exc)
 
             sparql_endpoint = 'https://nomisma.org/query'
 
@@ -1267,7 +1358,7 @@ def process_download_infos(obj):
             
             # If no results with HTTP, try HTTPS URI
             if not data_main.get('results', {}).get('bindings', []):
-                https_link = "https://" + http_link[7:] if http_link.startswith("http://") else obj.link
+                https_link = "https://" + http_link[7:] if http_link.startswith("http://") else http_link
                 query_main_https = f"""
                 SELECT * WHERE {{
                   <{https_link}> ?p ?o
@@ -1318,6 +1409,10 @@ def process_download_infos(obj):
             avleg = ""
             avpor_list = []
             if obverse_uri:
+                try:
+                    obverse_uri = _safe_sparql_iri(obverse_uri)
+                except ValueError as exc:
+                    return False, str(exc)
                 query_obverse = f"""
                 SELECT * WHERE {{
                   <{obverse_uri}> ?p ?o
@@ -1341,6 +1436,10 @@ def process_download_infos(obj):
             rvleg = ""
             rvpor_list = []
             if reverse_uri:
+                try:
+                    reverse_uri = _safe_sparql_iri(reverse_uri)
+                except ValueError as exc:
+                    return False, str(exc)
                 query_reverse = f"""
                 SELECT * WHERE {{
                   <{reverse_uri}> ?p ?o
@@ -1360,25 +1459,35 @@ def process_download_infos(obj):
                     elif p == nmo + 'hasPortrait':
                         rvpor_list.append(o_value)
         
-        elif 'rpc.ashmus.ox.ac.uk/' in obj.link:
+        elif link_kind == 'rpc':
             # Fetch HTML content and parse to find the RDF link
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36'}
-            response = requests.get(obj.link, headers=headers)
+            rpc_hosts = TYPE_LINK_HOSTS['rpc']
+            try:
+                response = _safe_get(safe_link, rpc_hosts, headers=headers)
+            except (RequestException, RuntimeError) as exc:
+                return False, f"Abruf fehlgeschlagen: {exc}"
 
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 rdf_link = soup.find('a', string='rdf')
                 
                 if rdf_link:
-                    rdf_url = urljoin(obj.link, rdf_link.get('href'))
+                    rdf_url = urljoin(response.url or safe_link, rdf_link.get('href') or '')
                 else:
                     # Wenn kein RDF-Link gefunden wurde, aus der if-Abfrage aussteigen
                     # messages.warning(request, f"Kein RDF-Link für {obj.link} gefunden.")
                     return False, "Kein RDF-Link gefunden"
 
-                # Fetch and parse the RDF/XML data
+                # RDF/XML selbst (geprüft) laden und rdflib nur die Daten übergeben,
+                # damit rdflib keine beliebigen URLs (file://, interne Hosts) öffnet.
+                try:
+                    rdf_response = _safe_get(rdf_url, rpc_hosts, headers=headers)
+                    rdf_response.raise_for_status()
+                except (RequestException, RuntimeError) as exc:
+                    return False, f"RDF-Abruf fehlgeschlagen: {exc}"
                 g = Graph()
-                g.parse(rdf_url, format='xml')
+                g.parse(data=rdf_response.content, format='xml', publicID=rdf_url)
 
                 # Define your namespaces
                 nmo = Namespace("http://nomisma.org/ontology#")
@@ -1405,7 +1514,7 @@ def process_download_infos(obj):
                     mint = str(o)
 
                 # Find the obverse for that TypeSeriesItem
-                type_series_item_uri = URIRef(obj.link)
+                type_series_item_uri = URIRef(safe_link)
                 for s, p, o in g.triples((type_series_item_uri, nmo.hasObverse, None)):
                     obverse_uri = o
 
@@ -1459,7 +1568,7 @@ def process_download_infos(obj):
             except ObjectDoesNotExist:
                 pass
 
-        if "numismatics.org" in obj.link:
+        if link_kind == 'numismatics':
             obj.Muenzstand = Muenzstand.objects.get(id=424)
 
         for praegeherr in praegeherr_list:
@@ -1593,14 +1702,17 @@ class MuenztypAdmin(ImportExportModelAdmin, CloneModelAdmin,):
     def verkupfern(self, request, queryset):
         queryset.update(Metall="9")
     verkupfern.short_description = "zu Kupfer machen"
+    verkupfern.allowed_permissions = ('change',)
     
     def nummisieren(self, request, queryset):
         queryset.update(Nominal="492")
     nummisieren.short_description = "zu Nummus machen"
+    nummisieren.allowed_permissions = ('change',)
 
     def vermessingere(self, request, queryset):
         queryset.update(Metall="5")
     vermessingere.short_description = "zu Messing machen"
+    vermessingere.allowed_permissions = ('change',)
     
     def material_vom_nominal(self, request, queryset):
         betroffene = queryset.filter(
@@ -1628,10 +1740,12 @@ class MuenztypAdmin(ImportExportModelAdmin, CloneModelAdmin,):
                 level=messages.WARNING,
             )
     material_vom_nominal.short_description = "Material vom Nominal übernehmen (nur ohne Material)"
+    material_vom_nominal.allowed_permissions = ('change',)
 
     def transpadana(self, request, queryset):
         queryset.update(region="210")
     transpadana.short_description = "nach Transpadana"
+    transpadana.allowed_permissions = ('change',)
 
     
     
@@ -2070,6 +2184,7 @@ def material_von_nominal_uebernehmen(modeladmin, request, queryset):
         )
 
 material_von_nominal_uebernehmen.short_description = "Material vom Nominal übernehmen (nur ohne Typ, ohne Material)"
+material_von_nominal_uebernehmen.allowed_permissions = ('change',)
 
 
 def material_von_muenztyp_uebernehmen(modeladmin, request, queryset):
@@ -2105,6 +2220,7 @@ def material_von_muenztyp_uebernehmen(modeladmin, request, queryset):
         )
 
 material_von_muenztyp_uebernehmen.short_description = "Material vom Münztyp übernehmen (nur mit Typ, ohne Material)"
+material_von_muenztyp_uebernehmen.allowed_permissions = ('change',)
 
 
 class ObjAdmin(ImportExportModelAdmin):
@@ -2254,9 +2370,12 @@ class ObjAdmin(ImportExportModelAdmin):
 
     # ... rest of existing code ...
 
+    @csrf_protect_m
     def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
-        if object_id and '_download_legenden' in request.POST:
+        if object_id and request.method == 'POST' and '_download_legenden' in request.POST:
             obj = self.get_object(request, object_id)
+            if obj is None or not self.has_change_permission(request, obj):
+                raise PermissionDenied
             if obj and obj.Typ:
                 obj.avleg = obj.Typ.avleg
                 obj.rvleg = obj.Typ.rvleg
@@ -2388,6 +2507,7 @@ class ObjAdmin(ImportExportModelAdmin):
             f"({created} neu, {updated} aktualisiert)."
         )
     sync_mtoa_selected.short_description = "MTOA aktualisieren (Anzeige-Tabelle)"
+    sync_mtoa_selected.allowed_permissions = ('change',)
 
     def create_coin_labels(self, request, queryset):
         from .views import prepare_coin_labels_html
@@ -2533,6 +2653,7 @@ class MyObjectsAdmin(admin.ModelAdmin,):
     def SlgHlHaupt(self, request, queryset):
         queryset.update(Slg="1", SlgTeil="2")
     SlgHlHaupt.short_description = "Objekte zu Hl gesellen"
+    SlgHlHaupt.allowed_permissions = ('change',)
 
     class Media:
         js = ('Djangoprojekt/js/admin.js',)
