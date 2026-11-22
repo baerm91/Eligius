@@ -166,11 +166,10 @@ def _get_filtered_mtoa_queryset(request, exclude_field=None):
 
     ref_values = [name for name in request.GET.getlist('Ref') if is_valid_qparam(name)]
     if exclude_field != 'Ref' and ref_values:
-        ref_query = Q()
-        if unbestimmt_param != 'True':
-            ref_query |= Q(Typ__Ref__abk__in=ref_values)
-        if unbestimmt_param != 'False':
-            ref_query |= Q(idfk_Ref__abk__in=ref_values)
+        # Typ.Ref und Obj_Ref unabhängig von 'unbestimmt' prüfen – genau wie die
+        # Ref-Facette (public_api._facet_values). Die Einschränkung auf
+        # typisierte/unbestimmte Objekte erfolgt bereits über qs oben.
+        ref_query = Q(Typ__Ref__abk__in=ref_values) | Q(idfk_Ref__abk__in=ref_values)
 
         ref_obj_ids = (
             Obj.objects.filter(ref_query)

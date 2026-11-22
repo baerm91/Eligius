@@ -4,7 +4,7 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR"
 
-VENV_PATH="${VENV_PATH:-/home/goffosen/.venvs/eligius_min}"
+VENV_PATH="${VENV_PATH:-$HOME/.venvs/eligius_min}"
 if [[ ! -f "$VENV_PATH/bin/activate" ]]; then
   echo "❌ Venv not found at $VENV_PATH"
   echo "Set VENV_PATH=/path/to/venv and retry."

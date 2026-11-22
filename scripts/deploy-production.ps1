@@ -2,8 +2,21 @@
 [CmdletBinding()]
 param(
     [switch]$CheckOnly,
-    [string]$KeyPath = (Join-Path ([Environment]::GetFolderPath('DesktopDirectory')) 'privatekey_mbaer.ppk')
+    [string]$User = $env:ELIGIUS_DEPLOY_USER,
+    [string]$KeyPath = $env:ELIGIUS_DEPLOY_KEY
 )
+
+# Persönliche Zugangsdaten (SSH-Benutzer, PuTTY-Schlüssel) stehen nicht im Repo,
+# sondern in dev-local/deploy.local.ps1 (gitignored), z. B.:
+#   $DeployUser = 'benutzer'
+#   $DeployKeyPath = 'C:\Users\...\privatekey.ppk'
+$localConfig = Join-Path $PSScriptRoot '..\dev-local\deploy.local.ps1'
+if (Test-Path -LiteralPath $localConfig -PathType Leaf) { . $localConfig }
+if (!$User) { $User = $DeployUser }
+if (!$KeyPath) { $KeyPath = $DeployKeyPath }
+if (!$User -or !$KeyPath) {
+    throw 'SSH-Benutzer oder PuTTY-Schlüssel fehlt: dev-local/deploy.local.ps1 anlegen oder -User/-KeyPath angeben.'
+}
 
 $ErrorActionPreference = 'Stop'
 function Invoke-Native([scriptblock]$Command) {
@@ -26,7 +39,7 @@ function Invoke-Production([string]$Mode, [string]$Revision = '', [string]$Diges
         throw 'Invalid production command arguments.'
     }
     $remoteCommand = 'tr -d ''\r'' | bash -s -- ' + "$Mode $Revision $Digest $PreviousImage"
-    Invoke-Native { $remoteScript | plink -batch -hostkey $hostKey -i $KeyPath "mbaer@$server" $remoteCommand }
+    Invoke-Native { $remoteScript | plink -batch -hostkey $hostKey -i $KeyPath "$User@$server" $remoteCommand }
 }
 
 function Get-RegistryDigest([string]$Reference) {

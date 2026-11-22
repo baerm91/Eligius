@@ -156,9 +156,12 @@ def add_record(parent, row, obj, request, prefix):
     metadata.append((serialize_edm if prefix == 'edm' else serialize_dc)(row, obj, request))
 
 
-def add_token(node, state, page, more, resumed, key):
+def add_token(node, state, page, more, resumed, key, shown=None):
+    # shown: Anzahl tatsächlich ausgegebener Elemente (ListSets Seite 1 enthält
+    # zusätzlich das Root-Set) – der Cursor der Folgeseite muss sie alle zählen.
     if more:
-        next_state = dict(state, after=key(page[-1]), cursor=state['cursor'] + len(page))
+        shown = len(page) if shown is None else shown
+        next_state = dict(state, after=key(page[-1]), cursor=state['cursor'] + shown)
         token = signing.dumps(next_state, salt=TOKEN_SALT)
         element(node, 'oai', 'resumptionToken', token, cursor=str(state['cursor']))
     elif resumed:
@@ -208,7 +211,9 @@ def list_response(root, params, request):
         # A concurrent withdrawal must never accidentally release stale metadata.
         raise OAIError('badResumptionToken' if resumed else 'noRecordsMatch', 'Records changed during this request; retry harvesting.')
     node = element(root, 'oai', verb)
+    shown = len(page)
     if verb == 'ListSets' and not resumed:
+        shown += 1
         # Die Sammlungs-Sets 'eligius:collection-N' sind Kinder von 'eligius';
         # das Eltern-Set muss selbst in ListSets erscheinen.
         item = element(node, 'oai', 'set')
@@ -223,7 +228,7 @@ def list_response(root, params, request):
             header(node, row)
         else:
             add_record(node, row, objects[row.obj_id], request, state['prefix'])
-    add_token(node, state, page, more, resumed, key)
+    add_token(node, state, page, more, resumed, key, shown)
 
 
 def respond(query, request):
@@ -278,6 +283,7 @@ def respond(query, request):
             # badResumptionToken). Dann sind sie bereits syntaktisch geprüft.
             echo.attrib.update({key: values[0] for key, values in query.lists()
                                 if key in ALL_ARGUMENTS and len(values) == 1
+                                and len(values[0]) <= 4096
                                 and not INVALID_XML.search(values[0])})
         element(root, 'oai', 'error', error.message, code=error.code)
     return ET.tostring(root, encoding='utf-8', xml_declaration=True)

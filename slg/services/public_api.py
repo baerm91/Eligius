@@ -18,18 +18,21 @@ from .authority_display import display_label, english, localize_facets
 
 def allowed_filter_names():
     """The same public filter whitelist for transports and page context."""
-    return set().union(*(set(c) for c in FILTER_PARAMETERS.values())) | {'unbestimmt'}
+    # MTOA_FILTERS ist die tatsächlich ausgeführte Filterliste (u. a. 'objekttyp').
+    return (set().union(*(set(c) for c in FILTER_PARAMETERS.values()))
+            | set(MTOA_FILTERS) | {'unbestimmt'})
 
 
 def int_filter_names():
-    """Filter, deren Werte als ID/Ganzzahl in das ORM gehen (Browse wie MTOA)."""
-    names = {key for key, config in MTOA_FILTERS.items()
-             if any(field_needs_int(field) for field in config['fields'])}
-    for context in FILTER_PARAMETERS.values():
-        for key, config in context.items():
-            if any(field_needs_int(field) for field in config.get('fields', ())):
-                names.add(key)
-    return names
+    """Filter, deren Werte als ID/Ganzzahl in das ORM gehen.
+
+    Maßgeblich ist allein MTOA_FILTERS, denn filter_request() speist
+    _get_filtered_mtoa_queryset(). FILTER_PARAMETERS (Browse-Ansicht) filtert
+    z. B. av_beizeichen/obj_type über IDs, MTOA dagegen über den Namen; Paket
+    akzeptiert IDs, Slugs und Namen.
+    """
+    return {key for key, config in MTOA_FILTERS.items()
+            if any(field_needs_int(field) for field in config['fields'])}
 
 
 def filter_request(filters=None):

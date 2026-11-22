@@ -148,11 +148,11 @@ Mit `agent-browser` lässt sich die native Browserregistrierung und Ausführung
 zusätzlich prüfen (Chrome mit experimenteller WebMCP-Unterstützung):
 
 ```sh
-agent-browser --session webmcp open https://46.101.237.189/lab/
+agent-browser --session webmcp open https://<dev-server>/lab/
 agent-browser --session webmcp webmcp list
 agent-browser --session webmcp webmcp invoke get_current_context
 agent-browser --session webmcp webmcp invoke get_statistics --params '{"filters":{"Praegeherren":["Valens"]}}'
-agent-browser --session without-webmcp --no-webmcp open https://46.101.237.189/lab/
+agent-browser --session without-webmcp --no-webmcp open https://<dev-server>/lab/
 ```
 
 In den Netzwerkwerkzeugen darf nach dem Laden ohne native Unterstützung kein

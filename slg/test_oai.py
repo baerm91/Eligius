@@ -229,6 +229,10 @@ class OAITests(OAIFixtures, TestCase):
         bad = signing.dumps(['unsafe', 'payload'], salt=TOKEN_SALT)
         self.error('ListRecords', 'badResumptionToken', resumptionToken=bad)
 
+    def test_oversized_token_is_not_echoed(self):
+        root = self.error('ListSets', 'badResumptionToken', resumptionToken='x' * 5000)
+        self.assertNotIn('resumptionToken', root.find('oai:request', NS).attrib)
+
     def test_invalid_signed_state_and_empty_token(self):
         self.error('ListSets', 'badResumptionToken', resumptionToken='')
         for state in (['unexpected'], {'v': 1}, {'verb': 'ListSets', 'size': -1}):
@@ -242,6 +246,9 @@ class OAITests(OAIFixtures, TestCase):
         last = self.request('ListSets', resumptionToken=token)
         self.assertEqual(len(last.findall('.//oai:set', NS)), 1)
         self.assertIsNone(last.find('.//oai:resumptionToken', NS).text)
+        # Seite 1 enthielt Root-Set + 1 Sammlung → Cursor der Folgeseite ist 2.
+        self.assertEqual(len(first.findall('.//oai:set', NS)), 2)
+        self.assertEqual(last.find('.//oai:resumptionToken', NS).get('cursor'), '2')
         self.obj('1')
         self.obj('2')
         first = self.request('ListIdentifiers', metadataPrefix='edm')

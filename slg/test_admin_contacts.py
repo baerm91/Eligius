@@ -4,20 +4,21 @@ from unittest.mock import patch
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from .models import Kontaktanfrage
 
 
+@override_settings(ELIGIUS_ADMIN_DASHBOARD_USERS=['dashboard-user'])
 class AdminContactDashboardTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.goffo = get_user_model().objects.create_user(
-            username='goffo', is_staff=True,
+        cls.dashboard_user = get_user_model().objects.create_user(
+            username='dashboard-user', is_staff=True,
         )
-        cls.goffo.user_permissions.add(Permission.objects.get(
+        cls.dashboard_user.user_permissions.add(Permission.objects.get(
             content_type__app_label='slg', codename='view_kontaktanfrage',
         ))
         cls.other_admin = get_user_model().objects.create_superuser(
@@ -33,10 +34,10 @@ class AdminContactDashboardTests(TestCase):
         )
 
     def dashboard(self, user=None):
-        self.client.force_login(user or self.goffo)
+        self.client.force_login(user or self.dashboard_user)
         return self.client.get(reverse('admin:index'))
 
-    def test_goffo_sees_open_contacts_and_direct_links_with_view_permission(self):
+    def test_dashboard_user_sees_open_contacts_and_direct_links_with_view_permission(self):
         response = self.dashboard()
 
         self.assertEqual(response.status_code, 200)
@@ -80,10 +81,10 @@ class AdminContactDashboardTests(TestCase):
         self.assertContains(response, 'die fünf neuesten offenen Anfragen')
 
     def test_marking_contact_processed_in_admin_clears_dashboard(self):
-        self.goffo.user_permissions.add(Permission.objects.get(
+        self.dashboard_user.user_permissions.add(Permission.objects.get(
             content_type__app_label='slg', codename='change_kontaktanfrage',
         ))
-        self.client.force_login(self.goffo)
+        self.client.force_login(self.dashboard_user)
         response = self.client.post(reverse(
             'admin:slg_kontaktanfrage_change', args=[self.contact.pk],
         ), {'bearbeitet': 'on', '_save': 'Save'})
@@ -107,8 +108,8 @@ class AdminContactDashboardTests(TestCase):
         self.assertContains(response, 'id="recent-actions-module"')
         self.assertContains(response, reverse('admin:slg_obj_changelist'))
 
-    def test_goffo_without_contact_permission_does_not_query_or_see_contacts(self):
-        self.goffo.user_permissions.clear()
+    def test_dashboard_user_without_contact_permission_does_not_query_or_see_contacts(self):
+        self.dashboard_user.user_permissions.clear()
         contact_admin = admin.site._registry[Kontaktanfrage]
         with patch.object(contact_admin, 'get_queryset') as get_queryset:
             response = self.dashboard()
@@ -116,10 +117,10 @@ class AdminContactDashboardTests(TestCase):
         self.assertNotIn('contact_dashboard', response.context)
         self.assertNotContains(response, self.contact.betreff)
 
-    def test_inactive_or_nonstaff_goffo_does_not_get_contact_context(self):
+    def test_inactive_or_nonstaff_dashboard_user_does_not_get_contact_context(self):
         for attribute in ('is_active', 'is_staff'):
             with self.subTest(attribute=attribute):
-                user = get_user_model().objects.get(pk=self.goffo.pk)
+                user = get_user_model().objects.get(pk=self.dashboard_user.pk)
                 setattr(user, attribute, False)
                 request = RequestFactory().get(reverse('admin:index'))
                 request.user = user

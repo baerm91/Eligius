@@ -227,7 +227,7 @@ class SeoMetaTests(TestCase):
         response = self.client.get('/about/')
         self.assertContains(response, '<title>Über das Projekt | Eligius</title>')
         self.assertIn('Klöster', self.meta(response, 'name', 'description'))
-        self.assertTrue(self.meta(response, 'property', 'og:image').endswith('img/hero_coin.png'))
+        self.assertTrue(self.meta(response, 'property', 'og:image').endswith('img/hero_coin_og.jpg'))
         self.assertEqual(self.meta(response, 'name', 'twitter:card'), 'summary')
         english = self.client.get('/about/', HTTP_ACCEPT_LANGUAGE='en')
         self.assertContains(english, '<title>About the project | Eligius</title>')

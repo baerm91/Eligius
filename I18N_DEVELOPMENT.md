@@ -54,7 +54,7 @@ nach einem Deployment alle Django-/ASGI-Worker neu starten (Katalogcache).
 3. Mit installiertem GNU gettext im Projektverzeichnis ausführen:
 
    ```sh
-   python manage.py makemessages -l en --ignore=.venv --ignore=dev-local --ignore=_unused_html_backup
+   python manage.py makemessages -l en --ignore=.venv --ignore=dev-local
    python manage.py compilemessages -l en
    python manage.py test slg.test_ui_translations --settings=djangoproject.test_settings
    node --test scripts/test_ui_language.cjs

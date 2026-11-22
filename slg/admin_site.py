@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.admin import AdminSite
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -24,7 +25,7 @@ class EligiusAdminSite(AdminSite):
 
     def index(self, request, extra_context=None):
         context = dict(extra_context or {})
-        if self.has_permission(request) and request.user.get_username() == 'goffo':
+        if self.has_permission(request) and request.user.get_username() in settings.ELIGIUS_ADMIN_DASHBOARD_USERS:
             for model, context_key, filters in (
                 (Kontaktanfrage, 'contact_dashboard', {'bearbeitet__exact': '0'}),
                 (ObjektAenderung, 'object_change_dashboard', {'status__exact': 'offen'}),

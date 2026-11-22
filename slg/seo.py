@@ -78,7 +78,7 @@ def absolute_url(url, request=None):
 
 
 def default_share_image(request=None):
-    return absolute_url(static('img/hero_coin.png'), request)
+    return absolute_url(static('img/hero_coin_og.jpg'), request)
 
 
 # ---------------------------------------------------------------------------

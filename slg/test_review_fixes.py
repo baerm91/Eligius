@@ -1,5 +1,6 @@
 """Regressionstests zur Fehlerliste "Mittel" (Suche, UI/JS, OAI/SEO, Performance & Deployment)."""
 import re
+from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from django.conf import settings
@@ -13,6 +14,7 @@ from .models import (Muenzstand, MuenztypObjektAnzeige, Nominal, Obj, Obj_Ref, P
                      stempelstellung_parts)
 from .mtoa_sync import sync_objs_to_mtoa
 from .services import public_api
+from .services.search import _get_filtered_mtoa_queryset
 from .test_bugfix_regressions import Fixtures
 
 OAI = {'oai': 'http://www.openarchives.org/OAI/2.0/'}
@@ -59,6 +61,15 @@ class FilterLogicTests(Fixtures, TestCase):
                 public_api.filter_request(filters)
         self.assertEqual(public_api.filter_request({'Slg': ' 3 '}).GET.getlist('Slg'), ['3'])
 
+    def test_name_based_mtoa_filters_accept_text(self):
+        query = public_api.filter_request({'av_beizeichen': 'Stern', 'rv_beizeichen': 'Kreuz',
+                                           'obj_type': 'Münze', 'Paket': 'paket-a', 'objekttyp': 3})
+        for name, value in {'av_beizeichen': 'Stern', 'rv_beizeichen': 'Kreuz', 'obj_type': 'Münze',
+                            'Paket': 'paket-a', 'objekttyp': '3'}.items():
+            self.assertEqual(query.GET.getlist(name), [value])
+        with self.assertRaises(ValueError):
+            public_api.filter_request({'objekttyp': 'Münze'})
+
     def test_webmcp_page_context_accepts_regular_browse_urls(self):
         from .webmcp import _page_context
         url = reverse('Objektliste') + '?dat_von=&dat_bis=&Slg=abc&Nominal=Denar'
@@ -87,6 +98,13 @@ class FacetTests(Fixtures, TestCase):
 
     def test_ref_facet_counts_obj_ref_of_typed_objects(self):
         self.assertEqual(public_api.facet_values(get({}), 'Ref'), [{'name': 'RIC', 'count': 1}])
+
+    def test_ref_filter_matches_facet_for_typed_objects(self):
+        for params in ({}, {'unbestimmt': 'False'}):
+            self.assertEqual(public_api.facet_values(get(params), 'Ref'),
+                             [{'name': 'RIC', 'count': 1}])
+            rows, _, _ = _get_filtered_mtoa_queryset(get({**params, 'Ref': 'RIC'}))
+            self.assertEqual(set(rows.values_list('obj_id', flat=True)), {self.obj.pk})
 
     def test_unpublished_comparison_packages_are_hidden(self):
         from .views import _get_package_comparison_packages
@@ -189,6 +207,10 @@ class TemplateAndSettingsTests(Fixtures, TestCase):
         staff = Client()
         staff.force_login(User.objects.create_superuser('s', 's@example.test', 'pw'))
         self.assertEqual(self.div_depth(staff), 0)
+
+    def test_served_browse_script_disposes_chart(self):
+        script = Path(settings.BASE_DIR) / 'slg/static/js/objektliste_mtoa_inline.min.js'
+        self.assertIn('disposeBrowseChart', script.read_text(encoding='utf-8'))
 
     def test_cors_middleware_runs_early(self):
         self.assertLess(settings.MIDDLEWARE.index('corsheaders.middleware.CorsMiddleware'),

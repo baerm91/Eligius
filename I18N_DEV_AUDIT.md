@@ -1,6 +1,6 @@
 # DE/EN-Prüfung am Dev-Server – 13. November 2026
 
-Geprüft über Chrome auf http://46.101.237.189/ (im Browser HTTPS).
+Geprüft über Chrome auf http://<dev-server>/ (im Browser HTTPS).
 Die nachfolgend genannten Korrekturen liegen lokal, noch nicht auf dem Dev-Server.
 Keine Änderungen an Datenbankinhalten, URLs oder URI-Identifikatoren.
 

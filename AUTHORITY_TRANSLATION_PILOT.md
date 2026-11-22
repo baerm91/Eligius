@@ -53,7 +53,7 @@ GND→Wikidata-Ketten auf Dev.
 
 ## Ergebnisse
 
-Quelle: http://46.101.237.189. Vollständige öffentliche Listen-APIs für
+Quelle: http://<dev-server>. Vollständige öffentliche Listen-APIs für
 Münzstätten und Nominale, nicht die Zahl tatsächlich verwendeter Facettenwerte.
 
 | Tabelle | Einträge | Normdatenfeld befüllt |
@@ -94,7 +94,7 @@ Ein unmarkierter GND-Vorzugsname darf nicht als englische Übersetzung gelten.
 Im Projektverzeichnis, mit installierten Projektabhängigkeiten:
 
 ```sh
-python scripts/audit_authority_labels.py --base-url http://46.101.237.189 --output dev-local/authority-audit-dev --follow-wikidata
+python scripts/audit_authority_labels.py --base-url http://<dev-server> --output dev-local/authority-audit-dev --follow-wikidata
 python manage.py test slg.test_authority_inventory --settings=djangoproject.test_settings
 ```
 

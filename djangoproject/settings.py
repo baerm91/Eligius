@@ -68,7 +68,6 @@ def _get_secret_key():
 
 SECRET_KEY = _get_secret_key()
 
-# ALLOWED_HOSTS = ['46.101.237.189']
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
@@ -206,6 +205,12 @@ ASGI_APPLICATION = 'djangoproject.asgi.application'
 # Standard: temporäres Verzeichnis (im Container für den Benutzer webapp beschreibbar).
 ELIGIUS_NOMISMA_CACHE_DIR = Path(os.getenv('ELIGIUS_NOMISMA_CACHE_DIR', str(Path(tempfile.gettempdir()) / 'eligius-nomisma')))
 ELIGIUS_NOMISMA_CACHE_SECONDS = int(os.getenv('ELIGIUS_NOMISMA_CACHE_SECONDS', str(6 * 3600)))
+
+# Admin-Benutzer, die auf der Admin-Startseite die Vorschau offener
+# Kontaktanfragen/Objektänderungen sehen (kommagetrennt).
+ELIGIUS_ADMIN_DASHBOARD_USERS = [
+    u.strip() for u in os.getenv('ELIGIUS_ADMIN_DASHBOARD_USERS', '').split(',') if u.strip()
+]
 
 # Indexing is opt-in for public deployments.
 ELIGIUS_SEO_INDEXING = os.getenv('ELIGIUS_SEO_INDEXING', '0').lower() in ('1', 'true', 'yes')

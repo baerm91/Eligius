@@ -4,6 +4,7 @@ Writes review artifacts only. No database connection or writes to remote service
 Run from the repository root with the project's Python environment.
 """
 import argparse
+import os
 import json
 import sys
 from datetime import datetime, timezone
@@ -54,7 +55,9 @@ def wikidata_label(data, identifier):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', required=True, type=Path)
-    parser.add_argument('--base-url', default='http://46.101.237.189')
+    parser.add_argument('--base-url', default=os.getenv('ELIGIUS_DEV_BASE_URL'),
+                        required=not os.getenv('ELIGIUS_DEV_BASE_URL'),
+                        help='Basis-URL des Dev-Servers (oder ELIGIUS_DEV_BASE_URL setzen).')
     parser.add_argument('--follow-wikidata', action='store_true',
                         help='Resolve only explicit Wikidata identity links found in the pilot.')
     parser.add_argument('--sample-per-model', default=20, type=int)

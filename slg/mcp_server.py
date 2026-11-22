@@ -10,7 +10,6 @@ from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
-from slg.filter_config import FILTER_PARAMETERS
 from slg.services import public_api
 
 logger = logging.getLogger(__name__)
@@ -18,7 +17,7 @@ Page = Annotated[int, Field(ge=1)]
 PageSize = Annotated[int, Field(ge=1, le=100)]
 Filters = dict[str, list[str | int] | str | int | bool]
 
-FILTER_HELP = ', '.join(sorted(set().union(*(set(c) for c in FILTER_PARAMETERS.values()))))
+FILTER_HELP = ', '.join(sorted(public_api.allowed_filter_names() - {'unbestimmt'}))
 mcp = MCPServer(
     name='Eligius', version='1.0.0',
     instructions=(

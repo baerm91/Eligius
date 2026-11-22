@@ -12,11 +12,19 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-product
 
 Das Skript benötigt Windows PowerShell 5.1 oder neuer, Git, PuTTY/Plink, Docker Desktop
 mit Linux-Containern und ein bestehendes Docker-Login mit Schreibrecht auf
-`dwb-gitlab.donau-uni.ac.at/zms/eligius`. Es verwendet den SSH-Zugang
-`mbaer@eligius.donau-uni.ac.at` mit geprüftem Hostschlüssel. Der persönliche
-PuTTY-Schlüssel liegt standardmäßig als `privatekey_mbaer.ppk` auf dem Desktop.
-Über `-KeyPath` lässt sich ein anderer Pfad angeben. Falls das Registry-Login
-abgelaufen ist, einmal `docker login dwb-gitlab.donau-uni.ac.at -u mbaer`
+`dwb-gitlab.donau-uni.ac.at/zms/eligius`. Es verbindet sich per SSH
+mit `eligius.donau-uni.ac.at` (geprüfter Hostschlüssel). SSH-Benutzer und
+persönlicher PuTTY-Schlüssel stehen nicht im Repo, sondern lokal in
+`dev-local/deploy.local.ps1`:
+
+```powershell
+$DeployUser = '<ssh-benutzer>'
+$DeployKeyPath = 'C:\Pfad\zu\privatekey.ppk'
+```
+
+Alternativ gehen die Parameter `-User`/`-KeyPath` oder die Umgebungsvariablen
+`ELIGIUS_DEPLOY_USER`/`ELIGIUS_DEPLOY_KEY`. Falls das Registry-Login
+abgelaufen ist, einmal `docker login dwb-gitlab.donau-uni.ac.at -u <benutzer>`
 ausführen und den Registry-Token bei der Passwortabfrage eingeben.
 
 Das Skript baut den GitLab-Commit aus einem separaten Verzeichnis und prüft das
@@ -68,8 +76,8 @@ Beide Dateien sind in `.gitignore` eingetragen.
 ## 3) Python-Umgebung
 
 ```bash
-python3 -m venv /home/goffosen/.venvs/eligius_min
-source /home/goffosen/.venvs/eligius_min/bin/activate
+python3 -m venv ~/.venvs/eligius_min
+source ~/.venvs/eligius_min/bin/activate
 pip install -U pip setuptools wheel
 pip install -r requirements.txt
 ```
@@ -147,7 +155,7 @@ Hinweis: Das Script stellt auch sicher, dass ein `django_site` mit ID 1 existier
 ```bash
 ./scripts/smoke.sh
 # optional:
-# VENV_PATH=/home/goffosen/.venvs/eligius_min ./scripts/smoke.sh
+# VENV_PATH=~/.venvs/eligius_min ./scripts/smoke.sh
 ```
 
 ### Route-Sweep (Webseiten-/API-Basischeck)

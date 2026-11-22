@@ -27,6 +27,7 @@ staticfiles/
 .env.*
 !.env.example
 *.pem
+*.ppk
 *.key
 *.crt
 *.cnf
@@ -35,7 +36,7 @@ mysql.cnf
 secrets/
 
 # Local dev files (explicit, easy to spot in ZIP handovers)
-dev-local/
+dev-local/*
 !dev-local/*.example
 !dev-local/README.md
 
@@ -55,3 +56,10 @@ Thumbs.db
 *.sql.gz
 *.sqlite3
 *.bak
+
+# Archive / Patches / lokale KI-Ausgaben
+*.tgz
+*.tar.gz
+*.patch
+_archiv/
+Claude outputs/

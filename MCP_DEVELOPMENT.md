@@ -184,9 +184,9 @@ wieder her. Es sind weder Datenmigrationen noch Backfills für MCP erforderlich.
 
 ## Verifikation am 13. September 2026
 
-Development: [Eligius Lab](https://46.101.237.189/lab/),
-[MCP-Endpunkt](https://46.101.237.189/mcp),
-[Healthcheck](https://46.101.237.189/health).
+Development: [Eligius Lab](https://<dev-server>/lab/),
+[MCP-Endpunkt](https://<dev-server>/mcp),
+[Healthcheck](https://<dev-server>/health).
 
 - Neun relevante automatisierte Tests bestehen unter Python 3.12 lokal und
   Python 3.10 auf Development. `manage.py check` und `pip check` erfolgreich.

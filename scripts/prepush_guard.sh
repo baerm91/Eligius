@@ -7,7 +7,7 @@ set -euo pipefail
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 cd "$ROOT_DIR"
 
-forbidden_regex='(^|/)(\.venv/|venv/|\.envrc$|\.env$|\.env\..+|dev-local/|secrets/|db\.sqlite3$|.*\.sqlite3$|.*\.sql$)'
+forbidden_regex='(^|/)(\.venv/|venv/|\.envrc$|\.env$|\.env\..+|dev-local/|secrets/|db\.sqlite3$|.*\.sqlite3$|.*\.sql$|.*\.sql\.gz$|.*\.ppk$|.*\.pem$|.*\.key$|.*\.cnf$|.*\.tgz$|.*\.tar\.gz$|.*\.patch$|_archiv/|Claude outputs/)'
 # Bewusst getrackte Vorlagen (siehe .gitignore: !.env.example, !dev-local/*.example)
 allowed_regex='(^|/)(\.env\.example$|dev-local/[^/]+\.example$|dev-local/README\.md$)'
 

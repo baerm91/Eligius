@@ -26,7 +26,7 @@
   fachliche Objektfreigaberegel muss vor Veröffentlichung geklärt werden.
 - Django besitzt unveränderte WSGI- und ASGI-Einstiege. Lokal startet bisher
   `runserver`. Die tatsächliche Remote-Prozess-/Proxykonfiguration ist noch
-  zu prüfen; Development-URL laut Auftraggeber: https://46.101.237.189/.
+  zu prüfen; Development-URL laut Auftraggeber: https://<dev-server>/.
 - Eine bestehende lokale Änderung in `MuenztypListCreate.get_queryset()`
   (HTTP/HTTPS- und Slash-Varianten) bleibt erhalten.
 
