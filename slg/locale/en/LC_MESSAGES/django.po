@@ -1960,3 +1960,390 @@ msgstr "Coin images"
 
 msgid "Weitere Objekte laden"
 msgstr "Load more objects"
+
+
+msgid ""
+"Im Eligius Lab öffnen wir die Sammlung für KI-Assistenten – für "
+"Forschungsfragen, die über eine klassische Suchmaske hinausgehen."
+msgstr ""
+"In the Eligius Lab, we open the collection to AI assistants—for research "
+"questions that go beyond a standard search form."
+
+msgid "Unterschied zwischen Webseite und KI-Zugang"
+msgstr "Difference between website and AI access"
+
+msgid "Normale Webseite"
+msgstr "Standard website"
+
+msgid "Suchen und Blättern"
+msgstr "Search and browse"
+
+msgid "Filter Schritt für Schritt kombinieren"
+msgstr "Combine filters step by step"
+
+msgid "Trefferlisten und einzelne Münzen prüfen"
+msgstr "Inspect result lists and individual coins"
+
+msgid "Feste Ansicht pro Abfrage"
+msgstr "Fixed view per query"
+
+msgid "Eligius + KI (MCP & WebMCP)"
+msgstr "Eligius + AI (MCP & WebMCP)"
+
+msgid "Strukturen und Muster erkennen"
+msgstr "Uncover structures and patterns"
+
+msgid "Mehrstufige Fragen in einem Durchgang auswerten"
+msgstr "Evaluate multi-step questions in a single pass"
+
+msgid "Nominale, Legenden und Lücken direkt gruppieren"
+msgstr "Group denominations, legends, and gaps directly"
+
+msgid "Eligius-Bestände mit externen Quellen verknüpfen"
+msgstr "Combine Eligius holdings with external sources"
+
+msgid "Beispiel: Prägeskelett für Hadrianus (Wiener Schule)"
+msgstr "Example: Coinage skeleton for Hadrian (Vienna School)"
+
+msgid ""
+"Wie war die Münzprägung strukturiert? Aus 118 öffentlichen Hadrianus-"
+"Prägungen der Münzstätte Rom (119–121 n. Chr., COS III) rekonstruiert ein "
+"KI-Assistent über MCP oder WebMCP ein systematisches Prägeskelett samt "
+"Bestandsbelegen."
+msgstr ""
+"How was coin production structured? From 118 public coins of Hadrian minted "
+"in Rome (AD 119–121, COS III), an AI assistant uses MCP or WebMCP to "
+"reconstruct a systematic coinage skeleton with collection evidence."
+
+msgid ""
+"Rekonstruiere aus Eligius ein Prägeskelett nach der Wiener Schule für "
+"Hadrianus aus Rom (119–121 n. Chr.): gruppiert nach Nominal, Avers-Legende, "
+"Revers-Legende und Motiv, mit Stückzahlen, verlinkten Beispielobjekten und "
+"sichtbaren Lücken."
+msgstr ""
+"Reconstruct a Vienna School coinage skeleton from Eligius for Hadrian at "
+"Rome (AD 119–121): grouped by denomination, obverse legend, reverse legend, "
+"and motif, with counts, linked sample records, and visible gaps."
+
+msgid "Ansichten zum Prägeskelett-Beispiel"
+msgstr "Views of the coinage skeleton example"
+
+msgid "1. Forschungsfrage"
+msgstr "1. Research question"
+
+msgid "2. Prägeskelett (Eligius)"
+msgstr "2. Coinage skeleton (Eligius)"
+
+msgid "3. Mit Quellen erweitern"
+msgstr "3. Extend with sources"
+
+msgid "Kopiert"
+msgstr "Copied"
+
+msgid "Prompt kopieren"
+msgstr "Copy prompt"
+
+msgid "Schritt 1 · Sammeln"
+msgstr "Step 1 · Collect"
+
+msgid ""
+"Assistent lädt alle passenden Hadrianus-Objekte aus Rom (119–121) mit WebMCP"
+" oder Remote MCP."
+msgstr ""
+"The assistant retrieves all matching Hadrian objects from Rome (AD 119–121) "
+"via WebMCP or Remote MCP."
+
+msgid "Schritt 2 · Ordnen"
+msgstr "Step 2 · Structure"
+
+msgid ""
+"Gruppierung nach Metall, Nominal und der Verteilung der Kaisertitulatur auf "
+"Avers und Revers."
+msgstr ""
+"Grouping by metal, denomination, and how imperial titulature is distributed "
+"across obverse and reverse."
+
+msgid "Schritt 3 · Prüfen"
+msgstr "Step 3 · Verify"
+
+msgid ""
+"Ausgabe als übersichtliche Matrix – jedes Feld verweist direkt auf echte "
+"Eligius-Datensätze."
+msgstr ""
+"Output as a clear matrix—every cell links directly to verified Eligius "
+"records."
+
+msgid "Hadrianus · Rom · ca. 119–121 n. Chr. (COS III)"
+msgstr "Hadrian · Rome · c. AD 119–121 (COS III)"
+
+msgid "Datenbasis: 118 Eligius-Objekte (inkl. 1 unbestimmtes Nominal)"
+msgstr "Data basis: 118 Eligius objects (incl. 1 uncertain denomination)"
+
+msgid "Avers-Legende (Schwerpunkt)"
+msgstr "Obverse legend (main pattern)"
+
+msgid "Revers-Legenden & Motive"
+msgstr "Reverse legends & motifs"
+
+msgid "Belege in Eligius"
+msgstr "Evidence in Eligius"
+
+msgid "Im aktuellen Eligius-Bestand nicht belegt (Desiderat)"
+msgstr "Not attested in current Eligius holdings (desideratum)"
+
+msgid "Kurzform → Titulatur wandert auf den Revers"
+msgstr "Short form → titulature moves to the reverse"
+
+msgid "Aequitas, Victoria, Fortuna"
+msgstr "Aequitas, Victoria, Fortuna"
+
+msgid "Kurzform wie beim Denar"
+msgstr "Short form as on the denarius"
+
+msgid "Victoria (gehend, sitzend, stehend)"
+msgstr "Victoria (advancing, seated, standing)"
+
+msgid "Langform → Raum für Programm-Legenden im Revers"
+msgstr "Long form → frees the reverse for programmatic legends"
+
+msgid "ab 121 auch"
+msgstr "from 121 also"
+
+msgid "Langform parallel zum Sestertius"
+msgstr "Long form matching the sestertius"
+
+msgid "Kurzform → Titulatur im Revers"
+msgstr "Short form → titulature on the reverse"
+
+msgid "Auf einen Blick:"
+msgstr "At a glance:"
+
+msgid ""
+"Das Skelett zeigt sofort die Systematik der Emission: Auf Denaren, Quinaren "
+"und Assen verdrängt die kurze Avers-Legende die Titulatur auf den Revers (P "
+"M TR P COS III). Auf großen Bronzen (Sestertius, Dupondius) steht die volle "
+"Titulatur auf dem Avers – und macht den Revers frei für politische "
+"Programmbotschaften wie MONETA AVGVSTI oder LIBERTAS PVBLICA."
+msgstr ""
+"The skeleton makes the emission logic immediately visible: on denarii, "
+"quinarii, and asses, the short obverse legend shifts the imperial titulature"
+" onto the reverse (P M TR P COS III). On large bronzes (sestertius, "
+"dupondius), the full titulature appears on the obverse—freeing the reverse "
+"for programmatic legends such as MONETA AVGVSTI or LIBERTAS PVBLICA."
+
+msgid "Lücken im Typencorpus"
+msgstr "Gaps against the type corpus"
+
+msgid ""
+"Gleichen Sie das Hadrianus-Skelett mit RIC II.3 oder OCRE ab: Welche "
+"Emissionen fehlen in den österreichischen Sammlungen, etwa bei Gold- oder "
+"Sonderprägungen?"
+msgstr ""
+"Cross-check the Hadrian skeleton against RIC II.3 or OCRE: which issues are "
+"missing from Austrian collections, such as gold or special issues?"
+
+msgid "Eligius + eigene Listen"
+msgstr "Eligius + your own lists"
+
+msgid "Fundmünzen einordnen"
+msgstr "Contextualize coin finds"
+
+msgid ""
+"Spiegeln Sie Ihre eigenen Grabungs- oder Sammlungstabellen gegen den "
+"Eligius-Bestand, um auffällige Häufungen von Denaren, Sesterzen oder Assen "
+"zu erkennen."
+msgstr ""
+"Compare your own excavation or collection spreadsheets against Eligius "
+"holdings to spot notable concentrations of denarii, sestertii, or asses."
+
+msgid "Eligius + Epigraphik"
+msgstr "Eligius + epigraphy"
+
+msgid "Titulatur & Geschichte"
+msgstr "Titulature & history"
+
+msgid ""
+"Verbinden Sie den Wechsel von P M TR P COS III zu COS III P P mit "
+"Inschriften, Bauprogrammen und Hadrians Reisen aus externen Geschichts- oder"
+" Fachquellen."
+msgstr ""
+"Connect the shift from P M TR P COS III to COS III P P with inscriptions, "
+"building programs, and Hadrian’s travels from external historical sources."
+
+msgid "Darauf aufbauen – Eligius-Daten neu verwenden"
+msgstr "Build on this – reuse Eligius data"
+
+msgid ""
+"Über die offene Schnittstelle lassen sich Eligius-Bestände direkt mit "
+"weiteren Ressourcen und Werkzeugen weiterverarbeiten."
+msgstr ""
+"Through the open interface, Eligius holdings can be processed directly "
+"alongside other resources and tools."
+
+msgid "Bestands- und Lückenanalyse"
+msgstr "Holdings and gap analysis"
+
+msgid ""
+"Fehlende Typen, Varianten oder ganze Emissionsstufen innerhalb einer "
+"Sammlung systematisch sichtbar machen."
+msgstr ""
+"Systematically highlight missing types, variants, or entire emission phases "
+"within a collection."
+
+msgid "Eligius + Excel / CSV"
+msgstr "Eligius + Excel / CSV"
+
+msgid "Eigene Daten kontextualisieren"
+msgstr "Contextualize your own data"
+
+msgid ""
+"Eigene Fundlisten, Auktionsdaten oder Bestandsverzeichnisse mit "
+"verifizierten Eligius-Vergleichsstücken anreichern."
+msgstr ""
+"Enrich your own find lists, auction records, or inventories with verified "
+"comparison pieces from Eligius."
+
+msgid "Eligius + Epigraphik & Archäologie"
+msgstr "Eligius + epigraphy & archaeology"
+
+msgid "Interdisziplinäre Brücken"
+msgstr "Interdisciplinary bridges"
+
+msgid ""
+"Münzlegenden und Ikonographie mit Inschriftenkorpora, Grabungsberichten und "
+"historischen Zeitleisten verknüpfen."
+msgstr ""
+"Link coin legends and iconography with epigraphic corpora, excavation "
+"reports, and historical timelines."
+
+msgid "Eligius → Lehre & Publikation"
+msgstr "Eligius → teaching & publication"
+
+msgid "Tabellen, Grafiken & Vitrinen"
+msgstr "Tables, charts & exhibitions"
+
+msgid ""
+"Vergleichsmatrizen, Statistik-Übersichten und Katalogentwürfe im Gespräch "
+"erzeugen – immer mit stabilen Objekt-Links."
+msgstr ""
+"Generate comparison matrices, statistical overviews, and catalog drafts in "
+"conversation—always backed by stable object links."
+
+msgid "Direkt ausprobieren"
+msgstr "Try it yourself"
+
+msgid ""
+"Kopieren Sie eine der Aufgaben in Ihren verbundenen KI-Assistenten oder "
+"testen Sie WebMCP direkt auf einer geöffneten Eligius-Suchseite."
+msgstr ""
+"Copy one of the tasks into your connected AI assistant or try WebMCP "
+"directly on an open Eligius browse page."
+
+msgid ""
+"Vergleiche zwei Sammlungen in Eligius für das 2. Jahrhundert n. Chr. nach "
+"Münzstätten und Nominalen mit Prozentanteilen und nenne die größten "
+"Unterschiede."
+msgstr ""
+"Compare two collections in Eligius for the 2nd century AD by mint and "
+"denomination with percentages, and summarize the main differences."
+
+msgid ""
+"Analysiere die aktuell in Eligius geöffnete Auswahl: Welche Nominale kommen "
+"vor, welche fehlen im Vergleich zum Gesamtbestand und öffne das früheste "
+"Objekt."
+msgstr ""
+"Analyze the selection currently open in Eligius: which denominations appear,"
+" which are missing compared with the full collection, and open the earliest "
+"object."
+
+msgid "Wiener Schule · Remote MCP"
+msgstr "Vienna School · Remote MCP"
+
+msgid "Prägeskelett erstellen"
+msgstr "Build a coinage skeleton"
+
+msgid "Kopieren"
+msgstr "Copy"
+
+msgid "Bestände · Remote MCP"
+msgstr "Holdings · Remote MCP"
+
+msgid "Sammlungs-Fingerabdruck"
+msgstr "Collection fingerprint"
+
+msgid "Im Browser · WebMCP"
+msgstr "In the browser · WebMCP"
+
+msgid "Auswahl live auswerten"
+msgstr "Analyze selection live"
+
+msgid "Im eigenen KI-Assistenten nutzen (Remote MCP)"
+msgstr "Use in your own AI assistant (Remote MCP)"
+
+msgid ""
+"Ideal für umfangreiche Auswertungen, Prägeskelette und die Kombination mit "
+"externen Quellen oder eigenen Dateien."
+msgstr ""
+"Ideal for comprehensive analyses, coinage skeletons, and combining Eligius "
+"with external sources or your own files."
+
+msgid ""
+"Im KI-Client eine neue Remote-MCP-Verbindung (Streamable HTTP) anlegen und "
+"die Adresse unten eintragen."
+msgstr ""
+"Create a new Remote MCP connection (Streamable HTTP) in your AI client and "
+"enter the address below."
+
+msgid "Kein Eligius-Konto nötig – funktioniert auch ohne geöffnete Webseite."
+msgstr "No Eligius account needed—works even without the website open."
+
+msgid "Adresse kopieren"
+msgstr "Copy address"
+
+msgid "Direkt im Browser nutzen (WebMCP)"
+msgstr "Use directly in the browser (WebMCP)"
+
+msgid ""
+"Eligius in einem Browser mit nativer WebMCP-Unterstützung öffnen (der "
+"Standard befindet sich noch im Aufbau)."
+msgstr ""
+"Open Eligius in a browser with native WebMCP support (the standard is still "
+"under development)."
+
+msgid ""
+"Keine Serveradresse nötig – der Browser-Assistent erkennt die Werkzeuge "
+"automatisch auf der Seite."
+msgstr ""
+"No server address needed—the browser assistant detects the page tools "
+"automatically."
+
+msgid ""
+"Kann direkt aus Ihrer aktuellen Suchauswahl heraus filtern, Objekte öffnen "
+"und Zwischenbilanzen ziehen."
+msgstr ""
+"Can filter directly from your current search selection, open objects, and "
+"summarize findings."
+
+msgid "Verfügbare Werkzeuge (für Technik-Interessierte)"
+msgstr "Available tools (technical reference)"
+
+msgid "Hinweise zur wissenschaftlichen Nutzung & Grenzen"
+msgstr "Notes on scholarly use & limitations"
+
+msgid ""
+"Nur lesender Zugriff auf öffentliche Katalogdaten – weder KI noch WebMCP "
+"können Datensätze verändern."
+msgstr ""
+"Read-only access to public catalog data—neither AI assistants nor WebMCP can"
+" modify records."
+
+msgid ""
+"Navigation und Filter über WebMCP ändern nur Ihre eigene Browser-Ansicht."
+msgstr "Navigation and filters via WebMCP only change your own browser view."
+
+msgid ""
+"Prüfen Sie Interpretationen Ihres Assistenten immer anhand der verlinkten "
+"Originaldatensätze in Eligius."
+msgstr ""
+"Always verify your assistant’s interpretations against the linked original "
+"records in Eligius."

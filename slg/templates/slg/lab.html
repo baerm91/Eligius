@@ -4,27 +4,103 @@
 {% block stylesheets %}
 {{ block.super }}
 <style>
-  .lab { max-width: 980px; margin: 0 auto; padding: 56px 24px 80px; }
-  .lab .eyebrow { color: var(--accent, #f6b15d); letter-spacing: .14em; text-transform: uppercase; font-size: .8rem; }
-  .lab h1 { font-family: Georgia, serif; font-size: clamp(2.8rem, 7vw, 4.5rem); margin: 12px 0 20px; }
-  .lab h2 { font-family: Georgia, serif; font-size: 2.2rem; }
-  .lab p, .lab li, .lab td { line-height: 1.75; }
-  .lab .intro { max-width: 700px; font-size: 1.15rem; }
-  .lab section { border-top: 1px solid rgba(246,177,93,.25); padding: 32px 0; margin-top: 24px; }
-  .lab .endpoint { display: block; overflow-wrap: anywhere; padding: 20px; border: 1px solid rgba(246,177,93,.4); border-radius: 8px; margin: 16px 0; color: inherit; }
-  .lab .badge { display: inline-block; background: rgba(246,177,93,.12); border: 1px solid rgba(246,177,93,.35); padding: 7px 12px; border-radius: 24px; color: inherit; font-weight: 400; margin: 4px 6px 4px 0; }
-  .lab table { width: 100%; border-collapse: collapse; margin: 24px 0; }
-  .lab caption { caption-side: top; color: inherit; font-size: 1.2rem; padding: 12px 8px; }
-  .lab th, .lab td { text-align: left; padding: 12px 8px; border-bottom: 1px solid rgba(246,177,93,.15); vertical-align: top; }
+  .lab { max-width: 1040px; margin: 0 auto; padding: 52px 24px 84px; }
+  .lab .eyebrow { color: var(--accent, #f6b15d); letter-spacing: .14em; text-transform: uppercase; font-size: .8rem; margin: 0; }
+  .lab h1 { font-family: Georgia, serif; font-size: clamp(2.6rem, 6.5vw, 4.2rem); margin: 10px 0 16px; line-height: 1.08; }
+  .lab h2 { font-family: Georgia, serif; font-size: clamp(1.6rem, 3.2vw, 2.15rem); margin: 0 0 10px; }
+  .lab h3 { font-size: 1.08rem; font-weight: 600; margin: 0 0 8px; }
+  .lab p, .lab li, .lab td, .lab th { line-height: 1.65; }
+  .lab .intro { max-width: 720px; font-size: 1.12rem; margin: 0 0 28px; opacity: .92; }
+  .lab section { border-top: 1px solid rgba(246,177,93,.24); padding: 36px 0; margin-top: 28px; }
+  .lab .section-lead { max-width: 760px; margin: 0 0 22px; opacity: .88; }
   .lab code { color: var(--accent, #f6b15d); overflow-wrap: anywhere; }
-  .lab .future { display: flex; flex-wrap: wrap; gap: 12px; }
-  .lab .future span { border: 1px solid rgba(246,177,93,.2); padding: 12px 16px; border-radius: 6px; }
-  @media(max-width: 600px) {
-    .lab { padding: 32px 16px; }
-    .lab table, .lab tbody, .lab tr, .lab td { display: block; }
-    .lab thead { display: none; }
-    .lab tr { border-bottom: 1px solid rgba(246,177,93,.15); padding: 10px 0; }
-    .lab td { border: 0; padding: 4px; font-size: .9rem; }
+  .lab a.lab-link { color: var(--accent, #f6b15d); text-decoration: none; border-bottom: 1px solid rgba(246,177,93,.4); }
+  .lab a.lab-link:hover, .lab a.lab-link:focus-visible { border-bottom-color: var(--accent, #f6b15d); }
+
+  /* Contrast strip */
+  .lab-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 8px; }
+  .lab-card { background: rgba(255,255,255,.025); border: 1px solid rgba(246,177,93,.22); border-radius: 10px; padding: 18px 20px; }
+  .lab-card--accent { background: rgba(246,177,93,.06); border-color: rgba(246,177,93,.48); }
+  .lab-card ul { margin: 8px 0 0; padding-left: 18px; }
+  .lab-card li { margin: 4px 0; }
+  .lab-tag { display: inline-block; font-size: .76rem; letter-spacing: .06em; text-transform: uppercase; color: var(--accent, #f6b15d); margin-bottom: 6px; font-weight: 600; }
+
+  /* Tabs */
+  .lab-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .lab-tab { background: rgba(255,255,255,.03); color: inherit; border: 1px solid rgba(246,177,93,.3); border-radius: 999px; padding: 8px 16px; font-size: .92rem; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
+  .lab-tab:hover { border-color: rgba(246,177,93,.65); }
+  .lab-tab[aria-selected="true"] { background: rgba(246,177,93,.16); border-color: var(--accent, #f6b15d); color: var(--accent, #f6b15d); font-weight: 600; }
+  .lab-panel { border: 1px solid rgba(246,177,93,.28); border-radius: 12px; padding: 20px 22px; background: rgba(255,255,255,.02); }
+  .lab-panel[hidden] { display: none; }
+
+  /* Prompt bubble & flow */
+  .lab-prompt-box { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; background: rgba(246,177,93,.07); border: 1px solid rgba(246,177,93,.35); border-radius: 10px; padding: 16px 18px; }
+  .lab-prompt-text { margin: 0; font-style: italic; }
+  .lab-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+  .lab-flow-step { border: 1px dashed rgba(246,177,93,.28); border-radius: 8px; padding: 12px 14px; font-size: .92rem; }
+  .lab-flow-step strong { display: block; color: var(--accent, #f6b15d); margin-bottom: 4px; font-size: .84rem; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* Praegeskelett matrix */
+  .lab-matrix-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 12px; }
+  .lab-matrix-meta { font-size: .88rem; opacity: .82; }
+  .lab-matrix-wrap { overflow-x: auto; border: 1px solid rgba(246,177,93,.22); border-radius: 8px; }
+  .lab-matrix { width: 100%; min-width: 680px; border-collapse: collapse; margin: 0; font-size: .93rem; }
+  .lab-matrix th, .lab-matrix td { text-align: left; padding: 11px 12px; border-bottom: 1px solid rgba(246,177,93,.14); vertical-align: top; }
+  .lab-matrix thead th { background: rgba(246,177,93,.1); color: var(--accent, #f6b15d); font-weight: 600; font-size: .84rem; letter-spacing: .04em; text-transform: uppercase; }
+  .lab-matrix tbody tr:last-child td { border-bottom: 0; }
+  .lab-matrix-gap td { opacity: .68; font-style: italic; background: rgba(255,255,255,.015); }
+  .lab-metal { display: inline-block; font-size: .72rem; border: 1px solid rgba(246,177,93,.4); border-radius: 4px; padding: 1px 6px; margin-left: 4px; color: var(--accent, #f6b15d); font-style: normal; vertical-align: middle; }
+  .lab-legend { font-family: Georgia, serif; letter-spacing: .02em; font-size: .9rem; display: block; }
+  .lab-note-inline { display: block; font-size: .82rem; opacity: .78; margin-top: 2px; }
+  .lab-count { display: inline-block; font-weight: 600; color: var(--accent, #f6b15d); margin-bottom: 4px; }
+  .lab-refs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .lab-ref-pill { display: inline-block; font-size: .82rem; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(246,177,93,.35); color: var(--accent, #f6b15d); text-decoration: none; }
+  .lab-ref-pill:hover, .lab-ref-pill:focus-visible { background: rgba(246,177,93,.14); }
+  .lab-insight { margin-top: 14px; padding: 12px 16px; border-left: 3px solid var(--accent, #f6b15d); background: rgba(246,177,93,.06); border-radius: 0 8px 8px 0; font-size: .94rem; }
+
+  /* Extension grids & prompt cards */
+  .lab-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .lab-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .lab-prompt-card { display: flex; flex-direction: column; justify-content: space-between; gap: 12px; background: rgba(255,255,255,.025); border: 1px solid rgba(246,177,93,.22); border-radius: 10px; padding: 18px; }
+  .lab-prompt-card p { margin: 6px 0 0; font-size: .93rem; opacity: .9; }
+
+  /* Copy buttons */
+  .lab-btn { flex-shrink: 0; background: rgba(246,177,93,.12); color: var(--accent, #f6b15d); border: 1px solid rgba(246,177,93,.45); border-radius: 6px; padding: 6px 12px; font-size: .84rem; cursor: pointer; align-self: flex-start; }
+  .lab-btn:hover, .lab-btn:focus-visible { background: rgba(246,177,93,.22); }
+
+  /* Badges & collapsible details */
+  .lab-badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 20px; }
+  .lab .badge { display: inline-block; background: rgba(246,177,93,.12); border: 1px solid rgba(246,177,93,.35); padding: 6px 12px; border-radius: 24px; color: inherit; font-weight: 400; font-size: .88rem; }
+  .lab-details { border: 1px solid rgba(246,177,93,.25); border-radius: 10px; padding: 0 18px; margin-bottom: 12px; background: rgba(255,255,255,.02); }
+  .lab-details summary { cursor: pointer; padding: 15px 0; font-weight: 600; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .lab-details summary::-webkit-details-marker { display: none; }
+  .lab-details summary::after { content: "+"; color: var(--accent, #f6b15d); font-size: 1.25rem; line-height: 1; font-weight: 400; }
+  .lab-details[open] summary::after { content: "−"; }
+  .lab-details-body { border-top: 1px solid rgba(246,177,93,.16); padding: 14px 0 18px; }
+  .lab-details-body ul { margin: 0; padding-left: 18px; }
+  .lab-details-body li { margin: 6px 0; }
+  .lab-endpoint-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 14px 0 10px; }
+  .lab .endpoint { flex: 1 1 280px; display: block; overflow-wrap: anywhere; padding: 12px 16px; border: 1px solid rgba(246,177,93,.4); border-radius: 8px; margin: 0; color: var(--accent, #f6b15d); background: rgba(0,0,0,.22); }
+  .lab-status-note { margin: 12px 0 0; padding: 10px 14px; border-radius: 8px; background: rgba(246,177,93,.08); border: 1px solid rgba(246,177,93,.28); font-size: .92rem; }
+
+  /* Tools table & future strip */
+  .lab-tools-table { width: 100%; border-collapse: collapse; margin: 4px 0; }
+  .lab-tools-table caption { caption-side: top; color: inherit; font-size: .95rem; opacity: .82; padding: 4px 0 10px; text-align: left; }
+  .lab-tools-table th, .lab-tools-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid rgba(246,177,93,.15); vertical-align: top; }
+  .lab-tools-table tr:last-child td { border-bottom: 0; }
+  .lab .future { display: flex; flex-wrap: wrap; gap: 10px; }
+  .lab .future span { border: 1px solid rgba(246,177,93,.24); padding: 10px 14px; border-radius: 6px; font-size: .92rem; }
+
+  @media (max-width: 820px) {
+    .lab-compare, .lab-grid-2, .lab-grid-3, .lab-flow { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .lab { padding: 32px 16px 64px; }
+    .lab-prompt-box { flex-direction: column; }
+    .lab-tools-table, .lab-tools-table tbody, .lab-tools-table tr, .lab-tools-table td { display: block; }
+    .lab-tools-table thead { display: none; }
+    .lab-tools-table tr { border-bottom: 1px solid rgba(246,177,93,.15); padding: 8px 0; }
+    .lab-tools-table td { border: 0; padding: 3px 0; font-size: .92rem; }
   }
 </style>
 {% endblock %}
@@ -32,54 +108,411 @@
 <main class="lab">
   <p class="eyebrow">{% translate "Sammlungen digital erkunden" %}</p>
   <h1>Eligius Lab</h1>
-  <p class="intro">{% translate "Ein Ort für neue Zugänge zu Eligius: digitale Werkzeuge, Schnittstellen und Ideen für die numismatische Forschung." %}</p>
+  <p class="intro">{% translate "Im Eligius Lab öffnen wir die Sammlung für KI-Assistenten – für Forschungsfragen, die über eine klassische Suchmaske hinausgehen." %}</p>
+
+  <div class="lab-compare" aria-label="{% translate 'Unterschied zwischen Webseite und KI-Zugang' %}">
+    <div class="lab-card">
+      <span class="lab-tag">{% translate "Normale Webseite" %}</span>
+      <h3>{% translate "Suchen und Blättern" %}</h3>
+      <ul>
+        <li>{% translate "Filter Schritt für Schritt kombinieren" %}</li>
+        <li>{% translate "Trefferlisten und einzelne Münzen prüfen" %}</li>
+        <li>{% translate "Feste Ansicht pro Abfrage" %}</li>
+      </ul>
+    </div>
+    <div class="lab-card lab-card--accent">
+      <span class="lab-tag">{% translate "Eligius + KI (MCP & WebMCP)" %}</span>
+      <h3>{% translate "Strukturen und Muster erkennen" %}</h3>
+      <ul>
+        <li>{% translate "Mehrstufige Fragen in einem Durchgang auswerten" %}</li>
+        <li>{% translate "Nominale, Legenden und Lücken direkt gruppieren" %}</li>
+        <li>{% translate "Eligius-Bestände mit externen Quellen verknüpfen" %}</li>
+      </ul>
+    </div>
+  </div>
+
+  <section aria-labelledby="showcase-hadrian">
+    <h2 id="showcase-hadrian">{% translate "Beispiel: Prägeskelett für Hadrianus (Wiener Schule)" %}</h2>
+    <p class="section-lead">{% translate "Wie war die Münzprägung strukturiert? Aus 118 öffentlichen Hadrianus-Prägungen der Münzstätte Rom (119–121 n. Chr., COS III) rekonstruiert ein KI-Assistent über MCP oder WebMCP ein systematisches Prägeskelett samt Bestandsbelegen." %}</p>
+
+    {% translate "Rekonstruiere aus Eligius ein Prägeskelett nach der Wiener Schule für Hadrianus aus Rom (119–121 n. Chr.): gruppiert nach Nominal, Avers-Legende, Revers-Legende und Motiv, mit Stückzahlen, verlinkten Beispielobjekten und sichtbaren Lücken." as prompt_hadrian_skeleton %}
+
+    <div class="lab-tabs" role="tablist" aria-label="{% translate 'Ansichten zum Prägeskelett-Beispiel' %}">
+      <button type="button" class="lab-tab" role="tab" id="tab-question" aria-controls="panel-question" aria-selected="false" data-lab-tab="question">{% translate "1. Forschungsfrage" %}</button>
+      <button type="button" class="lab-tab" role="tab" id="tab-skeleton" aria-controls="panel-skeleton" aria-selected="true" data-lab-tab="skeleton">{% translate "2. Prägeskelett (Eligius)" %}</button>
+      <button type="button" class="lab-tab" role="tab" id="tab-extend" aria-controls="panel-extend" aria-selected="false" data-lab-tab="extend">{% translate "3. Mit Quellen erweitern" %}</button>
+    </div>
+
+    <div class="lab-panel" role="tabpanel" id="panel-question" aria-labelledby="tab-question" data-lab-panel="question" hidden>
+      <div class="lab-prompt-box">
+        <p class="lab-prompt-text">„{{ prompt_hadrian_skeleton }}“</p>
+        <button type="button" class="lab-btn" data-copy-text="{{ prompt_hadrian_skeleton }}" data-copied-label="{% translate 'Kopiert' %}">{% translate "Prompt kopieren" %}</button>
+      </div>
+      <div class="lab-flow">
+        <div class="lab-flow-step">
+          <strong>{% translate "Schritt 1 · Sammeln" %}</strong>
+          {% translate "Assistent lädt alle passenden Hadrianus-Objekte aus Rom (119–121) mit WebMCP oder Remote MCP." %}
+        </div>
+        <div class="lab-flow-step">
+          <strong>{% translate "Schritt 2 · Ordnen" %}</strong>
+          {% translate "Gruppierung nach Metall, Nominal und der Verteilung der Kaisertitulatur auf Avers und Revers." %}
+        </div>
+        <div class="lab-flow-step">
+          <strong>{% translate "Schritt 3 · Prüfen" %}</strong>
+          {% translate "Ausgabe als übersichtliche Matrix – jedes Feld verweist direkt auf echte Eligius-Datensätze." %}
+        </div>
+      </div>
+    </div>
+
+    <div class="lab-panel" role="tabpanel" id="panel-skeleton" aria-labelledby="tab-skeleton" data-lab-panel="skeleton">
+      <div class="lab-matrix-head">
+        <strong>{% translate "Hadrianus · Rom · ca. 119–121 n. Chr. (COS III)" %}</strong>
+        <span class="lab-matrix-meta">{% translate "Datenbasis: 118 Eligius-Objekte (inkl. 1 unbestimmtes Nominal)" %}</span>
+      </div>
+      <div class="lab-matrix-wrap">
+        <table class="lab-matrix">
+          <thead>
+            <tr>
+              <th scope="col">{% translate "Nominal" %}</th>
+              <th scope="col">{% translate "Avers-Legende (Schwerpunkt)" %}</th>
+              <th scope="col">{% translate "Revers-Legenden & Motive" %}</th>
+              <th scope="col">{% translate "Belege in Eligius" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="lab-matrix-gap">
+              <td>Aureus <span class="lab-metal">Au</span></td>
+              <td>—</td>
+              <td>{% translate "Im aktuellen Eligius-Bestand nicht belegt (Desiderat)" %}</td>
+              <td>0 {% translate "Stk." %}</td>
+            </tr>
+            <tr>
+              <td>Denar <span class="lab-metal">Ar</span></td>
+              <td>
+                <span class="lab-legend">IMP CAESAR TRAIAN HADRIANVS AVG</span>
+                <span class="lab-note-inline">{% translate "Kurzform → Titulatur wandert auf den Revers" %}</span>
+              </td>
+              <td>
+                <code>P M TR P COS III</code>:
+                {% translate "Aequitas, Victoria, Fortuna" %}
+              </td>
+              <td>
+                <span class="lab-count">20 {% translate "Stk." %}</span>
+                <div class="lab-refs">
+                  <a class="lab-ref-pill" href="/objekt/4747/" target="_blank" rel="noopener">#4747 · RIC II.3 386</a>
+                  <a class="lab-ref-pill" href="/objekt/9095/" target="_blank" rel="noopener">#9095 · RIC II.3 397</a>
+                  <a class="lab-ref-pill" href="/objekt/24112/" target="_blank" rel="noopener">#24112 · RIC II.3 394</a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Quinarius <span class="lab-metal">Ar</span></td>
+              <td>
+                <span class="lab-legend">IMP CAESAR TRAIAN HADRIANVS AVG</span>
+                <span class="lab-note-inline">{% translate "Kurzform wie beim Denar" %}</span>
+              </td>
+              <td>
+                <code>P M TR P COS III</code>:
+                {% translate "Victoria (gehend, sitzend, stehend)" %}
+              </td>
+              <td>
+                <span class="lab-count">17 {% translate "Stk." %}</span>
+                <div class="lab-refs">
+                  <a class="lab-ref-pill" href="/objekt/9184/" target="_blank" rel="noopener">#9184 · RIC II.3 330A2</a>
+                  <a class="lab-ref-pill" href="/objekt/46243/" target="_blank" rel="noopener">#46243 · RIC II.3 338</a>
+                  <a class="lab-ref-pill" href="/objekt/47315/" target="_blank" rel="noopener">#47315 · RIC II.3 348</a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Sestertius <span class="lab-metal">Ae</span></td>
+              <td>
+                <span class="lab-legend">IMP CAESAR TRAIANVS HADRIANVS AVG P M TR P COS III</span>
+                <span class="lab-note-inline">{% translate "Langform → Raum für Programm-Legenden im Revers" %}</span>
+              </td>
+              <td>
+                <code>MONETA AVGVSTI</code> (Moneta), <code>LIBERTAS PVBLICA</code> (Libertas),
+                {% translate "ab 121 auch" %} <code>P M TR P COS III</code> (Spes)
+              </td>
+              <td>
+                <span class="lab-count">27 {% translate "Stk." %}</span>
+                <div class="lab-refs">
+                  <a class="lab-ref-pill" href="/objekt/1554/" target="_blank" rel="noopener">#1554 · RIC II.3 433</a>
+                  <a class="lab-ref-pill" href="/objekt/96/" target="_blank" rel="noopener">#96 · RIC II.3 422</a>
+                  <a class="lab-ref-pill" href="/objekt/110/" target="_blank" rel="noopener">#110 · RIC II.3 679</a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Dupondius <span class="lab-metal">Ae</span></td>
+              <td>
+                <span class="lab-legend">IMP CAESAR TRAIANVS HADRIANVS AVG P M TR P COS III</span>
+                <span class="lab-note-inline">{% translate "Langform parallel zum Sestertius" %}</span>
+              </td>
+              <td>
+                <code>SALVS PVBLICA</code> (Salus), <code>VIRTVTI AVGVSTI</code> (Virtus)
+              </td>
+              <td>
+                <span class="lab-count">21 {% translate "Stk." %}</span>
+                <div class="lab-refs">
+                  <a class="lab-ref-pill" href="/objekt/46761/" target="_blank" rel="noopener">#46761 · RIC II.3 276</a>
+                  <a class="lab-ref-pill" href="/objekt/47529/" target="_blank" rel="noopener">#47529 · RIC II.3 278</a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>As <span class="lab-metal">Ae</span></td>
+              <td>
+                <span class="lab-legend">IMP CAESAR TRAIAN HADRIANVS AVG</span>
+                <span class="lab-note-inline">{% translate "Kurzform → Titulatur im Revers" %}</span>
+              </td>
+              <td>
+                <code>P M TR P COS III</code> (Pax), <code>PONT MAX TR POT COS III</code> (Felicitas)
+              </td>
+              <td>
+                <span class="lab-count">32 {% translate "Stk." %}</span>
+                <div class="lab-refs">
+                  <a class="lab-ref-pill" href="/objekt/43038/" target="_blank" rel="noopener">#43038 · RIC II.3 673</a>
+                  <a class="lab-ref-pill" href="/objekt/4757/" target="_blank" rel="noopener">#4757 · RIC II.3 248</a>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="lab-insight">
+        <strong>{% translate "Auf einen Blick:" %}</strong>
+        {% translate "Das Skelett zeigt sofort die Systematik der Emission: Auf Denaren, Quinaren und Assen verdrängt die kurze Avers-Legende die Titulatur auf den Revers (P M TR P COS III). Auf großen Bronzen (Sestertius, Dupondius) steht die volle Titulatur auf dem Avers – und macht den Revers frei für politische Programmbotschaften wie MONETA AVGVSTI oder LIBERTAS PVBLICA." %}
+      </div>
+    </div>
+
+    <div class="lab-panel" role="tabpanel" id="panel-extend" aria-labelledby="tab-extend" data-lab-panel="extend" hidden>
+      <div class="lab-grid-3">
+        <div class="lab-card">
+          <span class="lab-tag">Eligius + OCRE / RIC</span>
+          <h3>{% translate "Lücken im Typencorpus" %}</h3>
+          <p>{% translate "Gleichen Sie das Hadrianus-Skelett mit RIC II.3 oder OCRE ab: Welche Emissionen fehlen in den österreichischen Sammlungen, etwa bei Gold- oder Sonderprägungen?" %}</p>
+        </div>
+        <div class="lab-card">
+          <span class="lab-tag">{% translate "Eligius + eigene Listen" %}</span>
+          <h3>{% translate "Fundmünzen einordnen" %}</h3>
+          <p>{% translate "Spiegeln Sie Ihre eigenen Grabungs- oder Sammlungstabellen gegen den Eligius-Bestand, um auffällige Häufungen von Denaren, Sesterzen oder Assen zu erkennen." %}</p>
+        </div>
+        <div class="lab-card">
+          <span class="lab-tag">{% translate "Eligius + Epigraphik" %}</span>
+          <h3>{% translate "Titulatur & Geschichte" %}</h3>
+          <p>{% translate "Verbinden Sie den Wechsel von P M TR P COS III zu COS III P P mit Inschriften, Bauprogrammen und Hadrians Reisen aus externen Geschichts- oder Fachquellen." %}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="build-on-eligius">
+    <h2 id="build-on-eligius">{% translate "Darauf aufbauen – Eligius-Daten neu verwenden" %}</h2>
+    <p class="section-lead">{% translate "Über die offene Schnittstelle lassen sich Eligius-Bestände direkt mit weiteren Ressourcen und Werkzeugen weiterverarbeiten." %}</p>
+    <div class="lab-grid-2">
+      <div class="lab-card">
+        <span class="lab-tag">Eligius + OCRE / RIC / Nomisma</span>
+        <h3>{% translate "Bestands- und Lückenanalyse" %}</h3>
+        <p>{% translate "Fehlende Typen, Varianten oder ganze Emissionsstufen innerhalb einer Sammlung systematisch sichtbar machen." %}</p>
+      </div>
+      <div class="lab-card">
+        <span class="lab-tag">{% translate "Eligius + Excel / CSV" %}</span>
+        <h3>{% translate "Eigene Daten kontextualisieren" %}</h3>
+        <p>{% translate "Eigene Fundlisten, Auktionsdaten oder Bestandsverzeichnisse mit verifizierten Eligius-Vergleichsstücken anreichern." %}</p>
+      </div>
+      <div class="lab-card">
+        <span class="lab-tag">{% translate "Eligius + Epigraphik & Archäologie" %}</span>
+        <h3>{% translate "Interdisziplinäre Brücken" %}</h3>
+        <p>{% translate "Münzlegenden und Ikonographie mit Inschriftenkorpora, Grabungsberichten und historischen Zeitleisten verknüpfen." %}</p>
+      </div>
+      <div class="lab-card">
+        <span class="lab-tag">{% translate "Eligius → Lehre & Publikation" %}</span>
+        <h3>{% translate "Tabellen, Grafiken & Vitrinen" %}</h3>
+        <p>{% translate "Vergleichsmatrizen, Statistik-Übersichten und Katalogentwürfe im Gespräch erzeugen – immer mit stabilen Objekt-Links." %}</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="try-prompts">
+    <h2 id="try-prompts">{% translate "Direkt ausprobieren" %}</h2>
+    <p class="section-lead">{% translate "Kopieren Sie eine der Aufgaben in Ihren verbundenen KI-Assistenten oder testen Sie WebMCP direkt auf einer geöffneten Eligius-Suchseite." %}</p>
+
+    {% translate "Vergleiche zwei Sammlungen in Eligius für das 2. Jahrhundert n. Chr. nach Münzstätten und Nominalen mit Prozentanteilen und nenne die größten Unterschiede." as prompt_compare %}
+    {% translate "Analysiere die aktuell in Eligius geöffnete Auswahl: Welche Nominale kommen vor, welche fehlen im Vergleich zum Gesamtbestand und öffne das früheste Objekt." as prompt_webmcp_browse %}
+
+    <div class="lab-grid-3">
+      <div class="lab-prompt-card">
+        <div>
+          <span class="lab-tag">{% translate "Wiener Schule · Remote MCP" %}</span>
+          <h3>{% translate "Prägeskelett erstellen" %}</h3>
+          <p>„{{ prompt_hadrian_skeleton }}“</p>
+        </div>
+        <button type="button" class="lab-btn" data-copy-text="{{ prompt_hadrian_skeleton }}" data-copied-label="{% translate 'Kopiert' %}">{% translate "Kopieren" %}</button>
+      </div>
+      <div class="lab-prompt-card">
+        <div>
+          <span class="lab-tag">{% translate "Bestände · Remote MCP" %}</span>
+          <h3>{% translate "Sammlungs-Fingerabdruck" %}</h3>
+          <p>„{{ prompt_compare }}“</p>
+        </div>
+        <button type="button" class="lab-btn" data-copy-text="{{ prompt_compare }}" data-copied-label="{% translate 'Kopiert' %}">{% translate "Kopieren" %}</button>
+      </div>
+      <div class="lab-prompt-card">
+        <div>
+          <span class="lab-tag">{% translate "Im Browser · WebMCP" %}</span>
+          <h3>{% translate "Auswahl live auswerten" %}</h3>
+          <p>„{{ prompt_webmcp_browse }}“</p>
+        </div>
+        <button type="button" class="lab-btn" data-copy-text="{{ prompt_webmcp_browse }}" data-copied-label="{% translate 'Kopiert' %}">{% translate "Kopieren" %}</button>
+      </div>
+    </div>
+  </section>
 
   <section aria-labelledby="connect-ai">
     <h2 id="connect-ai">{% translate "KI-Assistenten verbinden" %}</h2>
-    <p>{% translate "Verbinden Sie Eligius mit Ihrem eigenen KI-Assistenten. So können Sie Münzen suchen, Sammlungen erkunden und Bestände vergleichen – im Gespräch und mit Links zu den Originaldatensätzen." %}</p>
-    <p>{% translate "Zwei Wege führen zu denselben öffentlichen Sammlungsdaten: eine direkte Verbindung für Ihren KI-Assistenten und Werkzeuge für die geöffnete Webseite." %}</p>
-    <span class="badge">{% translate "Read-only · nur lesender Zugriff" %}</span>
-    <span class="badge">{% translate "Öffentliche Eligius-Daten" %}</span>
-    <span class="badge">{% if mcp_enabled %}{% translate "Development · verfügbar" %}{% else %}{% translate "In Vorbereitung" %}{% endif %}</span>
+    <div class="lab-badges">
+      <span class="badge">{% translate "Read-only · nur lesender Zugriff" %}</span>
+      <span class="badge">{% translate "Öffentliche Eligius-Daten" %}</span>
+      <span class="badge">{% if mcp_enabled %}{% translate "Development · verfügbar" %}{% else %}{% translate "In Vorbereitung" %}{% endif %}</span>
+    </div>
 
-    <h3 style="margin-top: 28px">{% translate "Remote MCP · direkt mit Ihrem KI-Assistenten" %}</h3>
-    <p>{% translate "Für Recherche, Datenanalyse und Sammlungsvergleiche. Diese Verbindung funktioniert auch dann, wenn Sie keine Eligius-Seite geöffnet haben." %}</p>
-    <p>{% translate "Wählen Sie in einem KI-Client mit Unterstützung für Remote-MCP eine neue Verbindung und tragen Sie diese Adresse ein. Der Client muss Streamable HTTP unterstützen. Für den öffentlichen Zugang benötigen Sie kein Eligius-Konto." %}</p>
-    <code class="endpoint">{{ mcp_endpoint }}</code>
-    <p>{% translate "Die Bezeichnung und Einrichtung der Verbindung unterscheiden sich je nach KI-Client. Ihr Assistent wählt die passenden Werkzeuge und Filter selbst aus." %}</p>
+    <details class="lab-details">
+      <summary>{% translate "Im eigenen KI-Assistenten nutzen (Remote MCP)" %}</summary>
+      <div class="lab-details-body">
+        <ul>
+          <li>{% translate "Ideal für umfangreiche Auswertungen, Prägeskelette und die Kombination mit externen Quellen oder eigenen Dateien." %}</li>
+          <li>{% translate "Im KI-Client eine neue Remote-MCP-Verbindung (Streamable HTTP) anlegen und die Adresse unten eintragen." %}</li>
+          <li>{% translate "Kein Eligius-Konto nötig – funktioniert auch ohne geöffnete Webseite." %}</li>
+        </ul>
+        <div class="lab-endpoint-row">
+          <code class="endpoint" id="mcp-endpoint">{{ mcp_endpoint }}</code>
+          <button type="button" class="lab-btn" data-copy-target="mcp-endpoint" data-copied-label="{% translate 'Kopiert' %}">{% translate "Adresse kopieren" %}</button>
+        </div>
+      </div>
+    </details>
 
-    <h3 style="margin-top: 28px">{% translate "WebMCP · gemeinsam im Browser" %}</h3>
-    <p>{% translate "Ein unterstützter Browser-Assistent kann auf der geöffneten Eligius-Seite recherchieren, die normale Objektsuche filtern und Objekte, Münztypen oder Sammlungen öffnen. Er kann auch Ihre aktuelle Auswahl für Folgefragen verwenden." %}</p>
-    <p>{% translate "Öffnen Sie Eligius in einem Browser mit nativer WebMCP-Unterstützung und nutzen Sie dessen Assistenten. Eine zusätzliche Verbindung mit einer Serveradresse ist dafür nicht nötig. Die Browserunterstützung befindet sich noch in Entwicklung." %}</p>
-    <p id="webmcp-status" role="status">{% if webmcp_enabled %}{% translate "Die Verfügbarkeit hängt von Ihrem Browser ab." %}{% else %}{% translate "WebMCP ist auf diesem Server noch nicht aktiviert." %}{% endif %}</p>
-    <p>{% translate "Zum Beispiel: „Öffne Münze 46736“, „Zeige mir die Sammlung Heiligenkreuz“ oder „Welche Nominale kommen in dieser Auswahl vor?“ Navigation und Filter ändern nur Ihre Ansicht, keine Katalogdaten." %}</p>
+    <details class="lab-details">
+      <summary>{% translate "Direkt im Browser nutzen (WebMCP)" %}</summary>
+      <div class="lab-details-body">
+        <ul>
+          <li>{% translate "Eligius in einem Browser mit nativer WebMCP-Unterstützung öffnen (der Standard befindet sich noch im Aufbau)." %}</li>
+          <li>{% translate "Keine Serveradresse nötig – der Browser-Assistent erkennt die Werkzeuge automatisch auf der Seite." %}</li>
+          <li>{% translate "Kann direkt aus Ihrer aktuellen Suchauswahl heraus filtern, Objekte öffnen und Zwischenbilanzen ziehen." %}</li>
+        </ul>
+        <p id="webmcp-status" class="lab-status-note" role="status">{% if webmcp_enabled %}{% translate "Die Verfügbarkeit hängt von Ihrem Browser ab." %}{% else %}{% translate "WebMCP ist auf diesem Server noch nicht aktiviert." %}{% endif %}</p>
+      </div>
+    </details>
 
-    <table>
-      <caption>{% translate "Gemeinsame Recherchewerkzeuge" %}</caption>
-      <thead><tr><th scope="col">{% translate "Werkzeug" %}</th><th scope="col">{% translate "Damit können Sie …" %}</th></tr></thead>
-      <tbody>
-        <tr><td><code>search_objects</code></td><td>{% translate "Münzen mit denselben Filtern wie in der Objektsuche finden." %}</td></tr>
-        <tr><td><code>get_object</code></td><td>{% translate "Details zu einem einzelnen Objekt aufrufen." %}</td></tr>
-        <tr><td><code>get_facets</code></td><td>{% translate "Vertretene Prägeherren, Münzstätten und andere Merkmale erkunden." %}</td></tr>
-        <tr><td><code>get_distribution</code></td><td>{% translate "Häufigkeiten und Prozentanteile für Sammlungsvergleiche abfragen." %}</td></tr>
-        <tr><td><code>get_statistics</code></td><td>{% translate "Umfang, Datierung und weitere Kennzahlen eines Bestands ermitteln." %}</td></tr>
-      </tbody>
-    </table>
-    <h3>{% translate "Probieren Sie zum Beispiel" %}</h3>
-    <ul>
-      <li>{% translate "„Zeige mir alle Münzen des Valens aus Siscia.“" %}</li>
-      <li>{% translate "„Welche Nominale kommen bei Valens in Siscia vor?“" %}</li>
-      <li>{% translate "„Welche Münztypen des Pescennius Niger befinden sich in Eligius?“" %}</li>
-      <li>{% translate "„Vergleiche zwei Sammlungen nach Prägeherren und Münzstätten – mit Prozentanteilen.“" %}</li>
-    </ul>
-    <p>{% translate "Die Verbindung kann Daten lesen, aber keine Datensätze bearbeiten. Prüfen Sie Interpretationen Ihres Assistenten anhand der verlinkten Quellen." %}</p>
+    <details class="lab-details">
+      <summary>{% translate "Verfügbare Werkzeuge (für Technik-Interessierte)" %}</summary>
+      <div class="lab-details-body">
+        <table class="lab-tools-table">
+          <caption>{% translate "Gemeinsame Recherchewerkzeuge" %}</caption>
+          <thead><tr><th scope="col">{% translate "Werkzeug" %}</th><th scope="col">{% translate "Damit können Sie …" %}</th></tr></thead>
+          <tbody>
+            <tr><td><code>search_objects</code></td><td>{% translate "Münzen mit denselben Filtern wie in der Objektsuche finden." %}</td></tr>
+            <tr><td><code>get_object</code></td><td>{% translate "Details zu einem einzelnen Objekt aufrufen." %}</td></tr>
+            <tr><td><code>get_facets</code></td><td>{% translate "Vertretene Prägeherren, Münzstätten und andere Merkmale erkunden." %}</td></tr>
+            <tr><td><code>get_distribution</code></td><td>{% translate "Häufigkeiten und Prozentanteile für Sammlungsvergleiche abfragen." %}</td></tr>
+            <tr><td><code>get_statistics</code></td><td>{% translate "Umfang, Datierung und weitere Kennzahlen eines Bestands ermitteln." %}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <details class="lab-details">
+      <summary>{% translate "Hinweise zur wissenschaftlichen Nutzung & Grenzen" %}</summary>
+      <div class="lab-details-body">
+        <ul>
+          <li>{% translate "Nur lesender Zugriff auf öffentliche Katalogdaten – weder KI noch WebMCP können Datensätze verändern." %}</li>
+          <li>{% translate "Navigation und Filter über WebMCP ändern nur Ihre eigene Browser-Ansicht." %}</li>
+          <li>{% translate "Prüfen Sie Interpretationen Ihres Assistenten immer anhand der verlinkten Originaldatensätze in Eligius." %}</li>
+        </ul>
+      </div>
+    </details>
   </section>
 
   <section aria-labelledby="future-tools">
     <h2 id="future-tools">{% translate "Raum für weitere Werkzeuge" %}</h2>
-    <p>{% translate "Diese Bereiche sind als mögliche Erweiterungen vorgesehen und noch nicht verfügbar." %}</p>
+    <p class="section-lead">{% translate "Diese Bereiche sind als mögliche Erweiterungen vorgesehen und noch nicht verfügbar." %}</p>
     <div class="future"><span>API</span><span>{% translate "Forschungswerkzeuge" %}</span>
       <span>{% translate "Datenexport" %}</span><span>{% translate "Experimentelle Werkzeuge" %}</span></div>
   </section>
 </main>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+(() => {
+  'use strict';
+
+  const tabs = Array.from(document.querySelectorAll('[data-lab-tab]'));
+  const panels = Array.from(document.querySelectorAll('[data-lab-panel]'));
+
+  function activateTab(targetName, focusTab) {
+    for (const tab of tabs) {
+      const active = tab.dataset.labTab === targetName;
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      tab.tabIndex = active ? 0 : -1;
+      if (active && focusTab) tab.focus();
+    }
+    for (const panel of panels) {
+      panel.hidden = panel.dataset.labPanel !== targetName;
+    }
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.tabIndex = tab.getAttribute('aria-selected') === 'true' ? 0 : -1;
+    tab.addEventListener('click', () => activateTab(tab.dataset.labTab, false));
+    tab.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+      event.preventDefault();
+      const step = event.key === 'ArrowRight' ? 1 : -1;
+      const next = tabs[(index + step + tabs.length) % tabs.length];
+      activateTab(next.dataset.labTab, true);
+    });
+  });
+
+  async function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    const helper = document.createElement('textarea');
+    helper.value = text;
+    helper.setAttribute('readonly', '');
+    helper.style.position = 'fixed';
+    helper.style.opacity = '0';
+    document.body.appendChild(helper);
+    helper.select();
+    const ok = document.execCommand('copy');
+    helper.remove();
+    return ok;
+  }
+
+  document.querySelectorAll('[data-copy-text], [data-copy-target]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const targetId = button.getAttribute('data-copy-target');
+      const text = targetId
+        ? (document.getElementById(targetId)?.textContent || '').trim()
+        : (button.getAttribute('data-copy-text') || '');
+      if (!text) return;
+      if (!button.dataset.origLabel) button.dataset.origLabel = button.textContent;
+      try {
+        const ok = await copyText(text);
+        if (!ok) return;
+        button.textContent = button.getAttribute('data-copied-label') || 'Kopiert';
+        clearTimeout(button._copyTimer);
+        button._copyTimer = setTimeout(() => {
+          button.textContent = button.dataset.origLabel;
+        }, 1800);
+      } catch (_) {
+        /* Ignore clipboard permission rejections silently. */
+      }
+    });
+  });
+})();
+</script>
 {% endblock %}
