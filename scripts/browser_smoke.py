@@ -176,12 +176,15 @@ class BrowserSmokeTests(Fixtures, StaticLiveServerTestCase):
         self.page.keyboard.press('Enter')
         dialog = self.page.locator('.lg-outer[role="dialog"]')
         expect(dialog).to_be_visible()
+        expect(self.page.locator('.site-wrap')).to_have_js_property('inert', True)
+        expect(self.page.locator('.detail-feedback-btn')).to_be_hidden()
         close = dialog.locator('.lg-close')
         expect(close).to_be_focused()
         expect(dialog.get_by_role('img', name=re.compile(r'^Avers:'))).to_have_count(1)
         expect(dialog.get_by_role('link', name='Bild herunterladen')).to_be_visible()
         self.page.keyboard.press('Enter')
         expect(dialog).to_have_count(0)
+        expect(self.page.locator('.site-wrap')).to_have_js_property('inert', False)
         expect(trigger).to_be_focused()
 
     def test_staff_motif_statistics_load(self):

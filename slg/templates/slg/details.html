@@ -879,6 +879,7 @@
     <script type="text/javascript">
         $(document).ready(function(e){
             const gallery = $('#captions');
+            const pageContent = document.querySelector('.site-wrap');
             let trigger;
             if (!gallery.length) return;
             gallery[0].addEventListener('click', event => {
@@ -896,6 +897,7 @@
                 dialog.setAttribute('role', 'dialog');
                 dialog.setAttribute('aria-modal', 'true');
                 dialog.setAttribute('aria-label', '{% translate "Münzbilder" as gallery_label %}{{ gallery_label|escapejs }}');
+                pageContent.inert = true;
                 const controls = [
                     ['.lg-close', '{% translate "Close" as gallery_close %}{{ gallery_close|escapejs }}'],
                     ['.lg-prev', '{% translate "Previous" as gallery_prev %}{{ gallery_prev|escapejs }}'],
@@ -941,7 +943,10 @@
                 });
                 close.focus();
             });
-            gallery.on('onCloseAfter.lg', () => trigger?.focus());
+            gallery.on('onCloseAfter.lg', () => {
+                pageContent.inert = false;
+                trigger?.focus();
+            });
             gallery.lightGallery({
                 selector: '.item',
                 showThumbByDefault: false,

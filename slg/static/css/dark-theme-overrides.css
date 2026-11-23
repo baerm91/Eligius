@@ -571,6 +571,12 @@ textarea::placeholder {
   color: var(--text-main);
 }
 
+body.lg-on .detail-feedback-btn,
+body.lg-on > .cc-window,
+body.lg-on > .cc-revoke {
+  visibility: hidden;
+}
+
 #captions .coin-image-stage img {
   display: block;
   width: auto;
