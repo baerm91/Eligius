@@ -1,5 +1,4 @@
 """Build review-only label proposals. Source text and identifiers are never replaced."""
-import hashlib
 import json
 import re
 from collections import defaultdict
@@ -8,6 +7,7 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import OWL, SKOS
 
 from slg.services.authority_inventory import identify_authority
+from slg.services.authority_review import original_hash
 
 ISSUE_LABELS = {
     'possible_german_catalogue_text': 'Möglicherweise deutscher Katalogtext trotz Englisch-Kennzeichnung',
@@ -108,8 +108,8 @@ def build_proposals(records, resolved):
             issues.extend(review_flags(original, candidate['label'], model))
             if candidate.get('reciprocal_gnd') is False:
                 issues.append('gnd_link_not_reciprocated')
-        original_hash = hashlib.sha256(json.dumps(references, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-        proposals.append(dict(model=model, id=pk, original=original, original_sha256=original_hash,
+        fingerprint = original_hash(references)
+        proposals.append(dict(model=model, id=pk, original=original, original_sha256=fingerprint,
                               proposed_entity_label=preferred,
                               status='unresolved' if not candidates else 'pending_review',
                               approved=False, issues=sorted(set(issues)), candidates=candidates,

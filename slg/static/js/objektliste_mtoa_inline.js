@@ -37,6 +37,8 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         tooltips: [true, true]
       });
+      dateSlider.querySelector('.noUi-handle-lower').setAttribute('aria-label', dateSlider.dataset.startLabel);
+      dateSlider.querySelector('.noUi-handle-upper').setAttribute('aria-label', dateSlider.dataset.endLabel);
 
       // Elements to display values
       const minValueElement = document.getElementById('date-min-value');

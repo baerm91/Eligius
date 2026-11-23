@@ -130,8 +130,17 @@
     {% translate "Ablehnen" as cookie_dismiss %}
     {% translate "Akzeptieren" as cookie_allow %}
     {% translate "Mehr erfahren" as cookie_link %}
+    {% translate "Cookie-Einstellungen" as cookie_title %}
     window.addEventListener("load", function(){
       window.cookieconsent.initialise({
+        "window": '<div role="dialog" aria-live="polite" aria-label="{{ cookie_title|escapejs }}" {% verbatim %}aria-describedby="cookieconsent:desc" class="cc-window {{classes}}">{{children}}</div>{% endverbatim %}',
+        {% verbatim %}
+        "elements": {
+          "messagelink": '<span id="cookieconsent:desc" class="cc-message">{{message}} <a class="cc-link" href="{{href}}">{{link}}</a></span>',
+          "deny": '<button type="button" class="cc-btn cc-deny">{{deny}}</button>',
+          "allow": '<button type="button" class="cc-btn cc-allow">{{allow}}</button>'
+        },
+        {% endverbatim %}
         "palette": {
           "popup": {
             "background": "#161616",

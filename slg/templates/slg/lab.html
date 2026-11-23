@@ -1,4 +1,5 @@
 {% extends 'slg/navbar.html' %}
+{% load i18n %}
 {% block title %}Eligius Lab{% endblock %}
 {% block stylesheets %}
 {{ block.super }}
@@ -29,71 +30,56 @@
 {% endblock %}
 {% block content %}
 <main class="lab">
-  <p class="eyebrow">Sammlungen digital erkunden</p>
+  <p class="eyebrow">{% translate "Sammlungen digital erkunden" %}</p>
   <h1>Eligius Lab</h1>
-  <p class="intro">Ein Ort für neue Zugänge zu Eligius: digitale Werkzeuge,
-    Schnittstellen und Ideen für die numismatische Forschung.</p>
+  <p class="intro">{% translate "Ein Ort für neue Zugänge zu Eligius: digitale Werkzeuge, Schnittstellen und Ideen für die numismatische Forschung." %}</p>
 
   <section aria-labelledby="connect-ai">
-    <h2 id="connect-ai">Connect your AI</h2>
-    <p>Verbinden Sie Eligius mit Ihrem eigenen KI-Assistenten. So können Sie
-      Münzen suchen, Sammlungen erkunden und Bestände vergleichen – im Gespräch
-      und mit Links zu den Originaldatensätzen.</p>
-    <p>Zwei Wege führen zu denselben öffentlichen Sammlungsdaten:
-      eine direkte Verbindung für Ihren KI-Assistenten und Werkzeuge für die geöffnete Webseite.</p>
-    <span class="badge">Read-only · nur lesender Zugriff</span>
-    <span class="badge">Öffentliche Eligius-Daten</span>
-    <span class="badge">{% if mcp_enabled %}Development · verfügbar{% else %}In Vorbereitung{% endif %}</span>
+    <h2 id="connect-ai">{% translate "KI-Assistenten verbinden" %}</h2>
+    <p>{% translate "Verbinden Sie Eligius mit Ihrem eigenen KI-Assistenten. So können Sie Münzen suchen, Sammlungen erkunden und Bestände vergleichen – im Gespräch und mit Links zu den Originaldatensätzen." %}</p>
+    <p>{% translate "Zwei Wege führen zu denselben öffentlichen Sammlungsdaten: eine direkte Verbindung für Ihren KI-Assistenten und Werkzeuge für die geöffnete Webseite." %}</p>
+    <span class="badge">{% translate "Read-only · nur lesender Zugriff" %}</span>
+    <span class="badge">{% translate "Öffentliche Eligius-Daten" %}</span>
+    <span class="badge">{% if mcp_enabled %}{% translate "Development · verfügbar" %}{% else %}{% translate "In Vorbereitung" %}{% endif %}</span>
 
-    <h3 style="margin-top: 28px">Remote MCP · direkt mit Ihrem KI-Assistenten</h3>
-    <p>Für Recherche, Datenanalyse und Sammlungsvergleiche. Diese Verbindung funktioniert
-      auch dann, wenn Sie keine Eligius-Seite geöffnet haben.</p>
-    <p>Wählen Sie in einem KI-Client mit Unterstützung für Remote-MCP eine neue
-      Verbindung und tragen Sie diese Adresse ein. Der Client muss Streamable HTTP
-      unterstützen. Für den öffentlichen Zugang benötigen Sie kein Eligius-Konto.</p>
+    <h3 style="margin-top: 28px">{% translate "Remote MCP · direkt mit Ihrem KI-Assistenten" %}</h3>
+    <p>{% translate "Für Recherche, Datenanalyse und Sammlungsvergleiche. Diese Verbindung funktioniert auch dann, wenn Sie keine Eligius-Seite geöffnet haben." %}</p>
+    <p>{% translate "Wählen Sie in einem KI-Client mit Unterstützung für Remote-MCP eine neue Verbindung und tragen Sie diese Adresse ein. Der Client muss Streamable HTTP unterstützen. Für den öffentlichen Zugang benötigen Sie kein Eligius-Konto." %}</p>
     <code class="endpoint">{{ mcp_endpoint }}</code>
-    <p>Die Bezeichnung und Einrichtung der Verbindung unterscheiden sich je nach
-      KI-Client. Ihr Assistent wählt die passenden Werkzeuge und Filter selbst aus.</p>
+    <p>{% translate "Die Bezeichnung und Einrichtung der Verbindung unterscheiden sich je nach KI-Client. Ihr Assistent wählt die passenden Werkzeuge und Filter selbst aus." %}</p>
 
-    <h3 style="margin-top: 28px">WebMCP · gemeinsam im Browser</h3>
-    <p>Ein unterstützter Browser-Assistent kann auf der geöffneten Eligius-Seite
-      recherchieren, die normale Objektsuche filtern und Objekte, Münztypen oder
-      Sammlungen öffnen. Er kann auch Ihre aktuelle Auswahl für Folgefragen verwenden.</p>
-    <p>Öffnen Sie Eligius in einem Browser mit nativer WebMCP-Unterstützung und nutzen
-      Sie dessen Assistenten. Eine zusätzliche Verbindung mit einer Serveradresse
-      ist dafür nicht nötig. Die Browserunterstützung befindet sich noch in Entwicklung.</p>
-    <p id="webmcp-status" role="status">{% if webmcp_enabled %}Die Verfügbarkeit hängt von Ihrem Browser ab.{% else %}WebMCP ist auf diesem Server noch nicht aktiviert.{% endif %}</p>
-    <p>Zum Beispiel: „Öffne Münze 46736“, „Zeige mir die Sammlung Heiligenkreuz“
-      oder „Welche Nominale kommen in dieser Auswahl vor?“
-      Navigation und Filter ändern nur Ihre Ansicht, keine Katalogdaten.</p>
+    <h3 style="margin-top: 28px">{% translate "WebMCP · gemeinsam im Browser" %}</h3>
+    <p>{% translate "Ein unterstützter Browser-Assistent kann auf der geöffneten Eligius-Seite recherchieren, die normale Objektsuche filtern und Objekte, Münztypen oder Sammlungen öffnen. Er kann auch Ihre aktuelle Auswahl für Folgefragen verwenden." %}</p>
+    <p>{% translate "Öffnen Sie Eligius in einem Browser mit nativer WebMCP-Unterstützung und nutzen Sie dessen Assistenten. Eine zusätzliche Verbindung mit einer Serveradresse ist dafür nicht nötig. Die Browserunterstützung befindet sich noch in Entwicklung." %}</p>
+    <p id="webmcp-status" role="status">{% if webmcp_enabled %}{% translate "Die Verfügbarkeit hängt von Ihrem Browser ab." %}{% else %}{% translate "WebMCP ist auf diesem Server noch nicht aktiviert." %}{% endif %}</p>
+    <p>{% translate "Zum Beispiel: „Öffne Münze 46736“, „Zeige mir die Sammlung Heiligenkreuz“ oder „Welche Nominale kommen in dieser Auswahl vor?“ Navigation und Filter ändern nur Ihre Ansicht, keine Katalogdaten." %}</p>
 
     <table>
-      <caption>Gemeinsame Recherchewerkzeuge</caption>
-      <thead><tr><th scope="col">Werkzeug</th><th scope="col">Damit können Sie …</th></tr></thead>
+      <caption>{% translate "Gemeinsame Recherchewerkzeuge" %}</caption>
+      <thead><tr><th scope="col">{% translate "Werkzeug" %}</th><th scope="col">{% translate "Damit können Sie …" %}</th></tr></thead>
       <tbody>
-        <tr><td><code>search_objects</code></td><td>Münzen mit denselben Filtern wie in der Objektsuche finden.</td></tr>
-        <tr><td><code>get_object</code></td><td>Details zu einem einzelnen Objekt aufrufen.</td></tr>
-        <tr><td><code>get_facets</code></td><td>Vertretene Prägeherren, Münzstätten und andere Merkmale erkunden.</td></tr>
-        <tr><td><code>get_distribution</code></td><td>Häufigkeiten und Prozentanteile für Sammlungsvergleiche abfragen.</td></tr>
-        <tr><td><code>get_statistics</code></td><td>Umfang, Datierung und weitere Kennzahlen eines Bestands ermitteln.</td></tr>
+        <tr><td><code>search_objects</code></td><td>{% translate "Münzen mit denselben Filtern wie in der Objektsuche finden." %}</td></tr>
+        <tr><td><code>get_object</code></td><td>{% translate "Details zu einem einzelnen Objekt aufrufen." %}</td></tr>
+        <tr><td><code>get_facets</code></td><td>{% translate "Vertretene Prägeherren, Münzstätten und andere Merkmale erkunden." %}</td></tr>
+        <tr><td><code>get_distribution</code></td><td>{% translate "Häufigkeiten und Prozentanteile für Sammlungsvergleiche abfragen." %}</td></tr>
+        <tr><td><code>get_statistics</code></td><td>{% translate "Umfang, Datierung und weitere Kennzahlen eines Bestands ermitteln." %}</td></tr>
       </tbody>
     </table>
-    <h3>Probieren Sie zum Beispiel</h3>
+    <h3>{% translate "Probieren Sie zum Beispiel" %}</h3>
     <ul>
-      <li>„Zeige mir alle Münzen des Valens aus Siscia.“</li>
-      <li>„Welche Nominale kommen bei Valens in Siscia vor?“</li>
-      <li>„Welche Münztypen des Pescennius Niger befinden sich in Eligius?“</li>
-      <li>„Vergleiche zwei Sammlungen nach Prägeherren und Münzstätten – mit Prozentanteilen.“</li>
+      <li>{% translate "„Zeige mir alle Münzen des Valens aus Siscia.“" %}</li>
+      <li>{% translate "„Welche Nominale kommen bei Valens in Siscia vor?“" %}</li>
+      <li>{% translate "„Welche Münztypen des Pescennius Niger befinden sich in Eligius?“" %}</li>
+      <li>{% translate "„Vergleiche zwei Sammlungen nach Prägeherren und Münzstätten – mit Prozentanteilen.“" %}</li>
     </ul>
-    <p>Die Verbindung kann Daten lesen, aber keine Datensätze bearbeiten.
-      Prüfen Sie Interpretationen Ihres Assistenten anhand der verlinkten Quellen.</p>
+    <p>{% translate "Die Verbindung kann Daten lesen, aber keine Datensätze bearbeiten. Prüfen Sie Interpretationen Ihres Assistenten anhand der verlinkten Quellen." %}</p>
   </section>
 
   <section aria-labelledby="future-tools">
-    <h2 id="future-tools">Raum für weitere Werkzeuge</h2>
-    <p>Diese Bereiche sind als mögliche Erweiterungen vorgesehen und noch nicht verfügbar.</p>
-    <div class="future"><span>API</span><span>Research Tools</span>
-      <span>Data Export</span><span>Experimental Tools</span></div>
+    <h2 id="future-tools">{% translate "Raum für weitere Werkzeuge" %}</h2>
+    <p>{% translate "Diese Bereiche sind als mögliche Erweiterungen vorgesehen und noch nicht verfügbar." %}</p>
+    <div class="future"><span>API</span><span>{% translate "Forschungswerkzeuge" %}</span>
+      <span>{% translate "Datenexport" %}</span><span>{% translate "Experimentelle Werkzeuge" %}</span></div>
   </section>
 </main>
 {% endblock %}

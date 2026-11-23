@@ -434,7 +434,7 @@ class SlgView(nested_admin.NestedModelAdmin):
                            'wird die passende Creative-Commons-URI automatisch verwendet; sonst die Kulturpool-Rechte-URI eintragen. '
                            'Metadatenrechte (üblich: http://creativecommons.org/publicdomain/zero/1.0/) separat eintragen – sie gelten auch für Nomisma. '
                            'Nomisma nutzt /slg/<id>/nomisma.rdf; registriert wird /slg/<id>/void.rdf. '
-                           'Vor produktiver Übernahme validate_kulturpool_export --strict ausführen.'
+                           'Vor der Freigabe validate_kulturpool_export --preflight --slg ID --strict ausführen.'
         }),
         ('Bildeinstellungen', {
             'classes': ('collapse',),
@@ -2337,6 +2337,7 @@ admin.site.register(Titel, TitelAdmin)
 @admin.register(Bildabruf)
 class BildabrufAdmin(admin.ModelAdmin):
     """Read-only statistics of the image redirect service (/bild/<obj>/<ansicht>/)."""
+    change_list_template = 'admin/slg/bildabruf/change_list.html'
     list_display = ('datum', 'herkunft', 'objekt', 'ansicht', 'automatisiert', 'anzahl')
     list_filter = ('herkunft', 'automatisiert', 'ansicht', 'obj__Slg')
     date_hierarchy = 'datum'
@@ -2344,6 +2345,20 @@ class BildabrufAdmin(admin.ModelAdmin):
     ordering = ('-datum', '-anzahl')
     list_select_related = ('obj',)
     show_full_result_count = False
+
+    def changelist_view(self, request, extra_context=None):
+        response = super().changelist_view(request, extra_context)
+        context = getattr(response, 'context_data', None)
+        if context and 'cl' in context:
+            from .services.image_request_stats import summarize_image_requests
+
+            date_selected = any(key.startswith('datum__') for key in request.GET)
+            context['image_stats'] = summarize_image_requests(
+                context['cl'].queryset,
+                has_selected_date=date_selected,
+                monthly='datum__year' in request.GET and 'datum__month' not in request.GET,
+            )
+        return response
 
     @admin.display(description='Objekt', ordering='obj__invnr')
     def objekt(self, obj):

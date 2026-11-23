@@ -10,6 +10,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
+from slg.operations import operation
 from slg.services import public_api
 
 logger = logging.getLogger(__name__)
@@ -43,13 +44,15 @@ async def _call(function, *args):
             return function(*args)
         finally:
             close_old_connections()
-    try:
-        return await sync_to_async(run, thread_sensitive=False)()
-    except ValueError:
-        raise
-    except Exception:
-        logger.exception('Public MCP service failed')
-        raise ValueError('Unable to complete the query. Check filter values or try again later.') from None
+    with operation('mcp', getattr(function, "__name__", "service_call")) as event:
+        try:
+            return await sync_to_async(run, thread_sensitive=False)()
+        except ValueError:
+            event['outcome'] = 'rejected'
+            raise
+        except Exception:
+            logger.exception('Public MCP service failed')
+            raise ValueError('Unable to complete the query. Check filter values or try again later.') from None
 
 
 @mcp.tool(annotations=READ_ONLY)

@@ -7,14 +7,7 @@
     const map = L.map('mintMap', {
       scrollWheelZoom: false,
       zoomControl: true,
-      doubleClickZoom: true,
-      fullscreenControl: true,
-      fullscreenControlOptions: {
-        position: 'topleft',
-        title: gettext('Vollbildmodus'),
-        titleCancel: gettext('Vollbildmodus beenden'),
-        content: '<i class="bi bi-arrows-fullscreen"></i>'
-      }
+      doubleClickZoom: true
     }).setView([48.2082, 16.3719], 5);
 
     EligiusMaps.addDarkBasemap(map);
@@ -81,7 +74,7 @@
       url.searchParams.set('Muenzstaette', mint.filter_value || mint.name);
 
       // ✅ POPUP mit Objektanzahl
-      const marker = L.marker([mint.latitude, mint.longitude])
+      const marker = L.marker([mint.latitude, mint.longitude], {alt: mint.name, title: mint.name})
         .bindPopup(`
               <div class="mint-popup">
                 <strong>
@@ -120,78 +113,43 @@
     console.log(`✅ ${markers.length} markers loaded successfully`);
   }
 
-  // Vollbild-Funktionalität implementieren
-  const customFullscreenBtn = document.getElementById('customFullscreenBtn');
-  const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
-  const fullscreenInstructions = document.getElementById('fullscreenInstructions');
-  const mapContainer = document.getElementById('mintMap');
+  const fullscreenButton = document.getElementById('customFullscreenBtn');
+  const exitButton = document.getElementById('exitFullscreenBtn');
+  const instructions = document.getElementById('fullscreenInstructions');
+  const mapContainer = map.getContainer();
+  const fullscreenEvents = new AbortController();
+  const listenerOptions = {signal: fullscreenEvents.signal};
 
-  // Custom Fullscreen Button Click Handler
-  if (customFullscreenBtn) {
-    customFullscreenBtn.addEventListener('click', function () {
-      console.log("Custom fullscreen button clicked");
-
-      // Toggle fullscreen class
-      mapContainer.classList.add('map-fullscreen');
-
-      // Show exit button and instructions
-      if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'block';
-      if (fullscreenInstructions) fullscreenInstructions.style.display = 'block';
-
-      // Hide scroll bars
-      document.body.style.overflow = 'hidden';
-
-      // Invalidate map size to recalculate
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 100);
-    });
-  }
-
-  // Exit Fullscreen Button Click Handler
-  if (exitFullscreenBtn) {
-    exitFullscreenBtn.addEventListener('click', function () {
-      console.log("Exit fullscreen button clicked");
-      exitFullscreen();
-    });
-  }
-
-  // ESC Key Handler for fullscreen exit
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && mapContainer.classList.contains('map-fullscreen')) {
-      exitFullscreen();
-    }
-  });
-
-  // Function to exit fullscreen
-  function exitFullscreen() {
-    // Remove fullscreen class
-    mapContainer.classList.remove('map-fullscreen');
-
-    // Hide exit button and instructions
-    if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'none';
-    if (fullscreenInstructions) fullscreenInstructions.style.display = 'none';
-
-    // Restore scroll bars
-    document.body.style.overflow = '';
-
-    // Invalidate map size to recalculate
-    setTimeout(() => {
+  function setFullscreen(active, restoreFocus = true) {
+    mapContainer.classList.toggle('map-fullscreen', active);
+    fullscreenButton.setAttribute('aria-expanded', String(active));
+    exitButton.style.display = active ? 'block' : '';
+    instructions.style.display = active ? 'block' : '';
+    document.body.style.overflow = active ? 'hidden' : '';
+    if (restoreFocus) {
+      (active ? exitButton : fullscreenButton).focus({preventScroll: true});
       map.invalidateSize();
-    }, 100);
+    }
   }
 
-  // Map fullscreen events (for the Leaflet plugin)
-  map.on('enterFullscreen', function () {
-    console.log("Map entered fullscreen (Leaflet plugin)");
-    if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'block';
-    if (fullscreenInstructions) fullscreenInstructions.style.display = 'block';
-  });
-
-  map.on('exitFullscreen', function () {
-    console.log("Map exited fullscreen (Leaflet plugin)");
-    if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'none';
-    if (fullscreenInstructions) fullscreenInstructions.style.display = 'none';
+  fullscreenButton.addEventListener('click', () => setFullscreen(true), listenerOptions);
+  exitButton.addEventListener('click', () => setFullscreen(false), listenerOptions);
+  document.addEventListener('keydown', event => {
+    if (!mapContainer.classList.contains('map-fullscreen')) return;
+    if (event.key === 'Escape') {
+      setFullscreen(false);
+    } else if (event.key === 'Tab') {
+      const controls = [exitButton, mapContainer, ...mapContainer.querySelectorAll('a[href], button, [tabindex="0"]')]
+          .filter(control => !control.disabled && control.tabIndex >= 0 && control.getClientRects().length);
+      const index = controls.indexOf(document.activeElement);
+      const next = index < 0 ? 0 : (index + (event.shiftKey ? -1 : 1) + controls.length) % controls.length;
+      event.preventDefault();
+      controls[next]?.focus();
+    }
+  }, listenerOptions);
+  map.once('unload', () => {
+    fullscreenEvents.abort();
+    if (mapContainer.classList.contains('map-fullscreen')) setFullscreen(false, false);
   });
 
   return map;

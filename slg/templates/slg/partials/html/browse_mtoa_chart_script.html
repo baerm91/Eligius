@@ -3,6 +3,28 @@
   // Laufende Anfrage: DOMContentLoaded hier und initializePageResources() in
   // objektliste_mtoa_inline.js rufen loadChartData() beide beim Laden auf.
   let chartRequest = null;
+  const chartData = document.getElementById('browse-chart-data');
+  const chartStatus = document.getElementById('browse-chart-status');
+  let dataRows = null;
+
+  function renderChartTable() {
+    if (!chartData.open || !dataRows) return;
+    const [years, counts] = dataRows;
+    const rows = document.createDocumentFragment();
+    const number = new Intl.NumberFormat(document.documentElement.lang, {maximumFractionDigits: 3});
+    years.forEach((year, index) => {
+      const row = document.createElement('tr');
+      const heading = document.createElement('th');
+      heading.scope = 'row';
+      heading.textContent = formatYear(year);
+      row.append(heading);
+      row.insertCell().textContent = number.format(counts[index]);
+      rows.append(row);
+    });
+    chartData.querySelector('tbody').replaceChildren(rows);
+  }
+
+  chartData.addEventListener('toggle', renderChartTable);
 
   document.addEventListener("DOMContentLoaded", function () {
     loadChartData();
@@ -62,6 +84,15 @@
           absoluteValues = filtered.c;
         }
 
+        if (!years.length) {
+          showEmptyChart(gettext("Keine Daten für diesen Zeitraum verfügbar"));
+          return;
+        }
+
+        dataRows = [years, absoluteValues];
+        chartStatus.hidden = true;
+        chartData.querySelector('table').hidden = false;
+        renderChartTable();
         renderEChart(years, absoluteValues);
 
         if (years.length > 0) {
@@ -99,7 +130,7 @@
     const accentColor = '#f6b15d';
     const accentRgba  = 'rgba(246, 177, 93, 0.12)';
     const textColor   = '#d4c5a0';
-    const axisColor   = '#8a7d65';
+    const axisColor   = '#a89a7e';
     const gridColor   = 'rgba(255, 255, 255, 0.06)';
     const gridDashed  = 'rgba(255, 255, 255, 0.04)';
     const bgColor     = '#161616';
@@ -150,8 +181,8 @@
       },
       yAxis: {
         type: 'value',
-        name: gettext("Stückzahl"),
-        nameTextStyle: { color: textColor, fontSize: 13, fontWeight: 600, padding: [0, 0, 8, 0] },
+        name: gettext("Gewichtete Stückzahl"),
+        nameTextStyle: { color: textColor, fontSize: 13, fontWeight: 600, align: 'left', padding: [0, 0, 8, 0] },
         axisLine: { show: true, lineStyle: { color: axisColor, width: 1.5 } },
         axisLabel: { color: axisColor, fontWeight: 500 },
         splitLine: { lineStyle: { color: gridColor, type: 'solid' } }
@@ -171,7 +202,7 @@
             + formatYear(p.axisValue) + '</div>'
             + '<span style="display:inline-block;width:10px;height:10px;background-color:'
             + p.color + ';margin-right:5px;border-radius:50%;"></span>'
-            + gettext('Stückzahl') + ': <b>' + p.data + ' ' + gettext('Objekte') + '</b>';
+            + gettext('Gewichtete Stückzahl') + ': <b>' + p.data + '</b>';
         }
       },
       series: [{
@@ -236,6 +267,10 @@
   }
 
   function showEmptyChart(message) {
+    dataRows = null;
+    chartStatus.hidden = false;
+    chartStatus.textContent = message;
+    chartData.querySelector('table').hidden = true;
     const container = document.getElementById('objectsBarChart');
     if (!container) return;
 

@@ -30,7 +30,9 @@ test('Search applies the new term synchronously and keeps selected facets', () =
   const $ = selector => selector === '#searchInput'
     ? {attr: () => 'q', val: () => 'new'} : {val: () => 'False'};
   vm.runInNewContext(search + historyUpdate + '\nexecuteSearch();',
-    {window: {location}, history, $, URLSearchParams});
+    {window: {location}, history, $, URLSearchParams,
+      document: {querySelector: selector => selector === 'select[name="Nominal"]' ? {} : null},
+      CSS: {escape: value => value}});
   const result = new URL(location.href, 'http://localhost');
   assert.equal(result.searchParams.get('q'), 'new');
   assert.equal(result.searchParams.get('Nominal'), 'Pfennig');

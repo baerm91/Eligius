@@ -63,3 +63,7 @@ Thumbs.db
 *.patch
 _archiv/
 Claude outputs/
+
+
+# Playwright diagnostics
+/browser-smoke-artifacts/

@@ -71,9 +71,7 @@ Gleiche URI bedeutet nicht, dass lokale Datensätze zusammengeführt werden.
 
 Jeder Vorschlag bleibt `pending_review`, jeder Fall ohne Label `unresolved`.
 `approved` ist immer `false`. Der Hash des Originalstands erlaubt einem späteren
-Import, inzwischen geänderte Ausgangsdaten zurückzuweisen. Ein solcher Import
-in die Datenbank ist hier noch nicht enthalten. Die HTML-Prüfseite speichert
-Entscheidungen separat; die ursprünglichen Vorschläge bleiben unverändert.
+Import, inzwischen geänderte Ausgangsdaten zurückzuweisen. Die HTML-Prüfseite speichert Entscheidungen separat; die ursprünglichen Vorschläge bleiben unverändert.
 
 ## HTML-Prüfseite
 
@@ -117,3 +115,28 @@ Die HTML-Datei enthält Bestandsdaten und ist nicht für öffentliche Ablage bes
 Die Textprüfungen sind Heuristiken. Fehlende Hinweise belegen keine fachliche
 Richtigkeit. Gleichlautende Labels können korrekt sein, sind aber ebenfalls
 noch nicht freigegeben.
+
+## Bestätigte Entscheidungen installieren
+
+Die Redaktion exportiert nach der Prüfung den Prüfstand von `pruefung.html` als
+JSON. Dann im passenden Django-Anwendungsumfeld ausführen:
+
+```sh
+python manage.py import_authority_review proposals.json eligius-pruefstand.json
+python manage.py import_authority_review proposals.json eligius-pruefstand.json --apply
+```
+
+Der erste Aufruf prüft den Bestand ohne Schreibzugriff. `--apply` übernimmt
+ausschließlich Entscheidungen mit dem Status `approved`. Originalname und
+Normdatenverweise müssen mit dem Vorschlag übereinstimmen. Bei einem Konflikt
+wird der gesamte Import abgebrochen. Unterstützt sind die Entitätstypen der
+englischen Normdatenanzeige. Bibliografische Zitate sind davon ausgenommen.
+
+Der separate Freigabebestand unter `ELIGIUS_REVIEWED_AUTHORITY_LABELS_PATH`
+wird atomar ergänzt und enthält Original, Normdatenverweise, vorgeschlagene
+Quellenbelege, redaktionellen Text, Datum und Notiz. Er gehört in ein dauerhaftes,
+privates Verzeichnis. Die Originaldatenbank bleibt erhalten. Freigaben gelten
+pro lokalem Datensatz für die englische Anzeige und haben Vorrang vor
+automatischen Quellennamen und bestehenden englischen Anzeigefeldern.
+Ändern sich Name oder Normdatenverweise später, greift die übliche Anzeige
+wieder, bis eine neue Entscheidung vorliegt.

@@ -44,7 +44,7 @@
     </div>
   </div>
   <div class="coins-carousel-wrapper">
-    <button class="coin-nav-btn prev" onclick="document.getElementById('coinsContainer').scrollBy({left: -350, behavior: 'smooth'})"><i class="bi bi-chevron-left"></i></button>
+    <button type="button" class="coin-nav-btn prev" aria-label="{% translate 'Weitere Objekte links anzeigen' %}" aria-controls="coinsContainer" onclick="document.getElementById('coinsContainer').scrollBy({left: -350, behavior: 'smooth'})"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
     <div class="coins-track" id="coinsContainer">
         {% for Obj in latest_entries %}
             <!-- Using mtoa card -->
@@ -55,7 +55,7 @@
         <p style="text-align: center; width: 100%; color: var(--prem-text-muted);">{% translate "Derzeit keine neuen Objekte" %}</p>
         {% endfor %}
     </div>
-    <button class="coin-nav-btn next" onclick="document.getElementById('coinsContainer').scrollBy({left: 350, behavior: 'smooth'})"><i class="bi bi-chevron-right"></i></button>
+    <button type="button" class="coin-nav-btn next" aria-label="{% translate 'Weitere Objekte rechts anzeigen' %}" aria-controls="coinsContainer" onclick="document.getElementById('coinsContainer').scrollBy({left: 350, behavior: 'smooth'})"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
   </div>
   <div class="coins-mobile-indicators" id="coinsIndicators" aria-hidden="true"></div>
   <div class="numismatica-cta-mobile">
@@ -305,17 +305,17 @@
         <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
         <div class="contact-form-row">
           <div class="contact-form-group">
-            <label class="prem-form-label">Name</label>
-            <input type="text" class="prem-form-control" name="name" required>
+            <label class="prem-form-label" for="contact-name">{% translate "Name" %}</label>
+            <input type="text" class="prem-form-control" id="contact-name" name="name" autocomplete="name" required>
           </div>
           <div class="contact-form-group">
-            <label class="prem-form-label">{% translate "E-Mail Adresse" %}</label>
-            <input type="email" class="prem-form-control" name="email" required>
+            <label class="prem-form-label" for="contact-email">{% translate "E-Mail Adresse" %}</label>
+            <input type="email" class="prem-form-control" id="contact-email" name="email" autocomplete="email" required>
           </div>
         </div>
         <div class="contact-form-group">
-          <label class="prem-form-label">{% translate "Ihre Nachricht" %}</label>
-          <textarea class="prem-form-control" name="nachricht" rows="1" required></textarea>
+          <label class="prem-form-label" for="contact-message">{% translate "Ihre Nachricht" %}</label>
+          <textarea class="prem-form-control" id="contact-message" name="nachricht" rows="1" required></textarea>
         </div>
         <button type="submit" class="contact-submit-btn">{% translate "Anfrage senden" %}</button>
       </form>
@@ -325,6 +325,6 @@
 
 {{ av_wordcloud_data|json_script:"av-wordcloud-data" }}
 {{ rv_wordcloud_data|json_script:"rv-wordcloud-data" }}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="{% static 'vendor/d3/d3.min.js' %}"></script>
 <script src="{% static 'js/home.js' %}"></script>
 {% endblock content %}

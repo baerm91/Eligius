@@ -780,6 +780,46 @@ msgstr "Chronology"
 msgid "Stückzahl"
 msgstr "Count"
 
+msgid "Gewichtete Stückzahl"
+msgstr "Weighted count"
+
+msgid "Frühestes Prägejahr"
+msgstr "Earliest year of minting"
+
+msgid "Spätestes Prägejahr"
+msgstr "Latest year of minting"
+
+msgid "Weitere Objekte links anzeigen"
+msgstr "Show more objects on the left"
+
+msgid "Weitere Objekte rechts anzeigen"
+msgstr "Show more objects on the right"
+
+msgid "Cookie-Einstellungen"
+msgstr "Cookie settings"
+
+msgid "Bild herunterladen"
+msgstr "Download image"
+
+msgid "Vergrößern"
+msgstr "Zoom in"
+
+msgid "Verkleinern"
+msgstr "Zoom out"
+
+msgid "Originalgröße"
+msgstr "Actual size"
+
+msgid "Diashow starten oder anhalten"
+msgstr "Start or pause slideshow"
+
+msgid "Vorschaubilder ein- oder ausblenden"
+msgstr "Show or hide thumbnails"
+
+#, python-format
+msgid "Details zu %(name)s öffnen"
+msgstr "Open details for %(name)s"
+
 msgid "Anzahl der Objekte"
 msgstr "Number of objects"
 
@@ -1428,3 +1468,495 @@ msgstr "Die axis"
 #. SEO-Metadaten
 msgid "Münze %(invnr)s aus der Sammlung %(collection)s: %(title)s."
 msgstr "Coin %(invnr)s from the %(collection)s collection: %(title)s."
+
+msgid ""
+"Öffnen Sie Eligius in einem Browser mit nativer WebMCP-Unterstützung und "
+"nutzen Sie dessen Assistenten. Eine zusätzliche Verbindung mit einer "
+"Serveradresse ist dafür nicht nötig. Die Browserunterstützung befindet sich "
+"noch in Entwicklung."
+msgstr ""
+"Open Eligius in a browser with native WebMCP support and use its assistant. "
+"No separate connection or server address is required. Browser support is "
+"still in development."
+
+msgid ""
+"Ein unterstützter Browser-Assistent kann auf der geöffneten Eligius-Seite "
+"recherchieren, die normale Objektsuche filtern und Objekte, Münztypen oder "
+"Sammlungen öffnen. Er kann auch Ihre aktuelle Auswahl für Folgefragen "
+"verwenden."
+msgstr ""
+"A compatible browser assistant can research the open Eligius page, filter "
+"the regular object search and open objects, coin types or collections. It "
+"can also use your current selection for follow-up questions."
+
+msgid ""
+"Wählen Sie in einem KI-Client mit Unterstützung für Remote-MCP eine neue "
+"Verbindung und tragen Sie diese Adresse ein. Der Client muss Streamable HTTP"
+" unterstützen. Für den öffentlichen Zugang benötigen Sie kein Eligius-Konto."
+msgstr ""
+"Add a connection in an AI client that supports remote MCP and enter this "
+"address. The client must support Streamable HTTP. Public access does not "
+"require an Eligius account."
+
+msgid ""
+"Zum Beispiel: „Öffne Münze 46736“, „Zeige mir die Sammlung Heiligenkreuz“ "
+"oder „Welche Nominale kommen in dieser Auswahl vor?“ Navigation und Filter "
+"ändern nur Ihre Ansicht, keine Katalogdaten."
+msgstr ""
+"Try “Open coin 46736”, “Show me the Heiligenkreuz collection” or “Which "
+"denominations appear in this selection?” Navigation and filters only change "
+"what you see."
+
+msgid ""
+"Verbinden Sie Eligius mit Ihrem eigenen KI-Assistenten. So können Sie Münzen"
+" suchen, Sammlungen erkunden und Bestände vergleichen – im Gespräch und mit "
+"Links zu den Originaldatensätzen."
+msgstr ""
+"Connect Eligius to your AI assistant to search for coins, explore "
+"collections and compare holdings in conversation, with links to the original"
+" records."
+
+msgid ""
+"Die Bezeichnung und Einrichtung der Verbindung unterscheiden sich je nach "
+"KI-Client. Ihr Assistent wählt die passenden Werkzeuge und Filter selbst "
+"aus."
+msgstr ""
+"Connection labels and setup vary by client. Your assistant selects the tools"
+" and filters for your query."
+
+msgid ""
+"Zwei Wege führen zu denselben öffentlichen Sammlungsdaten: eine direkte "
+"Verbindung für Ihren KI-Assistenten und Werkzeuge für die geöffnete "
+"Webseite."
+msgstr ""
+"You can access the same public collection data in two ways: through a direct"
+" connection for your AI assistant or through tools on the open website."
+
+msgid ""
+"Die Verbindung kann Daten lesen, aber keine Datensätze bearbeiten. Prüfen "
+"Sie Interpretationen Ihres Assistenten anhand der verlinkten Quellen."
+msgstr ""
+"The connection provides read-only access. Check your assistant’s "
+"interpretations against the linked sources."
+
+msgid ""
+"Für Recherche, Datenanalyse und Sammlungsvergleiche. Diese Verbindung "
+"funktioniert auch dann, wenn Sie keine Eligius-Seite geöffnet haben."
+msgstr ""
+"Use this connection for research, data analysis and comparing collections, "
+"even when you do not have Eligius open."
+
+msgid ""
+"Ein Ort für neue Zugänge zu Eligius: digitale Werkzeuge, Schnittstellen und "
+"Ideen für die numismatische Forschung."
+msgstr ""
+"New ways to use Eligius, with digital tools, interfaces and ideas for "
+"numismatic research."
+
+msgid ""
+"„Vergleiche zwei Sammlungen nach Prägeherren und Münzstätten – mit "
+"Prozentanteilen.“"
+msgstr ""
+"“Compare two collections by issuing authority and mint, including "
+"percentages.”"
+
+msgid ""
+"Diese Bereiche sind als mögliche Erweiterungen vorgesehen und noch nicht "
+"verfügbar."
+msgstr "These are possible additions for future releases."
+
+msgid "Umfang, Datierung und weitere Kennzahlen eines Bestands ermitteln."
+msgstr "Find the size, date range and other statistics for a collection."
+
+msgid "Vertretene Prägeherren, Münzstätten und andere Merkmale erkunden."
+msgstr ""
+"Explore the issuing authorities, mints and other attributes represented in "
+"the collection."
+
+msgid "Häufigkeiten und Prozentanteile für Sammlungsvergleiche abfragen."
+msgstr "Get counts and percentages to compare collections."
+
+msgid "„Welche Münztypen des Pescennius Niger befinden sich in Eligius?“"
+msgstr "“Which coin types of Pescennius Niger are in Eligius?”"
+
+msgid "Münzen mit denselben Filtern wie in der Objektsuche finden."
+msgstr "Find coins using the same filters as the object search."
+
+msgid "WebMCP ist auf diesem Server noch nicht aktiviert."
+msgstr "WebMCP is not yet enabled on this server."
+
+msgid "„Welche Nominale kommen bei Valens in Siscia vor?“"
+msgstr "“Which denominations did Valens issue at Siscia?”"
+
+msgid "„Zeige mir alle Münzen des Valens aus Siscia.“"
+msgstr "“Show me all coins of Valens from Siscia.”"
+
+msgid "Die Verfügbarkeit hängt von Ihrem Browser ab."
+msgstr "Availability depends on your browser."
+
+msgid "Remote MCP · direkt mit Ihrem KI-Assistenten"
+msgstr "Remote MCP · connect directly to your AI assistant"
+
+msgid "Details zu einem einzelnen Objekt aufrufen."
+msgstr "View the details of an individual object."
+
+msgid "Read-only · nur lesender Zugriff"
+msgstr "Read-only access"
+
+msgid "WebMCP · gemeinsam im Browser"
+msgstr "WebMCP · work together in the browser"
+
+msgid "Gemeinsame Recherchewerkzeuge"
+msgstr "Shared research tools"
+
+msgid "Sammlungen digital erkunden"
+msgstr "Explore collections digitally"
+
+msgid "Probieren Sie zum Beispiel"
+msgstr "Examples to try"
+
+msgid "Raum für weitere Werkzeuge"
+msgstr "Future tools"
+
+msgid "Öffentliche Eligius-Daten"
+msgstr "Public Eligius data"
+
+msgid "Development · verfügbar"
+msgstr "Available on the development server"
+
+msgid "Damit können Sie …"
+msgstr "What you can do"
+
+msgid "Experimentelle Werkzeuge"
+msgstr "Experimental tools"
+
+msgid "KI-Assistenten verbinden"
+msgstr "Connect your AI"
+
+msgid "In Vorbereitung"
+msgstr "In preparation"
+
+msgid "Forschungswerkzeuge"
+msgstr "Research tools"
+
+msgid "Datenexport"
+msgstr "Data export"
+
+msgid "Werkzeug"
+msgstr "Tool"
+
+msgid ""
+"Eligius wurde von Martin Baer und Wolfgang Szaivert ins Leben gerufen – aus "
+"dem Wunsch heraus, eine digitale Lösung zu schaffen, die sich den besonderen"
+" Anforderungen numismatischer Sammlungen anpasst. Münzsammlungen von großer "
+"historischer Bedeutung lagern in österreichischen Klöstern, Museen und "
+"öffentlichen Einrichtungen – doch oft bleiben sie wenig bekannt und schwer "
+"zugänglich."
+msgstr ""
+"Martin Baer and Wolfgang Szaivert founded Eligius to meet the particular "
+"needs of numismatic collections. Austrian monasteries, museums and public "
+"institutions hold coin collections of great historical significance, many of"
+" which remain little known and difficult to access."
+
+msgid ""
+"Wir wollen Eligius weiterentwickeln zu einer Sammlung, die jede Münze als "
+"Teil eines größeren Geflechts aus Geschichte, Wirtschaft und Kultur zeigt. "
+"Statt nur Material oder Prägung zu beschreiben, soll die Datenbank künftig "
+"Verknüpfungen sichtbar machen – zu den Ereignissen hinter ihrer Entstehung, "
+"den Zielen der Münzstätten und dem Alltag der Menschen, die sie in Händen "
+"hielten."
+msgstr ""
+"We want Eligius to show each coin in its wider historical, economic and "
+"cultural context. Alongside material and production details, the database "
+"will highlight the events behind its creation, the aims of the mints and the"
+" everyday lives of the people who handled it."
+
+msgid ""
+"Wir denken an die Zukunft: Gemeinsam mit den Sammlungen entwickeln wir "
+"Eligius kontinuierlich weiter und passen es an ihre Bedürfnisse an. Das "
+"Projekt lebt vom Austausch mit numismatischen Einrichtungen, Forschenden und"
+" Begeisterten. Durch die Zusammenarbeit entstehen Synergien, die "
+"Insellösungen vermeiden und einen Mehrwert für die Öffentlichkeit schaffen."
+msgstr ""
+"We continue to develop Eligius with participating collections and adapt it "
+"to their needs. The project draws on exchanges with numismatic institutions,"
+" researchers and enthusiasts. Working together helps build shared resources "
+"for the public."
+
+msgid ""
+"Unsere Mission ist es, das zu ändern, indem wir eine Plattform bieten, die "
+"flexibel anpassbar ist. So können auch Sammlungen mit begrenzten Mitteln "
+"ihre Münzen umfassend digital erschließen und langfristig sichern. Bereits "
+"jetzt umfasst Eligius bedeutende Bestände aus öffentlichen und klösterlichen"
+" Sammlungen."
+msgstr ""
+"We offer a flexible platform so that even collections with limited resources"
+" can catalogue their coins digitally and preserve their records for the long"
+" term. Eligius already includes major holdings from public and monastic "
+"collections."
+
+msgid ""
+"Wir laden alle österreichischen Sammlungen – klösterliche wie öffentliche – "
+"ein, sich uns anzuschließen, um ihre Objekte gemeinsam auf Eligius zu "
+"präsentieren und den Zugang zu numismatischen Zeugnissen zu öffnen."
+msgstr ""
+"We invite Austrian monastic and public collections to present their objects "
+"together on Eligius and make numismatic sources more accessible."
+
+msgid ""
+"Ziel ist es, jede Münze zu einem Fenster in ihre Zeit zu machen, das über "
+"das Prägeprogramm hinausreicht und sie mit den Strömungen ihrer Epoche "
+"verbindet."
+msgstr ""
+"Our aim is to use each coin as a window into its time, connecting it with "
+"the wider developments of its era."
+
+msgid ""
+"Eligius wird unterstützt durch die Expertise ausgewählter Einrichtungen der "
+"österreichischen Wissenschafts- und Kulturlandschaft."
+msgstr ""
+"Eligius is supported by the expertise of Austrian academic and cultural "
+"institutions."
+
+msgid "Institut für Numismatik und Geldgeschichte, Universität Wien"
+msgstr "Department of Numismatics and Monetary History, University of Vienna"
+
+msgid "Universität für Weiterbildung Krems"
+msgstr "University for Continuing Education Krems"
+
+msgid "Landessammlungen Niederösterreich"
+msgstr "State Collections of Lower Austria"
+
+msgid "Werden Sie Teil von Eligius"
+msgstr "Join Eligius"
+
+msgid "Institutionelle Partner"
+msgstr "Institutional partners"
+
+msgid "Kontakt aufnehmen"
+msgstr "Get in touch"
+
+msgid "Zusammenarbeit"
+msgstr "Working together"
+
+msgid "Unsere Vision"
+msgstr "Our vision"
+
+msgid "Das Projekt"
+msgstr "The project"
+
+msgid "Kooperation"
+msgstr "Cooperation"
+
+msgid "Entstehung"
+msgstr "Origins"
+
+msgid "Mitmachen"
+msgstr "Get involved"
+
+msgid "Partner"
+msgstr "Partners"
+
+msgid "Vision"
+msgstr "Vision"
+
+msgid ""
+"In diesem Browser ist WebMCP nicht verfügbar. Sie können Eligius wie gewohnt"
+" nutzen."
+msgstr ""
+"WebMCP is unavailable in this browser. You can still use Eligius as usual."
+
+msgid ""
+"WebMCP ist in diesem Browser aktiv. Ihr Browser-Assistent kann Eligius "
+"erkunden."
+msgstr ""
+"WebMCP is active in this browser. Your browser assistant can explore "
+"Eligius."
+
+msgid ""
+"WebMCP ist momentan nicht verfügbar. Eligius bleibt wie gewohnt nutzbar."
+msgstr "WebMCP is currently unavailable. You can still use Eligius as usual."
+
+msgid ""
+"Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für "
+"die Inhalte externer Links. Für den Inhalt der verlinkten Seiten sind "
+"ausschließlich deren Betreiber verantwortlich. Die auf dieser Website "
+"veröffentlichten Inhalte und Daten wurden mit größtmöglicher Sorgfalt "
+"erstellt. Dennoch kann keine Gewähr für deren Vollständigkeit, Richtigkeit "
+"und Aktualität übernommen werden."
+msgstr ""
+"Despite careful review, we accept no liability for the content of external "
+"links. The operators of the linked sites alone are responsible for their "
+"content. We have taken the utmost care in preparing the content and data "
+"published on this website. We cannot guarantee that the content and data are"
+" complete, accurate or up to date."
+
+msgid ""
+"Eligius ist eine digitale Plattform zur Erschließung und Präsentation "
+"numismatischer Sammlungen in Österreich. Die Datenbank dient der "
+"wissenschaftlichen Dokumentation, Forschung und öffentlichen "
+"Zugänglichmachung von Münzbeständen aus klösterlichen, öffentlichen und "
+"institutionellen Sammlungen."
+msgstr ""
+"Eligius is a digital platform for cataloguing and presenting numismatic "
+"collections in Austria. The database supports scholarly documentation and "
+"research and provides public access to coin holdings from monastic, public "
+"and institutional collections."
+
+msgid ""
+"Sämtliche auf dieser Website veröffentlichten Texte, Bilder und sonstigen "
+"Inhalte unterliegen – sofern nicht anders angegeben – dem Urheberrecht. "
+"Jegliche Nutzung außerhalb der engen Grenzen des Urheberrechtsgesetzes "
+"bedarf der vorherigen schriftlichen Zustimmung des jeweiligen "
+"Rechteinhabers."
+msgstr ""
+"Unless otherwise indicated, copyright applies to all text, images and other "
+"content published on this website. Any use beyond the limits permitted by "
+"copyright law requires prior written consent from the relevant rights "
+"holder."
+
+msgid "Zentrum für Museale Sammlungswissenschaften"
+msgstr "Center for Museum Collections Management"
+
+msgid "Medieninhaber und Herausgeber"
+msgstr "Media owner and publisher"
+
+msgid "Haftungsausschluss"
+msgstr "Disclaimer"
+
+msgid "Zweck der Website"
+msgstr "Purpose of this website"
+
+msgid "Projektleitung"
+msgstr "Project leads"
+
+msgid "Urheberrecht"
+msgstr "Copyright"
+
+msgid "Österreich"
+msgstr "Austria"
+
+msgid "E-Mail:"
+msgstr "Email:"
+
+msgid "Web:"
+msgstr "Website:"
+
+msgid ""
+"Diese Website nutzt Google Analytics, einen Webanalysedienst der Google "
+"Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Google "
+"Analytics verwendet Cookies, die eine Analyse Ihrer Nutzung der Website "
+"ermöglichen. Die durch das Cookie erzeugten Informationen können an Google-"
+"Server in den USA übermittelt und dort verarbeitet werden. Laut Google "
+"verwendet Google Analytics bei Zugriffen aus der EU, der Schweiz oder dem "
+"Vereinigten Königreich IP-Adressen zur ungefähren Standortbestimmung und "
+"verwirft sie anschließend vor dem Protokollieren der Messdaten."
+msgstr ""
+"This website uses Google Analytics, a web analytics service provided by "
+"Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Ireland. "
+"Google Analytics uses cookies to analyse how you use the website. The "
+"information generated by the cookie may be transferred to and processed on "
+"Google servers in the United States. According to Google, for traffic from "
+"the EU, Switzerland or the United Kingdom, Google Analytics uses IP "
+"addresses to determine approximate location and then discards them before "
+"logging the measurement data."
+
+msgid ""
+"Diese Website verwendet Cookies. Technisch notwendige Cookies gewährleisten "
+"die Grundfunktionalität der Website und werden automatisch gesetzt. Analyse-"
+"Cookies (Google Analytics) werden nur mit Ihrer ausdrücklichen Einwilligung "
+"über den Cookie-Banner aktiviert. Sie können Ihre Einwilligung jederzeit "
+"widerrufen, indem Sie die Cookies in Ihrem Browser löschen."
+msgstr ""
+"This website uses cookies. It automatically sets strictly necessary cookies "
+"to provide its basic functionality. Analytics cookies (Google Analytics) are"
+" only activated if you expressly consent through the cookie banner. You can "
+"withdraw your consent at any time by deleting cookies in your browser."
+
+
+msgid ""
+"Diese Daten werden ausschließlich zur Sicherstellung eines reibungslosen "
+"Verbindungsaufbaus und zur Systemsicherheit verarbeitet. Eine "
+"Zusammenführung mit anderen Datenquellen findet nicht statt."
+msgstr ""
+"We process this data solely to ensure that the connection works properly and"
+" to maintain system security. We do not combine it with data from other "
+"sources."
+
+msgid ""
+"Google Analytics wird nur aktiviert, wenn Sie über den Cookie-Banner Ihre "
+"ausdrückliche Einwilligung erteilt haben. Die Rechtsgrundlage ist Art. 6 "
+"Abs. 1 lit. a DSGVO (Einwilligung)."
+msgstr ""
+"Google Analytics is only activated if you expressly consent through the "
+"cookie banner. The legal basis is Article 6(1)(a) of the GDPR (consent)."
+
+msgid ""
+"Beim Besuch dieser Website werden automatisch technische Informationen "
+"erfasst, die Ihr Browser an unseren Server übermittelt. Dazu gehören:"
+msgstr ""
+"When you visit this website, we automatically collect technical information "
+"that your browser sends to our server. This includes:"
+
+msgid "Bei Fragen zum Datenschutz wenden Sie sich bitte an:"
+msgstr "If you have questions about data protection, please contact:"
+
+msgid "Erhebung und Verarbeitung von Daten"
+msgstr "Data collection and processing"
+
+msgid "Referrer-URL (zuvor besuchte Seite)"
+msgstr "Referrer URL (previously visited page)"
+
+
+msgid "Datum und Uhrzeit des Zugriffs"
+msgstr "Date and time of access"
+
+msgid "Aufgerufene Seite bzw. Datei"
+msgstr "Page or file accessed"
+
+msgid "IP-Adresse (anonymisiert)"
+msgstr "IP address (anonymised)"
+
+msgid "Browsertyp und -version"
+msgstr "Browser type and version"
+
+msgid "Verantwortlicher"
+msgstr "Controller"
+
+msgid "Google Analytics"
+msgstr "Google Analytics"
+
+msgid "Betriebssystem"
+msgstr "Operating system"
+
+msgid "Ihre Rechte"
+msgstr "Your rights"
+
+msgid "Cookies"
+msgstr "Cookies"
+
+#, python-format
+msgid ""
+"Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung "
+"der Verarbeitung Ihrer personenbezogenen Daten. Darüber hinaus steht Ihnen "
+"ein Beschwerderecht bei der zuständigen Aufsichtsbehörde (Österreichische "
+"Datenschutzbehörde, <a href=\"%(authority_url)s\" target=\"_blank\" "
+"rel=\"noopener\">www.dsb.gv.at</a>) zu."
+msgstr ""
+"You have the right to access, rectify and erase your personal data and to "
+"restrict its processing. You also have the right to lodge a complaint with "
+"the competent supervisory authority (Austrian Data Protection Authority, <a "
+"href=\"%(authority_url)s\" target=\"_blank\" "
+"rel=\"noopener\">www.dsb.gv.at</a>)."
+
+msgid "Karte der Münzstätten"
+msgstr "Map of mints"
+
+msgid "Diagrammdaten als Tabelle"
+msgstr "Chart data as a table"
+
+msgid "Münzbilder"
+msgstr "Coin images"
+
+msgid "Weitere Objekte laden"
+msgstr "Load more objects"

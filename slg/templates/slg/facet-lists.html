@@ -1088,6 +1088,7 @@
   /* ---------- Facet-Änderung ------------------------------------ */
   const onFacetChange = evt => {
       const sel = evt.target;
+      const restoreFocus = sel.closest('.offcanvas.show');
       const name = sel.name;
       const p = new URLSearchParams(window.location.search);
 
@@ -1114,6 +1115,12 @@
       initLiteraturAutocomplete();
       initCoinTypeAutocomplete();
       initMaterialAutocomplete();
+
+      if (restoreFocus && document.activeElement === document.body) {
+          const control = $(sel).next('.select2')
+              .find('.select2-selection[tabindex="0"], .select2-search__field:visible').get(0);
+          (control || restoreFocus).focus();
+      }
   };
 
   /* ---------- Text Input Änderung ------------------------------- */
@@ -1189,6 +1196,15 @@
 
   /***************** Event Binding *****************/
   document.addEventListener('DOMContentLoaded', () => {
+      const panel = document.getElementById('offcanvasFilter');
+      panel?.addEventListener('keydown', event => {
+          // Select2 stops key events before they reach Bootstrap's dialog handler.
+          if (event.key !== 'Escape' || !event.target.closest('.select2') ||
+              panel.querySelector('.select2-container--open')) return;
+          event.stopPropagation();
+          bootstrap.Offcanvas.getInstance(panel)?.hide();
+      }, { capture: true });
+
       /* 1. Facets initialisieren */
       loadSammlungen();
       initMuenzstaettenAutocomplete();

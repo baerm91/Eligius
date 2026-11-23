@@ -1,6 +1,6 @@
 {% extends 'slg/navbar.html' %}
-{% block title %}Eligius – Impressum{% endblock title %}
-{% load static %}
+{% load i18n %}
+{% block title %}Eligius – {% translate "Impressum" %}{% endblock title %}
 
 {% block stylesheets %}
 {{ block.super }}
@@ -72,58 +72,48 @@
 
 {% block content %}
 <div class="legal-sections">
-  <h1 class="legal-page-title">Impressum</h1>
+  <h1 class="legal-page-title">{% translate "Impressum" %}</h1>
 
   <div class="legal-block">
-    <h3>Medieninhaber &amp; Herausgeber</h3>
+    <h3>{% translate "Medieninhaber und Herausgeber" %}</h3>
     <address>
-      Universität für Weiterbildung Krems<br>
-      Zentrum für Museale Sammlungswissenschaften<br>
+      {% translate "Universität für Weiterbildung Krems" %}<br>
+      {% translate "Zentrum für Museale Sammlungswissenschaften" %}<br>
       Dr.-Karl-Dorrek-Straße 30<br>
       3500 Krems an der Donau<br>
-      Österreich
+      {% translate "Österreich" %}
     </address>
     <p>
-      E-Mail: <a href="mailto:martin.baer@donau-uni.ac.at">martin.baer@donau-uni.ac.at</a><br>
-      Web: <a href="https://www.donau-uni.ac.at" target="_blank" rel="noopener">www.donau-uni.ac.at</a>
+      {% translate "E-Mail:" %} <a href="mailto:martin.baer@donau-uni.ac.at">martin.baer@donau-uni.ac.at</a><br>
+      {% translate "Web:" %} <a href="https://www.donau-uni.ac.at" target="_blank" rel="noopener">www.donau-uni.ac.at</a>
     </p>
   </div>
 
   <div class="legal-block">
-    <h3>Projektleitung</h3>
+    <h3>{% translate "Projektleitung" %}</h3>
     <p>
       Martin Baer &amp; Wolfgang Szaivert
     </p>
   </div>
 
   <div class="legal-block">
-    <h3>Zweck der Website</h3>
+    <h3>{% translate "Zweck der Website" %}</h3>
     <p>
-      Eligius ist eine digitale Plattform zur Erschließung und Präsentation numismatischer
-      Sammlungen in Österreich. Die Datenbank dient der wissenschaftlichen Dokumentation,
-      Forschung und öffentlichen Zugänglichmachung von Münzbeständen aus klösterlichen,
-      öffentlichen und institutionellen Sammlungen.
+      {% translate "Eligius ist eine digitale Plattform zur Erschließung und Präsentation numismatischer Sammlungen in Österreich. Die Datenbank dient der wissenschaftlichen Dokumentation, Forschung und öffentlichen Zugänglichmachung von Münzbeständen aus klösterlichen, öffentlichen und institutionellen Sammlungen." %}
     </p>
   </div>
 
   <div class="legal-block">
-    <h3>Haftungsausschluss</h3>
+    <h3>{% translate "Haftungsausschluss" %}</h3>
     <p>
-      Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte
-      externer Links. Für den Inhalt der verlinkten Seiten sind ausschließlich deren Betreiber
-      verantwortlich. Die auf dieser Website veröffentlichten Inhalte und Daten wurden mit
-      größtmöglicher Sorgfalt erstellt. Dennoch kann keine Gewähr für deren Vollständigkeit,
-      Richtigkeit und Aktualität übernommen werden.
+      {% translate "Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte externer Links. Für den Inhalt der verlinkten Seiten sind ausschließlich deren Betreiber verantwortlich. Die auf dieser Website veröffentlichten Inhalte und Daten wurden mit größtmöglicher Sorgfalt erstellt. Dennoch kann keine Gewähr für deren Vollständigkeit, Richtigkeit und Aktualität übernommen werden." %}
     </p>
   </div>
 
   <div class="legal-block">
-    <h3>Urheberrecht</h3>
+    <h3>{% translate "Urheberrecht" %}</h3>
     <p>
-      Sämtliche auf dieser Website veröffentlichten Texte, Bilder und sonstigen Inhalte
-      unterliegen – sofern nicht anders angegeben – dem Urheberrecht. Jegliche Nutzung
-      außerhalb der engen Grenzen des Urheberrechtsgesetzes bedarf der vorherigen
-      schriftlichen Zustimmung des jeweiligen Rechteinhabers.
+      {% translate "Sämtliche auf dieser Website veröffentlichten Texte, Bilder und sonstigen Inhalte unterliegen – sofern nicht anders angegeben – dem Urheberrecht. Jegliche Nutzung außerhalb der engen Grenzen des Urheberrechtsgesetzes bedarf der vorherigen schriftlichen Zustimmung des jeweiligen Rechteinhabers." %}
     </p>
   </div>
 </div>

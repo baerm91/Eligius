@@ -106,6 +106,7 @@ class PublicMCPTests(TestCase):
         self.assertEqual(first['total'], 2)
 
     def test_lab_health(self):
+        self.client.cookies['django_language'] = 'en'
         response = self.client.get(reverse('lab'))
         self.assertContains(response, 'https://example.test/mcp')
         self.assertContains(response, 'Connect your AI')

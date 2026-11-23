@@ -20,6 +20,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.request import Request
 from starlette.responses import JSONResponse
 
+from slg.operations import operation
 from slg.services import bildtyp_translations, editor_api, editor_persons, ui_translations, vocabulary_translations
 
 logger = logging.getLogger(__name__)
@@ -61,13 +62,15 @@ async def _call(function, *args):
             return function(user_id, *args)
         finally:
             close_old_connections()
-    try:
-        return await sync_to_async(run, thread_sensitive=False)()
-    except ValueError:
-        raise
-    except Exception:
-        logger.exception('Editor MCP operation failed')
-        raise ValueError('Bearbeitung fehlgeschlagen. Es wurde keine Teiländerung übernommen.') from None
+    with operation('editor_mcp', getattr(function, "__name__", "service_call")) as event:
+        try:
+            return await sync_to_async(run, thread_sensitive=False)()
+        except ValueError:
+            event['outcome'] = 'rejected'
+            raise
+        except Exception:
+            logger.exception('Editor MCP operation failed')
+            raise ValueError('Bearbeitung fehlgeschlagen. Es wurde keine Teiländerung übernommen.') from None
 
 
 @mcp.tool(annotations=READ)

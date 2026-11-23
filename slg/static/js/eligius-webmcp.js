@@ -7,7 +7,7 @@
 
   function status(message) {
     const element = document.getElementById('webmcp-status');
-    if (element) element.textContent = message;
+    if (element) element.textContent = window.gettext ? window.gettext(message) : message;
   }
 
   async function request(endpoint, arguments_, signal) {

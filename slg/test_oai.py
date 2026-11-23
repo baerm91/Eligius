@@ -537,6 +537,26 @@ class OAITests(OAIFixtures, TestCase):
         self.assertEqual(len(single), len(many))
         self.assertLessEqual(len(many), 7)
 
+    def test_preflight_checks_unpublished_collection_without_exposing_it(self):
+        self.private.bildurl = self.collection.bildurl
+        self.private.bild_endung_av = self.collection.bild_endung_av
+        self.private.kulturpool_rights_uri = 'https://rightsstatements.org/vocab/InC/1.0/'
+        self.private.kulturpool_metadata_rights_uri = 'https://creativecommons.org/publicdomain/zero/1.0/'
+        self.private.save()
+        self.obj(Slg=self.private)
+        output = StringIO()
+        call_command('validate_kulturpool_export', slg=self.private.pk, preflight=True,
+                     strict=True, stdout=output)
+        self.assertIn('nach Freigabe exportierbar: 1', output.getvalue())
+        self.private.refresh_from_db()
+        self.assertFalse(self.private.kulturpool_export_erlaubt)
+        self.assertNotIn(self.private.name, self.client.get('/oai/', {'verb': 'ListSets'}).content.decode())
+
+    def test_validator_rejects_empty_selection_and_missing_preflight_id(self):
+        for options in ({'slg': 99999}, {'slg': self.private.pk}, {'preflight': True}):
+            with self.subTest(options=options), self.assertRaises(CommandError):
+                call_command('validate_kulturpool_export', strict=True, stdout=StringIO(), **options)
+
     def test_readiness_command_and_admin_status(self):
         self.obj()
         collection_admin = admin.site._registry[Slg]

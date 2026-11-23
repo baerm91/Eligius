@@ -6,20 +6,21 @@ from slg.models import MtoaPerson, Muenztyp, MuenztypObjektAnzeige, Obj, Obj_Ref
 CONTROLLED = 'kontrolliert'
 
 
-def eligible_objects():
+def eligible_objects(*, preview_collection_id=None):
     # Both models use workflow.name='kontrolliert' (also used by Nomisma).
     # Obj.freigabe is historically unused and is not a quality/release status.
-    return Obj.objects.filter(
-        Slg__kulturpool_export_erlaubt=True,
-        workflow__name__iexact=CONTROLLED,
-    ).filter(Q(Typ__isnull=True) | Q(Typ__workflow__name__iexact=CONTROLLED))
+    scope = (Q(Slg__kulturpool_export_erlaubt=True) if preview_collection_id is None
+             else Q(Slg_id=preview_collection_id))
+    return Obj.objects.filter(scope, workflow__name__iexact=CONTROLLED).filter(
+        Q(Typ__isnull=True) | Q(Typ__workflow__name__iexact=CONTROLLED)
+    )
 
 
-def export_rows():
-    canonical = eligible_objects().filter(pk=OuterRef('obj_id'), Slg_id=OuterRef('slg_fk_id'))
+def export_rows(*, preview_collection_id=None):
+    canonical = eligible_objects(preview_collection_id=preview_collection_id).filter(pk=OuterRef('obj_id'), Slg_id=OuterRef('slg_fk_id'))
     # Fail closed if an old projection still describes a different coin type.
     typed = canonical.filter(Typ_id=OuterRef('typ_fk_id'), Typ__isnull=False)
-    untyped = eligible_objects().filter(pk=OuterRef('obj_id'), Slg_id=OuterRef('slg_fk_id'), Typ__isnull=True)
+    untyped = canonical.filter(Typ__isnull=True)
     latest = MuenztypObjektAnzeige.objects.filter(obj_id=OuterRef('obj_id')).order_by('-pk')
     return MuenztypObjektAnzeige.objects.filter(last_modified__isnull=False).alias(
         allowed_typed=Exists(typed), allowed_untyped=Exists(untyped),
@@ -38,10 +39,10 @@ def with_metadata_relations(rows):
     ))
 
 
-def objects_for_rows(rows):
+def objects_for_rows(rows, *, preview_collection_id=None):
     """One page-local join, because MTOA.obj_id is an integer, not a ForeignKey."""
     concordances = Muenztyp.objects.filter(workflow__name__iexact=CONTROLLED).only('pk', 'link', 'muenztyptitel')
-    objects = eligible_objects().filter(pk__in=[row.obj_id for row in rows]).select_related(
+    objects = eligible_objects(preview_collection_id=preview_collection_id).filter(pk__in=[row.obj_id for row in rows]).select_related(
         'Slg', 'Typ',
     ).only(
         'pk', 'Slg', 'Typ',

@@ -1,6 +1,6 @@
 {% extends 'slg/navbar.html' %}
-{% block title %}Eligius – Datenschutzerklärung{% endblock title %}
-{% load static %}
+{% load i18n %}
+{% block title %}Eligius – {% translate "Datenschutzerklärung" %}{% endblock title %}
 
 {% block stylesheets %}
 {{ block.super }}
@@ -81,78 +81,64 @@
 
 {% block content %}
 <div class="legal-sections">
-  <h1 class="legal-page-title">Datenschutzerklärung</h1>
+  <h1 class="legal-page-title">{% translate "Datenschutzerklärung" %}</h1>
 
   <div class="legal-block">
-    <h3>Verantwortlicher</h3>
+    <h3>{% translate "Verantwortlicher" %}</h3>
     <p>
-      Universität für Weiterbildung Krems<br>
-      Zentrum für Museale Sammlungswissenschaften<br>
-      Dr.-Karl-Dorrek-Straße 30, 3500 Krems an der Donau, Österreich<br>
-      E-Mail: <a href="mailto:martin.baer@donau-uni.ac.at">martin.baer@donau-uni.ac.at</a>
+      {% translate "Universität für Weiterbildung Krems" %}<br>
+      {% translate "Zentrum für Museale Sammlungswissenschaften" %}<br>
+      Dr.-Karl-Dorrek-Straße 30, 3500 Krems an der Donau, {% translate "Österreich" %}<br>
+      {% translate "E-Mail:" %} <a href="mailto:martin.baer@donau-uni.ac.at">martin.baer@donau-uni.ac.at</a>
     </p>
   </div>
 
   <div class="legal-block">
-    <h3>Erhebung und Verarbeitung von Daten</h3>
+    <h3>{% translate "Erhebung und Verarbeitung von Daten" %}</h3>
     <p>
-      Beim Besuch dieser Website werden automatisch technische Informationen erfasst,
-      die Ihr Browser an unseren Server übermittelt. Dazu gehören:
+      {% translate "Beim Besuch dieser Website werden automatisch technische Informationen erfasst, die Ihr Browser an unseren Server übermittelt. Dazu gehören:" %}
     </p>
     <ul>
-      <li>IP-Adresse (anonymisiert)</li>
-      <li>Datum und Uhrzeit des Zugriffs</li>
-      <li>Aufgerufene Seite bzw. Datei</li>
-      <li>Browsertyp und -version</li>
-      <li>Betriebssystem</li>
-      <li>Referrer-URL (zuvor besuchte Seite)</li>
+      <li>{% translate "IP-Adresse (anonymisiert)" %}</li>
+      <li>{% translate "Datum und Uhrzeit des Zugriffs" %}</li>
+      <li>{% translate "Aufgerufene Seite bzw. Datei" %}</li>
+      <li>{% translate "Browsertyp und -version" %}</li>
+      <li>{% translate "Betriebssystem" %}</li>
+      <li>{% translate "Referrer-URL (zuvor besuchte Seite)" %}</li>
     </ul>
     <p>
-      Diese Daten werden ausschließlich zur Sicherstellung eines reibungslosen
-      Verbindungsaufbaus und zur Systemsicherheit verarbeitet. Eine Zusammenführung
-      mit anderen Datenquellen findet nicht statt.
+      {% translate "Diese Daten werden ausschließlich zur Sicherstellung eines reibungslosen Verbindungsaufbaus und zur Systemsicherheit verarbeitet. Eine Zusammenführung mit anderen Datenquellen findet nicht statt." %}
     </p>
   </div>
 
   <div class="legal-block">
-    <h3>Cookies</h3>
+    <h3>{% translate "Cookies" %}</h3>
     <p>
-      Diese Website verwendet Cookies. Technisch notwendige Cookies gewährleisten die
-      Grundfunktionalität der Website und werden automatisch gesetzt. Analyse-Cookies
-      (Google Analytics) werden nur mit Ihrer ausdrücklichen Einwilligung über den
-      Cookie-Banner aktiviert. Sie können Ihre Einwilligung jederzeit widerrufen, indem
-      Sie die Cookies in Ihrem Browser löschen.
+      {% translate "Diese Website verwendet Cookies. Technisch notwendige Cookies gewährleisten die Grundfunktionalität der Website und werden automatisch gesetzt. Analyse-Cookies (Google Analytics) werden nur mit Ihrer ausdrücklichen Einwilligung über den Cookie-Banner aktiviert. Sie können Ihre Einwilligung jederzeit widerrufen, indem Sie die Cookies in Ihrem Browser löschen." %}
     </p>
   </div>
 
   <div class="legal-block">
-    <h3>Google Analytics</h3>
+    <h3>{% translate "Google Analytics" %}</h3>
     <p>
-      Diese Website nutzt Google Analytics, einen Webanalysedienst der Google Ireland
-      Limited, Gordon House, Barrow Street, Dublin 4, Irland. Google Analytics verwendet
-      Cookies, die eine Analyse Ihrer Nutzung der Website ermöglichen. Die durch das Cookie
-      erzeugten Informationen werden in der Regel an einen Server von Google in den USA
-      übertragen und dort gespeichert. Durch die Aktivierung der IP-Anonymisierung auf
-      dieser Website wird Ihre IP-Adresse von Google innerhalb von Mitgliedstaaten der
-      Europäischen Union zuvor gekürzt.
+      {% translate "Diese Website nutzt Google Analytics, einen Webanalysedienst der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Google Analytics verwendet Cookies, die eine Analyse Ihrer Nutzung der Website ermöglichen. Die durch das Cookie erzeugten Informationen können an Google-Server in den USA übermittelt und dort verarbeitet werden. Laut Google verwendet Google Analytics bei Zugriffen aus der EU, der Schweiz oder dem Vereinigten Königreich IP-Adressen zur ungefähren Standortbestimmung und verwirft sie anschließend vor dem Protokollieren der Messdaten." %}
     </p>
     <p>
-      Google Analytics wird nur aktiviert, wenn Sie über den Cookie-Banner Ihre
-      ausdrückliche Einwilligung erteilt haben. Die Rechtsgrundlage ist Art. 6 Abs. 1
-      lit. a DSGVO (Einwilligung).
+      {% translate "Google Analytics wird nur aktiviert, wenn Sie über den Cookie-Banner Ihre ausdrückliche Einwilligung erteilt haben. Die Rechtsgrundlage ist Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)." %}
     </p>
   </div>
 
   <div class="legal-block">
-    <h3>Ihre Rechte</h3>
+    <h3>{% translate "Ihre Rechte" %}</h3>
     <p>
-      Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der
-      Verarbeitung Ihrer personenbezogenen Daten. Darüber hinaus steht Ihnen ein
-      Beschwerderecht bei der zuständigen Aufsichtsbehörde
-      (Österreichische Datenschutzbehörde, <a href="https://www.dsb.gv.at" target="_blank" rel="noopener">www.dsb.gv.at</a>) zu.
+      {% blocktranslate trimmed with authority_url="https://www.dsb.gv.at" %}
+        Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung Ihrer personenbezogenen Daten.
+        Darüber hinaus steht Ihnen ein Beschwerderecht bei der zuständigen Aufsichtsbehörde
+        (Österreichische Datenschutzbehörde, <a href="{{ authority_url }}" target="_blank" rel="noopener">www.dsb.gv.at</a>) zu.
+      {% endblocktranslate %}
     </p>
     <p>
-      Bei Fragen zum Datenschutz wenden Sie sich bitte an:
+      {% translate "Bei Fragen zum Datenschutz wenden Sie sich bitte an:" %}
       <a href="mailto:martin.baer@donau-uni.ac.at">martin.baer@donau-uni.ac.at</a>
     </p>
   </div>

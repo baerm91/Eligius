@@ -71,9 +71,10 @@ Schriften die Pakete unter `@fontsource-variable`.
 | Cookie Consent | 3.1.1 |
 | Select2 (CSS) | 4.1.0-rc.0 |
 | LightGallery (CSS und Schrift) | 1.6.11 |
-| Leaflet / Leaflet.markercluster / Leaflet.fullscreen | 1.9.4 / 1.4.1 / 2.4.0 |
+| Leaflet / Leaflet.markercluster | 1.9.4 / 1.4.1 |
 | MapLibre GL / @maplibre/maplibre-gl-leaflet | 5.24.0 / 0.1.2 |
 | noUiSlider / ECharts | 14.7.0 / 5.5.0 |
+| D3 / SortableJS | 7.9.0 / 1.15.0 |
 | Cormorant Garamond, Plus Jakarta Sans, Josefin Sans, Inter, Outfit, Playfair Display | 5.3.0 |
 
 Die Basiskarte bezieht ihre Kartendaten weiterhin von OpenFreeMap.
@@ -225,3 +226,57 @@ wenn verbotene lokale/dev-Dateien bereits getrackt sind (z. B. `.venv/`, `.env*`
 - `mysqlclient` wurde für Dev durch **PyMySQL** ersetzt (kein System-Compile nötig)
 - Alle `slg`-Migrations bis `0097` sind vorhanden
 - `python manage.py test` findet aktuell keine Tests (`0 tests`)
+
+## Browser-Tests, Barrierefreiheit und Betriebsalarme
+
+Der CI-Job `browser-smoke` startet Django mit einer isolierten SQLite-Datenbank.
+Chromium prüft acht Abläufe mit echten Templates und echtem JavaScript, darunter
+Filterauswahl, Karten-Vollbild, Diagrammdaten, Nachladen, Galerie, Dialog und
+Motivstatistik. Nur externe Kartendaten und Testbilder werden im Browser
+abgefangen. Screenshots und Traces stehen bei Fehlern als CI-Artefakt bereit.
+
+```sh
+python -m pip install playwright==1.65.2
+python -m playwright install chromium
+python manage.py test scripts.browser_smoke --settings=djangoproject.browser_test_settings
+```
+
+Der Job `security-audit` prüft die aufgelösten Laufzeitabhängigkeiten aus
+`requirements.txt` mit `pip-audit`. Aktualisierte Pins vor der Übernahme mit
+der Django-Suite sowie den Browser-Tests prüfen.
+
+### Barrierefreiheitserklärung für Eligius vorbereiten
+
+Am 23. November 2026 wurden 22 Seiten- und Dialogzustände in Chrome mit
+axe-core 4.14.1 nach den automatisierbaren WCAG-2.1-A/AA-Regeln geprüft. Der
+letzte Lauf meldete keine Verstöße. Geprüft wurden Startseite, Objektsuche,
+Objektdetail, Lab, Projekt, Impressum und Datenschutz sowie die geöffneten
+Cookie-Einstellungen, Filter, Feedbackdialog und Galerie bei 390 und 1280 Pixeln
+Breite. Der Lauf verwendete lokale Testobjekte und eine Kartenattrappe.
+Die Browser-Checks decken außerdem ausgewählte Tastaturabläufe ab.
+
+Für die Konformitätsbewertung stehen die Prüfung mit einem Screenreader und
+manuelle Prüfungen aus, etwa für Text auf Bildern, wechselnde Zustände und
+Inhalte, die der automatische Kontrasttest zur Nachprüfung markiert.
+Die [Erklärung der Universität](https://www.donau-uni.ac.at/de/universitaet/erklaerung-zur-barrierefreiheit.html)
+nennt `barrierefreiheit.website@donau-uni.ac.at` als Kontakt für
+`www.donau-uni.ac.at`. Für eine eigene Erklärung mit dem Geltungsbereich
+`eligius.donau-uni.ac.at` muss die Universität den für Eligius zuständigen
+Feedbackkontakt bestätigen. Die Erklärung dokumentiert auch festgestellte
+Barrieren, Prüfmethode und Durchsetzungsverfahren.
+[WZG § 4](https://ris.bka.gv.at/Dokumente/Bundesnormen/NOR40216386/NOR40216386.pdf)
+
+### Betrieb
+
+OAI, MCP und die Admin-Importe für Objekte, Münztypen und Paketzuordnungen
+geben JSON-Ereignisse auf stderr aus. Enthalten sind Aktion, Ergebnis und
+Laufzeit sowie gegebenenfalls Fehlerklasse, OAI-Protokollcode oder Zeilenzahl.
+Request-Inhalte und Tokens gehören nicht in diese Ereignisse.
+
+Alarme für Django-HTTP-5xx durch `ELIGIUS_ERROR_ALERT_RECIPIENTS` und die
+SMTP-Einstellungen aus `.env.example` in der Laufzeitumgebung aktivieren.
+Das SMTP-Passwort kann über `EMAIL_HOST_PASSWORD_FILE` eingebunden werden.
+Der Alarm enthält Routenname und Statuscode und ist je Kombination auf eine
+Nachricht in fünf Minuten begrenzt. Transportfehler beim Mailversand werden
+als eigenes Ereignis protokolliert. Die Zustellung mit dem tatsächlichen
+SMTP-Server und einem Testempfänger vor der Aktivierung prüfen.

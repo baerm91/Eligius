@@ -11,8 +11,8 @@ from django.conf import settings
 from django.utils.translation import get_language
 
 from .authority_inventory import identify_authority
+from .authority_review import REFERENCE_FIELDS, SCHEMA, record_hash, reviewed_path
 
-REFERENCE_FIELDS = ('name_nom_id', 'DNB', 'WikiEn', 'WikiDe', 'uri_reference', 'nomisma_collection_uri')
 MODELS = ('Person', 'Nominal', 'Metall', 'Mzstaette', 'Region', 'Objekttyp',
           'Herstellungsmerkmale', 'Sek_Merkmale', 'Schlagwort', 'OffizinSymbol', 'Slg',
           'Herstellung', 'PersonFunktion')
@@ -29,22 +29,35 @@ def english():
 
 
 @lru_cache(maxsize=2)
-def _read_catalog(path, modified):
+def _read_catalog(path, modified, schema):
     try:
         data = json.loads(Path(path).read_text(encoding='utf-8'))
-        return data['labels'] if data.get('schema') == 'eligius-authority-labels-v1' else {}
+        if isinstance(data, dict) and data.get('schema') == schema and isinstance(data.get('labels'), dict):
+            return data['labels']
+        return {}
     except (OSError, ValueError, KeyError):
         return {}
 
 
-def catalog():
+def source_catalog():
     path = Path(getattr(settings, 'ELIGIUS_AUTHORITY_LABELS_PATH',
                         settings.BASE_DIR / 'var' / 'authority-labels.en.json'))
+    return file_catalog(path, 'eligius-authority-labels-v1')
+
+
+def file_catalog(path, schema):
     try:
         modified = path.stat().st_mtime_ns
     except OSError:
         return {}, (str(path), None)
-    return _read_catalog(str(path), modified), (str(path), modified)
+    return _read_catalog(str(path), modified, schema), (str(path), modified)
+
+
+def _reviewed_label(reviewed, model, pk, values):
+    entry = reviewed.get(f'{model}:{pk}')
+    if entry and entry.get('original_sha256') == record_hash(model, pk, values):
+        return entry['label']
+    return None
 
 
 def _label(values, labels):
@@ -84,10 +97,12 @@ def display_label(instance):
         return str(instance)
     if instance._meta.object_name not in (*MODELS, 'AvBildtyp', 'RvBildtyp'):
         return str(instance)
-    labels, _ = catalog()
+    labels, _ = source_catalog()
+    reviewed, _ = file_catalog(reviewed_path(), SCHEMA)
     fields = {f.name for f in instance._meta.concrete_fields}
     values = {field: getattr(instance, field) for field in (*REFERENCE_FIELDS, 'name', 'name_en') if field in fields}
-    return _label(values, labels) or str(instance)
+    return (_reviewed_label(reviewed, instance._meta.label, instance.pk, values)
+            or _label(values, labels) or str(instance))
 
 
 _indices = {}
@@ -107,7 +122,9 @@ def label_index(model_name):
     """
     if model_name not in (*MODELS, 'AvBildtyp', 'RvBildtyp'):
         return {}, {}
-    labels, version = catalog()
+    labels, source_version = source_catalog()
+    reviewed, review_version = file_catalog(reviewed_path(), SCHEMA)
+    version = source_version, review_version
     with _lock:
         cached = _indices.get(model_name)
         if cached and cached[0] == version and cached[1] > monotonic():
@@ -118,7 +135,7 @@ def label_index(model_name):
         by_id, variants = {}, {}
         for row in model.objects.values(*columns).iterator(chunk_size=2000):
             original = row.get('name', '')
-            label = _label(row, labels)
+            label = _reviewed_label(reviewed, model._meta.label, row["pk"], row) or _label(row, labels)
             by_id[row['pk']] = label
             variants.setdefault(original, set()).add(label)
         by_name = {name: next(iter(values)) for name, values in variants.items() if len(values) == 1}

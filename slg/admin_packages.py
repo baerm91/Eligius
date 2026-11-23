@@ -92,7 +92,12 @@ class ObjPaketZuweisungResource(resources.ModelResource):
     def import_data(self, dataset, dry_run=False, raise_errors=False, use_transactions=None, collect_failed_rows=False, **kwargs):
         """Eigener Bulk-Import. Der Dry-Run (Vorschau) führt dieselbe Zuordnung aus
         und rollt anschließend zurück, damit Fehler bereits in der Vorschau sichtbar sind."""
-        return self._bulk_import(dataset, dry_run=dry_run)
+        from .operations import operation
+        with operation('admin_import', 'package_assignments', dry_run=dry_run, rows=len(dataset)) as event:
+            result = self._bulk_import(dataset, dry_run=dry_run)
+            if result.has_errors() or result.has_validation_errors():
+                event['outcome'] = 'rejected'
+            return result
 
     @staticmethod
     def _norm(value):

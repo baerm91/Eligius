@@ -21,6 +21,9 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = Path(__file__).resolve().parent.parent
 ELIGIUS_AUTHORITY_LABELS_PATH = Path(os.getenv(
     'ELIGIUS_AUTHORITY_LABELS_PATH', str(BASE_DIR / 'var' / 'authority-labels.en.json')))
+ELIGIUS_REVIEWED_AUTHORITY_LABELS_PATH = Path(os.getenv(
+    'ELIGIUS_REVIEWED_AUTHORITY_LABELS_PATH',
+    str(ELIGIUS_AUTHORITY_LABELS_PATH.with_name('authority-reviewed.en.json'))))
 
 
 # Quick-start development settings - unsuitable for production
@@ -142,6 +145,31 @@ if _CACHE_DIR:
 # Altintegrationen bewusst per ELIGIUS_ALLOW_QUERY_PARAM_TOKEN_AUTH=1 aktivieren.
 ELIGIUS_ALLOW_QUERY_PARAM_TOKEN_AUTH = os.getenv(
     'ELIGIUS_ALLOW_QUERY_PARAM_TOKEN_AUTH', 'False').lower() in ('1', 'true', 'yes', 'on')
+ELIGIUS_ERROR_ALERT_RECIPIENTS = [
+    value.strip() for value in os.getenv('ELIGIUS_ERROR_ALERT_RECIPIENTS', '').split(',') if value.strip()
+]
+SERVER_EMAIL = os.getenv('ELIGIUS_ERROR_ALERT_FROM', 'eligius@localhost')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '25'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = _read_secret_file('EMAIL_HOST_PASSWORD_FILE') or os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', '').lower() in ('1', 'true', 'yes')
+EMAIL_TIMEOUT = 5
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'operation_json': {'format': '%(message)s'}},
+    'handlers': {
+        'operation_stream': {'class': 'logging.StreamHandler', 'formatter': 'operation_json'},
+        'error_alert': {'class': 'slg.operations.ServerErrorEmailHandler', 'level': 'ERROR'},
+    },
+    'loggers': {
+        'slg.operations': {'handlers': ['operation_stream'], 'level': 'INFO', 'propagate': False},
+        'django.request': {'handlers': ['error_alert'], 'level': 'WARNING', 'propagate': True},
+    },
+}
+
 MIDDLEWARE = [
     'djangoproject.middleware.RobotsTagMiddleware',
     # django-cors-headers: so weit oben wie möglich, vor allem vor Common-/GZip-

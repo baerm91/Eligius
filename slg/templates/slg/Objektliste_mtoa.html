@@ -32,7 +32,7 @@
 {% load custom_tags %} {# Ensure custom_tags are loaded if not already #}
 
 <!-- Exit Fullscreen Button -->
-<button id="exitFullscreenBtn" class="exit-fullscreen-btn">
+<button type="button" id="exitFullscreenBtn" class="exit-fullscreen-btn">
   <i class="bi bi-fullscreen-exit me-1"></i> {% translate "Vollbildmodus beenden" %}
 </button>
 
@@ -89,13 +89,14 @@
         <div class="col-12">
           <div class="browse-map-surface">
             <div class="zoom-container">
-              <div id="mintMap" style="height: 400px;"></div>
+              <div id="mintMap" aria-label="{% translate 'Karte der Münzstätten' %}" style="height: 400px;"></div>
               <div class="zoom-hint map-zoom-hint">
                 <i class="bi bi-mouse me-1"></i> {% translate "Strg + Mausrad zum Zoomen" %}
               </div>
-              <div id="customFullscreenBtn" class="custom-fullscreen-btn">
-                <i class="bi bi-arrows-fullscreen"></i>
-              </div>
+              <button type="button" id="customFullscreenBtn" class="custom-fullscreen-btn"
+                aria-controls="mintMap" aria-expanded="false" aria-label="{% translate 'Vollbildmodus' %}">
+                <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -109,7 +110,15 @@
               <h5>{% translate "Zeitliche Verteilung der Objekte" %}</h5>
             </div>
             <div class="card-body p-0">
-              <div id="objectsBarChart" class="browse-echart-container"></div>
+              <div id="objectsBarChart" class="browse-echart-container" aria-hidden="true"></div>
+              <details id="browse-chart-data" class="px-3 pb-3">
+                <summary>{% translate "Diagrammdaten als Tabelle" %}</summary>
+                <p id="browse-chart-status" role="status">{% translate "Loading..." %}</p>
+                <table class="table table-dark" hidden>
+                  <thead><tr><th scope="col">{% translate "Jahr" %}</th><th scope="col">{% translate "Gewichtete Stückzahl" %}</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </details>
             </div>
           </div>
         </div>
@@ -124,7 +133,9 @@
               <span id="date-range-display" class="badge bg-primary">{% translate "Jahr 0 - 2000" %}</span>
             </div>
             <div class="card-body py-4">
-              <div id="date-range-slider" class="mx-2 mb-4"></div>
+              <div id="date-range-slider" class="mx-2 mb-4"
+                data-start-label="{% translate 'Frühestes Prägejahr' %}"
+                data-end-label="{% translate 'Spätestes Prägejahr' %}"></div>
               <div class="d-flex justify-content-between mt-3">
                 <span id="date-min-value" class="badge bg-secondary">0</span>
                 <button id="apply-date-filter" class="btn btn-primary px-4">
@@ -152,7 +163,10 @@
           {% if Objekte.has_next %}
           <div id="load-more" class="text-center mt-4"
             data-next-page="?page={{ Objekte.next_page_number }}{{ getvars }}">
-            <span class="loading-spinner"></span><br><br><br>
+            <a class="btn btn-outline-light" data-load-more href="?page={{ Objekte.next_page_number }}{{ getvars }}">
+              {% translate "Weitere Objekte laden" %}
+            </a>
+            <p role="status" class="mt-2 mb-0"></p>
           </div>
           {% endif %}
         </div>

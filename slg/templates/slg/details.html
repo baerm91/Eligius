@@ -114,7 +114,10 @@
                     const navParams = new URLSearchParams({invnr: currentInvnr, slg_id: slgId, slgteil_id: slgteilId});
 
                     fetch(`/api/adjacent-invnrs/?${navParams}`)
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) throw new Error('Failed to load adjacent objects');
+                            return response.json();
+                        })
                         .then(data => {
                             setNavState('prev2', data.prev2, data.prev2_id);
                             setNavState('prev1', data.prev1, data.prev1_id);
@@ -123,6 +126,11 @@
                             setNavState('next2', data.next2, data.next2_id);
                             setNavTarget('prev10', data.prev2_id);
                             setNavTarget('next10', data.next2_id);
+                        })
+                        .catch(() => {
+                            for (const id of ['prev10', 'prev2', 'prev1', 'current', 'next1', 'next2', 'next10']) {
+                                setNavTarget(id, null);
+                            }
                         });
                 }
                 
@@ -225,8 +233,8 @@
                                             {% endif %}
                                                 {{ person.idfk_Person|person_label }}{% if person.idfk_Person.zeichen %}, Zeichen: {{person.idfk_Person.zeichen}}{% endif %}
                                             </a>
-                                            <a href="#theModal" data-title="{{ person.idfk_Person.name }}" data-remote="{% url 'PersonModal' id=person.idfk_Person.id %}" data-footer="{% url 'admin:slg_person_change' person.idfk_Person.id %}" data-bs-toggle="modal" data-bs-target="#theModal" title="{% translate 'Person' %}">
-                                                <i class="bi bi-box-arrow-up-right"></i>
+                                            <a href="#theModal" data-title="{{ person.idfk_Person.name }}" data-remote="{% url 'PersonModal' id=person.idfk_Person.id %}" data-footer="{% url 'admin:slg_person_change' person.idfk_Person.id %}" data-bs-toggle="modal" data-bs-target="#theModal" aria-label="{% blocktranslate with name=person.idfk_Person|person_label %}Details zu {{ name }} öffnen{% endblocktranslate %}">
+                                                <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
                                             </a>
                                             {% if not forloop.last %}<br>{% endif %}
                                         {% endfor %}
@@ -516,16 +524,20 @@
             <div class="coin-image-row" data-aos="fade-in" data-aos-duration="4000" data-aos-delay="300">
                 {% with bild_urls=coin_data.bild_urls %}
                     {% if bild_urls %}
+                        {% if bild_urls.av %}
                         <div class="coin-image-col">
-                            <div class="item coin-image-stage" data-src="{{ bild_urls.av }}">
-                                <a href="{{ coin_data.get_absolute_url }}"><img src="{{ bild_urls.av }}" data-fallback-src="{{ bild_urls.av_alt|default:'' }}" alt="{{ seo.alt.av }}" class="img-fluid" loading="eager" fetchpriority="high" decoding="async" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
-                            </div>
+                            <a class="item coin-image-stage" href="{{ bild_urls.av }}">
+                                <img src="{{ bild_urls.av }}" data-fallback-src="{{ bild_urls.av_alt|default:'' }}" alt="{{ seo.alt.av }}" class="img-fluid" loading="eager" fetchpriority="high" decoding="async" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }">
+                            </a>
                         </div>
+                        {% endif %}
+                        {% if bild_urls.rv %}
                         <div class="coin-image-col">
-                            <div class="item coin-image-stage" data-src="{{ bild_urls.rv }}">
-                                <a href="{{ coin_data.get_absolute_url }}"><img src="{{ bild_urls.rv }}" data-fallback-src="{{ bild_urls.rv_alt|default:'' }}" alt="{{ seo.alt.rv }}" class="img-fluid" loading="eager" decoding="async" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }"></a>
-                            </div>
+                            <a class="item coin-image-stage" href="{{ bild_urls.rv }}">
+                                <img src="{{ bild_urls.rv }}" data-fallback-src="{{ bild_urls.rv_alt|default:'' }}" alt="{{ seo.alt.rv }}" class="img-fluid" loading="eager" decoding="async" onerror="if (this.dataset.fallbackSrc) { this.src=this.dataset.fallbackSrc; this.dataset.src=''; this.dataset.fallbackSrc=''; }">
+                            </a>
                         </div>
+                        {% endif %}
                     {% endif %}
                 {% endwith %}
                 {% if coin_data.slg.bildrechte_lizenz %}
@@ -649,8 +661,8 @@
 {% include "slg/modal.html" %}
 
 <!-- Floating feedback icon -->
-<button type="button" class="detail-feedback-btn" data-bs-toggle="modal" data-bs-target="#editModal" title="{% translate 'Änderung vorschlagen' %}">
-    <i class="bi bi-pencil"></i>
+<button type="button" class="detail-feedback-btn" data-bs-toggle="modal" data-bs-target="#editModal" title="{% translate 'Änderung vorschlagen' %}" aria-label="{% translate 'Änderung vorschlagen' %}">
+    <i class="bi bi-pencil" aria-hidden="true"></i>
 </button>
 
 <!-- Modal für Änderungsvorschläge -->
@@ -851,10 +863,10 @@
 </div>
 
 <!-- SortableJS für Drag & Drop -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script src="{% static 'vendor/sortablejs/Sortable.min.js' %}"></script>
 
 <!-- D3.js für Diagramme -->
-<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="{% static 'vendor/d3/d3.min.js' %}"></script>
 
 <!-- JavaScript Code für die Münzanalyse -->
 {% include "slg/partials/js/object_analysis.html" %}
@@ -866,7 +878,71 @@
     <script src="{% static 'Djangoprojekt/js/jquery.mousewheel.min.js'%}"></script>
     <script type="text/javascript">
         $(document).ready(function(e){
-            $('#captions').lightGallery({
+            const gallery = $('#captions');
+            let trigger;
+            if (!gallery.length) return;
+            gallery[0].addEventListener('click', event => {
+                trigger = event.target.closest('.item');
+            }, true);
+            // LightGallery 1.x emits this event with the spelling "Afer".
+            gallery.on('onAferAppendSlide.lg', function (event, index) {
+                const original = gallery.find('.item').eq(index).find('img');
+                $('.lg-outer .lg-item').eq(index).find('img.lg-image').attr('alt', original.attr('alt') || '');
+            });
+            gallery.on('onAfterOpen.lg', function () {
+                const dialog = document.querySelector('.lg-outer');
+                const close = dialog?.querySelector('.lg-close');
+                if (!close) return;
+                dialog.setAttribute('role', 'dialog');
+                dialog.setAttribute('aria-modal', 'true');
+                dialog.setAttribute('aria-label', '{% translate "Münzbilder" as gallery_label %}{{ gallery_label|escapejs }}');
+                const controls = [
+                    ['.lg-close', '{% translate "Close" as gallery_close %}{{ gallery_close|escapejs }}'],
+                    ['.lg-prev', '{% translate "Previous" as gallery_prev %}{{ gallery_prev|escapejs }}'],
+                    ['.lg-next', '{% translate "Next" as gallery_next %}{{ gallery_next|escapejs }}'],
+                    ['.lg-download', '{% translate "Bild herunterladen" as download %}{{ download|escapejs }}'],
+                    ['#lg-zoom-in', '{% translate "Vergrößern" as zoom_in %}{{ zoom_in|escapejs }}'],
+                    ['#lg-zoom-out', '{% translate "Verkleinern" as zoom_out %}{{ zoom_out|escapejs }}'],
+                    ['#lg-actual-size', '{% translate "Originalgröße" as original_size %}{{ original_size|escapejs }}'],
+                    ['.lg-fullscreen', '{% translate "Vollbildmodus" as fullscreen %}{{ fullscreen|escapejs }}'],
+                    ['.lg-autoplay-button', '{% translate "Diashow starten oder anhalten" as slideshow %}{{ slideshow|escapejs }}'],
+                    ['.lg-toogle-thumb', '{% translate "Vorschaubilder ein- oder ausblenden" as thumbnails %}{{ thumbnails|escapejs }}'],
+                ];
+                for (const [selector, label] of controls) {
+                    const control = dialog.querySelector(selector);
+                    if (!control) continue;
+                    control.setAttribute('aria-label', label);
+                    if (control.tagName === 'SPAN') {
+                        control.setAttribute('role', 'button');
+                        control.tabIndex = 0;
+                    }
+                }
+                for (const image of dialog.querySelectorAll('.lg-thumb-item img')) {
+                    image.alt = '';
+                }
+                dialog.addEventListener('keydown', event => {
+                    if (event.target.matches('span[role="button"]') && ['Enter', ' '].includes(event.key)) {
+                        event.preventDefault();
+                        close.click();
+                    }
+                    if (event.key === 'Tab') {
+                        const available = Array.from(dialog.querySelectorAll('button, a[href], [tabindex="0"]'))
+                            .filter(control => !control.disabled && control.getClientRects().length);
+                        const first = available[0], last = available[available.length - 1];
+                        if (!first) return;
+                        if (event.shiftKey && document.activeElement === first) {
+                            event.preventDefault();
+                            last.focus();
+                        } else if (!event.shiftKey && document.activeElement === last) {
+                            event.preventDefault();
+                            first.focus();
+                        }
+                    }
+                });
+                close.focus();
+            });
+            gallery.on('onCloseAfter.lg', () => trigger?.focus());
+            gallery.lightGallery({
                 selector: '.item',
                 showThumbByDefault: false,
                 preload: 2,
@@ -879,4 +955,9 @@
     </script>
     
     {% include "slg/scripte.html" with active_block="jsobjektaenderung" %}
+    <script>
+      document.getElementById('editModal').addEventListener('shown.bs.modal', function () {
+        this.querySelector('#name').focus();
+      });
+    </script>
 {% endblock scripts %}

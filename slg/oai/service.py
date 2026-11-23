@@ -231,7 +231,7 @@ def list_response(root, params, request):
     add_token(node, state, page, more, resumed, key, shown)
 
 
-def respond(query, request):
+def respond(query, request, *, event=None):
     root = ET.Element(qname('oai', 'OAI-PMH'), {
         qname('xsi', 'schemaLocation'): NS['oai'] + ' http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd',
     })
@@ -274,6 +274,8 @@ def respond(query, request):
         else:
             list_response(root, params, request)
     except OAIError as error:
+        if event is not None:
+            event.update(outcome='protocol_error', error_code=error.code)
         for child in list(root)[2:]:
             root.remove(child)
         echo.attrib.clear()

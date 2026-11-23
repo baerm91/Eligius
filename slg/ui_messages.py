@@ -63,6 +63,7 @@ JS_MESSAGES = (
     _("Schlagworte suchen …"),
     _("Sekundäre Merkmale suchen …"),
     _("Stückzahl"),
+    _("Gewichtete Stückzahl"),
     _("Suche läuft …"),
     _("Summe"),
     _("Vergleich der Prägungen von %(ruler)s"),
@@ -86,4 +87,7 @@ JS_MESSAGES = (
     _('Rang %(rank)s (%(percentage)s aller Prägungen unter %(ruler)s)'),
     _('%(start)s bis %(end)s'),
     _('Gesamt: %(start)s bis %(end)s'),
+    _("In diesem Browser ist WebMCP nicht verfügbar. Sie können Eligius wie gewohnt nutzen."),
+    _("WebMCP ist in diesem Browser aktiv. Ihr Browser-Assistent kann Eligius erkunden."),
+    _("WebMCP ist momentan nicht verfügbar. Eligius bleibt wie gewohnt nutzbar."),
 )

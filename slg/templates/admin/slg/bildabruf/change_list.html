@@ -1,0 +1,78 @@
+{% extends "admin/change_list.html" %}
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .image-request-tables {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: 1rem;
+    align-items: start;
+  }
+  .image-request-tables th, .image-request-tables td { overflow-wrap: anywhere; }
+  .image-request-tables .request-count { text-align: right; white-space: nowrap; }
+  .image-request-stats details { margin: .75rem 0; }
+  .image-request-stats summary { cursor: pointer; }
+  @media (max-width: 1050px) {
+    .image-request-tables { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+{% endblock %}
+{% block result_list %}
+{% if image_stats %}
+<section class="module image-request-stats" aria-labelledby="image-request-summary">
+  <h2 id="image-request-summary">Abrufe der Bildweiterleitung</h2>
+  <p>
+    {% if image_stats.period %}{{ image_stats.period.0|date:"d.m.Y" }} – {{ image_stats.period.1|date:"d.m.Y" }}{% else %}Gewählter Zeitraum{% endif %}
+    · {{ image_stats.total }} Abrufe
+  </p>
+  <p>Direkt geladene und zwischengespeicherte Bilder sind nicht erfasst. Ohne Referer bleibt die Herkunft unbekannt.</p>
+  {% if image_stats.total %}
+    <div class="image-request-tables">
+      <table>
+        <caption>Herkunft</caption>
+        <thead><tr><th scope="col">Quelle</th><th scope="col" class="request-count">Browser</th><th scope="col" class="request-count">Automatisiert</th></tr></thead>
+        <tbody>
+        {% for origin, counts in image_stats.origins %}
+          <tr><th scope="row">{{ origin }}</th><td class="request-count">{{ counts.0 }}</td><td class="request-count">{{ counts.1 }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <table>
+        <caption>Top 10 nach Browserabrufen</caption>
+        <thead><tr><th scope="col">Objekt</th><th scope="col">Sammlung</th><th scope="col" class="request-count">Abrufe</th></tr></thead>
+        <tbody>
+          {% for row in image_stats.top %}
+            <tr>
+              <th scope="row"><a href="{% url 'Objekt' row.obj_id %}">{{ row.obj__invnr|default:row.obj_id }}</a></th>
+              <td>{{ row.obj__Slg__name|default:"–" }}</td><td class="request-count">{{ row.total }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3">Keine Browserabrufe vorhanden.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <details>
+      <summary>{% if image_stats.monthly %}Monatsverlauf{% else %}Tagesverlauf{% endif %}</summary>
+      <table>
+        <thead><tr><th scope="col">Zeitraum</th><th scope="col">Browser</th><th scope="col">Automatisiert</th><th scope="col">Gesamt</th></tr></thead>
+        <tbody>
+          {% for day, counts in image_stats.timeline %}
+          {% with total=counts.0|add:counts.1 %}
+            <tr>
+              <th scope="row">{% if image_stats.monthly %}{{ day|date:"m.Y" }}{% else %}{{ day|date:"d.m.Y" }}{% endif %}</th>
+              <td>{{ counts.0 }}</td><td>{{ counts.1 }}</td>
+              <td>{{ total }} <meter aria-label="Abrufe insgesamt" min="0" max="{{ image_stats.peak }}" value="{{ total }}"></meter></td>
+            </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </details>
+  {% else %}
+    <p>Für diese Auswahl sind keine Abrufe erfasst.</p>
+  {% endif %}
+</section>
+{% endif %}
+{{ block.super }}
+{% endblock %}

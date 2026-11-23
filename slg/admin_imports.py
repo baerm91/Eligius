@@ -132,6 +132,15 @@ class MuenztypImport(resources.ModelResource):
         skip_unchanged = True
         report_skipped = True
 
+    def import_data(self, dataset, dry_run=False, *args, **kwargs):
+        from .operations import operation
+
+        with operation('admin_import', 'coin_types', dry_run=dry_run, rows=len(dataset)) as event:
+            result = super().import_data(dataset, dry_run, *args, **kwargs)
+            if result.has_errors() or result.has_validation_errors():
+                event['outcome'] = 'rejected'
+            return result
+
     def get_import_id_fields(self):
         return ['id']
 
@@ -299,14 +308,18 @@ class ObjImport(resources.ModelResource):
         # django-import-export 4.x übergibt dry_run nicht mehr an before_import.
         # Auto-Sync für die Dauer des Imports pausieren und in jedem Fall wieder
         # einschalten; danach einmal gebündelt synchronisieren (after_import).
+        from slg.operations import operation
         from slg.signals import mtoa_sync_paused
         self._dry_run = dry_run
-        with mtoa_sync_paused():
-            result = super().import_data(dataset, dry_run=dry_run, raise_errors=raise_errors,
-                                         use_transactions=use_transactions,
-                                         collect_failed_rows=collect_failed_rows, **kwargs)
-        self._sync_imported_objects()
-        return result
+        with operation('admin_import', 'objects', dry_run=dry_run, rows=len(dataset)) as event:
+            with mtoa_sync_paused():
+                result = super().import_data(dataset, dry_run=dry_run, raise_errors=raise_errors,
+                                             use_transactions=use_transactions,
+                                             collect_failed_rows=collect_failed_rows, **kwargs)
+            self._sync_imported_objects()
+            if result.has_errors() or result.has_validation_errors():
+                event['outcome'] = 'rejected'
+            return result
 
     def before_import(self, dataset, **kwargs):
         self._instance_cache = None

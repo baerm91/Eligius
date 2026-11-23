@@ -18,8 +18,7 @@ Vor der ersten Übernahme:
 ```powershell
 python manage.py migrate
 python manage.py sync_mtoa --slg <Sammlungs-ID>
-python manage.py validate_kulturpool_export
-python manage.py validate_kulturpool_export --slg <Sammlungs-ID> --strict
+python manage.py validate_kulturpool_export --slg <Sammlungs-ID> --preflight --strict
 ```
 
 Die Migration ist im produktiven Datenbank-Deployment anzuwenden. Entwicklung
@@ -309,7 +308,7 @@ bei fremden Seiten ohnehin nur den Ursprung), z. B. `kulturpool.at`,
 Es werden keine IP-Adressen, User-Agents oder vollständigen Referer
 gespeichert. HEAD wird nicht gezählt. Zählfehler werden protokolliert und
 verhindern nie die Weiterleitung. Auswertung im Admin unter **Bildabrufe
-(Weiterleitung)** oder per
+(Weiterleitung)** mit Herkunft, Tages-/Monatsverlauf und Top-10 nach Browserabrufen. Die Übersicht übernimmt die gewählten Filter und zeigt ohne Datumsauswahl die letzten 30 Tage. Die Liste darunter enthält die einzelnen Tagesaggregate. Auswertung per Kommando:
 
 ```powershell
 python manage.py bildabrufe --von 2026-12-01 --bis 2026-12-31 --slg 1 --herkunft kulturpool --top 20
@@ -472,7 +471,13 @@ invalidiert ausstehende Tokens.
 ## Bereitschaftsprüfung
 
 `python manage.py validate_kulturpool_export` prüft ausschließlich freigegebene
-Sammlungen. Optional begrenzt `--slg <ID>` die Ausgabe. Es meldet pro Sammlung:
+Sammlungen. `--slg <ID> --preflight --strict` prüft genau eine Sammlung schon
+vor der Freigabe. Die Vorabprüfung verwendet dieselben Objekt- und MTOA-Kriterien
+wie der öffentliche Export und ändert keine Freigaben. Eine ausdrücklich
+ausgewählte, nicht gefundene Sammlung ergibt einen Fehler. Im strikten Modus
+sind auch eine leere Auswahl oder eine Sammlung ohne exportierbare Objekte Fehler.
+
+Das Kommando meldet pro Sammlung:
 
 - grundsätzlich exportfähige und über OAI tatsächlich verfügbare Objekte;
 - Ausschlüsse wegen fehlender Objekt- oder Typkontrolle;
