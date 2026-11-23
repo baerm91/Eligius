@@ -2471,3 +2471,63 @@ msgstr ""
 "obverse titulature shifts via Av1–Av3. The donut charts add the quantitative"
 " profile at a glance: the quinarius is 100% Victoria, the as is 65% Pax, "
 "while the sestertius carries the broadest programmatic repertoire."
+
+
+msgid "Detailseite öffnen →"
+msgstr "Open detail page →"
+
+msgid ""
+"Klicken Sie eine Zelle an, um Avers-Variante und verlinkte "
+"Exemplarabbildungen (Av./Rv.) anzuzeigen."
+msgstr ""
+"Click any matrix cell to display its obverse variant and linked specimen "
+"images (obverse/reverse)."
+
+msgid ""
+"Anders als eine gedruckte Tabelle verknüpft das digitale Prägeskelett jede "
+"Matrix-Zelle direkt mit den Exemplarabbildungen (Avers & Revers) und den "
+"Eligius-Detailseiten. Die Kreisdiagramme zeigen zusätzlich die Gewichtung "
+"pro Nominal: Der Quinarius ist zu 100 % Victoria-geprägt, der As zu 65 % "
+"Pax, während der Sestertius das breiteste Bildprogramm trägt."
+msgstr ""
+"Unlike a printed table, the digital coinage skeleton links every matrix cell"
+" directly to specimen images (obverse and reverse) and the Eligius detail "
+"pages. The donut charts also show the distribution per denomination: the "
+"quinarius is 100% Victoria, the as is 65% Pax, while the sestertius carries "
+"the broadest programmatic repertoire."
+
+
+msgid ""
+"Standard: nach Revers-Legende & Motiv sortiert · Überschriften zum Sortieren"
+" anklicken"
+msgstr "Default: sorted by reverse legend & motif · click headings to sort"
+
+msgid "Avers-Legenden im Vergleich (zum Hervorheben anklicken):"
+msgstr "Obverse legends compared (click to highlight):"
+
+msgid "Alle anzeigen"
+msgstr "Show all"
+
+msgid "Nach Revers-Legende und Motiv sortieren"
+msgstr "Sort by reverse legend and motif"
+
+msgid "Nach Motiv sortieren"
+msgstr "Sort by motif"
+
+msgid "Nach Aureus-Belegen sortieren"
+msgstr "Sort by aureus evidence"
+
+msgid "Nach Denar-Belegen sortieren"
+msgstr "Sort by denarius evidence"
+
+msgid "Nach Quinarius-Belegen sortieren"
+msgstr "Sort by quinarius evidence"
+
+msgid "Nach Sestertius-Belegen sortieren"
+msgstr "Sort by sestertius evidence"
+
+msgid "Nach Dupondius-Belegen sortieren"
+msgstr "Sort by dupondius evidence"
+
+msgid "Nach As-Belegen sortieren"
+msgstr "Sort by as evidence"

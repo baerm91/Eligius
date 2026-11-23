@@ -43,19 +43,30 @@
   /* Praegeskelett matrix */
   .lab-matrix-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 10px; }
   .lab-matrix-meta { font-size: .88rem; opacity: .82; }
-  .lab-av-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
-  .lab-av-label { font-size: .84rem; opacity: .82; margin-right: 4px; }
-  .lab-av-pill { background: rgba(255,255,255,.03); color: inherit; border: 1px solid rgba(246,177,93,.28); border-radius: 999px; padding: 5px 11px; font-size: .82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background .15s ease, border-color .15s ease; }
+  .lab-av-bar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .lab-av-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .lab-av-label { font-size: .84rem; opacity: .86; }
+  .lab-av-list { display: flex; flex-direction: column; gap: 6px; }
+  .lab-av-pill { background: rgba(255,255,255,.03); color: inherit; border: 1px solid rgba(246,177,93,.28); border-radius: 8px; padding: 6px 12px; font-size: .82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background .15s ease, border-color .15s ease; }
+  .lab-av-pill--row { width: 100%; display: grid; grid-template-columns: 3.1em minmax(0, 1fr); align-items: center; text-align: left; }
   .lab-av-pill strong { color: var(--accent, #f6b15d); }
-  .lab-av-pill code { font-size: .78rem; color: inherit; opacity: .86; }
+  .lab-av-pill code { font-size: .82rem; color: inherit; opacity: .92; letter-spacing: .02em; }
+  .lab-av-diff { color: var(--accent, #f6b15d); font-weight: 600; text-decoration: underline; text-decoration-color: rgba(246,177,93,.55); text-underline-offset: 3px; }
   .lab-av-pill:hover, .lab-av-pill:focus-visible { border-color: rgba(246,177,93,.65); }
   .lab-av-pill[aria-pressed="true"] { background: rgba(246,177,93,.16); border-color: var(--accent, #f6b15d); }
 
   .lab-matrix-wrap { overflow-x: auto; border: 1px solid rgba(246,177,93,.22); border-radius: 8px; }
   .lab-matrix { width: 100%; min-width: 740px; border-collapse: collapse; margin: 0; font-size: .9rem; }
   .lab-matrix th, .lab-matrix td { text-align: left; padding: 9px 10px; border-bottom: 1px solid rgba(246,177,93,.14); vertical-align: middle; }
-  .lab-matrix thead th { background: rgba(246,177,93,.1); color: var(--accent, #f6b15d); font-weight: 600; font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; text-align: center; }
-  .lab-matrix thead th:first-child { text-align: left; }
+  .lab-matrix thead th { background: rgba(246,177,93,.1); color: var(--accent, #f6b15d); font-weight: 600; font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; text-align: center; padding: 7px 6px; }
+  .lab-matrix thead th:first-child { text-align: left; padding-left: 10px; }
+  .lab-th-split { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .lab-sort-btn { background: transparent; color: inherit; border: 1px solid transparent; border-radius: 6px; padding: 4px 7px; font: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: background .15s ease, border-color .15s ease; }
+  .lab-sort-btn--col { width: 100%; justify-content: center; }
+  .lab-sort-btn:hover, .lab-sort-btn:focus-visible { background: rgba(246,177,93,.14); border-color: rgba(246,177,93,.45); }
+  .lab-sort-btn[aria-pressed="true"] { background: rgba(246,177,93,.2); border-color: rgba(246,177,93,.65); }
+  .lab-sort-ind { font-size: .78rem; opacity: .78; }
+  .lab-sort-btn[aria-pressed="true"] .lab-sort-ind { opacity: 1; }
   .lab-matrix tbody th { font-weight: 600; text-align: left; }
   .lab-matrix tbody tr:last-child th, .lab-matrix tbody tr:last-child td { border-bottom: 0; }
   .lab-matrix-col-gap { background: rgba(255,255,255,.015); opacity: .68; text-align: center; }
@@ -77,8 +88,20 @@
   .lab-inspector-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; margin-bottom: 8px; }
   .lab-inspector-title { font-size: 1rem; font-weight: 600; color: var(--accent, #f6b15d); }
   .lab-inspector-hint { font-size: .82rem; opacity: .76; }
-  .lab-inspector-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; font-size: .88rem; margin-bottom: 10px; }
+  .lab-inspector-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; font-size: .88rem; margin-bottom: 12px; }
   .lab-inspector-meta span strong { color: var(--accent, #f6b15d); }
+  .lab-specimens { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 6px; }
+  .lab-specimen-card { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 9px; border: 1px solid rgba(246,177,93,.3); background: rgba(0,0,0,.24); color: inherit; text-decoration: none; transition: border-color .15s ease, background .15s ease, transform .12s ease; }
+  .lab-specimen-card:hover, .lab-specimen-card:focus-visible { border-color: var(--accent, #f6b15d); background: rgba(246,177,93,.1); transform: translateY(-1px); }
+  .lab-specimen-imgs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .lab-specimen-frame { position: relative; aspect-ratio: 1 / 1; border-radius: 6px; overflow: hidden; background: rgba(255,255,255,.04); border: 1px solid rgba(246,177,93,.18); display: flex; align-items: center; justify-content: center; }
+  .lab-specimen-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .lab-specimen-side { position: absolute; left: 4px; bottom: 4px; font-size: .68rem; font-weight: 600; padding: 1px 5px; border-radius: 4px; background: rgba(16,16,16,.82); color: var(--accent, #f6b15d); letter-spacing: .03em; }
+  .lab-specimen-fallback { font-size: .74rem; opacity: .68; text-align: center; padding: 6px; }
+  .lab-specimen-info { display: flex; flex-direction: column; gap: 2px; font-size: .82rem; }
+  .lab-specimen-cite { font-weight: 600; color: var(--accent, #f6b15d); }
+  .lab-specimen-sub { font-size: .76rem; opacity: .78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lab-specimen-go { font-size: .76rem; color: var(--accent, #f6b15d); opacity: .9; margin-top: 2px; }
   .lab-refs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
   .lab-ref-pill { display: inline-block; font-size: .82rem; padding: 2px 9px; border-radius: 999px; border: 1px solid rgba(246,177,93,.38); color: var(--accent, #f6b15d); text-decoration: none; }
   .lab-ref-pill:hover, .lab-ref-pill:focus-visible { background: rgba(246,177,93,.16); }
@@ -219,37 +242,163 @@
     <div class="lab-panel" role="tabpanel" id="panel-skeleton" aria-labelledby="tab-skeleton" data-lab-panel="skeleton">
       <div class="lab-matrix-head">
         <strong>{% translate "Hadrianus · Rom · ca. 119–121 n. Chr. (COS III)" %}</strong>
-        <span class="lab-matrix-meta">{% translate "Zeilen: Motiv + Revers-Legende · Spalten: Nominale · Zellen: Avers-Variante (klickbar)" %}</span>
+        <span class="lab-matrix-meta">{% translate "Standard: nach Revers-Legende & Motiv sortiert · Überschriften zum Sortieren anklicken" %}</span>
       </div>
 
       {% with av1_legend="IMP CAESAR TRAIAN HADRIANVS AVG" av2_legend="IMP CAESAR TRAIANVS HADRIANVS AVG" av3_legend="IMP CAESAR TRAIANVS HADRIANVS AVG P M TR P COS III" %}
 
       <div class="lab-av-bar" role="group" aria-label="{% translate 'Avers-Varianten filtern' %}">
-        <span class="lab-av-label">{% translate "Avers-Kürzel hervorheben:" %}</span>
-        <button type="button" class="lab-av-pill" data-av-filter="all" aria-pressed="true"><strong>{% translate "Alle" %}</strong></button>
-        <button type="button" class="lab-av-pill" data-av-filter="Av1" aria-pressed="false"><strong>Av1</strong> <code>IMP CAESAR TRAIAN HADRIANVS AVG</code></button>
-        <button type="button" class="lab-av-pill" data-av-filter="Av2" aria-pressed="false"><strong>Av2</strong> <code>IMP CAESAR TRAIANVS HADRIANVS AVG</code></button>
-        <button type="button" class="lab-av-pill" data-av-filter="Av3" aria-pressed="false"><strong>Av3</strong> <code>… AVG P M TR P COS III</code></button>
+        <div class="lab-av-top">
+          <span class="lab-av-label">{% translate "Avers-Legenden im Vergleich (zum Hervorheben anklicken):" %}</span>
+          <button type="button" class="lab-av-pill" data-av-filter="all" aria-pressed="true"><strong>{% translate "Alle anzeigen" %}</strong></button>
+        </div>
+        <div class="lab-av-list">
+          <button type="button" class="lab-av-pill lab-av-pill--row" data-av-filter="Av1" aria-pressed="false">
+            <strong>Av1</strong>
+            <code>IMP CAESAR <span class="lab-av-diff">TRAIAN</span> HADRIANVS AVG</code>
+          </button>
+          <button type="button" class="lab-av-pill lab-av-pill--row" data-av-filter="Av2" aria-pressed="false">
+            <strong>Av2</strong>
+            <code>IMP CAESAR <span class="lab-av-diff">TRAIANVS</span> HADRIANVS AVG</code>
+          </button>
+          <button type="button" class="lab-av-pill lab-av-pill--row" data-av-filter="Av3" aria-pressed="false">
+            <strong>Av3</strong>
+            <code>IMP CAESAR <span class="lab-av-diff">TRAIANVS</span> HADRIANVS AVG <span class="lab-av-diff">P M TR P COS III</span></code>
+          </button>
+        </div>
       </div>
 
       <div class="lab-matrix-wrap">
         <table class="lab-matrix" id="lab-skeleton-matrix">
           <thead>
             <tr>
-              <th scope="col">{% translate "Revers-Motiv & Legende" %}</th>
-              <th scope="col">Aureus <span class="lab-metal">Au</span></th>
-              <th scope="col">Denar <span class="lab-metal">Ar</span></th>
-              <th scope="col">Quinarius <span class="lab-metal">Ar</span></th>
-              <th scope="col">Sestertius <span class="lab-metal">Ae</span></th>
-              <th scope="col">Dupondius <span class="lab-metal">Ae</span></th>
-              <th scope="col">As <span class="lab-metal">Ae</span></th>
+              <th scope="col" aria-sort="ascending">
+                <div class="lab-th-split">
+                  <button type="button" class="lab-sort-btn" data-sort-key="rv" aria-pressed="true" title="{% translate 'Nach Revers-Legende und Motiv sortieren' %}">
+                    <span>{% translate "Revers-Legende" %}</span>
+                    <span class="lab-sort-ind" aria-hidden="true">↑</span>
+                  </button>
+                  <button type="button" class="lab-sort-btn" data-sort-key="motif" aria-pressed="false" title="{% translate 'Nach Motiv sortieren' %}">
+                    <span>{% translate "Motiv" %}</span>
+                    <span class="lab-sort-ind" aria-hidden="true">↕</span>
+                  </button>
+                </div>
+              </th>
+              <th scope="col" aria-sort="none">
+                <button type="button" class="lab-sort-btn lab-sort-btn--col" data-sort-key="col-1" aria-pressed="false" title="{% translate 'Nach Aureus-Belegen sortieren' %}">
+                  <span>Aureus <span class="lab-metal">Au</span></span>
+                  <span class="lab-sort-ind" aria-hidden="true">↕</span>
+                </button>
+              </th>
+              <th scope="col" aria-sort="none">
+                <button type="button" class="lab-sort-btn lab-sort-btn--col" data-sort-key="col-2" aria-pressed="false" title="{% translate 'Nach Denar-Belegen sortieren' %}">
+                  <span>Denar <span class="lab-metal">Ar</span></span>
+                  <span class="lab-sort-ind" aria-hidden="true">↕</span>
+                </button>
+              </th>
+              <th scope="col" aria-sort="none">
+                <button type="button" class="lab-sort-btn lab-sort-btn--col" data-sort-key="col-3" aria-pressed="false" title="{% translate 'Nach Quinarius-Belegen sortieren' %}">
+                  <span>Quinarius <span class="lab-metal">Ar</span></span>
+                  <span class="lab-sort-ind" aria-hidden="true">↕</span>
+                </button>
+              </th>
+              <th scope="col" aria-sort="none">
+                <button type="button" class="lab-sort-btn lab-sort-btn--col" data-sort-key="col-4" aria-pressed="false" title="{% translate 'Nach Sestertius-Belegen sortieren' %}">
+                  <span>Sestertius <span class="lab-metal">Ae</span></span>
+                  <span class="lab-sort-ind" aria-hidden="true">↕</span>
+                </button>
+              </th>
+              <th scope="col" aria-sort="none">
+                <button type="button" class="lab-sort-btn lab-sort-btn--col" data-sort-key="col-5" aria-pressed="false" title="{% translate 'Nach Dupondius-Belegen sortieren' %}">
+                  <span>Dupondius <span class="lab-metal">Ae</span></span>
+                  <span class="lab-sort-ind" aria-hidden="true">↕</span>
+                </button>
+              </th>
+              <th scope="col" aria-sort="none">
+                <button type="button" class="lab-sort-btn lab-sort-btn--col" data-sort-key="col-6" aria-pressed="false" title="{% translate 'Nach As-Belegen sortieren' %}">
+                  <span>As <span class="lab-metal">Ae</span></span>
+                  <span class="lab-sort-ind" aria-hidden="true">↕</span>
+                </button>
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr>
+            <tr data-rv-legend="LIBERTAS PVBLICA // S C" data-motif="Libertas">
               <th scope="row">
-                <span class="lab-motif-name">Victoria</span>
+                <code class="lab-rv-leg">LIBERTAS PVBLICA // S C</code>
+                <span class="lab-motif-name">Libertas</span>
+              </th>
+              <td class="lab-matrix-col-gap" title="{% translate 'Im Eligius-Bestand nicht belegt' %}">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av3" data-title="Libertas · Sestertius" data-count="3"
+                  data-av-legend="{{ av3_legend }}"
+                  data-bust="{% translate 'Büste mit Lorbeerkranz n. r.' %}"
+                  data-rv-legend="LIBERTAS PVBLICA // S C"
+                  data-refs="/objekt/96/|#96 · RIC II.3 422">
+                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">3×</span>
+                </button>
+              </td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+            </tr>
+            <tr data-rv-legend="MONETA AVGVSTI, S - C" data-motif="Moneta">
+              <th scope="row">
+                <code class="lab-rv-leg">MONETA AVGVSTI, S - C</code>
+                <span class="lab-motif-name">Moneta</span>
+              </th>
+              <td class="lab-matrix-col-gap" title="{% translate 'Im Eligius-Bestand nicht belegt' %}">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av3" data-title="Moneta · Sestertius" data-count="4"
+                  data-av-legend="{{ av3_legend }}"
+                  data-bust="{% translate 'Kopf oder Büste mit Lorbeerkranz n. r. od. l.' %}"
+                  data-rv-legend="MONETA AVGVSTI, S - C"
+                  data-refs="/objekt/29/|#29 · RIC II.3 434;;/objekt/1554/|#1554 · RIC II.3 433">
+                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">4×</span>
+                </button>
+              </td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av3" data-title="Moneta · Dupondius" data-count="1"
+                  data-av-legend="{{ av3_legend }}"
+                  data-bust="{% translate 'Büste mit Strahlenkrone n. r.' %}"
+                  data-rv-legend="MONETA AVGVSTI, S - C"
+                  data-refs="/objekt/76630/|#76630 · RIC II.3 440">
+                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">1×</span>
+                </button>
+              </td>
+              <td class="lab-matrix-empty">·</td>
+            </tr>
+            <tr data-rv-legend="P M TR P COS III" data-motif="Aequitas">
+              <th scope="row">
                 <code class="lab-rv-leg">P M TR P COS III</code>
+                <span class="lab-motif-name">Aequitas</span>
+              </th>
+              <td class="lab-matrix-col-gap" title="{% translate 'Im Eligius-Bestand nicht belegt' %}">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av1" data-title="Aequitas · Denar" data-count="5"
+                  data-av-legend="{{ av1_legend }}"
+                  data-bust="{% translate 'Lorbeerkranz n. r., l. Schulter drapiert' %}"
+                  data-rv-legend="P M TR P COS III"
+                  data-refs="/objekt/4747/|#4747 · RIC II.3 386">
+                  <span class="lab-cell-av">Av1</span><span class="lab-cell-cnt">5×</span>
+                </button>
+              </td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+            </tr>
+            <tr data-rv-legend="P M TR P COS III" data-motif="Victoria">
+              <th scope="row">
+                <code class="lab-rv-leg">P M TR P COS III</code>
+                <span class="lab-motif-name">Victoria</span>
               </th>
               <td class="lab-matrix-col-gap" title="{% translate 'Im Eligius-Bestand nicht belegt' %}">·</td>
               <td class="lab-matrix-cell">
@@ -276,33 +425,54 @@
               <td class="lab-matrix-empty">·</td>
               <td class="lab-matrix-empty">·</td>
             </tr>
-            <tr>
+            <tr data-rv-legend="P M TR P COS III, S - C" data-motif="Pax">
               <th scope="row">
-                <span class="lab-motif-name">Aequitas</span>
-                <code class="lab-rv-leg">P M TR P COS III</code>
+                <code class="lab-rv-leg">P M TR P COS III, S - C</code>
+                <span class="lab-motif-name">Pax</span>
               </th>
-              <td class="lab-matrix-col-gap">·</td>
+              <td class="lab-matrix-col-gap" title="{% translate 'Im Eligius-Bestand nicht belegt' %}">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
               <td class="lab-matrix-cell">
                 <button type="button" class="lab-cell-btn" aria-pressed="false"
-                  data-av="Av1" data-title="Aequitas · Denar" data-count="5"
+                  data-av="Av1" data-title="Pax · As" data-count="11"
                   data-av-legend="{{ av1_legend }}"
-                  data-bust="{% translate 'Lorbeerkranz n. r., l. Schulter drapiert' %}"
-                  data-rv-legend="P M TR P COS III"
-                  data-refs="/objekt/4747/|#4747 · RIC II.3 386">
-                  <span class="lab-cell-av">Av1</span><span class="lab-cell-cnt">5×</span>
+                  data-bust="{% translate 'Drapierte oder gepanzerte Büste mit Lorbeerkranz n. r.' %}"
+                  data-rv-legend="P M TR P COS III, S - C"
+                  data-refs="/objekt/484/|#484 · RIC II.3 675;;/objekt/43038/|#43038 · RIC II.3 673">
+                  <span class="lab-cell-av">Av1</span><span class="lab-cell-cnt">11×</span>
+                </button>
+              </td>
+            </tr>
+            <tr data-rv-legend="P M TR P COS III, S - C" data-motif="Spes">
+              <th scope="row">
+                <code class="lab-rv-leg">P M TR P COS III, S - C</code>
+                <span class="lab-motif-name">Spes</span>
+              </th>
+              <td class="lab-matrix-col-gap" title="{% translate 'Im Eligius-Bestand nicht belegt' %}">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av1" data-title="Spes · Sestertius" data-count="4"
+                  data-av-legend="{{ av1_legend }}"
+                  data-bust="{% translate 'Drapierte oder gepanzerte Büste mit Lorbeerkranz n. r.' %}"
+                  data-rv-legend="P M TR P COS III, S - C"
+                  data-refs="/objekt/2/|#2 · RIC II.3 680;;/objekt/110/|#110 · RIC II.3 679">
+                  <span class="lab-cell-av">Av1</span><span class="lab-cell-cnt">4×</span>
                 </button>
               </td>
               <td class="lab-matrix-empty">·</td>
               <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-empty">·</td>
             </tr>
-            <tr>
+            <tr data-rv-legend="PONT MAX TR POT COS III, S - C" data-motif="Felicitas">
               <th scope="row">
-                <span class="lab-motif-name">Felicitas</span>
                 <code class="lab-rv-leg">PONT MAX TR POT COS III, S - C</code>
+                <span class="lab-motif-name">Felicitas</span>
               </th>
-              <td class="lab-matrix-col-gap">·</td>
+              <td class="lab-matrix-col-gap" title="{% translate 'Im Eligius-Bestand nicht belegt' %}">·</td>
               <td class="lab-matrix-empty">·</td>
               <td class="lab-matrix-empty">·</td>
               <td class="lab-matrix-cell">
@@ -327,84 +497,12 @@
                 </button>
               </td>
             </tr>
-            <tr>
+            <tr data-rv-legend="SALVS PVBLICA, S - C" data-motif="Salus">
               <th scope="row">
-                <span class="lab-motif-name">Moneta</span>
-                <code class="lab-rv-leg">MONETA AVGVSTI, S - C</code>
-              </th>
-              <td class="lab-matrix-col-gap">·</td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-cell">
-                <button type="button" class="lab-cell-btn" aria-pressed="false"
-                  data-av="Av3" data-title="Moneta · Sestertius" data-count="4"
-                  data-av-legend="{{ av3_legend }}"
-                  data-bust="{% translate 'Kopf oder Büste mit Lorbeerkranz n. r. od. l.' %}"
-                  data-rv-legend="MONETA AVGVSTI, S - C"
-                  data-refs="/objekt/29/|#29 · RIC II.3 434;;/objekt/1554/|#1554 · RIC II.3 433">
-                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">4×</span>
-                </button>
-              </td>
-              <td class="lab-matrix-cell">
-                <button type="button" class="lab-cell-btn" aria-pressed="false"
-                  data-av="Av3" data-title="Moneta · Dupondius" data-count="1"
-                  data-av-legend="{{ av3_legend }}"
-                  data-bust="{% translate 'Büste mit Strahlenkrone n. r.' %}"
-                  data-rv-legend="MONETA AVGVSTI, S - C"
-                  data-refs="/objekt/76630/|#76630 · RIC II.3 440">
-                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">1×</span>
-                </button>
-              </td>
-              <td class="lab-matrix-empty">·</td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <span class="lab-motif-name">Libertas</span>
-                <code class="lab-rv-leg">LIBERTAS PVBLICA // S C</code>
-              </th>
-              <td class="lab-matrix-col-gap">·</td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-cell">
-                <button type="button" class="lab-cell-btn" aria-pressed="false"
-                  data-av="Av3" data-title="Libertas · Sestertius" data-count="3"
-                  data-av-legend="{{ av3_legend }}"
-                  data-bust="{% translate 'Büste mit Lorbeerkranz n. r.' %}"
-                  data-rv-legend="LIBERTAS PVBLICA // S C"
-                  data-refs="/objekt/96/|#96 · RIC II.3 422">
-                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">3×</span>
-                </button>
-              </td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-empty">·</td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <span class="lab-motif-name">Virtus</span>
-                <code class="lab-rv-leg">VIRTVTI AVGVSTI, S - C</code>
-              </th>
-              <td class="lab-matrix-col-gap">·</td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-cell">
-                <button type="button" class="lab-cell-btn" aria-pressed="false"
-                  data-av="Av3" data-title="Virtus · Dupondius" data-count="6"
-                  data-av-legend="{{ av3_legend }}"
-                  data-bust="{% translate 'Drapierte Büste mit Strahlenkrone n. r.' %}"
-                  data-rv-legend="VIRTVTI AVGVSTI, S - C"
-                  data-refs="/objekt/475/|#475 · RIC II.3 283;;/objekt/47529/|#47529 · RIC II.3 278">
-                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">6×</span>
-                </button>
-              </td>
-              <td class="lab-matrix-empty">·</td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <span class="lab-motif-name">Salus</span>
                 <code class="lab-rv-leg">SALVS PVBLICA, S - C</code>
+                <span class="lab-motif-name">Salus</span>
               </th>
-              <td class="lab-matrix-col-gap">·</td>
+              <td class="lab-matrix-col-gap" title="{% translate 'Im Eligius-Bestand nicht belegt' %}">·</td>
               <td class="lab-matrix-empty">·</td>
               <td class="lab-matrix-empty">·</td>
               <td class="lab-matrix-empty">·</td>
@@ -420,63 +518,46 @@
               </td>
               <td class="lab-matrix-empty">·</td>
             </tr>
-            <tr>
+            <tr data-rv-legend="VIRTVTI AVGVSTI, S - C" data-motif="Virtus">
               <th scope="row">
-                <span class="lab-motif-name">Spes</span>
-                <code class="lab-rv-leg">P M TR P COS III, S - C</code>
+                <code class="lab-rv-leg">VIRTVTI AVGVSTI, S - C</code>
+                <span class="lab-motif-name">Virtus</span>
               </th>
-              <td class="lab-matrix-col-gap">·</td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-cell">
-                <button type="button" class="lab-cell-btn" aria-pressed="false"
-                  data-av="Av1" data-title="Spes · Sestertius" data-count="4"
-                  data-av-legend="{{ av1_legend }}"
-                  data-bust="{% translate 'Drapierte oder gepanzerte Büste mit Lorbeerkranz n. r.' %}"
-                  data-rv-legend="P M TR P COS III, S - C"
-                  data-refs="/objekt/2/|#2 · RIC II.3 680;;/objekt/110/|#110 · RIC II.3 679">
-                  <span class="lab-cell-av">Av1</span><span class="lab-cell-cnt">4×</span>
-                </button>
-              </td>
-              <td class="lab-matrix-empty">·</td>
-              <td class="lab-matrix-empty">·</td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <span class="lab-motif-name">Pax</span>
-                <code class="lab-rv-leg">P M TR P COS III, S - C</code>
-              </th>
-              <td class="lab-matrix-col-gap">·</td>
-              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-col-gap" title="{% translate 'Im Eligius-Bestand nicht belegt' %}">·</td>
               <td class="lab-matrix-empty">·</td>
               <td class="lab-matrix-empty">·</td>
               <td class="lab-matrix-empty">·</td>
               <td class="lab-matrix-cell">
                 <button type="button" class="lab-cell-btn" aria-pressed="false"
-                  data-av="Av1" data-title="Pax · As" data-count="11"
-                  data-av-legend="{{ av1_legend }}"
-                  data-bust="{% translate 'Drapierte oder gepanzerte Büste mit Lorbeerkranz n. r.' %}"
-                  data-rv-legend="P M TR P COS III, S - C"
-                  data-refs="/objekt/484/|#484 · RIC II.3 675;;/objekt/43038/|#43038 · RIC II.3 673">
-                  <span class="lab-cell-av">Av1</span><span class="lab-cell-cnt">11×</span>
+                  data-av="Av3" data-title="Virtus · Dupondius" data-count="6"
+                  data-av-legend="{{ av3_legend }}"
+                  data-bust="{% translate 'Drapierte Büste mit Strahlenkrone n. r.' %}"
+                  data-rv-legend="VIRTVTI AVGVSTI, S - C"
+                  data-refs="/objekt/475/|#475 · RIC II.3 283;;/objekt/47529/|#47529 · RIC II.3 278">
+                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">6×</span>
                 </button>
               </td>
+              <td class="lab-matrix-empty">·</td>
             </tr>
           </tbody>
         </table>
       </div>
       {% endwith %}
 
-      <div class="lab-inspector" id="lab-cell-inspector" aria-live="polite">
+      <div class="lab-inspector" id="lab-cell-inspector" aria-live="polite"
+        data-label-av="{% translate 'Avers' %}"
+        data-label-rv="{% translate 'Revers' %}"
+        data-label-detail="{% translate 'Detailseite öffnen →' %}"
+        data-label-no-img="{% translate 'Kein Bild' %}">
         <div class="lab-inspector-head">
           <span class="lab-inspector-title" id="lab-insp-title">Victoria · Quinarius (13×)</span>
-          <span class="lab-inspector-hint">{% translate "Klicken Sie eine Zelle in der Matrix an, um Avers-Variante und Belege zu prüfen." %}</span>
+          <span class="lab-inspector-hint">{% translate "Klicken Sie eine Zelle an, um Avers-Variante und verlinkte Exemplarabbildungen (Av./Rv.) anzuzeigen." %}</span>
         </div>
         <div class="lab-inspector-meta">
           <span><strong>{% translate "Avers" %} (<span id="lab-insp-av-code">Av1</span>):</strong> <code id="lab-insp-av">IMP CAESAR TRAIAN HADRIANVS AVG</code> · <span id="lab-insp-bust">{% translate "Kopf oder Büste mit Lorbeerkranz n. r." %}</span></span>
           <span><strong>{% translate "Revers:" %}</strong> <code id="lab-insp-rv">P M TR P COS III</code></span>
         </div>
-        <div class="lab-refs" id="lab-insp-refs">
+        <div class="lab-specimens" id="lab-insp-refs">
           <a class="lab-ref-pill" href="/objekt/9184/" target="_blank" rel="noopener">#9184 · RIC II.3 330A2</a>
           <a class="lab-ref-pill" href="/objekt/46243/" target="_blank" rel="noopener">#46243 · RIC II.3 338</a>
           <a class="lab-ref-pill" href="/objekt/47315/" target="_blank" rel="noopener">#47315 · RIC II.3 348</a>
@@ -592,7 +673,7 @@
 
       <div class="lab-insight">
         <strong>{% translate "Auf einen Blick:" %}</strong>
-        {% translate "Die Matrix macht Motiv-Überschneidungen über Nominale hinweg sichtbar (z. B. Victoria bei Denar & Quinarius oder Moneta bei Sestertius & Dupondius) und zeigt über Av1–Av3 den Wechsel der Avers-Titulatur. Die Kreisdiagramme ergänzen sofort die Gewichtung: Der Quinarius ist zu 100 % Victoria-geprägt, der As zu 65 % Pax, während der Sestertius das breiteste Bildprogramm trägt." %}
+        {% translate "Anders als eine gedruckte Tabelle verknüpft das digitale Prägeskelett jede Matrix-Zelle direkt mit den Exemplarabbildungen (Avers & Revers) und den Eligius-Detailseiten. Die Kreisdiagramme zeigen zusätzlich die Gewichtung pro Nominal: Der Quinarius ist zu 100 % Victoria-geprägt, der As zu 65 % Pax, während der Sestertius das breiteste Bildprogramm trägt." %}
       </div>
     </div>
 
@@ -754,6 +835,7 @@
 
 {% block scripts %}
 {{ block.super }}
+{{ showcase_media|json_script:"lab-showcase-media" }}
 <script>
 (() => {
   'use strict';
@@ -788,6 +870,76 @@
   const matrix = document.getElementById('lab-skeleton-matrix');
   const avButtons = Array.from(document.querySelectorAll('[data-av-filter]'));
   const cellButtons = Array.from(document.querySelectorAll('.lab-cell-btn'));
+  const sortButtons = Array.from(document.querySelectorAll('[data-sort-key]'));
+
+  if (matrix) {
+    const tbody = matrix.tBodies[0];
+    const headerCells = Array.from(matrix.tHead ? matrix.tHead.rows[0].cells : []);
+    let activeSortKey = 'rv';
+    let activeSortDir = 'asc';
+
+    function cellCount(row, colIndex) {
+      const td = row.cells[colIndex];
+      const btn = td ? td.querySelector('.lab-cell-btn') : null;
+      return btn ? Number(btn.dataset.count || 0) : 0;
+    }
+
+    function compareByRvMotif(a, b, primaryFirst, dir) {
+      const aRv = (a.dataset.rvLegend || '').toUpperCase();
+      const bRv = (b.dataset.rvLegend || '').toUpperCase();
+      const aMotif = (a.dataset.motif || '').toUpperCase();
+      const bMotif = (b.dataset.motif || '').toUpperCase();
+      const sign = dir === 'asc' ? 1 : -1;
+      if (primaryFirst === 'motif') {
+        const mCmp = aMotif.localeCompare(bMotif);
+        if (mCmp !== 0) return mCmp * sign;
+        return aRv.localeCompare(bRv);
+      }
+      const rCmp = aRv.localeCompare(bRv);
+      if (rCmp !== 0) return rCmp * sign;
+      return aMotif.localeCompare(bMotif);
+    }
+
+    function applySort(key, dir) {
+      if (!tbody) return;
+      const rows = Array.from(tbody.rows);
+      rows.sort((a, b) => {
+        if (key === 'rv' || key === 'motif') {
+          return compareByRvMotif(a, b, key, dir);
+        }
+        const colIndex = Number(key.replace('col-', ''));
+        const diff = cellCount(a, colIndex) - cellCount(b, colIndex);
+        if (diff !== 0) return dir === 'asc' ? diff : -diff;
+        return compareByRvMotif(a, b, 'rv', 'asc');
+      });
+      rows.forEach((row) => tbody.appendChild(row));
+
+      headerCells.forEach((th) => th.setAttribute('aria-sort', 'none'));
+      sortButtons.forEach((btn) => {
+        const isActive = btn.dataset.sortKey === key;
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        const ind = btn.querySelector('.lab-sort-ind');
+        if (ind) ind.textContent = isActive ? (dir === 'asc' ? '↑' : '↓') : '↕';
+        if (isActive) {
+          const th = btn.closest('th');
+          if (th) th.setAttribute('aria-sort', dir === 'asc' ? 'ascending' : 'descending');
+        }
+      });
+    }
+
+    sortButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.sortKey;
+        if (activeSortKey === key) {
+          activeSortDir = activeSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          activeSortKey = key;
+          activeSortDir = (key === 'rv' || key === 'motif') ? 'asc' : 'desc';
+        }
+        applySort(activeSortKey, activeSortDir);
+      });
+    });
+  }
 
   avButtons.forEach((button) => {
     button.addEventListener('click', () => {
@@ -804,36 +956,125 @@
     });
   });
 
+  const inspector = document.getElementById('lab-cell-inspector');
   const inspTitle = document.getElementById('lab-insp-title');
   const inspAvCode = document.getElementById('lab-insp-av-code');
   const inspAv = document.getElementById('lab-insp-av');
   const inspBust = document.getElementById('lab-insp-bust');
   const inspRv = document.getElementById('lab-insp-rv');
   const inspRefs = document.getElementById('lab-insp-refs');
+  let showcaseMedia = {};
+  try {
+    showcaseMedia = JSON.parse(document.getElementById('lab-showcase-media')?.textContent || '{}');
+  } catch (_) {
+    showcaseMedia = {};
+  }
+
+  function buildCoinFrame(src, fallbackSrc, sideCode, altText, noImgLabel) {
+    const frame = document.createElement('div');
+    frame.className = 'lab-specimen-frame';
+    const sideBadge = document.createElement('span');
+    sideBadge.className = 'lab-specimen-side';
+    sideBadge.textContent = sideCode;
+
+    if (src) {
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.src = src;
+      img.alt = altText;
+      if (fallbackSrc) img.dataset.fallbackSrc = fallbackSrc;
+      img.addEventListener('error', () => {
+        if (img.dataset.fallbackSrc && img.dataset.fallbackSrc !== img.src) {
+          const next = img.dataset.fallbackSrc;
+          img.dataset.fallbackSrc = '';
+          img.src = next;
+          return;
+        }
+        img.remove();
+        const fb = document.createElement('span');
+        fb.className = 'lab-specimen-fallback';
+        fb.textContent = `${sideCode} · ${noImgLabel}`;
+        frame.appendChild(fb);
+      });
+      frame.appendChild(img);
+    } else {
+      const fb = document.createElement('span');
+      fb.className = 'lab-specimen-fallback';
+      fb.textContent = `${sideCode} · ${noImgLabel}`;
+      frame.appendChild(fb);
+    }
+    frame.appendChild(sideBadge);
+    return frame;
+  }
+
+  function renderInspector(button) {
+    if (!button || !inspTitle || !inspRefs) return;
+    inspTitle.textContent = `${button.dataset.title} (${button.dataset.count}×)`;
+    if (inspAvCode) inspAvCode.textContent = button.dataset.av || '';
+    if (inspAv) inspAv.textContent = button.dataset.avLegend || '';
+    if (inspBust) inspBust.textContent = button.dataset.bust || '';
+    if (inspRv) inspRv.textContent = button.dataset.rvLegend || '';
+    inspRefs.replaceChildren();
+
+    const avLabel = inspector?.dataset.labelAv || 'Avers';
+    const rvLabel = inspector?.dataset.labelRv || 'Revers';
+    const detailLabel = inspector?.dataset.labelDetail || 'Detailseite öffnen →';
+    const noImgLabel = inspector?.dataset.labelNoImg || 'Kein Bild';
+
+    (button.dataset.refs || '').split(';;').filter(Boolean).forEach((entry) => {
+      const [href, label] = entry.split('|');
+      const idMatch = href ? href.match(/^\/objekt\/(\d+)\/$/) : null;
+      if (!idMatch) return;
+      const item = showcaseMedia[idMatch[1]];
+
+      const card = document.createElement('a');
+      card.className = 'lab-specimen-card';
+      card.href = href;
+      card.target = '_blank';
+      card.rel = 'noopener';
+
+      if (item && (item.av || item.rv)) {
+        const imgs = document.createElement('div');
+        imgs.className = 'lab-specimen-imgs';
+        imgs.appendChild(buildCoinFrame(item.av, item.av_fallback, 'Av.', `${label || idMatch[1]} (${avLabel})`, noImgLabel));
+        imgs.appendChild(buildCoinFrame(item.rv, item.rv_fallback, 'Rv.', `${label || idMatch[1]} (${rvLabel})`, noImgLabel));
+        card.appendChild(imgs);
+      }
+
+      const info = document.createElement('div');
+      info.className = 'lab-specimen-info';
+      const cite = document.createElement('span');
+      cite.className = 'lab-specimen-cite';
+      cite.textContent = label || href;
+      info.appendChild(cite);
+
+      if (item && (item.collection || item.invnr)) {
+        const sub = document.createElement('span');
+        sub.className = 'lab-specimen-sub';
+        sub.textContent = [item.collection, item.invnr].filter(Boolean).join(' · ');
+        info.appendChild(sub);
+      }
+
+      const go = document.createElement('span');
+      go.className = 'lab-specimen-go';
+      go.textContent = detailLabel;
+      info.appendChild(go);
+
+      card.appendChild(info);
+      inspRefs.appendChild(card);
+    });
+  }
 
   cellButtons.forEach((button) => {
     button.addEventListener('click', () => {
       cellButtons.forEach((b) => b.setAttribute('aria-pressed', b === button ? 'true' : 'false'));
-      if (!inspTitle || !inspRefs) return;
-      inspTitle.textContent = `${button.dataset.title} (${button.dataset.count}×)`;
-      if (inspAvCode) inspAvCode.textContent = button.dataset.av || '';
-      if (inspAv) inspAv.textContent = button.dataset.avLegend || '';
-      if (inspBust) inspBust.textContent = button.dataset.bust || '';
-      if (inspRv) inspRv.textContent = button.dataset.rvLegend || '';
-      inspRefs.replaceChildren();
-      (button.dataset.refs || '').split(';;').filter(Boolean).forEach((entry) => {
-        const [href, label] = entry.split('|');
-        if (!href || !href.startsWith('/objekt/')) return;
-        const link = document.createElement('a');
-        link.className = 'lab-ref-pill';
-        link.href = href;
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.textContent = label || href;
-        inspRefs.appendChild(link);
-      });
+      renderInspector(button);
     });
   });
+
+  const initialCell = cellButtons.find((b) => b.getAttribute('aria-pressed') === 'true') || cellButtons[0];
+  if (initialCell) renderInspector(initialCell);
 
   async function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
