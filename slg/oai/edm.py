@@ -1,4 +1,5 @@
 """EDM RDF/XML mapping; never includes annotations or editorial fields."""
+import math
 import re
 from urllib.parse import quote, urlsplit
 from xml.etree import ElementTree as ET
@@ -7,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
 from slg.models import stempelstellung_parts
+from slg.services.authority_display import english_label
 from .identifiers import absolute_uri, image_redirect_uri, object_uri
 from .rights import image_rights_uri, metadata_rights_uri
 from .xml import clean_text, element, qname
@@ -60,6 +62,43 @@ def date_label(row):
     if start is not None and end is not None:
         return year(start) if start == end else f'{year(start)} – {year(end)}'
     return year(start if start is not None else end) if start is not None or end is not None else ''
+
+
+def iso_year(value):
+    """ISO 8601 (astronomical) year: 44 v. Chr. is stored as -44 and exported as -0043."""
+    year = value + 1 if value < 0 else value
+    return f'{"-" if year < 0 else ""}{abs(year):04d}'
+
+
+def time_span(row):
+    """(begin, end, English label) from the numeric dating, or None."""
+    years = [y for y in (row.datierung_von, row.datierung_bis) if y is not None]
+    if not years:
+        return None
+    start, end = min(years), max(years)
+    era = start < 0
+    def english(value):
+        return f'{abs(value)} BC' if value < 0 else (f'AD {value}' if era else str(value))
+    label = english(start) if start == end else f'{english(start)} – {english(end)}'
+    return iso_year(start), iso_year(end), label
+
+
+def coordinate(value, limit):
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(value) or abs(value) > limit:
+        return None
+    return f'{value:.6f}'.rstrip('0').rstrip('.')
+
+
+def mint_coordinates(mint):
+    """wgs84 lat/long strings for a mint, None for missing, invalid or 0/0 placeholders."""
+    lat, long = coordinate(mint.lat, 90), coordinate(mint.long, 180)
+    if lat is None or long is None or (float(lat) == 0 and float(long) == 0):
+        return None
+    return lat, long
 
 
 def record_title(row):
@@ -145,13 +184,14 @@ def serialize_edm(row, obj, request):
     literal(cho, 'dc', 'title', record_title(row), 'de')
     literal(cho, 'dc', 'identifier', row.invnr)
     resource(cho, 'dcterms', 'isPartOf', absolute_uri(request, obj.Slg.get_absolute_url()))
-    # Contextual classes: URI -> (class, {language or None: prefLabel}).
+    # Contextual classes: URI -> (class, {language or None: prefLabel}, {property: value}).
     contexts = {}
-    def context(uri, kind, de=None, en=None, neutral=None):
+    def context(uri, kind, de=None, en=None, neutral=None, **properties):
         labels = {lang: clean_text(text) for lang, text in (('de', de), ('en', en), (None, neutral))
                   if clean_text(text)}
         if labels:
-            contexts[uri] = (kind, labels)
+            previous = contexts.get(uri, (None, {}, {}))[2]
+            contexts[uri] = (kind, labels, {**previous, **properties})
 
     collection_authority = valid_uri(obj.Slg.nomisma_collection_uri)
     if collection_authority:
@@ -159,18 +199,31 @@ def serialize_edm(row, obj, request):
         context(collection_authority, 'Concept', de=obj.Slg.name)
     literal(cho, 'dcterms', 'isPartOf', obj.Slg.name, 'de')
     literal(cho, 'dcterms', 'temporal', date_label(row), 'de')
+    span = time_span(row)
+    if span:
+        # Structured dating as a contextual edm:TimeSpan; the German text stays as literal.
+        span_uri = object_uri(request, row.obj_id) + '#timespan'
+        resource(cho, 'dcterms', 'temporal', span_uri)
+        context(span_uri, 'TimeSpan', de=date_label(row), en=span[2], begin=span[0], end=span[1])
 
     def controlled(prefix, name, text, model, kind='Concept'):
         literal(cho, prefix, name, text, 'de')
-        uri = authority_uri(model.name_nom_id) if model else None
+        if not model:
+            return None
+        english = english_label(model)
+        uri = authority_uri(model.name_nom_id)
         if uri:
             resource(cho, prefix, name, uri)
-            context(uri, kind, de=text or model.name, en=getattr(model, 'name_en', ''))
+            context(uri, kind, de=text or model.name, en=english)
+        elif clean_text(text):
+            # Without an authority URI the English label goes directly onto the CHO.
+            literal(cho, prefix, name, english, 'en')
+        return uri
 
     controlled('dc', 'type', row.objekttyp, row.objekttyp_fk)
     controlled('dc', 'type', row.nominal, row.nominal_fk)
     controlled('dcterms', 'medium', row.metall, row.metall_fk)
-    controlled('dcterms', 'spatial', row.mzstaette, row.mzstaette_fk, 'Place')
+    mint_uris = [controlled('dcterms', 'spatial', row.mzstaette, row.mzstaette_fk, 'Place')]
     controlled('dcterms', 'spatial', row.region, row.region_fk, 'Place')
     controlled('dc', 'subject', row.herstellung, row.herstellung_fk)
     if row.mzstaette_fk:
@@ -182,18 +235,45 @@ def serialize_edm(row, obj, request):
                 uri = f'https://www.geonames.org/{value}'
             if uri:
                 resource(cho, 'dcterms', 'spatial', uri)
-                context(uri, 'Place', de=row.mzstaette or mint.name, en=mint.name_en)
+                context(uri, 'Place', de=row.mzstaette or mint.name, en=english_label(mint))
+                mint_uris.append(uri)
+        coordinates = mint_coordinates(mint)
+        for uri in dict.fromkeys(uri for uri in mint_uris if uri and uri in contexts):
+            if coordinates:
+                # All URIs describe the same mint; Eligius' own coordinates apply to each.
+                kind, labels, properties = contexts[uri]
+                contexts[uri] = (kind, labels, {**properties, 'lat': coordinates[0], 'long': coordinates[1]})
 
     literal(cho, 'dc', 'subject', row.typ, 'de')
     for uri, label in typology_entries(obj, row):
         resource(cho, 'dc', 'subject', uri)
         # Catalogue citations such as "RIC II.1 Domitian 78A" are language-neutral.
         context(uri, 'Concept', neutral=label)
-    for side, name in (('av', 'Vorderseite'), ('rv', 'Rückseite')):
+    seen_keywords = set()
+    for side in ('av', 'rv'):
+        # Iconographic keywords of the exported image types (Bildtyp -> Schlagwort).
+        bildtyp = getattr(row, side + '_bildtyp_fk')
+        for keyword in (bildtyp.schlagworte.all() if bildtyp else ()):
+            if keyword.pk in seen_keywords or not clean_text(keyword.name):
+                continue
+            seen_keywords.add(keyword.pk)
+            literal(cho, 'dc', 'subject', keyword.name, 'de')
+            english = english_label(keyword)
+            uri = authority_uri(keyword.name_nom_id)
+            if uri:
+                resource(cho, 'dc', 'subject', uri)
+                context(uri, 'Concept', de=keyword.name, en=english)
+            else:
+                literal(cho, 'dc', 'subject', english, 'en')
+    for side, name, name_en in (('av', 'Vorderseite', 'Obverse'), ('rv', 'Rückseite', 'Reverse')):
         # MTOA already resolves object/type precedence and Offizin placeholders.
         description = getattr(row, side + '_bildtyp')
         if clean_text(description):
             literal(cho, 'dc', 'description', f'{name}: {clean_text(description)}', 'de')
+            # MTOA's text is the name of this FK; the translation is maintained on it.
+            bildtyp = getattr(row, side + '_bildtyp_fk')
+            if bildtyp and clean_text(bildtyp.name) == clean_text(description) and clean_text(bildtyp.name_en):
+                literal(cho, 'dc', 'description', f'{name_en}: {clean_text(bildtyp.name_en)}', 'en')
         mint_mark = getattr(row, side + '_beizeichen')
         if clean_text(mint_mark):
             literal(cho, 'dc', 'description', f'{name}, Beizeichen: {clean_text(mint_mark)}', 'de')
@@ -224,7 +304,7 @@ def serialize_edm(row, obj, request):
         uris += [valid_uri(getattr(person, field)) for field in PERSON_AUTHORITY_FIELDS]
         for uri in dict.fromkeys(uri for uri in uris if uri):
             resource(cho, 'dc', predicate, uri)
-            context(uri, 'Agent', de=person.name)
+            context(uri, 'Agent', de=person.name, en=english_label(person))
     element(cho, 'edm', 'type', 'IMAGE')
 
     views = images(row, request)
@@ -254,8 +334,15 @@ def serialize_edm(row, obj, request):
         resource(aggregation, 'dc', 'rights', metadata_rights)
     if image_rights:
         resource(aggregation, 'edm', 'rights', image_rights)
-    for uri, (kind, labels) in contexts.items():
+    for uri, (kind, labels, properties) in contexts.items():
         node = element(root, 'skos' if kind == 'Concept' else 'edm', kind, **{qname('rdf', 'about'): uri})
+        # EDM XSD order: Place starts with wgs84_pos:lat/long; TimeSpan has begin/end after labels.
+        for name in ('lat', 'long'):
+            if name in properties:
+                element(node, 'wgs84_pos', name, properties[name])
         for language, label in labels.items():
             literal(node, 'skos', 'prefLabel', label, language)
+        for name in ('begin', 'end'):
+            if name in properties:
+                element(node, 'edm', name, properties[name])
     return root

@@ -12,6 +12,7 @@ NS = {
     'edm': 'http://www.europeana.eu/schemas/edm/',
     'ore': 'http://www.openarchives.org/ore/terms/',
     'skos': 'http://www.w3.org/2004/02/skos/core#',
+    'wgs84_pos': 'http://www.w3.org/2003/01/geo/wgs84_pos#',
     'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
     'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
 }

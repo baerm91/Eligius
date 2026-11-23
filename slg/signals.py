@@ -16,6 +16,7 @@ from contextvars import ContextVar
 from django.db.models import Q
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete, m2m_changed
 from django.dispatch import receiver
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -245,7 +246,12 @@ def sync_authority_change(sender, instance, **kwargs):
     if mtoa_sync_is_disabled() or kwargs.get('raw'):
         return
     if kwargs.get('update_fields') == {'name_en'}:
-        # English labels are read from the vocabulary, not the object projection.
+        # English labels are read from the vocabulary, not the object projection,
+        # but they are part of the EDM export: only advance the OAI datestamp.
+        from .models import MuenztypObjektAnzeige
+        MuenztypObjektAnzeige.objects.filter(
+            obj_id__in=_authority_objects(sender._meta.model_name, instance).values('pk'),
+        ).update(last_modified=timezone.now())
         return
     _sync_queryset(_authority_objects(sender._meta.model_name, instance))
 

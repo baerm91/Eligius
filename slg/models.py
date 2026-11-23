@@ -14,6 +14,30 @@ from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 
 
+def format_dat_verb(von, bis, ad_suffix_below=None):
+	"""Verbale Datierung aus Jahreszahlen (negativ = v. Chr.).
+
+	``ad_suffix_below``: "n. Chr." nur anhängen, wenn das Anfangsjahr darunter liegt;
+	``None`` = immer. Zeiträume über die Zeitenwende werden beidseitig gekennzeichnet
+	("44 v. Chr. – 14 n. Chr."), nie als "-44-14 n. Chr.".
+	"""
+	if von is None or bis is None or von > bis:
+		return None
+	if von < 0 and bis > 0:
+		return f'{abs(von)} v. Chr. – {bis} n. Chr.'
+	if bis < 0:
+		text = str(abs(von)) if von == bis else f'{abs(von)}-{abs(bis)}'
+		return text + ' v. Chr.'
+	if von < 0:  # bis == 0
+		return f'{abs(von)} v. Chr. – 0'
+	if von == bis == 0:
+		return None
+	text = str(von) if von == bis else f'{von}-{bis}'
+	if ad_suffix_below is None or von < ad_suffix_below:
+		text += ' n. Chr.'
+	return text
+
+
 def build_bild_urls_for_invnr(invnr, slg=None, slgteil=None):
 	basis_url = None
 	endung_av = None
@@ -194,22 +218,7 @@ class SlgInformation(models.Model):
 	
 	
 	def get_dat_verb(self):
-		if self.dat_von < self.dat_bis and self.dat_bis > 0:
-			result = str(self.dat_von) + "-" + str(self.dat_bis)
-			if self.dat_von < 492:
-				result = result + " n. Chr."
-			return result
-		elif self.dat_von < self.dat_bis and self.dat_bis < 0:
-			result = str(abs(self.dat_von)) + "-" + str(abs(self.dat_bis)) + " v. Chr."
-			return result
-		elif self.dat_von == self.dat_bis and self.dat_von < 0:
-			result = str(abs(self.dat_von)) + " v. Chr."
-			return result
-		elif self.dat_von == self.dat_bis and self.dat_von > 0:
-			result = str(self.dat_von)
-			if self.dat_von < 492:
-				result = result + " n. Chr."
-			return result
+		return format_dat_verb(self.dat_von, self.dat_bis, ad_suffix_below=492)
 
 	def save(self, *args, **kwargs):
 		if self.dat_verb is None and self.dat_bis is not None and self.dat_von is not None:
@@ -280,22 +289,7 @@ class Person(models.Model):
 	mmlo = models.URLField(max_length=255, blank=True, null=True, verbose_name='URL (Biographisches Lexikon der Münzmeister und Wardeine, Stempelschneider und Medailleure)')
 	
 	def get_dat_verb(self):
-		if self.dat_geboren < self.dat_gestorben and self.dat_gestorben > 0:
-			result = str(self.dat_geboren) + "-" + str(self.dat_gestorben)
-			if self.dat_geboren < 492:
-				result = result + " n. Chr."
-			return result
-		elif self.dat_geboren < self.dat_gestorben and self.dat_gestorben < 0:
-			result = str(abs(self.dat_geboren)) + "-" + str(abs(self.dat_gestorben)) + " v. Chr."
-			return result
-		elif self.dat_geboren == self.dat_gestorben and self.dat_geboren < 0:
-			result = str(abs(self.dat_geboren)) + " v. Chr."
-			return result
-		elif self.dat_geboren == self.dat_gestorben and self.dat_geboren > 0:
-			result = str(self.dat_geboren)
-			if self.dat_geboren < 492:
-				result = result + " n. Chr."
-			return result
+		return format_dat_verb(self.dat_geboren, self.dat_gestorben, ad_suffix_below=492)
 
 	def save(self, *args, **kwargs):
 		if self.dat_verb is None and self.dat_gestorben is not None and self.dat_geboren is not None:
@@ -1165,22 +1159,7 @@ class Muenztyp(CloneMixin, models.Model):
 	hlink = property(_hlink)
 	
 	def get_dat_verb(self):
-		if self.dat_von < self.dat_bis and self.dat_bis > 0:
-			result = str(self.dat_von) + "-" + str(self.dat_bis)
-			if self.dat_von < 492:
-				result = result + " n. Chr."
-			return result
-		elif self.dat_von < self.dat_bis and self.dat_bis < 0:
-			result = str(abs(self.dat_von)) + "-" + str(abs(self.dat_bis)) + " v. Chr."
-			return result
-		elif self.dat_von == self.dat_bis and self.dat_von < 0:
-			result = str(abs(self.dat_von)) + " v. Chr."
-			return result
-		elif self.dat_von == self.dat_bis and self.dat_von > 0:
-			result = str(self.dat_von)
-			if self.dat_von < 492:
-				result = result + " n. Chr."
-			return result
+		return format_dat_verb(self.dat_von, self.dat_bis, ad_suffix_below=492)
 
 	def save(self, *args, **kwargs):
 		if self.dat_verb is None and self.dat_bis is not None and self.dat_von is not None:
@@ -1479,19 +1458,8 @@ class Obj(models.Model):
 		return "Objekt"
 
 	def get_dat_verb(self):
-		if self.dat_von < self.dat_bis and self.dat_bis > 0:
-			result = str(self.dat_von) + "-" + str(self.dat_bis) + " n. Chr."
-			return result
-		elif self.dat_von < self.dat_bis and self.dat_bis < 0:
-			result = str(abs(self.dat_von)) + "-" + str(abs(self.dat_bis)) + " v. Chr."
-			return result
-		elif self.dat_von == self.dat_bis and self.dat_von < 0:
-			result = str(abs(self.dat_von)) + " v. Chr."
-			return result
-		elif self.dat_von == self.dat_bis and self.dat_von > 0:
-			result = str(self.dat_von) + " n. Chr."
-			return result
-		
+		return format_dat_verb(self.dat_von, self.dat_bis)
+
 	# def save_model(self, request, obj, form, change):
 	#     if not obj.pk:
 	#         # Only set added_by during the first save.

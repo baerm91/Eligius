@@ -105,6 +105,28 @@ def display_label(instance):
             or _label(values, labels) or str(instance))
 
 
+def english_label(instance):
+    """English label independent of the request language; '' when none is known.
+
+    Same priority as display_label (reviewed label, name_en, Nomisma/Wikidata/GND
+    snapshot), but without an implicit fallback to the German original. Reads
+    only the instance's own fields and the local JSON snapshots, never the DB.
+    """
+    if instance is None or not hasattr(instance, '_meta'):
+        return ''
+    if instance._meta.object_name not in (*MODELS, 'AvBildtyp', 'RvBildtyp'):
+        return ''
+    fields = {f.name for f in instance._meta.concrete_fields}
+    values = {field: getattr(instance, field) for field in (*REFERENCE_FIELDS, 'name', 'name_en') if field in fields}
+    reviewed, _ = file_catalog(reviewed_path(), SCHEMA)
+    label = _reviewed_label(reviewed, instance._meta.label, instance.pk, values)
+    if label or values.get('name_en'):
+        return label or values['name_en']
+    labels, _ = source_catalog()
+    label = _label(values, labels)
+    return label if label and label != (values.get('name') or '') else ''
+
+
 _indices = {}
 _lock = RLock()
 

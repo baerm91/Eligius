@@ -15,9 +15,10 @@ from django.urls import reverse
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import DC, DCTERMS, RDF, SKOS
 
-from .models import (AvBeizeichen, AvBildtyp, AvOffizin, Herstellung, Metall, MtoaPerson, Muenztyp, MuenztypObjektAnzeige,
+from .models import (AvBeizeichen, AvBildtyp, AvBildtyp_Schlagwort, AvOffizin, Herstellung, Metall, MtoaPerson, Muenztyp, MuenztypObjektAnzeige,
                      Mzstaette, Mztyp_Person, Nominal, Obj, Objekttyp, Obj_Person,
-                     Obj_Ref, Person, PersonFunktion, Ref, Region, RvBeizeichen, RvBildtyp, RvOffizin, Slg, SlgTeil, Workflow)
+                     Obj_Ref, Person, PersonFunktion, Ref, Region, RvBeizeichen, RvBildtyp, RvBildtyp_Schlagwort, RvOffizin,
+                     Schlagwort, Slg, SlgTeil, Workflow)
 from .mtoa_sync import sync_objs_to_mtoa
 from .oai.identifiers import identifier, set_spec
 from .oai.service import TOKEN_SALT
@@ -535,7 +536,8 @@ class OAITests(OAIFixtures, TestCase):
             root = self.request('ListRecords', metadataPrefix='edm')
         self.assertEqual(len(root.findall('.//oai:record', NS)), 31)
         self.assertEqual(len(single), len(many))
-        self.assertLessEqual(len(many), 7)
+        # +2 constant prefetches for the Av/Rv image-type keywords.
+        self.assertLessEqual(len(many), 8)
 
     def test_preflight_checks_unpublished_collection_without_exposing_it(self):
         self.private.bildurl = self.collection.bildurl
@@ -851,3 +853,100 @@ class OAISynchronizationTests(OAIFixtures, TestCase):
         batches = [call.args[0] for call in sync.call_args_list if call.args[0]]
         self.assertEqual([len(batch) for batch in batches], [500, 500, 500, 500, 101])
         self.assertEqual(len({pk for batch in batches for pk in batch}), 2101)
+
+
+WGS84 = Namespace(NS['wgs84_pos'])
+
+
+class KulturpoolEnrichmentTests(OAIFixtures, TestCase):
+    """Coordinates, structured dating, English texts and iconographic keywords."""
+
+    def children(self, root, kind, uri):
+        node = next(n for n in root.iter('{%s}%s' % (NS['edm'], kind))
+                    if n.get('{%s}about' % NS['rdf']) == uri)
+        return [child.tag.split('}')[1] for child in node]
+
+    def test_mint_coordinates_on_every_mint_place_in_xsd_order(self):
+        Mzstaette.objects.filter(pk=self.mint.pk).update(lat=41.893, long=12.4829)
+        graph, root = self.graph(self.obj(Typ=self.typ))
+        for rome in ('http://nomisma.org/id/rome', 'https://www.geonames.org/3169070'):
+            self.assertIn((URIRef(rome), WGS84.lat, Literal('41.893')), graph)
+            self.assertIn((URIRef(rome), WGS84.long, Literal('12.4829')), graph)
+            self.assertEqual(self.children(root, 'Place', rome)[:3], ['lat', 'long', 'prefLabel'])
+
+    def test_missing_or_placeholder_coordinates_are_omitted(self):
+        Mzstaette.objects.filter(pk=self.mint.pk).update(lat=0, long=0)
+        graph, _ = self.graph(self.obj(Typ=self.typ))
+        self.assertFalse(list(graph.triples((None, WGS84.lat, None))))
+        Mzstaette.objects.filter(pk=self.mint.pk).update(lat=95, long=12)
+        graph, _ = self.graph(self.obj('A2', Typ=self.typ))
+        self.assertFalse(list(graph.triples((None, WGS84.lat, None))))
+
+    def test_numeric_dating_becomes_timespan(self):
+        obj = self.obj(dat_von=-44, dat_bis=14)
+        graph, root = self.graph(obj)
+        cho = URIRef(BASE + obj.get_absolute_url() + '#providedCHO')
+        span = BASE + obj.get_absolute_url() + '#timespan'
+        self.assertIn((cho, DCTERMS.temporal, URIRef(span)), graph)
+        # The German text literal stays next to the structured resource.
+        self.assertIn((cho, DCTERMS.temporal, Literal('44 v. Chr. – 14 n. Chr.', lang='de')), graph)
+        self.assertIn((URIRef(span), RDF.type, EDM.TimeSpan), graph)
+        # ISO 8601 astronomical years: 44 BC is -0043.
+        self.assertIn((URIRef(span), EDM.begin, Literal('-0043')), graph)
+        self.assertIn((URIRef(span), EDM.end, Literal('0014')), graph)
+        self.assertIn((URIRef(span), SKOS.prefLabel, Literal('44 BC – AD 14', lang='en')), graph)
+        self.assertEqual(self.children(root, 'TimeSpan', span), ['prefLabel', 'prefLabel', 'begin', 'end'])
+
+    def test_no_timespan_without_numeric_dating(self):
+        graph, _ = self.graph(self.obj(Typ=self.typ))
+        self.assertFalse(list(graph.subjects(RDF.type, EDM.TimeSpan)))
+
+    def test_english_image_descriptions_and_keywords(self):
+        AvBildtyp.objects.filter(pk=self.obverse.pk).update(name_en='Head right')
+        victoria = Schlagwort.objects.create(name='Victoria', name_en='Victory', name_nom_id='victoria')
+        eagle = Schlagwort.objects.create(name='Adler', name_en='Eagle')
+        AvBildtyp_Schlagwort.objects.create(avbildtyp=self.obverse, schlagwort=victoria)
+        RvBildtyp_Schlagwort.objects.create(rvbildtyp=self.reverse, schlagwort=victoria)
+        RvBildtyp_Schlagwort.objects.create(rvbildtyp=self.reverse, schlagwort=eagle)
+        obj = self.obj(Typ=self.typ)
+        graph, root = self.graph(obj)
+        cho = URIRef(BASE + obj.get_absolute_url() + '#providedCHO')
+        self.assertIn((cho, DC.description, Literal('Obverse: Head right', lang='en')), graph)
+        self.assertFalse([d for d in graph.objects(cho, DC.description) if str(d).startswith('Reverse')])
+        self.assertIn((cho, DC.subject, Literal('Victoria', lang='de')), graph)
+        self.assertIn((cho, DC.subject, URIRef('http://nomisma.org/id/victoria')), graph)
+        self.assertIn((URIRef('http://nomisma.org/id/victoria'), SKOS.prefLabel, Literal('Victory', lang='en')), graph)
+        self.assertIn((cho, DC.subject, Literal('Adler', lang='de')), graph)
+        self.assertIn((cho, DC.subject, Literal('Eagle', lang='en')), graph)
+        subjects = [n.text for n in root.iter('{%s}subject' % NS['dc'])]
+        self.assertEqual(subjects.count('Victoria'), 1)
+
+    def test_english_literal_without_authority_uri(self):
+        brass = Metall.objects.create(name='Messing', name_en='Brass')
+        obj = self.obj(Metall=brass)
+        graph, _ = self.graph(obj)
+        cho = URIRef(BASE + obj.get_absolute_url() + '#providedCHO')
+        self.assertIn((cho, DCTERMS.medium, Literal('Messing', lang='de')), graph)
+        self.assertIn((cho, DCTERMS.medium, Literal('Brass', lang='en')), graph)
+
+    def test_authority_snapshot_supplies_missing_english_labels(self):
+        import json
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / 'labels.json'
+            path.write_text(json.dumps({'schema': 'eligius-authority-labels-v1', 'labels': {
+                'nomisma:denarius': {'label': 'Denarius'}, 'nomisma:rome': {'label': 'Rome'}}}), encoding='utf-8')
+            with self.settings(ELIGIUS_AUTHORITY_LABELS_PATH=path):
+                graph, _ = self.graph(self.obj(Typ=self.typ))
+        self.assertIn((URIRef('http://nomisma.org/id/denarius'), SKOS.prefLabel, Literal('Denarius', lang='en')), graph)
+        self.assertIn((URIRef('http://nomisma.org/id/rome'), SKOS.prefLabel, Literal('Rome', lang='en')), graph)
+        self.assertEqual(list(graph.objects(URIRef('http://nomisma.org/id/coin'), SKOS.prefLabel)),
+                         [Literal('Münze', lang='de')])
+
+    def test_translation_only_save_advances_datestamp(self):
+        obj = self.obj(Typ=self.typ)
+        previous = MuenztypObjektAnzeige.objects.get(obj_id=obj.pk).last_modified
+        self.obverse.name_en = 'Head right'
+        self.obverse.save(update_fields=['name_en'])
+        self.assertGreater(MuenztypObjektAnzeige.objects.get(obj_id=obj.pk).last_modified, previous)

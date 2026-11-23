@@ -1,7 +1,7 @@
 """Bounded projection reads with permission checks on the canonical objects."""
 from django.db.models import Exists, OuterRef, Prefetch, Q, Subquery
 
-from slg.models import MtoaPerson, Muenztyp, MuenztypObjektAnzeige, Obj, Obj_Ref
+from slg.models import MtoaPerson, Muenztyp, MuenztypObjektAnzeige, Obj, Obj_Ref, Schlagwort
 
 CONTROLLED = 'kontrolliert'
 
@@ -33,10 +33,11 @@ def with_metadata_relations(rows):
     return rows.select_related(
         'slg_fk', 'slgteil_fk', 'slgteil_fk__idfk_Slg_SlgTeil',
         'nominal_fk', 'metall_fk', 'mzstaette_fk', 'region_fk',
-        'objekttyp_fk', 'herstellung_fk',
+        'objekttyp_fk', 'herstellung_fk', 'av_bildtyp_fk', 'rv_bildtyp_fk',
     ).prefetch_related(Prefetch(
         'mtoaperson_set', queryset=MtoaPerson.objects.select_related('person', 'funktion').order_by('pk'),
-    ))
+    ), Prefetch('av_bildtyp_fk__schlagworte', queryset=Schlagwort.objects.order_by('name', 'pk')),
+       Prefetch('rv_bildtyp_fk__schlagworte', queryset=Schlagwort.objects.order_by('name', 'pk')))
 
 
 def objects_for_rows(rows, *, preview_collection_id=None):

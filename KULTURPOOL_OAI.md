@@ -278,6 +278,46 @@ sprachneutralem `skos:prefLabel` (ohne `xml:lang`): `Muenztyp.muenztyptitel`
 für Typ und Konkordanztypen, „Abkürzung Nummer“ (`Ref.abk` + `Obj_Ref.nummer`)
 für Objektverweise. Bei mehrfach vorkommender URI gilt das erste Label.
 
+## Anreicherung: Koordinaten, Zeitspannen, Englisch, Schlagworte
+
+Ergänzt im EDM-Export (DC unverändert):
+
+- **Koordinaten**: Jede `edm:Place`-Ressource der Münzstätte (Nomisma, GeoNames,
+  NDP-IKMK) erhält `wgs84_pos:lat` / `wgs84_pos:long` aus `Mzstaette.lat/long`,
+  in der von der EDM-XSD verlangten Reihenfolge vor `skos:prefLabel`. Fehlende,
+  ungültige oder 0/0-Werte werden ausgelassen. Münzstätten ohne jede URI
+  bekommen keine eigene Place-Ressource.
+- **Zeitspanne**: Bei numerischer Datierung verweist `dcterms:temporal` zusätzlich
+  auf `<Objekt-URI>#timespan` (`edm:TimeSpan`) mit `edm:begin` / `edm:end` und
+  `skos:prefLabel` (de: bisheriger Text, en: z. B. `44 BC – AD 14`). Jahre werden
+  nach ISO 8601 astronomisch geschrieben: 44 v. Chr. (`-44`) wird `-0043`.
+  Der deutsche Freitext bleibt als Literal erhalten.
+- **Englische Bildbeschreibungen**: `dc:description xml:lang="en"`
+  (`Obverse: …` / `Reverse: …`) aus `AvBildtyp.name_en` / `RvBildtyp.name_en`.
+- **Ikonographische Schlagworte**: Schlagworte der exportierten Av-/Rv-Bildtypen
+  als `dc:subject` (de); mit `name_nom_id` als URI plus `skos:Concept` (de/en),
+  ohne URI als zusätzliches `xml:lang="en"`-Literal. Doppelte Schlagworte
+  beider Seiten erscheinen einmal.
+- **Englische Labels**: `slg.services.authority_display.english_label` liefert
+  unabhängig von der Request-Sprache geprüfte Labels, `name_en` oder das Label aus
+  dem Normdaten-Snapshot (`ELIGIUS_AUTHORITY_LABELS_PATH`). Es gilt für Objekttyp,
+  Nominal, Material, Münzstätte, Region, Herstellung, Personen und Schlagworte.
+  Ohne Normdaten-URI wird das englische Label direkt als Literal am CHO ausgegeben
+  (z. B. `dcterms:medium "Brass"@en`). Ohne Snapshot auf dem Server fehlen
+  englische Labels für Nominale, Münzstätten und Regionen weiterhin; der Snapshot
+  wird mit `python manage.py install_authority_labels` installiert (siehe
+  `AUTHORITY_DISPLAY.md`).
+
+Datestamps: Übersetzungs-Saves (`update_fields=['name_en']`) bauen die MTOA
+weiterhin nicht neu auf, setzen aber `last_modified` der betroffenen Objekte, damit
+inkrementelle Harvests die neuen englischen Texte abholen. Ein neu installierter
+Normdaten-Snapshot und die erstmalige Auslieferung dieser Anreicherung ändern
+keine Datestamps: danach `sync_mtoa --slg <ID>` für freigegebene Sammlungen
+ausführen oder Kulturpool um einen Voll-Harvest bitten.
+
+Abfragebudget: ListRecords benötigt zwei zusätzliche, seitenkonstante Prefetches
+für die Schlagworte (höchstens 8 Queries pro Seite).
+
 ## Bilder und getrennte Rechte
 
 ### Bild-Weiterleitung mit Abrufzählung
