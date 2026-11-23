@@ -2347,3 +2347,127 @@ msgid ""
 msgstr ""
 "Always verify your assistant’s interpretations against the linked original "
 "records in Eligius."
+
+
+msgid ""
+"Rekonstruiere aus Eligius ein Prägeskelett nach der Wiener Schule für "
+"Hadrianus aus Rom (119–121 n. Chr.): Zeilen = Revers-Motiv und Legende, "
+"Spalten = Nominale, Zellen = Avers-Varianten, plus Motiv-Anteile pro Nominal"
+" im Vergleich mit Beleg-Links."
+msgstr ""
+"Reconstruct a Vienna School coinage skeleton from Eligius for Hadrian at "
+"Rome (AD 119–121): rows = reverse motif and legend, columns = denominations,"
+" cells = obverse variants, plus comparative motif shares per denomination "
+"with evidence links."
+
+msgid ""
+"Zeilen: Motiv + Revers-Legende · Spalten: Nominale · Zellen: Avers-Variante "
+"(klickbar)"
+msgstr ""
+"Rows: motif + reverse legend · Columns: denominations · Cells: obverse "
+"variant (clickable)"
+
+msgid "Avers-Varianten filtern"
+msgstr "Filter obverse variants"
+
+msgid "Avers-Kürzel hervorheben:"
+msgstr "Highlight obverse code:"
+
+msgid "Alle"
+msgstr "All"
+
+msgid "Revers-Motiv & Legende"
+msgstr "Reverse motif & legend"
+
+msgid "Im Eligius-Bestand nicht belegt"
+msgstr "Not attested in Eligius holdings"
+
+msgid "Lorbeerkranz n. r., l. Schulter drapiert"
+msgstr "Laureate right, drapery on left shoulder"
+
+msgid "Kopf oder Büste mit Lorbeerkranz n. r."
+msgstr "Laureate head or bust right"
+
+msgid "Drapierte Büste mit Lorbeerkranz n. r."
+msgstr "Laureate, draped bust right"
+
+msgid "Kopf oder Büste mit Lorbeerkranz n. r. od. l."
+msgstr "Laureate head or bust right or left"
+
+msgid "Büste mit Strahlenkrone n. r."
+msgstr "Radiate bust right"
+
+msgid "Büste mit Lorbeerkranz n. r."
+msgstr "Laureate bust right"
+
+msgid "Drapierte Büste mit Strahlenkrone n. r."
+msgstr "Radiate, draped bust right"
+
+msgid "Drapierte oder gepanzerte Büste mit Lorbeerkranz n. r."
+msgstr "Laureate, draped or cuirassed bust right"
+
+msgid ""
+"Klicken Sie eine Zelle in der Matrix an, um Avers-Variante und Belege zu "
+"prüfen."
+msgstr ""
+"Click any cell in the matrix to inspect its obverse variant and evidence "
+"records."
+
+msgid "Motiv-Verteilung pro Nominal im Vergleich"
+msgstr "Comparative motif distribution per denomination"
+
+msgid ""
+"Anteile bestimmter Revers-Motive je Nominal (Hadrianus, Rom, 119–121 n. "
+"Chr.) – direkt aus einer MCP-Abfrage erzeugt:"
+msgstr ""
+"Shares of identified reverse motifs per denomination (Hadrian, Rome, AD "
+"119–121)—generated directly from an MCP query:"
+
+msgid "n = 16 best. (20 ges.)"
+msgstr "n = 16 ident. (20 total)"
+
+msgid "Denar: Aequitas 31%, Victoria 25%, Fortuna 13%, Weitere 31%"
+msgstr "Denarius: Aequitas 31%, Victoria 25%, Fortuna 13%, Other 31%"
+
+msgid "Weitere"
+msgstr "Other"
+
+msgid "n = 14 best. (17 ges.)"
+msgstr "n = 14 ident. (17 total)"
+
+msgid "Quinarius: Victoria 100%"
+msgstr "Quinarius: Victoria 100%"
+
+msgid "n = 26 best. (27 ges.)"
+msgstr "n = 26 ident. (27 total)"
+
+msgid ""
+"Sestertius: Spes 19%, Moneta 15%, Libertas 12%, Felicitas 12%, Weitere 42%"
+msgstr ""
+"Sestertius: Spes 19%, Moneta 15%, Libertas 12%, Felicitas 12%, Other 42%"
+
+msgid "n = 15 best. (21 ges.)"
+msgstr "n = 15 ident. (21 total)"
+
+msgid "Dupondius: Virtus 40%, Salus 27%, Pietas 20%, Weitere 13%"
+msgstr "Dupondius: Virtus 40%, Salus 27%, Pietas 20%, Other 13%"
+
+msgid "n = 17 best. (32 ges.)"
+msgstr "n = 17 ident. (32 total)"
+
+msgid "As: Pax 65%, Genius 12%, Pietas 12%, Weitere 11%"
+msgstr "As: Pax 65%, Genius 12%, Pietas 12%, Other 11%"
+
+msgid ""
+"Die Matrix macht Motiv-Überschneidungen über Nominale hinweg sichtbar (z. B."
+" Victoria bei Denar & Quinarius oder Moneta bei Sestertius & Dupondius) und "
+"zeigt über Av1–Av3 den Wechsel der Avers-Titulatur. Die Kreisdiagramme "
+"ergänzen sofort die Gewichtung: Der Quinarius ist zu 100 % Victoria-geprägt,"
+" der As zu 65 % Pax, während der Sestertius das breiteste Bildprogramm "
+"trägt."
+msgstr ""
+"The matrix exposes motif overlap across denominations (such as Victoria on "
+"denarii and quinarii, or Moneta on sestertii and dupondii) and tracks "
+"obverse titulature shifts via Av1–Av3. The donut charts add the quantitative"
+" profile at a glance: the quinarius is 100% Victoria, the as is 65% Pax, "
+"while the sestertius carries the broadest programmatic repertoire."

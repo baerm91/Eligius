@@ -41,22 +41,67 @@
   .lab-flow-step strong { display: block; color: var(--accent, #f6b15d); margin-bottom: 4px; font-size: .84rem; text-transform: uppercase; letter-spacing: .05em; }
 
   /* Praegeskelett matrix */
-  .lab-matrix-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 12px; }
+  .lab-matrix-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 10px; }
   .lab-matrix-meta { font-size: .88rem; opacity: .82; }
+  .lab-av-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .lab-av-label { font-size: .84rem; opacity: .82; margin-right: 4px; }
+  .lab-av-pill { background: rgba(255,255,255,.03); color: inherit; border: 1px solid rgba(246,177,93,.28); border-radius: 999px; padding: 5px 11px; font-size: .82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background .15s ease, border-color .15s ease; }
+  .lab-av-pill strong { color: var(--accent, #f6b15d); }
+  .lab-av-pill code { font-size: .78rem; color: inherit; opacity: .86; }
+  .lab-av-pill:hover, .lab-av-pill:focus-visible { border-color: rgba(246,177,93,.65); }
+  .lab-av-pill[aria-pressed="true"] { background: rgba(246,177,93,.16); border-color: var(--accent, #f6b15d); }
+
   .lab-matrix-wrap { overflow-x: auto; border: 1px solid rgba(246,177,93,.22); border-radius: 8px; }
-  .lab-matrix { width: 100%; min-width: 680px; border-collapse: collapse; margin: 0; font-size: .93rem; }
-  .lab-matrix th, .lab-matrix td { text-align: left; padding: 11px 12px; border-bottom: 1px solid rgba(246,177,93,.14); vertical-align: top; }
-  .lab-matrix thead th { background: rgba(246,177,93,.1); color: var(--accent, #f6b15d); font-weight: 600; font-size: .84rem; letter-spacing: .04em; text-transform: uppercase; }
-  .lab-matrix tbody tr:last-child td { border-bottom: 0; }
-  .lab-matrix-gap td { opacity: .68; font-style: italic; background: rgba(255,255,255,.015); }
-  .lab-metal { display: inline-block; font-size: .72rem; border: 1px solid rgba(246,177,93,.4); border-radius: 4px; padding: 1px 6px; margin-left: 4px; color: var(--accent, #f6b15d); font-style: normal; vertical-align: middle; }
-  .lab-legend { font-family: Georgia, serif; letter-spacing: .02em; font-size: .9rem; display: block; }
-  .lab-note-inline { display: block; font-size: .82rem; opacity: .78; margin-top: 2px; }
-  .lab-count { display: inline-block; font-weight: 600; color: var(--accent, #f6b15d); margin-bottom: 4px; }
+  .lab-matrix { width: 100%; min-width: 740px; border-collapse: collapse; margin: 0; font-size: .9rem; }
+  .lab-matrix th, .lab-matrix td { text-align: left; padding: 9px 10px; border-bottom: 1px solid rgba(246,177,93,.14); vertical-align: middle; }
+  .lab-matrix thead th { background: rgba(246,177,93,.1); color: var(--accent, #f6b15d); font-weight: 600; font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; text-align: center; }
+  .lab-matrix thead th:first-child { text-align: left; }
+  .lab-matrix tbody th { font-weight: 600; text-align: left; }
+  .lab-matrix tbody tr:last-child th, .lab-matrix tbody tr:last-child td { border-bottom: 0; }
+  .lab-matrix-col-gap { background: rgba(255,255,255,.015); opacity: .68; text-align: center; }
+  .lab-matrix-empty { text-align: center !important; opacity: .34; }
+  .lab-matrix-cell { text-align: center !important; padding: 6px !important; }
+  .lab-motif-name { display: block; font-size: .95rem; }
+  .lab-rv-leg { display: block; font-size: .78rem; color: var(--accent, #f6b15d); font-weight: 400; margin-top: 2px; }
+  .lab-metal { display: inline-block; font-size: .7rem; border: 1px solid rgba(246,177,93,.4); border-radius: 4px; padding: 1px 5px; margin-left: 4px; color: var(--accent, #f6b15d); font-style: normal; vertical-align: middle; }
+
+  .lab-cell-btn { width: 100%; min-width: 68px; background: rgba(246,177,93,.09); color: inherit; border: 1px solid rgba(246,177,93,.35); border-radius: 7px; padding: 6px 8px; cursor: pointer; display: inline-flex; flex-direction: column; align-items: center; gap: 1px; transition: background .15s ease, border-color .15s ease, opacity .15s ease, transform .12s ease; }
+  .lab-cell-btn:hover, .lab-cell-btn:focus-visible { background: rgba(246,177,93,.2); border-color: var(--accent, #f6b15d); }
+  .lab-cell-btn[aria-pressed="true"] { background: rgba(246,177,93,.24); border-color: var(--accent, #f6b15d); box-shadow: 0 0 0 1px var(--accent, #f6b15d); }
+  .lab-cell-av { font-weight: 700; font-size: .86rem; color: var(--accent, #f6b15d); }
+  .lab-cell-cnt { font-size: .76rem; opacity: .82; }
+  .lab-matrix.is-filtered .lab-cell-btn:not(.is-match) { opacity: .24; }
+  .lab-matrix.is-filtered .lab-cell-btn.is-match { border-color: var(--accent, #f6b15d); background: rgba(246,177,93,.2); }
+
+  .lab-inspector { margin-top: 14px; border: 1px solid rgba(246,177,93,.32); border-radius: 10px; padding: 14px 18px; background: rgba(246,177,93,.05); }
+  .lab-inspector-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; margin-bottom: 8px; }
+  .lab-inspector-title { font-size: 1rem; font-weight: 600; color: var(--accent, #f6b15d); }
+  .lab-inspector-hint { font-size: .82rem; opacity: .76; }
+  .lab-inspector-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; font-size: .88rem; margin-bottom: 10px; }
+  .lab-inspector-meta span strong { color: var(--accent, #f6b15d); }
   .lab-refs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
-  .lab-ref-pill { display: inline-block; font-size: .82rem; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(246,177,93,.35); color: var(--accent, #f6b15d); text-decoration: none; }
-  .lab-ref-pill:hover, .lab-ref-pill:focus-visible { background: rgba(246,177,93,.14); }
-  .lab-insight { margin-top: 14px; padding: 12px 16px; border-left: 3px solid var(--accent, #f6b15d); background: rgba(246,177,93,.06); border-radius: 0 8px 8px 0; font-size: .94rem; }
+  .lab-ref-pill { display: inline-block; font-size: .82rem; padding: 2px 9px; border-radius: 999px; border: 1px solid rgba(246,177,93,.38); color: var(--accent, #f6b15d); text-decoration: none; }
+  .lab-ref-pill:hover, .lab-ref-pill:focus-visible { background: rgba(246,177,93,.16); }
+
+  /* Comparative donut charts */
+  .lab-subblock { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(246,177,93,.18); }
+  .lab-subblock h3 { margin-bottom: 4px; }
+  .lab-subblock-lead { margin: 0 0 14px; font-size: .92rem; opacity: .85; }
+  .lab-donuts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .lab-donut-card { background: rgba(255,255,255,.025); border: 1px solid rgba(246,177,93,.22); border-radius: 10px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; }
+  .lab-donut-title { font-weight: 600; font-size: .95rem; text-align: center; }
+  .lab-donut-n { font-size: .78rem; opacity: .76; margin-bottom: 8px; text-align: center; }
+  .lab-donut-wrap { position: relative; width: 104px; height: 104px; margin: 2px 0 10px; }
+  .lab-donut-svg { width: 100%; height: 100%; display: block; }
+  .lab-donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
+  .lab-donut-pct { font-size: 1rem; font-weight: 700; color: var(--accent, #f6b15d); line-height: 1.1; }
+  .lab-donut-top { font-size: .7rem; opacity: .82; }
+  .lab-donut-legend { list-style: none; margin: 0; padding: 0; width: 100%; font-size: .8rem; }
+  .lab-donut-legend li { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 2px 0; }
+  .lab-donut-key { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+  .lab-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  .lab-insight { margin-top: 16px; padding: 12px 16px; border-left: 3px solid var(--accent, #f6b15d); background: rgba(246,177,93,.06); border-radius: 0 8px 8px 0; font-size: .94rem; }
 
   /* Extension grids & prompt cards */
   .lab-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -91,16 +136,23 @@
   .lab .future { display: flex; flex-wrap: wrap; gap: 10px; }
   .lab .future span { border: 1px solid rgba(246,177,93,.24); padding: 10px 14px; border-radius: 6px; font-size: .92rem; }
 
+  @media (max-width: 960px) {
+    .lab-donuts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
   @media (max-width: 820px) {
-    .lab-compare, .lab-grid-2, .lab-grid-3, .lab-flow { grid-template-columns: 1fr; }
+    .lab-compare, .lab-grid-2, .lab-grid-3, .lab-flow, .lab-inspector-meta { grid-template-columns: 1fr; }
   }
   @media (max-width: 600px) {
     .lab { padding: 32px 16px 64px; }
+    .lab-donuts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .lab-prompt-box { flex-direction: column; }
     .lab-tools-table, .lab-tools-table tbody, .lab-tools-table tr, .lab-tools-table td { display: block; }
     .lab-tools-table thead { display: none; }
     .lab-tools-table tr { border-bottom: 1px solid rgba(246,177,93,.15); padding: 8px 0; }
     .lab-tools-table td { border: 0; padding: 3px 0; font-size: .92rem; }
+  }
+  @media (max-width: 390px) {
+    .lab-donuts { grid-template-columns: 1fr; }
   }
 </style>
 {% endblock %}
@@ -135,7 +187,7 @@
     <h2 id="showcase-hadrian">{% translate "Beispiel: Prägeskelett für Hadrianus (Wiener Schule)" %}</h2>
     <p class="section-lead">{% translate "Wie war die Münzprägung strukturiert? Aus 118 öffentlichen Hadrianus-Prägungen der Münzstätte Rom (119–121 n. Chr., COS III) rekonstruiert ein KI-Assistent über MCP oder WebMCP ein systematisches Prägeskelett samt Bestandsbelegen." %}</p>
 
-    {% translate "Rekonstruiere aus Eligius ein Prägeskelett nach der Wiener Schule für Hadrianus aus Rom (119–121 n. Chr.): gruppiert nach Nominal, Avers-Legende, Revers-Legende und Motiv, mit Stückzahlen, verlinkten Beispielobjekten und sichtbaren Lücken." as prompt_hadrian_skeleton %}
+    {% translate "Rekonstruiere aus Eligius ein Prägeskelett nach der Wiener Schule für Hadrianus aus Rom (119–121 n. Chr.): Zeilen = Revers-Motiv und Legende, Spalten = Nominale, Zellen = Avers-Varianten, plus Motiv-Anteile pro Nominal im Vergleich mit Beleg-Links." as prompt_hadrian_skeleton %}
 
     <div class="lab-tabs" role="tablist" aria-label="{% translate 'Ansichten zum Prägeskelett-Beispiel' %}">
       <button type="button" class="lab-tab" role="tab" id="tab-question" aria-controls="panel-question" aria-selected="false" data-lab-tab="question">{% translate "1. Forschungsfrage" %}</button>
@@ -167,122 +219,380 @@
     <div class="lab-panel" role="tabpanel" id="panel-skeleton" aria-labelledby="tab-skeleton" data-lab-panel="skeleton">
       <div class="lab-matrix-head">
         <strong>{% translate "Hadrianus · Rom · ca. 119–121 n. Chr. (COS III)" %}</strong>
-        <span class="lab-matrix-meta">{% translate "Datenbasis: 118 Eligius-Objekte (inkl. 1 unbestimmtes Nominal)" %}</span>
+        <span class="lab-matrix-meta">{% translate "Zeilen: Motiv + Revers-Legende · Spalten: Nominale · Zellen: Avers-Variante (klickbar)" %}</span>
       </div>
+
+      {% with av1_legend="IMP CAESAR TRAIAN HADRIANVS AVG" av2_legend="IMP CAESAR TRAIANVS HADRIANVS AVG" av3_legend="IMP CAESAR TRAIANVS HADRIANVS AVG P M TR P COS III" %}
+
+      <div class="lab-av-bar" role="group" aria-label="{% translate 'Avers-Varianten filtern' %}">
+        <span class="lab-av-label">{% translate "Avers-Kürzel hervorheben:" %}</span>
+        <button type="button" class="lab-av-pill" data-av-filter="all" aria-pressed="true"><strong>{% translate "Alle" %}</strong></button>
+        <button type="button" class="lab-av-pill" data-av-filter="Av1" aria-pressed="false"><strong>Av1</strong> <code>IMP CAESAR TRAIAN HADRIANVS AVG</code></button>
+        <button type="button" class="lab-av-pill" data-av-filter="Av2" aria-pressed="false"><strong>Av2</strong> <code>IMP CAESAR TRAIANVS HADRIANVS AVG</code></button>
+        <button type="button" class="lab-av-pill" data-av-filter="Av3" aria-pressed="false"><strong>Av3</strong> <code>… AVG P M TR P COS III</code></button>
+      </div>
+
       <div class="lab-matrix-wrap">
-        <table class="lab-matrix">
+        <table class="lab-matrix" id="lab-skeleton-matrix">
           <thead>
             <tr>
-              <th scope="col">{% translate "Nominal" %}</th>
-              <th scope="col">{% translate "Avers-Legende (Schwerpunkt)" %}</th>
-              <th scope="col">{% translate "Revers-Legenden & Motive" %}</th>
-              <th scope="col">{% translate "Belege in Eligius" %}</th>
+              <th scope="col">{% translate "Revers-Motiv & Legende" %}</th>
+              <th scope="col">Aureus <span class="lab-metal">Au</span></th>
+              <th scope="col">Denar <span class="lab-metal">Ar</span></th>
+              <th scope="col">Quinarius <span class="lab-metal">Ar</span></th>
+              <th scope="col">Sestertius <span class="lab-metal">Ae</span></th>
+              <th scope="col">Dupondius <span class="lab-metal">Ae</span></th>
+              <th scope="col">As <span class="lab-metal">Ae</span></th>
             </tr>
           </thead>
           <tbody>
-            <tr class="lab-matrix-gap">
-              <td>Aureus <span class="lab-metal">Au</span></td>
-              <td>—</td>
-              <td>{% translate "Im aktuellen Eligius-Bestand nicht belegt (Desiderat)" %}</td>
-              <td>0 {% translate "Stk." %}</td>
+            <tr>
+              <th scope="row">
+                <span class="lab-motif-name">Victoria</span>
+                <code class="lab-rv-leg">P M TR P COS III</code>
+              </th>
+              <td class="lab-matrix-col-gap" title="{% translate 'Im Eligius-Bestand nicht belegt' %}">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av1" data-title="Victoria · Denar" data-count="4"
+                  data-av-legend="{{ av1_legend }}"
+                  data-bust="{% translate 'Lorbeerkranz n. r., l. Schulter drapiert' %}"
+                  data-rv-legend="P M TR P COS III"
+                  data-refs="/objekt/9095/|#9095 · RIC II.3 397">
+                  <span class="lab-cell-av">Av1</span><span class="lab-cell-cnt">4×</span>
+                </button>
+              </td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="true"
+                  data-av="Av1" data-title="Victoria · Quinarius" data-count="13"
+                  data-av-legend="{{ av1_legend }}"
+                  data-bust="{% translate 'Kopf oder Büste mit Lorbeerkranz n. r.' %}"
+                  data-rv-legend="P M TR P COS III"
+                  data-refs="/objekt/9184/|#9184 · RIC II.3 330A2;;/objekt/46243/|#46243 · RIC II.3 338;;/objekt/47315/|#47315 · RIC II.3 348">
+                  <span class="lab-cell-av">Av1</span><span class="lab-cell-cnt">13×</span>
+                </button>
+              </td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
             </tr>
             <tr>
-              <td>Denar <span class="lab-metal">Ar</span></td>
-              <td>
-                <span class="lab-legend">IMP CAESAR TRAIAN HADRIANVS AVG</span>
-                <span class="lab-note-inline">{% translate "Kurzform → Titulatur wandert auf den Revers" %}</span>
+              <th scope="row">
+                <span class="lab-motif-name">Aequitas</span>
+                <code class="lab-rv-leg">P M TR P COS III</code>
+              </th>
+              <td class="lab-matrix-col-gap">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av1" data-title="Aequitas · Denar" data-count="5"
+                  data-av-legend="{{ av1_legend }}"
+                  data-bust="{% translate 'Lorbeerkranz n. r., l. Schulter drapiert' %}"
+                  data-rv-legend="P M TR P COS III"
+                  data-refs="/objekt/4747/|#4747 · RIC II.3 386">
+                  <span class="lab-cell-av">Av1</span><span class="lab-cell-cnt">5×</span>
+                </button>
               </td>
-              <td>
-                <code>P M TR P COS III</code>:
-                {% translate "Aequitas, Victoria, Fortuna" %}
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <span class="lab-motif-name">Felicitas</span>
+                <code class="lab-rv-leg">PONT MAX TR POT COS III, S - C</code>
+              </th>
+              <td class="lab-matrix-col-gap">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av2" data-title="Felicitas · Sestertius" data-count="3"
+                  data-av-legend="{{ av2_legend }}"
+                  data-bust="{% translate 'Drapierte Büste mit Lorbeerkranz n. r.' %}"
+                  data-rv-legend="PONT MAX TR POT COS III, S - C"
+                  data-refs="/objekt/112/|#112 · RIC II.3 245;;/objekt/47528/|#47528 · RIC II.3 244">
+                  <span class="lab-cell-av">Av2</span><span class="lab-cell-cnt">3×</span>
+                </button>
               </td>
-              <td>
-                <span class="lab-count">20 {% translate "Stk." %}</span>
-                <div class="lab-refs">
-                  <a class="lab-ref-pill" href="/objekt/4747/" target="_blank" rel="noopener">#4747 · RIC II.3 386</a>
-                  <a class="lab-ref-pill" href="/objekt/9095/" target="_blank" rel="noopener">#9095 · RIC II.3 397</a>
-                  <a class="lab-ref-pill" href="/objekt/24112/" target="_blank" rel="noopener">#24112 · RIC II.3 394</a>
-                </div>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av2" data-title="Felicitas · As" data-count="1"
+                  data-av-legend="{{ av2_legend }}"
+                  data-bust="{% translate 'Lorbeerkranz n. r., l. Schulter drapiert' %}"
+                  data-rv-legend="PONT MAX TR POT COS III, S - C"
+                  data-refs="/objekt/4757/|#4757 · RIC II.3 248">
+                  <span class="lab-cell-av">Av2</span><span class="lab-cell-cnt">1×</span>
+                </button>
               </td>
             </tr>
             <tr>
-              <td>Quinarius <span class="lab-metal">Ar</span></td>
-              <td>
-                <span class="lab-legend">IMP CAESAR TRAIAN HADRIANVS AVG</span>
-                <span class="lab-note-inline">{% translate "Kurzform wie beim Denar" %}</span>
+              <th scope="row">
+                <span class="lab-motif-name">Moneta</span>
+                <code class="lab-rv-leg">MONETA AVGVSTI, S - C</code>
+              </th>
+              <td class="lab-matrix-col-gap">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av3" data-title="Moneta · Sestertius" data-count="4"
+                  data-av-legend="{{ av3_legend }}"
+                  data-bust="{% translate 'Kopf oder Büste mit Lorbeerkranz n. r. od. l.' %}"
+                  data-rv-legend="MONETA AVGVSTI, S - C"
+                  data-refs="/objekt/29/|#29 · RIC II.3 434;;/objekt/1554/|#1554 · RIC II.3 433">
+                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">4×</span>
+                </button>
               </td>
-              <td>
-                <code>P M TR P COS III</code>:
-                {% translate "Victoria (gehend, sitzend, stehend)" %}
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av3" data-title="Moneta · Dupondius" data-count="1"
+                  data-av-legend="{{ av3_legend }}"
+                  data-bust="{% translate 'Büste mit Strahlenkrone n. r.' %}"
+                  data-rv-legend="MONETA AVGVSTI, S - C"
+                  data-refs="/objekt/76630/|#76630 · RIC II.3 440">
+                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">1×</span>
+                </button>
               </td>
-              <td>
-                <span class="lab-count">17 {% translate "Stk." %}</span>
-                <div class="lab-refs">
-                  <a class="lab-ref-pill" href="/objekt/9184/" target="_blank" rel="noopener">#9184 · RIC II.3 330A2</a>
-                  <a class="lab-ref-pill" href="/objekt/46243/" target="_blank" rel="noopener">#46243 · RIC II.3 338</a>
-                  <a class="lab-ref-pill" href="/objekt/47315/" target="_blank" rel="noopener">#47315 · RIC II.3 348</a>
-                </div>
-              </td>
+              <td class="lab-matrix-empty">·</td>
             </tr>
             <tr>
-              <td>Sestertius <span class="lab-metal">Ae</span></td>
-              <td>
-                <span class="lab-legend">IMP CAESAR TRAIANVS HADRIANVS AVG P M TR P COS III</span>
-                <span class="lab-note-inline">{% translate "Langform → Raum für Programm-Legenden im Revers" %}</span>
+              <th scope="row">
+                <span class="lab-motif-name">Libertas</span>
+                <code class="lab-rv-leg">LIBERTAS PVBLICA // S C</code>
+              </th>
+              <td class="lab-matrix-col-gap">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av3" data-title="Libertas · Sestertius" data-count="3"
+                  data-av-legend="{{ av3_legend }}"
+                  data-bust="{% translate 'Büste mit Lorbeerkranz n. r.' %}"
+                  data-rv-legend="LIBERTAS PVBLICA // S C"
+                  data-refs="/objekt/96/|#96 · RIC II.3 422">
+                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">3×</span>
+                </button>
               </td>
-              <td>
-                <code>MONETA AVGVSTI</code> (Moneta), <code>LIBERTAS PVBLICA</code> (Libertas),
-                {% translate "ab 121 auch" %} <code>P M TR P COS III</code> (Spes)
-              </td>
-              <td>
-                <span class="lab-count">27 {% translate "Stk." %}</span>
-                <div class="lab-refs">
-                  <a class="lab-ref-pill" href="/objekt/1554/" target="_blank" rel="noopener">#1554 · RIC II.3 433</a>
-                  <a class="lab-ref-pill" href="/objekt/96/" target="_blank" rel="noopener">#96 · RIC II.3 422</a>
-                  <a class="lab-ref-pill" href="/objekt/110/" target="_blank" rel="noopener">#110 · RIC II.3 679</a>
-                </div>
-              </td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
             </tr>
             <tr>
-              <td>Dupondius <span class="lab-metal">Ae</span></td>
-              <td>
-                <span class="lab-legend">IMP CAESAR TRAIANVS HADRIANVS AVG P M TR P COS III</span>
-                <span class="lab-note-inline">{% translate "Langform parallel zum Sestertius" %}</span>
+              <th scope="row">
+                <span class="lab-motif-name">Virtus</span>
+                <code class="lab-rv-leg">VIRTVTI AVGVSTI, S - C</code>
+              </th>
+              <td class="lab-matrix-col-gap">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av3" data-title="Virtus · Dupondius" data-count="6"
+                  data-av-legend="{{ av3_legend }}"
+                  data-bust="{% translate 'Drapierte Büste mit Strahlenkrone n. r.' %}"
+                  data-rv-legend="VIRTVTI AVGVSTI, S - C"
+                  data-refs="/objekt/475/|#475 · RIC II.3 283;;/objekt/47529/|#47529 · RIC II.3 278">
+                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">6×</span>
+                </button>
               </td>
-              <td>
-                <code>SALVS PVBLICA</code> (Salus), <code>VIRTVTI AVGVSTI</code> (Virtus)
-              </td>
-              <td>
-                <span class="lab-count">21 {% translate "Stk." %}</span>
-                <div class="lab-refs">
-                  <a class="lab-ref-pill" href="/objekt/46761/" target="_blank" rel="noopener">#46761 · RIC II.3 276</a>
-                  <a class="lab-ref-pill" href="/objekt/47529/" target="_blank" rel="noopener">#47529 · RIC II.3 278</a>
-                </div>
-              </td>
+              <td class="lab-matrix-empty">·</td>
             </tr>
             <tr>
-              <td>As <span class="lab-metal">Ae</span></td>
-              <td>
-                <span class="lab-legend">IMP CAESAR TRAIAN HADRIANVS AVG</span>
-                <span class="lab-note-inline">{% translate "Kurzform → Titulatur im Revers" %}</span>
+              <th scope="row">
+                <span class="lab-motif-name">Salus</span>
+                <code class="lab-rv-leg">SALVS PVBLICA, S - C</code>
+              </th>
+              <td class="lab-matrix-col-gap">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av3" data-title="Salus · Dupondius" data-count="4"
+                  data-av-legend="{{ av3_legend }}"
+                  data-bust="{% translate 'Drapierte Büste mit Strahlenkrone n. r.' %}"
+                  data-rv-legend="SALVS PVBLICA, S - C"
+                  data-refs="/objekt/493/|#493 · RIC II.3 276;;/objekt/46761/|#46761 · RIC II.3 276">
+                  <span class="lab-cell-av">Av3</span><span class="lab-cell-cnt">4×</span>
+                </button>
               </td>
-              <td>
-                <code>P M TR P COS III</code> (Pax), <code>PONT MAX TR POT COS III</code> (Felicitas)
+              <td class="lab-matrix-empty">·</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <span class="lab-motif-name">Spes</span>
+                <code class="lab-rv-leg">P M TR P COS III, S - C</code>
+              </th>
+              <td class="lab-matrix-col-gap">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av1" data-title="Spes · Sestertius" data-count="4"
+                  data-av-legend="{{ av1_legend }}"
+                  data-bust="{% translate 'Drapierte oder gepanzerte Büste mit Lorbeerkranz n. r.' %}"
+                  data-rv-legend="P M TR P COS III, S - C"
+                  data-refs="/objekt/2/|#2 · RIC II.3 680;;/objekt/110/|#110 · RIC II.3 679">
+                  <span class="lab-cell-av">Av1</span><span class="lab-cell-cnt">4×</span>
+                </button>
               </td>
-              <td>
-                <span class="lab-count">32 {% translate "Stk." %}</span>
-                <div class="lab-refs">
-                  <a class="lab-ref-pill" href="/objekt/43038/" target="_blank" rel="noopener">#43038 · RIC II.3 673</a>
-                  <a class="lab-ref-pill" href="/objekt/4757/" target="_blank" rel="noopener">#4757 · RIC II.3 248</a>
-                </div>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <span class="lab-motif-name">Pax</span>
+                <code class="lab-rv-leg">P M TR P COS III, S - C</code>
+              </th>
+              <td class="lab-matrix-col-gap">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-empty">·</td>
+              <td class="lab-matrix-cell">
+                <button type="button" class="lab-cell-btn" aria-pressed="false"
+                  data-av="Av1" data-title="Pax · As" data-count="11"
+                  data-av-legend="{{ av1_legend }}"
+                  data-bust="{% translate 'Drapierte oder gepanzerte Büste mit Lorbeerkranz n. r.' %}"
+                  data-rv-legend="P M TR P COS III, S - C"
+                  data-refs="/objekt/484/|#484 · RIC II.3 675;;/objekt/43038/|#43038 · RIC II.3 673">
+                  <span class="lab-cell-av">Av1</span><span class="lab-cell-cnt">11×</span>
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+      {% endwith %}
+
+      <div class="lab-inspector" id="lab-cell-inspector" aria-live="polite">
+        <div class="lab-inspector-head">
+          <span class="lab-inspector-title" id="lab-insp-title">Victoria · Quinarius (13×)</span>
+          <span class="lab-inspector-hint">{% translate "Klicken Sie eine Zelle in der Matrix an, um Avers-Variante und Belege zu prüfen." %}</span>
+        </div>
+        <div class="lab-inspector-meta">
+          <span><strong>{% translate "Avers" %} (<span id="lab-insp-av-code">Av1</span>):</strong> <code id="lab-insp-av">IMP CAESAR TRAIAN HADRIANVS AVG</code> · <span id="lab-insp-bust">{% translate "Kopf oder Büste mit Lorbeerkranz n. r." %}</span></span>
+          <span><strong>{% translate "Revers:" %}</strong> <code id="lab-insp-rv">P M TR P COS III</code></span>
+        </div>
+        <div class="lab-refs" id="lab-insp-refs">
+          <a class="lab-ref-pill" href="/objekt/9184/" target="_blank" rel="noopener">#9184 · RIC II.3 330A2</a>
+          <a class="lab-ref-pill" href="/objekt/46243/" target="_blank" rel="noopener">#46243 · RIC II.3 338</a>
+          <a class="lab-ref-pill" href="/objekt/47315/" target="_blank" rel="noopener">#47315 · RIC II.3 348</a>
+        </div>
+      </div>
+
+      <div class="lab-subblock">
+        <h3>{% translate "Motiv-Verteilung pro Nominal im Vergleich" %}</h3>
+        <p class="lab-subblock-lead">{% translate "Anteile bestimmter Revers-Motive je Nominal (Hadrianus, Rom, 119–121 n. Chr.) – direkt aus einer MCP-Abfrage erzeugt:" %}</p>
+
+        <div class="lab-donuts">
+          <div class="lab-donut-card">
+            <div class="lab-donut-title">Denar <span class="lab-metal">Ar</span></div>
+            <div class="lab-donut-n">{% translate "n = 16 best. (20 ges.)" %}</div>
+            <div class="lab-donut-wrap">
+              <svg class="lab-donut-svg" viewBox="0 0 42 42" role="img" aria-label="{% translate 'Denar: Aequitas 31%, Victoria 25%, Fortuna 13%, Weitere 31%' %}">
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="rgba(255,255,255,.08)" stroke-width="5.2" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#d49a6a" stroke-width="5.2" stroke-dasharray="31 69" stroke-dashoffset="25" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#f6b15d" stroke-width="5.2" stroke-dasharray="25 75" stroke-dashoffset="94" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#b89c72" stroke-width="5.2" stroke-dasharray="13 87" stroke-dashoffset="69" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="rgba(255,255,255,.24)" stroke-width="5.2" stroke-dasharray="31 69" stroke-dashoffset="56" />
+              </svg>
+              <div class="lab-donut-center"><span class="lab-donut-pct">31%</span><span class="lab-donut-top">Aequitas</span></div>
+            </div>
+            <ul class="lab-donut-legend">
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#d49a6a"></span>Aequitas</span><span>31%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#f6b15d"></span>Victoria</span><span>25%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#b89c72"></span>Fortuna</span><span>13%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:rgba(255,255,255,.24)"></span>{% translate "Weitere" %}</span><span>31%</span></li>
+            </ul>
+          </div>
+
+          <div class="lab-donut-card">
+            <div class="lab-donut-title">Quinarius <span class="lab-metal">Ar</span></div>
+            <div class="lab-donut-n">{% translate "n = 14 best. (17 ges.)" %}</div>
+            <div class="lab-donut-wrap">
+              <svg class="lab-donut-svg" viewBox="0 0 42 42" role="img" aria-label="{% translate 'Quinarius: Victoria 100%' %}">
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#f6b15d" stroke-width="5.2" stroke-dasharray="100 0" stroke-dashoffset="25" />
+              </svg>
+              <div class="lab-donut-center"><span class="lab-donut-pct">100%</span><span class="lab-donut-top">Victoria</span></div>
+            </div>
+            <ul class="lab-donut-legend">
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#f6b15d"></span>Victoria</span><span>100%</span></li>
+            </ul>
+          </div>
+
+          <div class="lab-donut-card">
+            <div class="lab-donut-title">Sestertius <span class="lab-metal">Ae</span></div>
+            <div class="lab-donut-n">{% translate "n = 26 best. (27 ges.)" %}</div>
+            <div class="lab-donut-wrap">
+              <svg class="lab-donut-svg" viewBox="0 0 42 42" role="img" aria-label="{% translate 'Sestertius: Spes 19%, Moneta 15%, Libertas 12%, Felicitas 12%, Weitere 42%' %}">
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="rgba(255,255,255,.08)" stroke-width="5.2" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#7aa6e8" stroke-width="5.2" stroke-dasharray="19 81" stroke-dashoffset="25" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#e6c86e" stroke-width="5.2" stroke-dasharray="15 85" stroke-dashoffset="106" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#63b3b8" stroke-width="5.2" stroke-dasharray="12 88" stroke-dashoffset="91" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#c988b8" stroke-width="5.2" stroke-dasharray="12 88" stroke-dashoffset="79" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="rgba(255,255,255,.24)" stroke-width="5.2" stroke-dasharray="42 58" stroke-dashoffset="67" />
+              </svg>
+              <div class="lab-donut-center"><span class="lab-donut-pct">19%</span><span class="lab-donut-top">Spes</span></div>
+            </div>
+            <ul class="lab-donut-legend">
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#7aa6e8"></span>Spes</span><span>19%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#e6c86e"></span>Moneta</span><span>15%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#63b3b8"></span>Libertas</span><span>12%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#c988b8"></span>Felicitas</span><span>12%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:rgba(255,255,255,.24)"></span>{% translate "Weitere" %}</span><span>42%</span></li>
+            </ul>
+          </div>
+
+          <div class="lab-donut-card">
+            <div class="lab-donut-title">Dupondius <span class="lab-metal">Ae</span></div>
+            <div class="lab-donut-n">{% translate "n = 15 best. (21 ges.)" %}</div>
+            <div class="lab-donut-wrap">
+              <svg class="lab-donut-svg" viewBox="0 0 42 42" role="img" aria-label="{% translate 'Dupondius: Virtus 40%, Salus 27%, Pietas 20%, Weitere 13%' %}">
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="rgba(255,255,255,.08)" stroke-width="5.2" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#e07a5f" stroke-width="5.2" stroke-dasharray="40 60" stroke-dashoffset="25" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#9b8fe8" stroke-width="5.2" stroke-dasharray="27 73" stroke-dashoffset="85" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#88b878" stroke-width="5.2" stroke-dasharray="20 80" stroke-dashoffset="58" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="rgba(255,255,255,.24)" stroke-width="5.2" stroke-dasharray="13 87" stroke-dashoffset="38" />
+              </svg>
+              <div class="lab-donut-center"><span class="lab-donut-pct">40%</span><span class="lab-donut-top">Virtus</span></div>
+            </div>
+            <ul class="lab-donut-legend">
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#e07a5f"></span>Virtus</span><span>40%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#9b8fe8"></span>Salus</span><span>27%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#88b878"></span>Pietas</span><span>20%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:rgba(255,255,255,.24)"></span>{% translate "Weitere" %}</span><span>13%</span></li>
+            </ul>
+          </div>
+
+          <div class="lab-donut-card">
+            <div class="lab-donut-title">As <span class="lab-metal">Ae</span></div>
+            <div class="lab-donut-n">{% translate "n = 17 best. (32 ges.)" %}</div>
+            <div class="lab-donut-wrap">
+              <svg class="lab-donut-svg" viewBox="0 0 42 42" role="img" aria-label="{% translate 'As: Pax 65%, Genius 12%, Pietas 12%, Weitere 11%' %}">
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="rgba(255,255,255,.08)" stroke-width="5.2" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#7ec8a3" stroke-width="5.2" stroke-dasharray="65 35" stroke-dashoffset="25" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#5fa8d3" stroke-width="5.2" stroke-dasharray="12 88" stroke-dashoffset="60" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#88b878" stroke-width="5.2" stroke-dasharray="12 88" stroke-dashoffset="48" />
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="rgba(255,255,255,.24)" stroke-width="5.2" stroke-dasharray="11 89" stroke-dashoffset="36" />
+              </svg>
+              <div class="lab-donut-center"><span class="lab-donut-pct">65%</span><span class="lab-donut-top">Pax</span></div>
+            </div>
+            <ul class="lab-donut-legend">
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#7ec8a3"></span>Pax</span><span>65%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#5fa8d3"></span>Genius</span><span>12%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:#88b878"></span>Pietas</span><span>12%</span></li>
+              <li><span class="lab-donut-key"><span class="lab-dot" style="background:rgba(255,255,255,.24)"></span>{% translate "Weitere" %}</span><span>11%</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       <div class="lab-insight">
         <strong>{% translate "Auf einen Blick:" %}</strong>
-        {% translate "Das Skelett zeigt sofort die Systematik der Emission: Auf Denaren, Quinaren und Assen verdrängt die kurze Avers-Legende die Titulatur auf den Revers (P M TR P COS III). Auf großen Bronzen (Sestertius, Dupondius) steht die volle Titulatur auf dem Avers – und macht den Revers frei für politische Programmbotschaften wie MONETA AVGVSTI oder LIBERTAS PVBLICA." %}
+        {% translate "Die Matrix macht Motiv-Überschneidungen über Nominale hinweg sichtbar (z. B. Victoria bei Denar & Quinarius oder Moneta bei Sestertius & Dupondius) und zeigt über Av1–Av3 den Wechsel der Avers-Titulatur. Die Kreisdiagramme ergänzen sofort die Gewichtung: Der Quinarius ist zu 100 % Victoria-geprägt, der As zu 65 % Pax, während der Sestertius das breiteste Bildprogramm trägt." %}
       </div>
     </div>
 
@@ -472,6 +782,56 @@
       const step = event.key === 'ArrowRight' ? 1 : -1;
       const next = tabs[(index + step + tabs.length) % tabs.length];
       activateTab(next.dataset.labTab, true);
+    });
+  });
+
+  const matrix = document.getElementById('lab-skeleton-matrix');
+  const avButtons = Array.from(document.querySelectorAll('[data-av-filter]'));
+  const cellButtons = Array.from(document.querySelectorAll('.lab-cell-btn'));
+
+  avButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = button.dataset.avFilter;
+      avButtons.forEach((b) => b.setAttribute('aria-pressed', b === button ? 'true' : 'false'));
+      if (!matrix) return;
+      if (target === 'all') {
+        matrix.classList.remove('is-filtered');
+        cellButtons.forEach((c) => c.classList.remove('is-match'));
+      } else {
+        matrix.classList.add('is-filtered');
+        cellButtons.forEach((c) => c.classList.toggle('is-match', c.dataset.av === target));
+      }
+    });
+  });
+
+  const inspTitle = document.getElementById('lab-insp-title');
+  const inspAvCode = document.getElementById('lab-insp-av-code');
+  const inspAv = document.getElementById('lab-insp-av');
+  const inspBust = document.getElementById('lab-insp-bust');
+  const inspRv = document.getElementById('lab-insp-rv');
+  const inspRefs = document.getElementById('lab-insp-refs');
+
+  cellButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      cellButtons.forEach((b) => b.setAttribute('aria-pressed', b === button ? 'true' : 'false'));
+      if (!inspTitle || !inspRefs) return;
+      inspTitle.textContent = `${button.dataset.title} (${button.dataset.count}×)`;
+      if (inspAvCode) inspAvCode.textContent = button.dataset.av || '';
+      if (inspAv) inspAv.textContent = button.dataset.avLegend || '';
+      if (inspBust) inspBust.textContent = button.dataset.bust || '';
+      if (inspRv) inspRv.textContent = button.dataset.rvLegend || '';
+      inspRefs.replaceChildren();
+      (button.dataset.refs || '').split(';;').filter(Boolean).forEach((entry) => {
+        const [href, label] = entry.split('|');
+        if (!href || !href.startsWith('/objekt/')) return;
+        const link = document.createElement('a');
+        link.className = 'lab-ref-pill';
+        link.href = href;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = label || href;
+        inspRefs.appendChild(link);
+      });
     });
   });
 
