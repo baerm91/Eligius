@@ -119,9 +119,9 @@ class ApplyTests(TestCase):
         target.write_text(json.dumps({'schema': PROPOSAL_SCHEMA, 'inventory_sha256': 'x', 'proposals': proposals}))
         return target
 
-    def run_command(self, *args):
+    def run_command(self, *args, **options):
         out = StringIO()
-        call_command('apply_identifier_proposals', *args, stdout=out)
+        call_command('apply_identifier_proposals', *args, stdout=out, **options)
         return out.getvalue()
 
     def standard(self):
@@ -134,7 +134,7 @@ class ApplyTests(TestCase):
         ])
 
     def test_dry_run_writes_nothing(self):
-        output = self.run_command(str(self.standard()))
+        output = self.run_command(str(self.standard()), skip_checks=False)
         self.assertIn('2 Felder würden gefüllt', output)
         self.assertIn('Feld inzwischen befüllt', output)
         self.assertIn('Nomisma-ID geändert', output)

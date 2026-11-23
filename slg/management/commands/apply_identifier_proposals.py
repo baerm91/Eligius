@@ -54,7 +54,7 @@ class Command(BaseCommand):
         if not isinstance(report, dict) or report.get('schema') != PROPOSAL_SCHEMA:
             raise CommandError('Unbekanntes Vorschlagsformat.')
         planned = self.plan(report['proposals'], options['decisions'])
-        changes, skipped = self.check(planned)
+        changes, skipped = self.check_proposals(planned)
         for reason, count in sorted(skipped.items()):
             self.stdout.write(f'Übersprungen ({reason}): {count}')
         by_field = {}
@@ -101,7 +101,7 @@ class Command(BaseCommand):
             planned.append(dict(proposal, value=stored_value(proposal['kind'], identifier), status='decided'))
         return planned
 
-    def check(self, planned):
+    def check_proposals(self, planned):
         changes, skipped, seen = [], {}, set()
         for p in planned:
             model_label, field = p['model'], p['field']
