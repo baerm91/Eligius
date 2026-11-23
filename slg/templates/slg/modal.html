@@ -37,7 +37,7 @@
                 if (!editLink.hidden) editLink.href = trigger.dataset.footer;
             }
             try {
-                const response = await fetch(trigger.dataset.remote, {signal: controller.signal});
+                const response = await fetch(trigger.dataset.remote, {signal: controller.signal, credentials: 'same-origin'});
                 if (!response.ok) throw new Error(response.status);
                 const html = await response.text();
                 if (!controller.signal.aborted) body.innerHTML = html;

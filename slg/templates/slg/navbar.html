@@ -62,13 +62,15 @@
           </div>
 
           <!-- Menü für Desktop -->
+          {% with url_name=request.resolver_match.url_name|default:'' %}
           <div class="nav-center d-none d-xl-flex">
-            <a class="nav-link" href="/">{% translate "Start" %}</a>
-            <a class="nav-link" href="{% url 'sammlungen_uebersicht' %}">{% translate "Sammlungen" %}</a>
-            <a class="nav-link" href="{% url 'Objektliste' %}">{% translate "Objekte" %}</a>
-            <a class="nav-link" href="{% url 'about' %}">{% translate "Projekt" %}</a>
-            <a class="nav-link" href="{% url 'lab' %}">{% translate "Eligius Lab" %}</a>
+            <a class="nav-link{% if request.path == '/' %} active{% endif %}" href="/"{% if request.path == '/' %} aria-current="page"{% endif %}>{% translate "Start" %}</a>
+            <a class="nav-link{% if url_name == 'sammlungen_uebersicht' or url_name == 'Sammlung' %} active{% endif %}" href="{% url 'sammlungen_uebersicht' %}"{% if url_name == 'sammlungen_uebersicht' or url_name == 'Sammlung' %} aria-current="page"{% endif %}>{% translate "Sammlungen" %}</a>
+            <a class="nav-link{% if url_name == 'Objektliste' or url_name == 'Objekt' or url_name == 'Typ' %} active{% endif %}" href="{% url 'Objektliste' %}"{% if url_name == 'Objektliste' or url_name == 'Objekt' or url_name == 'Typ' %} aria-current="page"{% endif %}>{% translate "Objekte" %}</a>
+            <a class="nav-link{% if url_name == 'about' %} active{% endif %}" href="{% url 'about' %}"{% if url_name == 'about' %} aria-current="page"{% endif %}>{% translate "Projekt" %}</a>
+            <a class="nav-link{% if url_name == 'lab' %} active{% endif %}" href="{% url 'lab' %}"{% if url_name == 'lab' %} aria-current="page"{% endif %}>{% translate "Eligius Lab" %}</a>
           </div>
+          {% endwith %}
 
           <!-- Login-Icon rechts -->
           <div class="nav-side nav-side--right d-flex">
@@ -81,16 +83,18 @@
         </div>
 
         <!-- Mobile Menü (collapse) -->
+        {% with url_name=request.resolver_match.url_name|default:'' %}
         <div class="collapse navbar-collapse d-xl-none" id="navbarMenu">
           <div class="d-flex flex-column align-items-center py-3 gap-2">
-            <a class="nav-link" href="/">{% translate "Start" %}</a>
-            <a class="nav-link" href="{% url 'sammlungen_uebersicht' %}">{% translate "Sammlungen" %}</a>
-            <a class="nav-link" href="{% url 'Objektliste' %}">{% translate "Objekte" %}</a>
-            <a class="nav-link" href="{% url 'about' %}">{% translate "Projekt" %}</a>
-            <a class="nav-link" href="{% url 'lab' %}">{% translate "Eligius Lab" %}</a>
+            <a class="nav-link{% if request.path == '/' %} active{% endif %}" href="/"{% if request.path == '/' %} aria-current="page"{% endif %}>{% translate "Start" %}</a>
+            <a class="nav-link{% if url_name == 'sammlungen_uebersicht' or url_name == 'Sammlung' %} active{% endif %}" href="{% url 'sammlungen_uebersicht' %}"{% if url_name == 'sammlungen_uebersicht' or url_name == 'Sammlung' %} aria-current="page"{% endif %}>{% translate "Sammlungen" %}</a>
+            <a class="nav-link{% if url_name == 'Objektliste' or url_name == 'Objekt' or url_name == 'Typ' %} active{% endif %}" href="{% url 'Objektliste' %}"{% if url_name == 'Objektliste' or url_name == 'Objekt' or url_name == 'Typ' %} aria-current="page"{% endif %}>{% translate "Objekte" %}</a>
+            <a class="nav-link{% if url_name == 'about' %} active{% endif %}" href="{% url 'about' %}"{% if url_name == 'about' %} aria-current="page"{% endif %}>{% translate "Projekt" %}</a>
+            <a class="nav-link{% if url_name == 'lab' %} active{% endif %}" href="{% url 'lab' %}"{% if url_name == 'lab' %} aria-current="page"{% endif %}>{% translate "Eligius Lab" %}</a>
             <a class="nav-link" href="/admin/">{% translate "Anmelden" %}</a>
           </div>
         </div>
+        {% endwith %}
       </div>
       <div class="nav-border"></div>
     </header>

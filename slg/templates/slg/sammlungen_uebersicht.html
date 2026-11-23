@@ -139,7 +139,7 @@
   .slg-panel--right .slg-panel-content {
     grid-column: 4 / 7;
     justify-self: end;
-    text-align: right;
+    text-align: left;
   }
 
   .slg-panel-num {
@@ -168,6 +168,10 @@
     line-height: 1.8;
     margin-bottom: 32px;
     font-family: 'Plus Jakarta Sans', sans-serif;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .slg-panel-links {
@@ -177,7 +181,7 @@
   }
 
   .slg-panel--right .slg-panel-links {
-    justify-content: flex-end;
+    justify-content: flex-start;
   }
 
   .slg-panel-link {
@@ -288,7 +292,7 @@
       <div class="slg-panel-num">{% translate "Kollektion" %} {{ forloop.counter|stringformat:"02d" }}</div>
       <h2 class="slg-panel-name">{{ slg.name }}</h2>
       {% if slg.beschreibung %}
-        <p class="slg-panel-desc">{{ slg.beschreibung|truncatewords:35 }}</p>
+        <p class="slg-panel-desc">{{ slg.beschreibung|striptags }}</p>
       {% endif %}
       {% if slg.obj_count %}
         <div class="slg-panel-meta"><span>{{ slg.obj_count }}</span> {% translate "Objekte" %}</div>

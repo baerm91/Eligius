@@ -9,6 +9,7 @@ from django.core.validators import URLValidator
 
 from slg.models import stempelstellung_parts
 from slg.services.authority_display import english_label
+from slg.services.identifier_enrichment import geonames_uri
 from .identifiers import absolute_uri, image_redirect_uri, object_uri
 from .rights import image_rights_uri, metadata_rights_uri
 from .xml import clean_text, element, qname
@@ -230,9 +231,8 @@ def serialize_edm(row, obj, request):
         mint = row.mzstaette_fk
         for field in ('geonames', 'ndpikmk'):
             value = getattr(mint, field)
-            uri = valid_uri(value)
-            if field == 'geonames' and value and value.isdigit():
-                uri = f'https://www.geonames.org/{value}'
+            # GeoNames as Europeana's dereferenceable concept URI (sws.geonames.org/{id}/).
+            uri = (geonames_uri(value) if field == 'geonames' else None) or valid_uri(value)
             if uri:
                 resource(cho, 'dcterms', 'spatial', uri)
                 context(uri, 'Place', de=row.mzstaette or mint.name, en=english_label(mint))

@@ -305,7 +305,7 @@ class StructuredDataTests(TestCase):
         self.assertEqual(art['artMedium'], 'Silber')
         self.assertEqual(art['temporalCoverage'], '82 n. Chr.')
         self.assertEqual(art['locationCreated']['sameAs'],
-                         ['http://nomisma.org/id/rome', 'https://www.geonames.org/3169070'])
+                         ['http://nomisma.org/id/rome', 'https://sws.geonames.org/3169070/'])
         self.assertEqual(art['creator'][0]['name'], 'Domitianus')
         self.assertEqual(art['creator'][0]['sameAs'], ['http://nomisma.org/id/domitian', 'https://viaf.org/viaf/12345'])
         self.assertEqual(art['about'][0]['name'], 'Minerva')

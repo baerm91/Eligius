@@ -95,14 +95,14 @@
 
       /* ── Description section ── */
       .slg-description {
-        max-width: 800px;
+        max-width: 68ch;
         margin: 48px auto 0;
         padding: 0 20px;
         color: var(--text-muted);
         font-size: 1.05rem;
         line-height: 1.85;
         font-family: 'Plus Jakarta Sans', sans-serif;
-        text-align: center;
+        text-align: left;
       }
 
       .slg-description p { margin-bottom: 1rem; }
@@ -278,6 +278,15 @@
         color: #fff;
       }
 
+      .slg-timeline-persons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.35rem;
+        margin: 0.4rem 0 0;
+        clear: both;
+      }
+
       /* ── Empty state ── */
       .slg-empty {
         text-align: center;
@@ -410,22 +419,20 @@
               personenHtml = info.personen.filter(person => /^\d+$/.test(String(person.id))).map(person => 
                 `<a href="#theModal" data-remote="${"{% url 'PersonModal' id=0 %}".replace('/0/', '/' + person.id + '/')}"
                  data-footer="/admin/slg/person/${person.id}/change/" data-bs-toggle="modal"
-                 data-bs-target="#theModal" class="badge text-bg-info" title="Person">${escapePersonName(person.name)}</a>`
+                 data-bs-target="#theModal" class="badge slg-person-badge" title="{% translate 'Person' %}">${escapePersonName(person.name)}</a>`
               ).join(' ');
             }
             
             // Füge die Information hinzu
             timelineHTML += `<li>
               ${escHtml(info.information)}<br>
-              <span style="float:right;">
-                ${referenzenHtml}<br>
+              <span style="float:right;margin-left:0.75rem;">
+                ${referenzenHtml}
               </span>
               <span style="text-align:left;color:var(--text-muted)">
                 ${escHtml(info.dat_verb || '')}
               </span>
-              <p style="text-align:right;color:var(--text-muted)">
-                ${personenHtml}
-              </p>
+              ${personenHtml ? `<p class="slg-timeline-persons">${personenHtml}</p>` : ''}
             </li>`;
           });
           

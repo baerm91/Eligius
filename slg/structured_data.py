@@ -15,6 +15,7 @@ from .models import stempelstellung_parts
 from .oai.edm import PERSON_AUTHORITY_FIELDS, authority_uri, typology_entries, valid_uri
 from .oai.rights import image_rights_uri, metadata_rights_uri
 from .seo import absolute_url, clean_text, public_base_url
+from .services.identifier_enrichment import geonames_uri
 
 CONTEXT = 'https://schema.org'
 SITE_NAME = 'Eligius'
@@ -133,7 +134,7 @@ def _mint_place(mint, name):
         'name': name,
         'sameAs': _unique([
             authority_uri(mint.name_nom_id),
-            f'https://www.geonames.org/{geonames}' if geonames.isdigit() else valid_uri(geonames),
+            geonames_uri(geonames) or valid_uri(geonames),
             valid_uri(mint.ndpikmk),
         ]),
     }

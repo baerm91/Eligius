@@ -592,7 +592,7 @@ class KulturpoolLabelAndRightsTests(OAIFixtures, TestCase):
         self.assertIn((silver, SKOS.prefLabel, Literal('Silver', lang='en')), graph)
         self.assertIn((URIRef('http://nomisma.org/id/denarius'), SKOS.prefLabel, Literal('Denarius', lang='en')), graph)
         self.assertIn((URIRef('http://nomisma.org/id/struck'), SKOS.prefLabel, Literal('Struck', lang='en')), graph)
-        for rome in (URIRef('http://nomisma.org/id/rome'), URIRef('https://www.geonames.org/3169070')):
+        for rome in (URIRef('http://nomisma.org/id/rome'), URIRef('https://sws.geonames.org/3169070/')):
             self.assertIn((rome, RDF.type, EDM.Place), graph)
             self.assertIn((rome, SKOS.prefLabel, Literal('Rom', lang='de')), graph)
             self.assertIn((rome, SKOS.prefLabel, Literal('Rome', lang='en')), graph)
@@ -869,7 +869,7 @@ class KulturpoolEnrichmentTests(OAIFixtures, TestCase):
     def test_mint_coordinates_on_every_mint_place_in_xsd_order(self):
         Mzstaette.objects.filter(pk=self.mint.pk).update(lat=41.893, long=12.4829)
         graph, root = self.graph(self.obj(Typ=self.typ))
-        for rome in ('http://nomisma.org/id/rome', 'https://www.geonames.org/3169070'):
+        for rome in ('http://nomisma.org/id/rome', 'https://sws.geonames.org/3169070/'):
             self.assertIn((URIRef(rome), WGS84.lat, Literal('41.893')), graph)
             self.assertIn((URIRef(rome), WGS84.long, Literal('12.4829')), graph)
             self.assertEqual(self.children(root, 'Place', rome)[:3], ['lat', 'long', 'prefLabel'])

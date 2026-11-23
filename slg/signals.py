@@ -217,16 +217,22 @@ _AUTHORITY_FIELDS = {
 
 def _authority_objects(name, instance):
     """Alle Objekte, deren MTOA-Zeile dieses Vokabular anzeigt."""
+    return authority_objects(name, [instance.pk])
+
+
+def authority_objects(name, pks):
+    """Alle Objekte, deren MTOA-Zeile einen dieser Vokabulareinträge anzeigt."""
     from .models import Obj, Obj_Person, Mztyp_Person, AvBildtyp_Schlagwort, RvBildtyp_Schlagwort
+    pks = list(pks)
     if name in ('person', 'personfunktion'):
-        field = 'idfk_Person_id' if name == 'person' else 'idfk_PersonFunktion_id'
+        field = 'idfk_Person_id__in' if name == 'person' else 'idfk_PersonFunktion_id__in'
         return Obj.objects.filter(
-            Q(pk__in=Obj_Person.objects.filter(**{field: instance.pk}).values('idfk_Obj_id')) |
-            Q(Typ_id__in=Mztyp_Person.objects.filter(**{field: instance.pk}).values('Mztyp_id'))
+            Q(pk__in=Obj_Person.objects.filter(**{field: pks}).values('idfk_Obj_id')) |
+            Q(Typ_id__in=Mztyp_Person.objects.filter(**{field: pks}).values('Mztyp_id'))
         )
     if name == 'schlagwort':
-        av_ids = AvBildtyp_Schlagwort.objects.filter(schlagwort_id=instance.pk).values('avbildtyp_id')
-        rv_ids = RvBildtyp_Schlagwort.objects.filter(schlagwort_id=instance.pk).values('rvbildtyp_id')
+        av_ids = AvBildtyp_Schlagwort.objects.filter(schlagwort_id__in=pks).values('avbildtyp_id')
+        rv_ids = RvBildtyp_Schlagwort.objects.filter(schlagwort_id__in=pks).values('rvbildtyp_id')
         return Obj.objects.filter(
             Q(av_bildtyp_id__in=av_ids) | Q(Typ__av_bildtyp_id__in=av_ids) |
             Q(rv_bildtyp_id__in=rv_ids) | Q(Typ__rv_bildtyp_id__in=rv_ids)
@@ -234,12 +240,24 @@ def _authority_objects(name, instance):
     own, inherited = _AUTHORITY_FIELDS[name]
     condition = Q(pk__in=[])
     if own:
-        condition |= Q(**{own: instance.pk})
+        condition |= Q(**{own + '__in': pks})
     if inherited:
-        condition |= Q(**{'Typ__' + inherited: instance.pk})
+        condition |= Q(**{'Typ__' + inherited + '__in': pks})
     if name == 'workflow':
-        condition |= Q(Typ__Konkordanz__workflow_id=instance.pk)
+        condition |= Q(Typ__Konkordanz__workflow_id__in=pks)
     return Obj.objects.filter(condition)
+
+
+def touch_oai_datestamps(name, pks):
+    """Nur den OAI-Zeitstempel betroffener Objekte vorziehen (Felder, die nur der EDM-Export liest)."""
+    from .models import MuenztypObjektAnzeige
+    return MuenztypObjektAnzeige.objects.filter(
+        obj_id__in=authority_objects(name, pks).values('pk'),
+    ).update(last_modified=timezone.now())
+
+
+# Felder, die nicht in der MTOA-Projektion stehen, aber im EDM-Export erscheinen.
+EXPORT_ONLY_FIELDS = {'name_en', 'name_nom_id', 'geonames', 'DNB', 'VIAF'}
 
 
 def sync_authority_change(sender, instance, **kwargs):
@@ -248,13 +266,10 @@ def sync_authority_change(sender, instance, **kwargs):
     update_fields = kwargs.get('update_fields')
     if update_fields is not None and not update_fields:
         return
-    if update_fields and set(update_fields) <= {'name_en', 'name_nom_id'}:
-        # English labels and Nomisma IDs are read from the vocabulary, not the object
+    if update_fields and set(update_fields) <= EXPORT_ONLY_FIELDS:
+        # English labels and authority IDs are read from the vocabulary, not the object
         # projection, but they are part of the EDM export: only advance the OAI datestamp.
-        from .models import MuenztypObjektAnzeige
-        MuenztypObjektAnzeige.objects.filter(
-            obj_id__in=_authority_objects(sender._meta.model_name, instance).values('pk'),
-        ).update(last_modified=timezone.now())
+        touch_oai_datestamps(sender._meta.model_name, [instance.pk])
         return
     objects = _authority_objects(sender._meta.model_name, instance)
     from .mtoa_queue import INLINE_LIMIT, enqueue

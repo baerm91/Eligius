@@ -246,7 +246,8 @@ Andere externe IDs werden nicht pauschal in Nomisma-URIs verwandelt.
 Zusätzlich zum lesbaren Label gibt es passende `skos:Concept`, `edm:Place`
 oder `edm:Agent`-Kontextressourcen mit `skos:prefLabel`. Für Personen werden
 vorhandene gültige URIs aus `DNB`, `VIAF`, `DB`, `OeBL` und `mmlo` erhalten.
-Bekannte numerische `geonames`-IDs werden als Geonames-Ressourcen abgebildet;
+Bekannte `geonames`-IDs werden als `https://sws.geonames.org/{id}/` abgebildet
+(dereferenzierbares Europeana-Muster; Anreicherung siehe `IDENTIFIER_ENRICHMENT.md`);
 `ndpikmk` wird nur bei einer bereits vorhandenen absoluten URI übernommen.
 Fehlende oder syntaktisch ungültige URIs werden nicht erfunden.
 
