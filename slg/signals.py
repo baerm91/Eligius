@@ -245,15 +245,25 @@ def _authority_objects(name, instance):
 def sync_authority_change(sender, instance, **kwargs):
     if mtoa_sync_is_disabled() or kwargs.get('raw'):
         return
-    if kwargs.get('update_fields') == {'name_en'}:
-        # English labels are read from the vocabulary, not the object projection,
-        # but they are part of the EDM export: only advance the OAI datestamp.
+    update_fields = kwargs.get('update_fields')
+    if update_fields is not None and not update_fields:
+        return
+    if update_fields and set(update_fields) <= {'name_en', 'name_nom_id'}:
+        # English labels and Nomisma IDs are read from the vocabulary, not the object
+        # projection, but they are part of the EDM export: only advance the OAI datestamp.
         from .models import MuenztypObjektAnzeige
         MuenztypObjektAnzeige.objects.filter(
             obj_id__in=_authority_objects(sender._meta.model_name, instance).values('pk'),
         ).update(last_modified=timezone.now())
         return
-    _sync_queryset(_authority_objects(sender._meta.model_name, instance))
+    objects = _authority_objects(sender._meta.model_name, instance)
+    from .mtoa_queue import INLINE_LIMIT, enqueue
+    if objects.values('pk').distinct()[:INLINE_LIMIT + 1].count() > INLINE_LIMIT:
+        # Zu viele Objekte für den Request (Gunicorn-Timeout): im Hintergrund nach dem Commit.
+        enqueue(sender._meta.label, instance.pk)
+        instance._mtoa_sync_queued = True
+        return
+    _sync_queryset(objects)
 
 
 def remember_authority_objects(sender, instance, **kwargs):

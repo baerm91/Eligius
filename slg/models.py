@@ -2143,3 +2143,26 @@ class Bildabruf(models.Model):
 		constraints = [models.UniqueConstraint(
 			fields=['obj', 'ansicht', 'datum', 'herkunft', 'automatisiert'], name='bildabruf_tag_unique')]
 		indexes = [models.Index(fields=['datum', 'herkunft'], name='bildabruf_datum_herkunft')]
+
+
+class MtoaSyncAuftrag(models.Model):
+	"""Ausstehender MTOA-Neuaufbau nach Änderung eines Vokabulars mit vielen Objekten.
+
+	Wird nach dem Commit im Hintergrund abgearbeitet (slg.mtoa_queue); falls ein Worker
+	dabei neu startet, holt `manage.py process_mtoa_queue` liegengebliebene Aufträge nach.
+	"""
+	model_label = models.CharField(max_length=100, verbose_name='Vokabular')
+	object_pk = models.IntegerField(verbose_name='Eintrag-ID')
+	created_at = models.DateTimeField(auto_now_add=True, verbose_name='Angelegt')
+	claimed_at = models.DateTimeField(null=True, blank=True, verbose_name='In Arbeit seit')
+	attempts = models.PositiveSmallIntegerField(default=0, verbose_name='Versuche')
+	last_error = models.TextField(blank=True, default='', verbose_name='Letzter Fehler')
+
+	def __str__(self):
+		return f'{self.model_label} #{self.object_pk}'
+
+	class Meta:
+		verbose_name = 'MTOA-Aktualisierung (ausstehend)'
+		verbose_name_plural = 'MTOA-Aktualisierungen (ausstehend)'
+		constraints = [models.UniqueConstraint(
+			fields=['model_label', 'object_pk'], name='mtoa_sync_auftrag_unique')]

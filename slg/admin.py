@@ -2369,3 +2369,16 @@ class BildabrufAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(MtoaSyncAuftrag)
+class MtoaSyncAuftragAdmin(admin.ModelAdmin):
+    """Nur Einsicht: hängende/fehlgeschlagene Hintergrund-Aktualisierungen erkennen."""
+    list_display = ['model_label', 'object_pk', 'created_at', 'claimed_at', 'attempts', 'last_error']
+    readonly_fields = list_display
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

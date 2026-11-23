@@ -2,6 +2,7 @@
 import hashlib
 import json
 
+from django.contrib import messages
 from django.contrib import admin
 from django import forms
 from django.core.exceptions import ValidationError
@@ -13,6 +14,10 @@ from import_export.instance_loaders import CachedInstanceLoader
 from slg.models import AvBildtyp, Herstellung, Metall, Mzstaette, Nominal, Objekttyp, PersonFunktion, RvBildtyp, Schlagwort
 from slg.services.authority_display import clear_display_cache
 from slg.templatetags.authority_labels import nomisma_url
+
+
+# Vokabularfelder, die nicht in MuenztypObjektAnzeige kopiert werden.
+PROJECTION_FREE_FIELDS = frozenset({'name_en', 'name_nom_id'})
 
 
 class TranslationAdminMixin:
@@ -33,10 +38,16 @@ class TranslationAdminMixin:
         return super().formfield_for_dbfield(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):
-        if change and form.changed_data == ['name_en']:
-            obj.save(update_fields=['name_en'])
+        # Nur Felder, die nicht in der MTOA-Projektion stehen (name_en, name_nom_id),
+        # geändert -> gezielt speichern, damit kein MTOA-Neuaufbau über tausende
+        # Objekte läuft. Ohne Änderung: gar nicht speichern (update_fields=[] ist ein No-op).
+        if change and set(form.changed_data) <= PROJECTION_FREE_FIELDS:
+            obj.save(update_fields=list(form.changed_data))
         else:
             super().save_model(request, obj, form, change)
+            if getattr(obj, '_mtoa_sync_queued', False):
+                messages.info(request, f'„{obj}“ wird an vielen Objekten verwendet: '
+                              'die Objektanzeige wird im Hintergrund aktualisiert (kann einige Minuten dauern).')
 
     def has_import_permission(self, request):
         return self.has_change_permission(request)
