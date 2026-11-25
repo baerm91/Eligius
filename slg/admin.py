@@ -470,6 +470,14 @@ class SlgView(nested_admin.NestedModelAdmin):
             return '; '.join(issues)
         return (f'Bildrechte: {image_rights_uri(obj)}; Metadatenrechte: {metadata_rights_uri(obj)}. '
                 'Objektqualität mit validate_kulturpool_export prüfen')
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            obj.save(update_fields=form.changed_data)
+        else:
+            super().save_model(request, obj, form, change)
+        if getattr(obj, '_mtoa_sync_queued', False):
+            messages.info(request, 'Die Objektanzeige der Sammlung wird im Hintergrund aktualisiert.')
     
     def get_queryset(self, request):
         """Optimiertes QuerySet ohne teure Nested-Inlines"""

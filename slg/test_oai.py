@@ -847,9 +847,14 @@ class OAISynchronizationTests(OAIFixtures, TestCase):
         self.assertEqual(len({pk for batch in batches for pk in batch}), 1201)
 
     def test_collection_sync_has_no_2000_object_cutoff(self):
+        from slg.mtoa_queue import process_queue
+
         Obj.objects.bulk_create([Obj(invnr=str(i), Slg=self.collection, workflow=self.controlled, Objekttyp=self.kind) for i in range(2101)])
+        self.collection.bildurl = 'https://new-images.example.test/'
         with patch('slg.signals._schedule_sync') as sync:
             self.collection.save()
+            sync.assert_not_called()
+            self.assertEqual(process_queue(), 1)
         batches = [call.args[0] for call in sync.call_args_list if call.args[0]]
         self.assertEqual([len(batch) for batch in batches], [500, 500, 500, 500, 101])
         self.assertEqual(len({pk for batch in batches for pk in batch}), 2101)

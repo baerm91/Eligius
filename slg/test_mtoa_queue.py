@@ -1,11 +1,13 @@
 from unittest import mock
 
 from django.contrib.admin.sites import AdminSite
+from django.contrib.auth.models import User
 from django.test import TestCase
+from django.urls import reverse
 
 from slg import mtoa_queue
 from slg.admin import HerstellungAdmin
-from slg.models import Herstellung, MtoaSyncAuftrag
+from slg.models import Herstellung, MtoaSyncAuftrag, MuenztypObjektAnzeige, Obj, Slg, Workflow
 
 
 class MtoaQueueTests(TestCase):
@@ -69,3 +71,41 @@ class MtoaQueueTests(TestCase):
         sync.assert_not_called()
         self.herstellung.refresh_from_db()
         self.assertEqual(self.herstellung.name_nom_id, 'https://nomisma.org/id/struck')
+
+
+class CollectionSyncTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        workflow = Workflow.objects.create(name='kontrolliert', reihenfolge=1)
+        cls.collection = Slg.objects.create(name='Stift Heiligenkreuz', kulturpool_export_erlaubt=True)
+        obj = Obj.objects.create(invnr='HK-1', Slg=cls.collection, workflow=workflow, Objekttyp=None)
+        cls.row = MuenztypObjektAnzeige.objects.get(obj_id=obj.pk)
+
+    def test_admin_rights_save_advances_datestamp_without_rebuilding_projection(self):
+        self.client.force_login(User.objects.create_superuser('collection-editor'))
+        uri = 'https://creativecommons.org/licenses/by-nc/4.0/'
+        with mock.patch('slg.signals._sync_queryset') as sync:
+            response = self.client.post(reverse('admin:slg_slg_change', args=[self.collection.pk]), {
+                'name': self.collection.name, 'kulturpool_export_erlaubt': 'on',
+                'kulturpool_rights_uri': uri, 'bild_endung_av': 'a00', 'bild_endung_rv': 'r00', '_save': '',
+            })
+        self.assertEqual(response.status_code, 302)
+        self.collection.refresh_from_db()
+        self.assertEqual(self.collection.kulturpool_rights_uri, uri)
+        self.assertTrue(self.collection.kulturpool_export_erlaubt)
+        original_stamp = self.row.last_modified
+        self.row.refresh_from_db()
+        self.assertGreater(self.row.last_modified, original_stamp)
+        sync.assert_not_called()
+        self.assertFalse(MtoaSyncAuftrag.objects.exists())
+
+    def test_large_collection_image_change_runs_through_queue(self):
+        self.collection.bildurl = 'https://images.example.test/'
+        with mock.patch.object(mtoa_queue, 'INLINE_LIMIT', 0), mock.patch('slg.mtoa_queue.start_worker') as start:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.collection.save(update_fields=['bildurl'])
+        start.assert_called_once()
+        self.assertEqual(MtoaSyncAuftrag.objects.get().model_label, 'slg.Slg')
+        self.assertEqual(mtoa_queue.process_queue(), 1)
+        self.row.refresh_from_db()
+        self.assertEqual(self.row.av_url, 'https://images.example.test/HK-1a00.jpg')

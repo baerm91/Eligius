@@ -114,12 +114,40 @@ def sync_muenztyp_on_save(sender, instance, **kwargs):
         _sync_queryset(Obj.objects.filter(Q(Typ_id=instance.pk) | Q(Typ__Konkordanz=instance)))
 
 
+_SLG_PROJECTION_FIELDS = {
+    'name', 'bildurl', 'bild_endung_av', 'bild_endung_rv', 'entferne_zeichen',
+    'bilder_lokal', 'lokaler_ordnername',
+}
+_SLG_OAI_FIELDS = {
+    'bildrechte_lizenz', 'kulturpool_rights_uri', 'kulturpool_metadata_rights_uri',
+    'kulturpool_export_erlaubt', 'nomisma_collection_uri',
+}
+
+
+@receiver(pre_save, sender='slg.Slg')
+def remember_slg_changes(sender, instance, *, raw, using, update_fields, **kwargs):
+    if raw or mtoa_sync_is_disabled():
+        return
+    fields = _SLG_PROJECTION_FIELDS | _SLG_OAI_FIELDS
+    if update_fields is not None:
+        fields &= update_fields
+    instance._mtoa_slg_changes = set()
+    if fields and instance.pk is not None:
+        previous = sender.objects.using(using).filter(pk=instance.pk).values(*fields).first()
+        if previous is not None:
+            instance._mtoa_slg_changes = {field for field, value in previous.items() if value != getattr(instance, field)}
+
+
 @receiver(post_save, sender='slg.Slg')
-def sync_slg_on_save(sender, instance, **kwargs):
-    """Bei Änderungen an Sammlungs-Bildpfaden die betroffenen Objekte neu synchronisieren."""
-    from .models import Obj
-    if not kwargs.get('raw'):
-        _sync_queryset(Obj.objects.filter(Q(Slg_id=instance.pk) | Q(SlgTeil__idfk_Slg_SlgTeil_id=instance.pk)))
+def sync_slg_on_save(sender, instance, *, raw, using, **kwargs):
+    if raw or mtoa_sync_is_disabled():
+        return
+    changed = instance._mtoa_slg_changes
+    if changed & _SLG_OAI_FIELDS:
+        from .models import MuenztypObjektAnzeige
+        MuenztypObjektAnzeige.objects.using(using).filter(slg_fk_id=instance.pk).update(last_modified=timezone.now())
+    if changed & _SLG_PROJECTION_FIELDS:
+        _sync_or_enqueue(instance)
 
 
 @receiver(post_save, sender='slg.SlgTeil')
@@ -224,6 +252,8 @@ def authority_objects(name, pks):
     """Alle Objekte, deren MTOA-Zeile einen dieser Vokabulareinträge anzeigt."""
     from .models import Obj, Obj_Person, Mztyp_Person, AvBildtyp_Schlagwort, RvBildtyp_Schlagwort
     pks = list(pks)
+    if name == 'slg':
+        return Obj.objects.filter(Q(Slg_id__in=pks) | Q(SlgTeil__idfk_Slg_SlgTeil_id__in=pks))
     if name in ('person', 'personfunktion'):
         field = 'idfk_Person_id__in' if name == 'person' else 'idfk_PersonFunktion_id__in'
         return Obj.objects.filter(
@@ -271,11 +301,15 @@ def sync_authority_change(sender, instance, **kwargs):
         # projection, but they are part of the EDM export: only advance the OAI datestamp.
         touch_oai_datestamps(sender._meta.model_name, [instance.pk])
         return
-    objects = _authority_objects(sender._meta.model_name, instance)
+    _sync_or_enqueue(instance)
+
+
+def _sync_or_enqueue(instance):
+    objects = _authority_objects(instance._meta.model_name, instance)
     from .mtoa_queue import INLINE_LIMIT, enqueue
     if objects.values('pk').distinct()[:INLINE_LIMIT + 1].count() > INLINE_LIMIT:
         # Zu viele Objekte für den Request (Gunicorn-Timeout): im Hintergrund nach dem Commit.
-        enqueue(sender._meta.label, instance.pk)
+        enqueue(instance._meta.label, instance.pk)
         instance._mtoa_sync_queued = True
         return
     _sync_queryset(objects)
