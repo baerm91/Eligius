@@ -49,7 +49,7 @@ from ..models import (
     SlgTeil,
     Workflow,
 )
-from ..permissions import AuthenticatedReadStaffModelWrite, PublicReadStaffModelWrite
+from ..permissions import AuthenticatedReadStaffModelWrite, PublicReadStaffModelWrite, staff_with_perms
 from ..serializers import (
     AvBeizeichenSerializer,
     AvBildtypSerializer,
@@ -307,6 +307,46 @@ def objekte_bulk_api(request):
         'objects': objects,
         'unmatched_invnrs': [invnr for invnr in cleaned_invnrs if invnr not in matched_invnrs],
     })
+
+
+@api_view(['POST'])
+@authentication_classes([QueryParamTokenAuthentication, SessionAuthentication, TokenAuthentication])
+@permission_classes([staff_with_perms('slg.change_obj')])
+def assign_citation_group(request):
+    from django.contrib.admin.models import CHANGE, LogEntry
+    from django.contrib.contenttypes.models import ContentType
+    from django.utils import timezone
+    from ..mtoa_sync import sync_objs_to_mtoa
+
+    data = _request_object(request)
+    members = data.get('members')
+    if not isinstance(members, list) or not 0 < len(members) <= 5000:
+        return Response({'error': '1 bis 5000 Objekte erwartet.'}, status=400)
+    if any(not isinstance(m, dict) or type(m.get('id')) is not int
+           or not isinstance(m.get('inv'), str) for m in members):
+        return Response({'error': 'Objekt-ID und Inventarnummer werden benötigt.'}, status=400)
+    if type(data.get('type')) is not int:
+        return Response({'error': 'Ungültige Typ-ID.'}, status=400)
+    expected = {m['id']: m['inv'] for m in members}
+    with transaction.atomic():
+        typ = get_object_or_404(Muenztyp, pk=data['type'])
+        controlled = Workflow.objects.filter(reihenfolge=3).values_list('pk', flat=True)
+        rows = Obj.objects.select_for_update().filter(pk__in=expected).order_by('pk').values_list(
+            'pk', 'invnr', 'Typ_id', 'workflow_id')
+        protected = set(controlled)
+        ids = [pk for pk, inv, old, workflow in rows
+               if expected[pk] == inv and old is None and workflow not in protected]
+        if ids:
+            Obj.objects.filter(pk__in=ids).update(Typ=typ, modified_at=timezone.now())
+            sync_objs_to_mtoa(ids)
+            content_type = ContentType.objects.get_for_model(Obj)
+            LogEntry.objects.bulk_create([
+                LogEntry(user=request.user, content_type=content_type, object_id=str(pk),
+                         object_repr=expected[pk][:200], action_flag=CHANGE,
+                         change_message=f'Concordia Zitatgruppe: Münztyp {typ.pk} zugewiesen.')
+                for pk in ids
+            ])
+    return Response({'assigned': len(ids), 'skipped': len(expected) - len(ids)})
 
 
 class ObjektDetail(generics.RetrieveUpdateAPIView):

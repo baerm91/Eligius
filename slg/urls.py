@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_protect
 from rest_framework import routers
 from . import views
 from . import api_views
+from .views.api import assign_citation_group
 #from .views import MzstaettenRView
 
 router = routers.DefaultRouter()
@@ -30,6 +31,7 @@ urlpatterns = [
     path('export_coin_states/', views.export_coin_states_api, name='export_coin_states_api'),
     path('objekt/', views.ObjektList.as_view()),
     path('objekte/bulk/', views.objekte_bulk_api, name='api-objekte-bulk'),
+    path('objekte/zitatgruppe/', assign_citation_group, name='api-zitatgruppe'),
     path('objekt/<str:invnr>/personen/', views.ObjektPersonenView.as_view(), name='api-objekt-personen'),
     # API-Route 'objekt/<str:invnr>/' entfernt, da sie mit der Detailseiten-Route 'objekt/<int:id>/' kollidiert
     # Die API-Route ist weiterhin unter /api/objekt/<str:invnr>/ verfügbar
