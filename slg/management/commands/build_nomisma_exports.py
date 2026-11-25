@@ -35,7 +35,7 @@ class Command(BaseCommand):
                               f'(kontrolliert: {controlled.count()}, davon Fälschung/Verdacht: '
                               f'{controlled.filter(faelschung__isnull=False).count()}, Typ unsicher: '
                               f'{controlled.filter(Typ_unsicher=True).count()}) -> {path}')
-            for issue in nomisma_readiness(slg):
+            for issue in nomisma_readiness(slg, exportable_count=exported):
                 problems = True
                 self.stdout.write(self.style.WARNING(f'  - {issue}'))
         if problems and options['strict']:

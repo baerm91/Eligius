@@ -187,7 +187,13 @@
                             <div class="detail-label">{% translate "Bearbeitungsstand:" %}</div>
                             <div class="detail-value">
                                 {% if not coin_data.Typ %}
-                                    {% translate "Münze bisher unbestimmt" %}
+                                    {% if coin_data.titel and test.workflow_id == 3 %}
+                                        {% translate "Bearbeitung abgeschlossen – Typ nicht eindeutig bestimmbar" %}{% if coin_data.anmerkung %} ({% translate "s. Anmerkungen" %}){% endif %}
+                                    {% elif coin_data.titel %}
+                                        {% translate "in Bearbeitung" %}
+                                    {% else %}
+                                        {% translate "Münze bisher unbestimmt" %}
+                                    {% endif %}
                                 {% elif coin_data.Typ.workflow.id != 3 or test.workflow.id != 3 %}
                                     {% translate "in Bearbeitung" %}
                                 {% else %}

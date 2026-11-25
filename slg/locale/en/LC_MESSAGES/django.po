@@ -544,6 +544,12 @@ msgstr "Coin"
 msgid "Münze bisher unbestimmt"
 msgstr "Coin not yet identified"
 
+msgid "Bearbeitung abgeschlossen – Typ nicht eindeutig bestimmbar"
+msgstr "Processing complete – type cannot be determined unambiguously"
+
+msgid "s. Anmerkungen"
+msgstr "see notes"
+
 msgid "Münzen"
 msgstr "Coins"
 

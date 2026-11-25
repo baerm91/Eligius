@@ -9,7 +9,7 @@ from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import DCTERMS, FOAF, RDF, RDFS, XSD
 
 from .models import Faelschung, Herstellung, Muenztyp, Obj, Obj_Ref, Objekttyp, Paket, Ref, Slg, Workflow
-from .nomisma_rdf import is_type_series_uri, nomisma_readiness
+from .nomisma_rdf import count_exportable, is_type_series_uri, nomisma_readiness
 from .signals import disable_mtoa_sync, enable_mtoa_sync
 
 NMO = Namespace('http://nomisma.org/ontology#')
@@ -144,8 +144,62 @@ class NomismaExportTests(TestCase):
         self.assertIn((self.uri(exact), NMO.hasTypeSeriesItem,
                        URIRef('http://numismatics.org/ocre/id/ric.2_1(2).dom.102')), graph)
 
+    def test_mir_and_lrbc_concordances_export_the_ocre_type(self):
+        coins = []
+        for citation in ('MIR 36,43,44', 'LRBC'):
+            primary = Muenztyp.objects.create(muenztyptitel=f'{citation} 1', workflow=self.controlled,
+                                               Ref=Ref.objects.create(abk=citation), nummer='1')
+            self.typ.Konkordanz.add(primary)
+            coins.append(self.obj(citation, Typ=primary))
+        graph, _ = self.dump()
+        for coin in coins:
+            self.assertEqual(list(graph.objects(self.uri(coin), NMO.hasTypeSeriesItem)), [URIRef(OCRE)])
+        self.assertEqual(count_exportable(self.slg), 2)
+        image = self.client.get(f'/bild/{coins[0].pk}/av/')
+        self.assertRedirects(image, 'https://images.example.test/MIR%2036,43,44_a.jpg',
+                             fetch_redirect_response=False)
+
+    def test_concordance_requires_a_unique_controlled_non_variant_ocre_type(self):
+        primary = Muenztyp.objects.create(muenztyptitel='MIR 1', workflow=self.controlled)
+        coin = self.obj('MIR1', Typ=primary)
+        draft = Muenztyp.objects.create(muenztyptitel='RIC draft', link=OCRE, workflow=self.draft)
+        variant = Muenztyp.objects.create(muenztyptitel='RIC variant', link=OCRE, workflow=self.controlled, nach=True)
+        unlinked = Muenztyp.objects.create(muenztyptitel='RIC without link', workflow=self.controlled)
+        non_type = Muenztyp.objects.create(muenztyptitel='RIC invalid link', link='https://numismatics.org/ocre/id/',
+                                          workflow=self.controlled)
+        primary.Konkordanz.add(draft, variant, unlinked, non_type)
+        self.assertEqual(count_exportable(self.slg), 0)
+
+        duplicate = Muenztyp.objects.create(muenztyptitel='RIC duplicate', link=OCRE.replace('http:', 'https:'),
+                                           workflow=self.controlled)
+        primary.Konkordanz.add(self.typ, duplicate)
+        self.assertEqual(count_exportable(self.slg), 1)
+
+        other_uri = 'http://numismatics.org/ocre/id/ric.2_1(2).dom.102'
+        other = Muenztyp.objects.create(muenztyptitel='RIC 102', link=other_uri, workflow=self.controlled)
+        primary.Konkordanz.add(other)
+        graph, _ = self.dump()
+        self.assertNotIn((self.uri(coin), RDF.type, NMO.NumismaticObject), graph)
+        self.assertEqual(count_exportable(self.slg), 0)
+
+        Obj_Ref.objects.create(idfk_Obj=coin, idfk_Ref=self.ref, nummer='102', nach=False, link=other_uri)
+        graph, _ = self.dump()
+        self.assertEqual(graph.value(self.uri(coin), NMO.hasTypeSeriesItem), URIRef(other_uri))
+        self.assertEqual(count_exportable(self.slg), 1)
+
+    def test_primary_type_variant_does_not_inherit_ocre_link(self):
+        variant = Muenztyp.objects.create(muenztyptitel='LRBC 1 var.', workflow=self.controlled, nach=True)
+        variant.Konkordanz.add(self.typ)
+        coin = self.obj('LRBC1', Typ=variant)
+        graph, _ = self.dump()
+        self.assertNotIn((self.uri(coin), RDF.type, NMO.NumismaticObject), graph)
+        self.assertEqual(count_exportable(self.slg), 0)
+
     def test_type_series_hosts(self):
         self.assertTrue(is_type_series_uri('http://numismatics.org/crro/id/rrc-476.1b'))
+        self.assertTrue(is_type_series_uri('https://www.corpus-nummorum.eu/types/29'))
+        self.assertFalse(is_type_series_uri('https://numismatics.org/collection/1944.100.26728'))
+        self.assertFalse(is_type_series_uri('https://numismatics.org/ocre/id/'))
         self.assertFalse(is_type_series_uri('https://rpc.ashmus.ox.ac.uk/type/74718'))
         self.assertFalse(is_type_series_uri('https://rpc.ashmus.ox.ac.uk/coins/1/3340'))
         self.assertFalse(is_type_series_uri('https://numismatics.org.evil.test/ocre/id/x'))

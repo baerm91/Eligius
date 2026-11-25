@@ -28,7 +28,7 @@ from django.conf import settings
 from django.db.models import Prefetch, Q
 from django.urls import reverse
 
-from .models import MtoaPerson, MuenztypObjektAnzeige, Obj, Obj_Ref, Paket
+from .models import MtoaPerson, Muenztyp, MuenztypObjektAnzeige, Obj, Obj_Ref, Paket
 from .oai.edm import record_title, valid_uri
 from .oai.identifiers import absolute_uri, image_redirect_uri
 from .oai.rights import metadata_rights_uri
@@ -36,6 +36,7 @@ from .oai.xml import clean_text
 
 CONTROLLED_WORKFLOW_NAME = 'kontrolliert'
 CHUNK_SIZE = 1000
+OCRE_TYPE_PREFIX = '/ocre/id/'
 
 NAMESPACES = {
     'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
@@ -51,7 +52,7 @@ XSD = 'http://www.w3.org/2001/XMLSchema#'
 
 # Online-Typenkorpora, zu denen Sammlungen ihre Münzen über Nomisma beitragen.
 # RPC Online gehört bewusst nicht dazu: RPC sammelt Exemplare direkt bei den Sammlungen.
-# (Host, Pfadpräfix) – Pfadpräfix None bedeutet: jeder Pfad.
+# (Host, Pfadpräfix) – ANS-Korpora verwenden /<Korpus>/id/<Typ-ID>.
 TYPE_SERIES_PREFIXES = (
     ('numismatics.org', None),            # OCRE, CRRO, PELLA, SCO, PCO, HRC, AGCO, BIGR …
     ('iacb.arch.ox.ac.uk', '/id/'),       # Ancient British/Celtic Coins
@@ -70,61 +71,81 @@ def is_type_series_uri(uri):
     parsed = urlsplit(uri)
     host = (parsed.hostname or '').lower()
     for allowed_host, prefix in TYPE_SERIES_PREFIXES:
-        if host == allowed_host or (prefix is None and host.endswith('.' + allowed_host)):
-            if prefix is None or parsed.path.startswith(prefix):
-                return True
+        if prefix is None and (host == allowed_host or host.endswith('.' + allowed_host)):
+            segments = parsed.path.strip('/').split('/')
+            return len(segments) == 3 and bool(segments[0]) and segments[1] == 'id' and bool(segments[2])
+        if host == allowed_host and prefix and parsed.path.startswith(prefix):
+            return bool(parsed.path[len(prefix):].strip('/'))
     return False
 
 
-def get_nomisma_export_queryset(slg):
-    """Kontrollierte, als echt geltende Objekte mit sicherer Typzuordnung."""
+def _objects_with_type_links(slg):
+    concordances = Muenztyp.objects.filter(
+        workflow__name__iexact=CONTROLLED_WORKFLOW_NAME, link__icontains=OCRE_TYPE_PREFIX,
+    ).exclude(nach=True).only('pk', 'link').order_by('pk')
     return (
         Obj.objects.filter(Slg=slg, workflow__name__iexact=CONTROLLED_WORKFLOW_NAME, faelschung__isnull=True)
         .filter(Q(Typ__isnull=True) | Q(Typ__workflow__name__iexact=CONTROLLED_WORKFLOW_NAME))
         .exclude(Typ_unsicher=True)
         # „nach“/Variante: das Objekt entspricht dem zitierten Typ nicht genau.
         .exclude(obj_ref__nach=True)
-        .select_related('Slg', 'SlgTeil', 'SlgTeil__idfk_Slg_SlgTeil', 'Typ')
+        .select_related('Typ')
         .prefetch_related(
             Prefetch('obj_ref_set', queryset=Obj_Ref.objects.only('id', 'idfk_Obj_id', 'link', 'nach').order_by('id')),
-            Prefetch('pakete', queryset=Paket.objects.filter(online_freigegeben=True).exclude(slug__isnull=True)
-                     .exclude(slug='').filter(kontexttyp__in=(Paket.KONTEXTTYP_HORTFUND, Paket.KONTEXTTYP_FUNDKONTEXT))),
+            Prefetch('Typ__Konkordanz', queryset=concordances, to_attr='nomisma_ocre_concordances'),
         )
         .order_by('id')
     )
 
 
+def get_nomisma_export_queryset(slg):
+    """Kontrollierte, als echt geltende Objekte mit ihren möglichen Typ-Links."""
+    return (
+        _objects_with_type_links(slg)
+        .select_related('Slg', 'SlgTeil', 'SlgTeil__idfk_Slg_SlgTeil')
+        .prefetch_related(
+            Prefetch('pakete', queryset=Paket.objects.filter(online_freigegeben=True).exclude(slug__isnull=True)
+                     .exclude(slug='').filter(kontexttyp__in=(Paket.KONTEXTTYP_HORTFUND, Paket.KONTEXTTYP_FUNDKONTEXT))),
+        )
+    )
+
+
 def type_series_item_uri(obj):
-    """Typ-Link des Münztyps; bei Typ-Varianten nur exakte Objektzitate."""
-    if obj.Typ and not obj.Typ.nach and is_type_series_uri(obj.Typ.link):
-        return obj.Typ.link
+    """Direkter Typ-Link, exaktes Objektzitat oder eindeutige OCRE-Konkordanz."""
+    typ = obj.Typ
+    if typ and not typ.nach and is_type_series_uri(typ.link):
+        return typ.link
     for ref in obj.obj_ref_set.all():
         if not ref.nach and is_type_series_uri(ref.link):
             return ref.link
+    if not typ or typ.nach:
+        return None
+    ocre_types = {}
+    for concordance in typ.nomisma_ocre_concordances:
+        if is_type_series_uri(concordance.link):
+            parsed = urlsplit(concordance.link)
+            if parsed.hostname in ('numismatics.org', 'www.numismatics.org') and parsed.path.startswith(OCRE_TYPE_PREFIX):
+                ocre_types.setdefault(parsed.path.rstrip('/'), concordance.link)
+    if len(ocre_types) == 1:
+        return next(iter(ocre_types.values()))
     return None
 
 
-def _type_series_filter():
-    query = Q()
-    for host, prefix in TYPE_SERIES_PREFIXES:
-        needle = f'://{host}{prefix or "/"}'
-        query |= Q(Typ__link__icontains=needle, Typ__nach__isnull=True) | Q(Typ__link__icontains=needle, Typ__nach=False)
-        query |= Q(obj_ref__link__icontains=needle, obj_ref__nach=False)
-    return query
-
-
 def count_exportable(slg):
-    """Schätzung für die Admin-Anzeige (Datenbankfilter, ohne URI-Validierung)."""
-    return get_nomisma_export_queryset(slg).filter(_type_series_filter()).values('pk').distinct().count()
+    """Anzahl der Münzen mit demselben Typ-Link-Kriterium wie im Dump."""
+    objects = _objects_with_type_links(slg).only('pk', 'Typ_id', 'Typ__link', 'Typ__nach')
+    return sum(bool(type_series_item_uri(obj)) for obj in objects.iterator(chunk_size=CHUNK_SIZE))
 
 
-def nomisma_readiness(slg):
+def nomisma_readiness(slg, *, exportable_count=None):
     issues = []
     if not valid_uri(slg.nomisma_collection_uri):
         issues.append('Nomisma-Collection-URI fehlt (bei Nomisma beantragen, z. B. http://nomisma.org/id/…)')
     if not metadata_rights_uri(slg):
         issues.append('Metadatenrechte-URI fehlt – Nomisma verlangt eine Lizenz (üblich: CC0)')
-    if not count_exportable(slg):
+    if exportable_count is None:
+        exportable_count = count_exportable(slg)
+    if not exportable_count:
         issues.append('Keine exportierbaren Münzen (kontrolliert, mit Link auf OCRE/CRRO-Typ o. Ä.)')
     return issues
 

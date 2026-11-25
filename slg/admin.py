@@ -452,10 +452,11 @@ class SlgView(nested_admin.NestedModelAdmin):
             return 'Export deaktiviert'
         from django.urls import reverse
         from .nomisma_rdf import count_exportable, nomisma_readiness
-        issues = nomisma_readiness(obj)
+        exportable_count = count_exportable(obj)
+        issues = nomisma_readiness(obj, exportable_count=exportable_count)
         if issues:
             return '; '.join(issues)
-        return (f'Bereit: ca. {count_exportable(obj)} Münzen mit Typ-Link. Bei Nomisma registrieren: '
+        return (f'Bereit: {exportable_count} Münzen mit Typ-Link. Bei Nomisma registrieren: '
                 f'{reverse("collection_nomisma_void", kwargs={"id": obj.pk})}')
 
     @admin.display(description='Kulturpool-Bereitschaft')
