@@ -36,7 +36,7 @@ from .oai.xml import clean_text
 
 CONTROLLED_WORKFLOW_NAME = 'kontrolliert'
 CHUNK_SIZE = 1000
-OCRE_TYPE_PREFIX = '/ocre/id/'
+NUMISMATICS_HOST = 'numismatics.org'
 
 NAMESPACES = {
     'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
@@ -81,7 +81,7 @@ def is_type_series_uri(uri):
 
 def _objects_with_type_links(slg):
     concordances = Muenztyp.objects.filter(
-        workflow__name__iexact=CONTROLLED_WORKFLOW_NAME, link__icontains=OCRE_TYPE_PREFIX,
+        workflow__name__iexact=CONTROLLED_WORKFLOW_NAME, link__icontains=NUMISMATICS_HOST,
     ).exclude(nach=True).only('pk', 'link').order_by('pk')
     return (
         Obj.objects.filter(Slg=slg, workflow__name__iexact=CONTROLLED_WORKFLOW_NAME, faelschung__isnull=True)
@@ -92,7 +92,7 @@ def _objects_with_type_links(slg):
         .select_related('Typ')
         .prefetch_related(
             Prefetch('obj_ref_set', queryset=Obj_Ref.objects.only('id', 'idfk_Obj_id', 'link', 'nach').order_by('id')),
-            Prefetch('Typ__Konkordanz', queryset=concordances, to_attr='nomisma_ocre_concordances'),
+            Prefetch('Typ__Konkordanz', queryset=concordances, to_attr='nomisma_concordances'),
         )
         .order_by('id')
     )
@@ -111,7 +111,7 @@ def get_nomisma_export_queryset(slg):
 
 
 def type_series_item_uri(obj):
-    """Direkter Typ-Link, exaktes Objektzitat oder eindeutige OCRE-Konkordanz."""
+    """Direkter Typ-Link, exaktes Objektzitat oder eindeutige numismatics.org-Konkordanz."""
     typ = obj.Typ
     if typ and not typ.nach and is_type_series_uri(typ.link):
         return typ.link
@@ -120,14 +120,16 @@ def type_series_item_uri(obj):
             return ref.link
     if not typ or typ.nach:
         return None
-    ocre_types = {}
-    for concordance in typ.nomisma_ocre_concordances:
+    concordance_types = {}
+    for concordance in typ.nomisma_concordances:
         if is_type_series_uri(concordance.link):
             parsed = urlsplit(concordance.link)
-            if parsed.hostname in ('numismatics.org', 'www.numismatics.org') and parsed.path.startswith(OCRE_TYPE_PREFIX):
-                ocre_types.setdefault(parsed.path.rstrip('/'), concordance.link)
-    if len(ocre_types) == 1:
-        return next(iter(ocre_types.values()))
+            host = (parsed.hostname or '').lower()
+            if host == NUMISMATICS_HOST or host.endswith('.' + NUMISMATICS_HOST):
+                canonical_host = host[4:] if host.startswith('www.') else host
+                concordance_types.setdefault((canonical_host, parsed.path.rstrip('/')), concordance.link)
+    if len(concordance_types) == 1:
+        return next(iter(concordance_types.values()))
     return None
 
 

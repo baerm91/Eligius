@@ -616,8 +616,10 @@ class KulturpoolLabelAndRightsTests(OAIFixtures, TestCase):
         self.collection.nomisma_collection_uri = 'http://nomisma.org/id/test_collection'
         self.collection.save()
         graph, _ = self.graph(self.obj())
-        self.assertIn((URIRef(self.collection.nomisma_collection_uri), SKOS.prefLabel,
-                       Literal('Testsammlung', lang='de')), graph)
+        for collection_uri in (BASE + self.collection.get_absolute_url(), self.collection.nomisma_collection_uri):
+            ref = URIRef(collection_uri)
+            self.assertIn((ref, RDF.type, SKOS.Concept), graph)
+            self.assertIn((ref, SKOS.prefLabel, Literal('Testsammlung', lang='de')), graph)
 
     def test_licence_labels_map_only_when_unambiguous(self):
         from .oai.rights import canonical_rights_uri, licence_from_label

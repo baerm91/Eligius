@@ -195,6 +195,39 @@ class NomismaExportTests(TestCase):
         self.assertNotIn((self.uri(coin), RDF.type, NMO.NumismaticObject), graph)
         self.assertEqual(count_exportable(self.slg), 0)
 
+    def test_concordance_supports_all_numismatics_org_corpora_when_unique(self):
+        crro_uri = 'http://numismatics.org/crro/id/rrc-476.1b'
+        pella_uri = 'http://numismatics.org/pella/id/price.1'
+        crro_typ = Muenztyp.objects.create(muenztyptitel='CRRO 476.1b', link=crro_uri, workflow=self.controlled)
+        pella_typ = Muenztyp.objects.create(muenztyptitel='PELLA Price 1', link=pella_uri, workflow=self.controlled)
+        ignored_links = (
+            Muenztyp.objects.create(muenztyptitel='ANS Collection', link='https://numismatics.org/collection/1944.100.26728',
+                                     workflow=self.controlled),
+            Muenztyp.objects.create(muenztyptitel='Evil Host', link='https://numismatics.org.evil.test/ocre/id/x',
+                                     workflow=self.controlled),
+            Muenztyp.objects.create(muenztyptitel='Corpus Nummorum', link='https://www.corpus-nummorum.eu/types/29',
+                                     workflow=self.controlled),
+        )
+        crro_primary = Muenztyp.objects.create(muenztyptitel='Sydenham 1', workflow=self.controlled)
+        crro_primary.Konkordanz.add(crro_typ, *ignored_links)
+        pella_primary = Muenztyp.objects.create(muenztyptitel='Price 1 lokal', workflow=self.controlled)
+        pella_www = Muenztyp.objects.create(muenztyptitel='PELLA Price 1 www',
+                                             link='https://www.numismatics.org/pella/id/price.1/', workflow=self.controlled)
+        pella_primary.Konkordanz.add(pella_typ, pella_www)
+        crro_coin = self.obj('CRRO1', Typ=crro_primary)
+        pella_coin = self.obj('PELLA1', Typ=pella_primary)
+
+        graph, _ = self.dump()
+        self.assertEqual(list(graph.objects(self.uri(crro_coin), NMO.hasTypeSeriesItem)), [URIRef(crro_uri)])
+        self.assertEqual(list(graph.objects(self.uri(pella_coin), NMO.hasTypeSeriesItem)), [URIRef(pella_uri)])
+        self.assertEqual(count_exportable(self.slg), 2)
+
+        # Mehrdeutige Konkordanz über zwei verschiedene numismatics.org-Korpora wird nicht exportiert.
+        pella_primary.Konkordanz.add(crro_typ)
+        graph, _ = self.dump()
+        self.assertNotIn((self.uri(pella_coin), RDF.type, NMO.NumismaticObject), graph)
+        self.assertEqual(count_exportable(self.slg), 1)
+
     def test_type_series_hosts(self):
         self.assertTrue(is_type_series_uri('http://numismatics.org/crro/id/rrc-476.1b'))
         self.assertTrue(is_type_series_uri('https://www.corpus-nummorum.eu/types/29'))

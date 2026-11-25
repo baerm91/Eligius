@@ -184,7 +184,6 @@ def serialize_edm(row, obj, request):
     cho = element(root, 'edm', 'ProvidedCHO', **{qname('rdf', 'about'): cho_uri})
     literal(cho, 'dc', 'title', record_title(row), 'de')
     literal(cho, 'dc', 'identifier', row.invnr)
-    resource(cho, 'dcterms', 'isPartOf', absolute_uri(request, obj.Slg.get_absolute_url()))
     # Contextual classes: URI -> (class, {language or None: prefLabel}, {property: value}).
     contexts = {}
     def context(uri, kind, de=None, en=None, neutral=None, **properties):
@@ -193,6 +192,10 @@ def serialize_edm(row, obj, request):
         if labels:
             previous = contexts.get(uri, (None, {}, {}))[2]
             contexts[uri] = (kind, labels, {**previous, **properties})
+
+    collection_page = absolute_uri(request, obj.Slg.get_absolute_url())
+    resource(cho, 'dcterms', 'isPartOf', collection_page)
+    context(collection_page, 'Concept', de=obj.Slg.name)
 
     collection_authority = valid_uri(obj.Slg.nomisma_collection_uri)
     if collection_authority:

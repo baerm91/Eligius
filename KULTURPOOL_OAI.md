@@ -257,12 +257,15 @@ Kulturpool löst externe URIs für die Anzeige nicht auf (Rückmeldung November
 `name_en` gepflegt, folgt ein zweites Label mit `xml:lang="en"`. Das gilt für
 Material, Nominal, Münzstätte (Migration `0106_material_nominal_mint_english`),
 Objekttyp und Herstellung. Fehlende Übersetzungen erzeugen kein leeres Label.
-Auch die Nomisma-Sammlungs-URI in `dcterms:isPartOf` erhält ein Label.
+Sowohl die Eligius-Sammlungs-URI als auch die Nomisma-Sammlungs-URI in
+`dcterms:isPartOf` erhalten ein `skos:Concept` mit `skos:prefLabel`.
 
 Hinweis: Übersetzungen werden mit `update_fields=['name_en']` gespeichert und
-lösen bewusst keine MTOA-Neusynchronisierung aus. Damit ändert sich der
-OAI-Datestamp nicht. Nach größeren Übersetzungsrunden `sync_mtoa --slg <ID>`
-ausführen oder Kulturpool um einen Vollharvest bitten.
+lösen bewusst keinen MTOA-Neuaufbau aus, ziehen aber `last_modified` der
+betroffenen Objekte vor, damit inkrementelle Harvests die neuen englischen
+Texte abholen. Nur nach Bulk-Updates ohne Signals oder nach dem Installieren
+eines neuen Normdaten-Snapshots `sync_mtoa --slg <ID>` ausführen oder
+Kulturpool um einen Vollharvest bitten.
 
 ### OCRE, CRRO, RPC und weitere Typologien
 
