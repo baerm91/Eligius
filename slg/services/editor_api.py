@@ -8,11 +8,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework import serializers
 
-from slg.models import Obj, Muenztyp
+from slg.models import Obj, Muenztyp, Workflow
 
 SALT = 'eligius.editor.preview.v1'
 MAX_AGE = 600
@@ -221,6 +221,63 @@ def get_editor_object(user_id, object_id):
             'coin_type': row_state(obj.Typ) if obj.Typ_id else None,
             'type_data_source': 'Muenztyp' if obj.Typ_id else 'Obj',
             'notice': 'Direkte Altangaben bleiben gespeichert; bei gesetztem Typ gelten die Typangaben.'}
+
+
+# Fachlich definierter Kontrollstatus: derselbe Workflow-Name wie OAI/Kulturpool,
+# Nomisma und SEO. Nicht die Reihenfolge (sichtbare "3") und nicht die DB-ID.
+CONTROLLED_WORKFLOW_NAME = 'kontrolliert'
+
+
+def get_workflow_statistics(user_id, collection_id, exclude_collection_part_ids=None):
+    """Object and coin type control rates on the public get_statistics population.
+
+    Uses the same MTOA base set as public get_statistics (filter Slg), minus the
+    excluded collection parts. Types are counted once each, however many objects
+    are assigned; their own Muenztyp workflow decides "kontrolliert".
+    """
+    editor_user(user_id)
+    from slg.services.public_api import filter_request
+    from slg.services.search import _get_filtered_mtoa_queryset
+    if type(collection_id) is not int or collection_id < 1:
+        raise ValueError('Positive Sammlungs-ID erforderlich.')
+    excluded = list(exclude_collection_part_ids or [])
+    if (len(excluded) > 100 or any(type(i) is not int or i < 1 for i in excluded)
+            or len(set(excluded)) != len(excluded)):
+        raise ValueError('Höchstens 100 verschiedene positive Sammlungsteil-IDs erforderlich.')
+    rows, _, _ = _get_filtered_mtoa_queryset(filter_request({'Slg': collection_id}))
+    if excluded:
+        # exclude() keeps rows without collection part (NULL), as intended.
+        rows = rows.exclude(slgteil_fk_id__in=excluded)
+    rows = rows.order_by()
+    workflows = Workflow.objects.filter(name__iexact=CONTROLLED_WORKFLOW_NAME)
+    object_ids = rows.values('obj_id')
+    type_ids = rows.filter(typ_fk__isnull=False).values('typ_fk_id')
+    totals = rows.aggregate(objects_total=Count('obj_id', distinct=True),
+                            assigned_types_total=Count('typ_fk', distinct=True))
+    objects_with_type = (rows.filter(typ_fk__isnull=False)
+                         .aggregate(n=Count('obj_id', distinct=True))['n'])
+    objects_controlled = Obj.objects.filter(pk__in=object_ids, workflow__in=workflows).count()
+    types_controlled = Muenztyp.objects.filter(pk__in=type_ids, workflow__in=workflows).count()
+
+    def rate(part, whole):
+        return round(part / whole, 6) if whole else None
+
+    return {
+        'collection_id': collection_id,
+        'exclude_collection_part_ids': sorted(excluded),
+        'objects_total': totals['objects_total'],
+        'objects_with_type': objects_with_type,
+        'objects_controlled': objects_controlled,
+        'assigned_types_total': totals['assigned_types_total'],
+        'assigned_types_controlled': types_controlled,
+        'object_control_rate': rate(objects_controlled, totals['objects_total']),
+        'type_control_rate': rate(types_controlled, totals['assigned_types_total']),
+        'controlled_workflow': json_value(list(workflows.order_by('pk').values('id', 'name', 'reihenfolge'))),
+        'notice': ('Grundgesamtheit wie öffentliches get_statistics (Slg-Filter) abzüglich der '
+                   'ausgeschlossenen Sammlungsteile. "kontrolliert" per Workflow-Name, nicht per '
+                   'Reihenfolge oder ID. Typquote: jeder zugewiesene Münztyp zählt einmal, '
+                   'nach seinem eigenen Typ-Workflow.'),
+    }
 
 
 def search_coin_types(user_id, mint_id=None, nominal_id=None, page=1):

@@ -271,6 +271,49 @@ class EditorServiceTests(TestCase):
         self.assertEqual(result['results'][0]['id'], self.typ.pk)
         self.assertEqual(api.search_coin_types(self.user.pk, self.other_mint.pk)['total'], 0)
 
+    def test_workflow_statistics_population_and_controlled_name(self):
+        from slg.models import SlgTeil
+        from slg.mtoa_sync import sync_objs_to_mtoa
+        # Order 3 is shown, but the IDs differ: only the name defines "kontrolliert".
+        Workflow.objects.create(name='in Bearbeitung', reihenfolge=1)
+        controlled = Workflow.objects.create(name='kontrolliert', reihenfolge=3)
+        decoy = Workflow.objects.create(name='Dummy', reihenfolge=None)
+        self.assertNotEqual(controlled.pk, 3)
+        collection = self.obj.Slg
+        notgeld = SlgTeil.objects.create(name='Notgeld', idfk_Slg_SlgTeil=collection)
+        other_type = Muenztyp.objects.create(muenztyptitel='Other', titel='Other',
+            Objekttyp=None, Herstellung=None, workflow=controlled)
+        Muenztyp.objects.filter(pk=self.typ.pk).update(workflow=decoy)
+        disable_mtoa_sync()
+        try:
+            Obj.objects.filter(pk=self.classified.pk).update(workflow=controlled)
+            same_type = Obj.objects.create(invnr='E-3', Slg=collection, Typ=self.typ,
+                Objekttyp=None, workflow=controlled)
+            other = Obj.objects.create(invnr='E-4', Slg=collection, Typ=other_type,
+                Objekttyp=None, workflow=None)
+            excluded = Obj.objects.create(invnr='E-5', Slg=collection, SlgTeil=notgeld,
+                Typ=other_type, Objekttyp=None, workflow=controlled)
+            foreign = Obj.objects.create(invnr='F-1', Slg=Slg.objects.create(name='Other'),
+                Typ=other_type, Objekttyp=None, workflow=controlled)
+        finally:
+            enable_mtoa_sync()
+        sync_objs_to_mtoa([self.obj.pk, self.classified.pk, same_type.pk, other.pk,
+                           excluded.pk, foreign.pk])
+        result = api.get_workflow_statistics(self.user.pk, collection.pk, [notgeld.pk])
+        self.assertEqual((result['objects_total'], result['objects_with_type'],
+                          result['objects_controlled']), (4, 3, 2))
+        self.assertEqual((result['assigned_types_total'], result['assigned_types_controlled']), (2, 1))
+        self.assertEqual(result['object_control_rate'], 0.5)
+        self.assertEqual(result['controlled_workflow'][0]['id'], controlled.pk)
+        from slg.services.public_api import get_statistics
+        self.assertEqual(get_statistics({'Slg': collection.pk})['total'], 5)
+        self.assertEqual(api.get_workflow_statistics(self.user.pk, collection.pk)['objects_total'], 5)
+        with self.assertRaises(ValueError):
+            api.get_workflow_statistics(self.user.pk, collection.pk, [0])
+        self.user.groups.clear()
+        with self.assertRaises(ValueError):
+            api.get_workflow_statistics(self.user.pk, collection.pk)
+
     def test_audit_and_projection_failure_roll_back_bulk(self):
         for target in ('slg.services.editor_api.LogEntry.objects.create', 'slg.mtoa_sync.sync_objs_to_mtoa'):
             before = api.row_state(self.obj)
@@ -315,7 +358,10 @@ class EditorTransportTests(TransactionTestCase):
             response = self.rpc(client, headers=headers)
             self.assertEqual(response.status_code, 200, response.text)
             names = {t['name'] for t in response.json()['result']['tools']}
-            self.assertTrue({'assign_coin_type', 'update_coin_type', 'set_workflow_status'} <= names)
+            self.assertTrue({'assign_coin_type', 'update_coin_type', 'set_workflow_status',
+                             'get_workflow_statistics'} <= names)
+            stats_tool = next(t for t in response.json()['result']['tools'] if t['name'] == 'get_workflow_statistics')
+            self.assertTrue(stats_tool['annotations']['readOnlyHint'])
             self.assertFalse({'set_field', 'execute_sql', 'update_model'} & names)
             public = self.rpc(client, path='/mcp', headers=headers).json()['result']['tools']
             self.assertEqual(len(public), 5)

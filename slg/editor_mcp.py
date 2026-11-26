@@ -135,6 +135,20 @@ async def get_editor_object(object_id: ID) -> dict:
 
 
 @mcp.tool(annotations=READ)
+async def get_workflow_statistics(collection_id: ID,
+                                  exclude_collection_part_ids: Annotated[list[ID], Field(max_length=100)] | None = None
+                                  ) -> dict:
+    """Object and coin type control rates for one collection, minus excluded collection parts.
+
+    Same object population as public get_statistics with filter Slg. Returns objects_total,
+    objects_with_type, objects_controlled, assigned_types_total (distinct assigned Muenztyp IDs)
+    and assigned_types_controlled (types with their own workflow "kontrolliert"), plus both rates.
+    Example: collection_id=4, exclude_collection_part_ids=[17] (Notgeld). Read only.
+    """
+    return await _call(editor_api.get_workflow_statistics, collection_id, exclude_collection_part_ids)
+
+
+@mcp.tool(annotations=READ)
 async def search_coin_types(mint_id: ID | None = None, nominal_id: ID | None = None,
                             page: ID = 1) -> dict:
     """Find candidate Muenztyp IDs by mint/nominal IDs, 25 per page. Never edits objects."""
