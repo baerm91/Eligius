@@ -15,6 +15,7 @@ jobs:
           fetch-depth: 0
 
       - name: Sync to GitLab but preserve Docker deployment files
+        shell: bash
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
           GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME }}
@@ -33,7 +34,7 @@ jobs:
           git diff --binary gitlab/main..main -- . \
             ':(exclude)Dockerfile' \
             ':(exclude)docker/**' \
-            ':(exclude)scripts/docker_build.sh' | git apply --index
+            ':(exclude)scripts/docker_build.sh' | git apply --index --allow-empty
 
           if git diff --cached --quiet; then
             echo "Nothing to sync."
