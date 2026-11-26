@@ -149,6 +149,16 @@ async def get_workflow_statistics(collection_id: ID,
 
 
 @mcp.tool(annotations=READ)
+async def list_packages(collection_id: ID, page: ID = 1) -> dict:
+    """List public and internal packages with members of the specified collection.
+
+    Returns stable package IDs and distinct object counts within that collection.
+    Requires view_paket. Never returns individual object or inventory records.
+    """
+    return await _call(editor_api.list_packages, collection_id, page)
+
+
+@mcp.tool(annotations=READ)
 async def search_coin_types(mint_id: ID | None = None, nominal_id: ID | None = None,
                             page: ID = 1) -> dict:
     """Find candidate Muenztyp IDs by mint/nominal IDs, 25 per page. Never edits objects."""

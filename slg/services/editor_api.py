@@ -12,7 +12,7 @@ from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework import serializers
 
-from slg.models import Obj, Muenztyp, Workflow
+from slg.models import Obj, Muenztyp, Paket, Workflow
 
 SALT = 'eligius.editor.preview.v1'
 MAX_AGE = 600
@@ -278,6 +278,24 @@ def get_workflow_statistics(user_id, collection_id, exclude_collection_part_ids=
                    'Reihenfolge oder ID. Typquote: jeder zugewiesene Münztyp zählt einmal, '
                    'nach seinem eigenen Typ-Workflow.'),
     }
+
+
+def list_packages(user_id, collection_id, page=1):
+    """Return package metadata and scoped membership counts for an editor."""
+    user = editor_user(user_id)
+    if not user.has_perm('slg.view_paket'):
+        raise ValueError('Keine Leseberechtigung für Pakete.')
+    if type(collection_id) is not int or collection_id < 1 or type(page) is not int or page < 1:
+        raise ValueError('Positive Sammlungs-ID und Seite erforderlich.')
+    page_size = 100
+    packages = (Paket.objects.annotate(
+        object_count=Count('obj', filter=Q(obj__Slg_id=collection_id), distinct=True))
+        .filter(object_count__gt=0).order_by('name', 'pk'))
+    start = (page - 1) * page_size
+    results = list(packages.values('id', 'name', 'slug', 'object_count',
+                                   'ist_arbeitspaket', 'online_freigegeben')[start:start + page_size + 1])
+    return {'collection_id': collection_id, 'page': page,
+            'has_more': len(results) > page_size, 'results': results[:page_size]}
 
 
 def search_coin_types(user_id, mint_id=None, nominal_id=None, page=1):

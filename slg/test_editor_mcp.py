@@ -314,6 +314,24 @@ class EditorServiceTests(TestCase):
         with self.assertRaises(ValueError):
             api.get_workflow_statistics(self.user.pk, collection.pk)
 
+    def test_package_catalog_scopes_internal_packages_and_requires_permission(self):
+        from slg.models import Paket
+
+        package = Paket.objects.create(name='Weber Arbeitspaket', online_freigegeben=False)
+        other = Paket.objects.create(name='Fremdes Paket', online_freigegeben=False)
+        foreign = Obj.objects.create(invnr='PKG-OUT', Slg=Slg.objects.create(name='Andere Sammlung'),
+                                     Objekttyp=None, workflow=None)
+        self.obj.pakete.add(package)
+        foreign.pakete.add(package)
+        foreign.pakete.add(other)
+        with self.assertRaisesMessage(ValueError, 'Keine Leseberechtigung'):
+            api.list_packages(self.user.pk, self.obj.Slg_id)
+        self.user.user_permissions.add(Permission.objects.get(codename='view_paket'))
+        result = api.list_packages(self.user.pk, self.obj.Slg_id)
+        self.assertEqual([(p['id'], p['object_count'], p['online_freigegeben'])
+                          for p in result['results']], [(package.pk, 1, False)])
+        self.assertFalse(result['has_more'])
+
     def test_audit_and_projection_failure_roll_back_bulk(self):
         for target in ('slg.services.editor_api.LogEntry.objects.create', 'slg.mtoa_sync.sync_objs_to_mtoa'):
             before = api.row_state(self.obj)
