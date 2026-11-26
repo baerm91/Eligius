@@ -332,6 +332,29 @@ class EditorServiceTests(TestCase):
                           for p in result['results']], [(package.pk, 1, False)])
         self.assertFalse(result['has_more'])
 
+    def test_package_workflow_counts_deduplicate_objects_and_types(self):
+        from slg.models import Paket
+
+        self.user.user_permissions.add(Permission.objects.get(codename='view_paket'))
+        controlled = Workflow.objects.create(name='kontrolliert', reihenfolge=3)
+        Muenztyp.objects.filter(pk=self.typ.pk).update(workflow=controlled)
+        Obj.objects.filter(pk=self.classified.pk).update(workflow=controlled)
+        second = Obj.objects.create(invnr='PKG-2', Slg=self.obj.Slg, Typ=self.typ,
+                                    Objekttyp=None, workflow=None)
+        foreign = Obj.objects.create(invnr='PKG-OUT', Slg=Slg.objects.create(name='Other collection'),
+                                     Typ=self.typ, Objekttyp=None, workflow=controlled)
+        a = Paket.objects.create(name='Einzellade')
+        b = Paket.objects.create(name='Sammelpaket')
+        self.classified.pakete.add(a, b)
+        second.pakete.add(b)
+        self.obj.pakete.add(a)
+        foreign.pakete.add(b)
+
+        result = api.get_package_workflow_statistics(self.user.pk, self.obj.Slg_id, [a.pk, b.pk])
+        self.assertEqual((result['objects_total'], result['objects_with_type'],
+                          result['objects_controlled']), (3, 2, 1))
+        self.assertEqual((result['assigned_types_total'], result['assigned_types_controlled']), (1, 1))
+
     def test_audit_and_projection_failure_roll_back_bulk(self):
         for target in ('slg.services.editor_api.LogEntry.objects.create', 'slg.mtoa_sync.sync_objs_to_mtoa'):
             before = api.row_state(self.obj)

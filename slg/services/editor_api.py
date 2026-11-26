@@ -298,6 +298,32 @@ def list_packages(user_id, collection_id, page=1):
             'has_more': len(results) > page_size, 'results': results[:page_size]}
 
 
+def get_package_workflow_statistics(user_id, collection_id, package_ids):
+    """Count the union of objects in selected editor packages for one collection."""
+    user = editor_user(user_id)
+    if not user.has_perm('slg.view_paket'):
+        raise ValueError('Keine Leseberechtigung für Pakete.')
+    if (type(collection_id) is not int or collection_id < 1 or not package_ids
+            or len(package_ids) > 100 or any(type(i) is not int or i < 1 for i in package_ids)
+            or len(set(package_ids)) != len(package_ids)):
+        raise ValueError('Positive Sammlungs-ID und bis zu 100 unterschiedliche Paket-IDs erforderlich.')
+    package_ids = sorted(package_ids)
+    if Paket.objects.filter(pk__in=package_ids).count() != len(package_ids):
+        raise ValueError('Mindestens ein ausgewähltes Paket ist nicht verfügbar.')
+    objects = Obj.objects.filter(Slg_id=collection_id, pakete__pk__in=package_ids).order_by()
+    workflows = Workflow.objects.filter(name__iexact=CONTROLLED_WORKFLOW_NAME)
+    if not workflows.exists():
+        raise ValueError('Der Workflow „kontrolliert“ ist nicht konfiguriert.')
+    counts = objects.aggregate(
+        objects_total=Count('pk', distinct=True),
+        objects_with_type=Count('pk', filter=Q(Typ_id__isnull=False), distinct=True),
+        objects_controlled=Count('pk', filter=Q(workflow__in=workflows), distinct=True),
+        assigned_types_total=Count('Typ', distinct=True),
+        assigned_types_controlled=Count('Typ', filter=Q(Typ__workflow__in=workflows), distinct=True),
+    )
+    return {'collection_id': collection_id, 'package_ids': package_ids, **counts}
+
+
 def search_coin_types(user_id, mint_id=None, nominal_id=None, page=1):
     editor_user(user_id)
     if type(page) is not int or page < 1:
